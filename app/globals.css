@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+:root {
+  --color-bg: #1a1a1a;
+  --color-surface: #2b2d42;
+  --color-primary: #e63946;
+  --color-text: #edf2f4;
+  --color-muted: #8d99ae;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family:
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    sans-serif;
+}
+
+a {
+  color: var(--color-primary);
+}
+
+input,
+select,
+textarea,
+button {
+  border-radius: 0.25rem;
+}

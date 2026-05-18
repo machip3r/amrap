@@ -17,48 +17,58 @@ export function LoginForm({
   const [state, formAction, pending] = useActionState(loginAction, null as LoginState);
 
   return (
-    <div className="flex w-full max-w-sm flex-col gap-3">
+    <div className="flex w-full flex-col gap-5">
       {banner ? (
-        <p className="rounded border border-[var(--color-muted)]/40 bg-[var(--color-surface)]/60 p-3 text-sm text-[var(--color-text)]">
-          {banner}
-        </p>
+        <div className="rounded-lg border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 p-4 text-sm text-[var(--color-text)] flex items-start gap-3">
+          <svg className="w-5 h-5 text-[var(--color-primary)] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <p>{banner}</p>
+        </div>
       ) : null}
-      <form action={formAction} className="flex flex-col gap-3">
+      <form action={formAction} className="flex flex-col gap-4">
         <input type="hidden" name="locale" value={locale} />
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-[var(--color-muted)]">{d.login.email}</span>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-[var(--color-text)]">{d.login.email}</label>
           <input
             required
             name="email"
             type="email"
             autoComplete="email"
-            className="border border-[var(--color-muted)]/40 bg-[var(--color-surface)] px-3 py-2 text-[var(--color-text)]"
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] px-4 py-2.5 text-[var(--color-text)] placeholder-[var(--color-muted)] transition-colors focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)]"
+            placeholder="you@example.com"
           />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-[var(--color-muted)]">{d.login.password}</span>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-[var(--color-text)]">{d.login.password}</label>
+          </div>
           <input
             required
             name="password"
             type="password"
             autoComplete="current-password"
-            className="border border-[var(--color-muted)]/40 bg-[var(--color-surface)] px-3 py-2 text-[var(--color-text)]"
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] px-4 py-2.5 text-[var(--color-text)] placeholder-[var(--color-muted)] transition-colors focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)]"
+            placeholder="••••••••"
           />
-        </label>
+        </div>
         {state?.error && (
-          <p className="text-sm text-[var(--color-primary)]">{d.login.error}</p>
+          <p className="text-sm font-medium text-[var(--color-primary)]">{d.login.error}</p>
         )}
         <button
           type="submit"
           disabled={pending}
-          className="mt-2 bg-[var(--color-primary)] px-3 py-2 font-medium text-[var(--color-text)] disabled:opacity-60"
+          className="mt-2 w-full rounded-lg bg-gradient-to-r from-[var(--color-primary)] to-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-rose-600 hover:to-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2 focus:ring-offset-[var(--color-bg)] disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          {d.login.submit}
+          {pending ? "..." : d.login.submit}
         </button>
       </form>
-      <p className="text-sm text-[var(--color-muted)]">
-        <Link href={`/${locale}/register`}>{d.login.registerLink}</Link>
-      </p>
+      <div className="text-center">
+        <p className="text-sm text-[var(--color-muted)]">
+          {d.login.registerLink ? "Don't have an account? " : ""}
+          <Link href={`/${locale}/register`} className="font-semibold text-[var(--color-text)] hover:text-white transition-colors">
+            {d.login.registerLink}
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

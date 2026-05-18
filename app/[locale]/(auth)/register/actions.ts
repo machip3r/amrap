@@ -7,6 +7,7 @@ import { bootstrapTenantForUser } from "@/lib/supabase/admin";
 import { getSessionUser, getProfile } from "@/lib/auth/session";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
+import { headers } from "next/headers";
 
 export type RegisterState = { error?: string } | null;
 
@@ -30,6 +31,7 @@ export async function registerAction(
 
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
   const tenantName = String(formData.get("tenantName") ?? "").trim();
   const fullName = String(formData.get("fullName") ?? "").trim();
 
@@ -37,8 +39,19 @@ export async function registerAction(
     return { error: d.register.error };
   }
 
+  if (password !== confirmPassword) {
+    return { error: "Passwords do not match." };
+  }
+
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const origin = (await headers()).get("origin");
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: `${origin}/auth/confirm`,
+    },
+  });
 
   if (error) {
     if (looksLikeEmailAlreadyRegistered(error.message)) {

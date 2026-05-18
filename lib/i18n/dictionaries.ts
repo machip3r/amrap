@@ -147,7 +147,7 @@ const es: Dictionary = {
     loginLink: "¿Ya tienes cuenta? Entrar",
     error: "No se pudo completar el registro",
     confirmEmail:
-      "No hay sesión tras crear la cuenta. Añade SUPABASE_SERVICE_ROLE_KEY en el servidor (solo .env, nunca NEXT_PUBLIC_) para crear el gimnasio automáticamente, o confirma el correo e inicia sesión y usa /complete-setup.",
+      "Por favor revisa tu correo electrónico para confirmar tu cuenta y completar el registro.",
     rpcFailed: "Error al crear el gimnasio",
     emailInUse: "Ese correo ya está registrado. Inicia sesión o usa «Terminar registro» si confirmaste el correo y no ves tu gimnasio.",
   },
@@ -263,7 +263,7 @@ const en: Dictionary = {
     loginLink: "Already have an account? Log in",
     error: "Registration failed",
     confirmEmail:
-      "No session after sign-up. Add SUPABASE_SERVICE_ROLE_KEY on the server (in .env only, never NEXT_PUBLIC_) to create the gym automatically, or confirm your email, sign in, and use /complete-setup.",
+      "Please check your email to confirm your account and complete the registration.",
     rpcFailed: "Could not create gym",
     emailInUse:
       "That email is already registered. Sign in, or use «Finish setup» if you confirmed email but still have no gym.",

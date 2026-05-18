@@ -4,9 +4,9 @@ import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { AppNav } from "@/components/app-nav";
-import { LocaleSwitcher } from "@/components/locale-switcher";
-import { LogoutButton } from "@/components/logout-button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { notFound } from "next/navigation";
+import { Search, Bell, HelpCircle } from "lucide-react";
 
 export default async function AppShellLayout({
   children,
@@ -27,17 +27,39 @@ export default async function AppShellLayout({
   const d = getDictionary(locale);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden bg-[var(--color-bg)]">
       <AppNav locale={locale} role={profile.role} />
-      <div className="flex min-h-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-[var(--color-muted)]/30 bg-[var(--color-surface)]/50 px-4 py-3">
-          <LocaleSwitcher locale={locale} />
-          <div className="flex items-center gap-4 text-sm text-[var(--color-muted)]">
-            <span>{profile.full_name || profile.id.slice(0, 8)}</span>
-            <LogoutButton label={d.nav.logout} locale={locale} />
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-6">
+          <div className="flex flex-1 items-center">
+            <div className="relative w-full max-w-md">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <Search className="h-4 w-4 text-[var(--color-muted)]" />
+              </div>
+              <input
+                type="text"
+                placeholder="Buscar socios, pagos..."
+                className="block w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-hover)] py-1.5 pl-10 pr-3 text-sm text-[var(--color-text)] placeholder-[var(--color-muted)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
+              />
+            </div>
+          </div>
+          <div className="flex flex-1 justify-center text-sm font-bold tracking-widest text-[var(--color-primary)]">
+            GYM ADMIN
+          </div>
+          <div className="flex flex-1 items-center justify-end gap-4">
+            <button className="text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors">
+              <Bell className="h-5 w-5" />
+            </button>
+            <button className="text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors">
+              <HelpCircle className="h-5 w-5" />
+            </button>
+            <ThemeToggle />
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-primary)]/20 text-[var(--color-primary)] font-bold text-xs ring-2 ring-[var(--color-primary)]/30 overflow-hidden">
+              {profile.full_name ? profile.full_name.charAt(0).toUpperCase() : profile.id.slice(0, 2).toUpperCase()}
+            </div>
           </div>
         </header>
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { defaultLocale, isLocale } from "@/lib/i18n/config";
+import { isLocale } from "@/lib/i18n/config";
+import { negotiateLocale } from "@/lib/i18n/negotiate-locale";
 import { updateSession } from "@/lib/supabase/update-session";
 
 const publicPathRoots = new Set(["login", "register"]);
@@ -25,7 +26,8 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     const suffix =
       pathname === "/" ? "" : pathname.startsWith("/") ? pathname : `/${pathname}`;
-    url.pathname = `/${defaultLocale}${suffix}`;
+    const locale = negotiateLocale(request.headers.get("accept-language"));
+    url.pathname = `/${locale}${suffix}`;
     const { supabaseResponse } = await updateSession(request);
     const redirect = NextResponse.redirect(url);
     applyCookies(supabaseResponse, redirect);
@@ -46,18 +48,10 @@ export async function proxy(request: NextRequest) {
   applyCookies(supabaseResponse, res);
   res.headers.set("x-locale", locale);
 
-  const isLocaleOnly = segments.length === 1;
-  if (user && isLocaleOnly) {
-    const url = request.nextUrl.clone();
-    url.pathname = `/${locale}/dashboard`;
-    const redirect = NextResponse.redirect(url);
-    applyCookies(supabaseResponse, redirect);
-    return redirect;
-  }
-
   const isPublic = publicPathRoots.has(firstSegment);
+  const isMarketingHome = segments.length === 1;
 
-  if (!user && !isPublic) {
+  if (!user && !isPublic && !isMarketingHome) {
     const url = request.nextUrl.clone();
     url.pathname = `/${locale}/login`;
     const redirect = NextResponse.redirect(url);

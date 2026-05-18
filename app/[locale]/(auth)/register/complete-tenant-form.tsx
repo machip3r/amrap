@@ -13,31 +13,41 @@ export function CompleteTenantForm({ locale }: { locale: Locale }) {
   );
 
   return (
-    <form action={formAction} className="flex w-full max-w-sm flex-col gap-3">
-      <input type="hidden" name="locale" value={locale} />
-      <p className="text-sm text-[var(--color-muted)]">{d.completeSetup.description}</p>
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-[var(--color-muted)]">{d.register.tenantName}</span>
-        <input
-          required
-          name="tenantName"
-          className="border border-[var(--color-muted)]/40 bg-[var(--color-surface)] px-3 py-2 text-[var(--color-text)]"
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-[var(--color-muted)]">{d.register.fullName}</span>
-        <input name="fullName" className="border border-[var(--color-muted)]/40 bg-[var(--color-surface)] px-3 py-2 text-[var(--color-text)]" />
-      </label>
-      {state?.error && (
-        <p className="whitespace-pre-wrap text-sm text-[var(--color-primary)]">{state.error}</p>
-      )}
-      <button
-        type="submit"
-        disabled={pending}
-        className="mt-2 bg-[var(--color-primary)] px-3 py-2 font-medium text-[var(--color-text)] disabled:opacity-60"
-      >
-        {d.completeSetup.submit}
-      </button>
-    </form>
+    <div className="w-full flex flex-col gap-5 mt-4">
+      <form action={formAction} className="flex flex-col gap-4">
+        <input type="hidden" name="locale" value={locale} />
+        
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-[var(--color-text)]">{d.register.tenantName}</label>
+          <input
+            required
+            name="tenantName"
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] px-4 py-2.5 text-[var(--color-text)] placeholder-[var(--color-muted)] transition-colors focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)]"
+            placeholder="My Awesome Gym"
+          />
+        </div>
+        
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-[var(--color-text)]">{d.register.fullName}</label>
+          <input 
+            name="fullName" 
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] px-4 py-2.5 text-[var(--color-text)] placeholder-[var(--color-muted)] transition-colors focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)]"
+            placeholder="Jane Doe"
+          />
+        </div>
+        
+        {state?.error && (
+          <p className="whitespace-pre-wrap text-sm font-medium text-[var(--color-primary)] p-3 rounded-lg bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20">{state.error}</p>
+        )}
+        
+        <button
+          type="submit"
+          disabled={pending}
+          className="mt-2 w-full rounded-lg bg-gradient-to-r from-[var(--color-primary)] to-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-rose-600 hover:to-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2 focus:ring-offset-[var(--color-bg)] disabled:opacity-70 disabled:cursor-not-allowed"
+        >
+          {pending ? "..." : d.completeSetup.submit}
+        </button>
+      </form>
+    </div>
   );
 }

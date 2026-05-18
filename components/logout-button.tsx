@@ -5,10 +5,12 @@ import type { Locale } from "@/lib/i18n/config";
 import { useRouter } from "next/navigation";
 
 export function LogoutButton({
-  label,
+  children,
+  className,
   locale,
 }: {
-  label: string;
+  children: React.ReactNode;
+  className?: string;
   locale: Locale;
 }) {
   const router = useRouter();
@@ -24,9 +26,9 @@ export function LogoutButton({
     <button
       type="button"
       onClick={() => void logout()}
-      className="text-[var(--color-primary)] hover:underline"
+      className={className || "text-[var(--color-primary)] hover:underline"}
     >
-      {label}
+      {children}
     </button>
   );
 }

@@ -2,26 +2,45 @@ import { type EmailOtpType } from "@supabase/supabase-js";
 import { type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { defaultLocale, isLocale } from "@/lib/i18n/config";
+
+const OTP_TYPES = new Set<string>([
+  "signup",
+  "invite",
+  "magiclink",
+  "recovery",
+  "email_change",
+  "email",
+]);
+
+/** Only allow relative in-app paths (open-redirect safe). */
+function safeNextPath(raw: string | null): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.includes("://")) {
+    return `/${defaultLocale}/dashboard`;
+  }
+  return raw;
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const token_hash = searchParams.get("token_hash");
-  const type = searchParams.get("type") as EmailOtpType | null;
-  const next = searchParams.get("next") ?? "/";
+  const typeRaw = searchParams.get("type");
+  const next = safeNextPath(searchParams.get("next"));
 
-  if (token_hash && type) {
+  const localeFromNext = next.split("/").filter(Boolean)[0];
+  const locale = isLocale(localeFromNext ?? "") ? localeFromNext : defaultLocale;
+
+  if (token_hash && typeRaw && OTP_TYPES.has(typeRaw)) {
     const supabase = await createClient();
-
     const { error } = await supabase.auth.verifyOtp({
-      type,
+      type: typeRaw as EmailOtpType,
       token_hash,
     });
     if (!error) {
-      // redirect user to specified redirect URL or root of app
       redirect(next);
     }
+    console.error("auth/confirm", error.message);
   }
 
-  // return the user to an error page with some instructions
-  redirect("/es/login?error=confirmation_failed");
+  redirect(`/${locale}/login?error=confirmation_failed`);
 }

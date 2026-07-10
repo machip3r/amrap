@@ -6,15 +6,21 @@ import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { createPlan, deletePlan } from "./actions";
+import { FormField } from "@/components/ui/form-field";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default async function PlansPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   const { locale: raw } = await params;
   if (!isLocale(raw)) notFound();
   const locale = raw as Locale;
+  const sp = await searchParams;
 
   const profile = await getProfile();
   if (!profile) redirect(`/${locale}/login`);
@@ -36,40 +42,33 @@ export default async function PlansPage({
     <div className="space-y-8">
       <h1 className="text-2xl font-semibold">{d.plans.title}</h1>
 
+      {sp.error ? (
+        <p className="text-sm font-medium text-[var(--color-primary)]">{d.plans.error}</p>
+      ) : null}
+
       <section className="max-w-md space-y-3 rounded border border-[var(--color-muted)]/30 bg-[var(--color-surface)]/40 p-4">
         <h2 className="text-lg font-medium">{d.plans.newPlan}</h2>
         <form action={createPlan} className="flex flex-col gap-2 text-sm">
           <input type="hidden" name="locale" value={locale} />
-          <label className="flex flex-col gap-1">
-            <span className="text-[var(--color-muted)]">{d.plans.planName}</span>
-            <input required name="name" className="border border-[var(--color-muted)]/40 bg-[var(--color-bg)] px-2 py-1" />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-[var(--color-muted)]">{d.plans.price}</span>
-            <input
-              required
-              name="price"
-              type="number"
-              min={0}
-              step="0.01"
-              className="border border-[var(--color-muted)]/40 bg-[var(--color-bg)] px-2 py-1"
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-[var(--color-muted)]">{d.plans.durationDays}</span>
-            <input
+          <FormField label={d.plans.planName}>
+            <Input required name="name" />
+          </FormField>
+          <FormField label={d.plans.price}>
+            <Input required name="price" type="number" min={0} step="0.01" />
+          </FormField>
+          <FormField label={d.plans.durationDays}>
+            <Input
               required
               name="duration_days"
               type="number"
               min={1}
               step={1}
               defaultValue={30}
-              className="border border-[var(--color-muted)]/40 bg-[var(--color-bg)] px-2 py-1"
             />
-          </label>
-          <button type="submit" className="mt-2 bg-[var(--color-primary)] px-3 py-2 text-[var(--color-text)]">
+          </FormField>
+          <Button type="submit" variant="appPrimary">
             {d.plans.save}
-          </button>
+          </Button>
         </form>
       </section>
 
@@ -99,9 +98,9 @@ export default async function PlansPage({
                 <form action={deletePlan}>
                   <input type="hidden" name="locale" value={locale} />
                   <input type="hidden" name="plan_id" value={p.id} />
-                  <button type="submit" className="text-[var(--color-primary)] hover:underline">
+                  <Button type="submit" variant="link">
                     {d.plans.delete}
-                  </button>
+                  </Button>
                 </form>
               </td>
             </tr>

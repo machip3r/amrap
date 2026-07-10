@@ -43,6 +43,7 @@ export default async function CheckinPage({
           memberNotFound: d.checkin.memberNotFound,
           cameraError: d.checkin.cameraError,
           forbidden: d.common.forbidden,
+          saveFailed: d.common.saveFailed,
         }}
       />
     </div>

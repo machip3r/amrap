@@ -9,15 +9,21 @@ import { getDictionary } from "@/lib/i18n/dictionaries";
 import { memberStatusFromExpires } from "@/lib/members/dates";
 import { notFound } from "next/navigation";
 import { createMember } from "./actions";
+import { FormField } from "@/components/ui/form-field";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default async function MembersPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   const { locale: raw } = await params;
   if (!isLocale(raw)) notFound();
   const locale = raw as Locale;
+  const sp = await searchParams;
 
   const profile = await getProfile();
   if (!profile) redirect(`/${locale}/login`);
@@ -46,31 +52,31 @@ export default async function MembersPage({
         <h1 className="text-2xl font-semibold">{d.members.title}</h1>
       </div>
 
+      {sp.error ? (
+        <p className="text-sm font-medium text-[var(--color-primary)]">{d.members.error}</p>
+      ) : null}
+
       <section className="max-w-md space-y-3 rounded border border-[var(--color-muted)]/30 bg-[var(--color-surface)]/40 p-4">
         <h2 className="text-lg font-medium">{d.members.createTitle}</h2>
         <form action={createMember} className="flex flex-col gap-2 text-sm">
           <input type="hidden" name="locale" value={locale} />
-          <label className="flex flex-col gap-1">
-            <span className="text-[var(--color-muted)]">{d.members.name}</span>
-            <input required name="name" className="border border-[var(--color-muted)]/40 bg-[var(--color-bg)] px-2 py-1" />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-[var(--color-muted)]">{d.members.phone}</span>
-            <input name="phone" className="border border-[var(--color-muted)]/40 bg-[var(--color-bg)] px-2 py-1" />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-[var(--color-muted)]">{d.members.membershipExpires}</span>
-            <input
+          <FormField label={d.members.name}>
+            <Input required name="name" />
+          </FormField>
+          <FormField label={d.members.phone}>
+            <Input name="phone" />
+          </FormField>
+          <FormField label={d.members.membershipExpires}>
+            <Input
               required
               type="datetime-local"
               name="membership_expires_at"
               defaultValue={toLocalInput(new Date())}
-              className="border border-[var(--color-muted)]/40 bg-[var(--color-bg)] px-2 py-1"
             />
-          </label>
-          <button type="submit" className="mt-2 bg-[var(--color-primary)] px-3 py-2 text-[var(--color-text)]">
+          </FormField>
+          <Button type="submit" variant="appPrimary">
             {d.members.save}
-          </button>
+          </Button>
         </form>
       </section>
 
@@ -100,7 +106,7 @@ export default async function MembersPage({
                 <td className="py-2 pr-4">
                   {m.liveStatus === "active" ? d.members.active : d.members.expired}
                 </td>
-                <td className="py-2 pr-4">{formatDate(m.membership_expires_at)}</td>
+                <td className="py-2 pr-4">{formatDate(m.membership_expires_at, locale)}</td>
                 <td className="py-2">
                   <Link className="text-[var(--color-primary)]" href={`/${locale}/members/${m.id}`}>
                     {d.members.view}
@@ -115,9 +121,9 @@ export default async function MembersPage({
   );
 }
 
-function formatDate(iso: string) {
+function formatDate(iso: string, locale: Locale) {
   try {
-    return new Date(iso).toLocaleString();
+    return new Date(iso).toLocaleString(locale);
   } catch {
     return iso;
   }

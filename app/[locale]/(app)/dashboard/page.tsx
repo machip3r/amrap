@@ -4,7 +4,7 @@ import { getProfile } from "@/lib/auth/session";
 import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { Users, UserCheck, AlertTriangle, CreditCard, ArrowRight, MoreVertical } from "lucide-react";
+import { Users, UserCheck, AlertTriangle, CreditCard, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export default async function DashboardPage({
@@ -49,141 +49,113 @@ export default async function DashboardPage({
     .eq("tenant_id", tid)
     .gte("created_at", start.toISOString());
 
-  // Format date for the header
   const todayDate = new Intl.DateTimeFormat(locale, {
     day: "numeric",
     month: "long",
-    year: "numeric"
+    year: "numeric",
   }).format(new Date());
 
+  // Placeholder capacity until live occupancy exists
+  const maxCapacity = 120;
+  const present = 0;
+  const occupancyPct = 0;
+
   return (
-    <div className="space-y-8 animate-fade-in-up">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[var(--color-border)] pb-6">
+    <div className="animate-fade-in-up space-y-8">
+      <div className="flex flex-col justify-between gap-4 border-b border-[var(--color-border)] pb-6 sm:flex-row sm:items-end">
         <div>
-          <h1 className="text-3xl font-title font-bold text-[var(--color-text)]">Resumen Diario</h1>
-          <p className="mt-1 text-sm text-[var(--color-muted)]">Métricas de rendimiento y actividad reciente del gimnasio.</p>
+          <h1 className="font-title text-3xl font-bold text-[var(--color-text)]">
+            {d.dashboard.title}
+          </h1>
+          <p className="mt-1 text-sm text-[var(--color-muted)]">{d.dashboard.subtitle}</p>
         </div>
         <div className="text-right">
-          <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-primary)]">FECHA</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-primary)]">
+            {d.dashboard.dateLabel}
+          </p>
           <p className="text-sm font-medium text-[var(--color-text)]">{todayDate}</p>
         </div>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Socios Totales */}
-        <div className="glass-panel rounded-lg p-5 flex flex-col justify-between">
+        <div className="glass-panel flex flex-col justify-between rounded-lg p-5">
           <div className="flex items-center justify-between text-[var(--color-muted)]">
-            <span className="text-xs font-bold tracking-wider uppercase">SOCIOS TOTALES</span>
-            <Users className="h-4 w-4" />
+            <span className="text-xs font-bold uppercase tracking-wider">
+              {d.dashboard.totalMembers}
+            </span>
+            <Users className="h-4 w-4" aria-hidden />
           </div>
-          <div className="mt-4 text-4xl font-title font-bold">{total ?? 0}</div>
+          <div className="font-title mt-4 text-4xl font-bold">{total ?? 0}</div>
         </div>
 
-        {/* Activos */}
-        <div className="glass-panel rounded-lg p-5 flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute right-0 top-0 h-full w-16 bg-gradient-to-l from-[var(--color-success-bg)] to-transparent pointer-events-none" />
-          <div className="flex items-center justify-between text-[var(--color-muted)] relative z-10">
-            <span className="text-xs font-bold tracking-wider uppercase">ACTIVOS</span>
-            <UserCheck className="h-4 w-4 text-[var(--color-success)]" />
+        <div className="glass-panel relative flex flex-col justify-between overflow-hidden rounded-lg p-5">
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-16 bg-gradient-to-l from-[var(--color-success-bg)] to-transparent" />
+          <div className="relative z-10 flex items-center justify-between text-[var(--color-muted)]">
+            <span className="text-xs font-bold uppercase tracking-wider">
+              {d.dashboard.activeMembers}
+            </span>
+            <UserCheck className="h-4 w-4 text-[var(--color-success)]" aria-hidden />
           </div>
-          <div className="mt-4 text-4xl font-title font-bold text-[var(--color-success)] relative z-10">{active ?? 0}</div>
+          <div className="font-title relative z-10 mt-4 text-4xl font-bold text-[var(--color-success)]">
+            {active ?? 0}
+          </div>
         </div>
 
-        {/* Vencidos */}
-        <div className="glass-panel rounded-lg p-5 flex flex-col justify-between relative overflow-hidden border-b-2 border-b-[var(--color-primary)]">
-          <div className="absolute right-0 top-0 h-full w-16 bg-gradient-to-l from-[var(--color-danger-bg)] to-transparent pointer-events-none" />
-          <div className="flex items-center justify-between text-[var(--color-muted)] relative z-10">
-            <span className="text-xs font-bold tracking-wider uppercase">VENCIDOS</span>
-            <AlertTriangle className="h-4 w-4 text-[var(--color-primary)]" />
+        <div className="glass-panel relative flex flex-col justify-between overflow-hidden rounded-lg border-b-2 border-b-[var(--color-primary)] p-5">
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-16 bg-gradient-to-l from-[var(--color-danger-bg)] to-transparent" />
+          <div className="relative z-10 flex items-center justify-between text-[var(--color-muted)]">
+            <span className="text-xs font-bold uppercase tracking-wider">
+              {d.dashboard.expiredMembers}
+            </span>
+            <AlertTriangle className="h-4 w-4 text-[var(--color-primary)]" aria-hidden />
           </div>
-          <div className="mt-4 text-4xl font-title font-bold text-[var(--color-primary)] relative z-10">{expired ?? 0}</div>
+          <div className="font-title relative z-10 mt-4 text-4xl font-bold text-[var(--color-primary)]">
+            {expired ?? 0}
+          </div>
         </div>
 
-        {/* Pagos Hoy */}
-        <div className="glass-panel rounded-lg p-5 flex flex-col justify-between">
+        <div className="glass-panel flex flex-col justify-between rounded-lg p-5">
           <div className="flex items-center justify-between text-[var(--color-muted)]">
-            <span className="text-xs font-bold tracking-wider uppercase">PAGOS HOY</span>
-            <CreditCard className="h-4 w-4" />
+            <span className="text-xs font-bold uppercase tracking-wider">
+              {d.dashboard.paymentsToday}
+            </span>
+            <CreditCard className="h-4 w-4" aria-hidden />
           </div>
           <div className="mt-4 flex items-baseline gap-2">
-            <div className="text-4xl font-title font-bold">{paymentsToday ?? 0}</div>
-            <div className="text-sm text-[var(--color-muted)]">renovaciones</div>
+            <div className="font-title text-4xl font-bold">{paymentsToday ?? 0}</div>
+            <div className="text-sm text-[var(--color-muted)]">{d.dashboard.renewals}</div>
           </div>
         </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 glass-panel rounded-lg flex flex-col">
+        <div className="glass-panel flex flex-col rounded-lg lg:col-span-2">
           <div className="flex items-center justify-between border-b border-[var(--color-border)] p-5">
-            <h2 className="text-lg font-title font-bold text-[var(--color-text)]">Registro de Accesos</h2>
-            <Link href={`/${locale}/checkin`} className="text-sm text-[var(--color-muted)] hover:text-[var(--color-text)] flex items-center gap-1 transition-colors">
-              Ver todos <ArrowRight className="h-3 w-3" />
+            <h2 className="font-title text-lg font-bold text-[var(--color-text)]">
+              {d.dashboard.accessLog}
+            </h2>
+            <Link
+              href={`/${locale}/checkin`}
+              className="flex items-center gap-1 text-sm text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
+            >
+              {d.dashboard.viewAll} <ArrowRight className="h-3 w-3" aria-hidden />
             </Link>
           </div>
-          
+
           <div className="flex-1 p-0">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-[var(--color-border)] text-xs uppercase tracking-wider text-[var(--color-muted)]">
                 <tr>
-                  <th className="p-4 font-medium">SOCIO</th>
-                  <th className="p-4 font-medium">HORA</th>
-                  <th className="p-4 font-medium">ESTADO DE MEMBRESÍA</th>
-                  <th className="p-4 font-medium text-right">ACCIÓN</th>
+                  <th className="p-4 font-medium">{d.dashboard.colMember}</th>
+                  <th className="p-4 font-medium">{d.dashboard.colTime}</th>
+                  <th className="p-4 font-medium">{d.dashboard.colMembershipStatus}</th>
+                  <th className="p-4 text-right font-medium">{d.dashboard.colAction}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--color-border)]">
-                {/* Mock Row 1 */}
-                <tr className="hover:bg-[var(--color-surface-hover)] transition-colors">
-                  <td className="p-4 flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-border)] text-xs font-bold text-[var(--color-muted)]">MR</div>
-                    <div className="font-medium text-[var(--color-text)]">Mateo Rojas</div>
-                  </td>
-                  <td className="p-4 text-[var(--color-muted)]">08:42 AM</td>
-                  <td className="p-4">
-                    <span className="inline-flex items-center rounded px-2 py-0.5 text-xs font-bold uppercase tracking-wider bg-[var(--color-success)]/20 text-[var(--color-success)]">
-                      ACTIVO
-                    </span>
-                  </td>
-                  <td className="p-4 text-right">
-                    <button className="text-[var(--color-muted)] hover:text-[var(--color-text)]">
-                      <MoreVertical className="h-4 w-4" />
-                    </button>
-                  </td>
-                </tr>
-                {/* Mock Row 2 */}
-                <tr className="hover:bg-[var(--color-surface-hover)] transition-colors">
-                  <td className="p-4 flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-border)] text-xs font-bold text-[var(--color-muted)]">SL</div>
-                    <div className="font-medium text-[var(--color-text)]">Sofía Luna</div>
-                  </td>
-                  <td className="p-4 text-[var(--color-muted)]">08:35 AM</td>
-                  <td className="p-4">
-                    <span className="inline-flex items-center rounded px-2 py-0.5 text-xs font-bold uppercase tracking-wider bg-[var(--color-primary)] text-white">
-                      VENCIDO
-                    </span>
-                  </td>
-                  <td className="p-4 text-right flex items-center justify-end gap-3">
-                    <button className="text-xs font-bold uppercase tracking-wider text-[var(--color-text)] border border-[var(--color-border)] rounded px-3 py-1 hover:bg-[var(--color-surface-hover)] transition-colors">
-                      RENOVAR
-                    </button>
-                  </td>
-                </tr>
-                {/* Mock Row 3 */}
-                <tr className="hover:bg-[var(--color-surface-hover)] transition-colors">
-                  <td className="p-4 flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-border)] text-xs font-bold text-[var(--color-muted)]">JG</div>
-                    <div className="font-medium text-[var(--color-text)]">Javier Gómez</div>
-                  </td>
-                  <td className="p-4 text-[var(--color-muted)]">08:15 AM</td>
-                  <td className="p-4">
-                    <span className="inline-flex items-center rounded px-2 py-0.5 text-xs font-bold uppercase tracking-wider bg-[var(--color-success)]/20 text-[var(--color-success)]">
-                      ACTIVO
-                    </span>
-                  </td>
-                  <td className="p-4 text-right">
-                    <button className="text-[var(--color-muted)] hover:text-[var(--color-text)]">
-                      <MoreVertical className="h-4 w-4" />
-                    </button>
+                <tr>
+                  <td colSpan={4} className="p-8 text-center text-[var(--color-muted)]">
+                    —
                   </td>
                 </tr>
               </tbody>
@@ -191,28 +163,41 @@ export default async function DashboardPage({
           </div>
         </div>
 
-        <div className="glass-panel rounded-lg flex flex-col">
+        <div className="glass-panel flex flex-col rounded-lg">
           <div className="border-b border-[var(--color-border)] p-5">
-            <h2 className="text-lg font-title font-bold text-[var(--color-text)]">Capacidad Actual</h2>
+            <h2 className="font-title text-lg font-bold text-[var(--color-text)]">
+              {d.dashboard.capacityTitle}
+            </h2>
           </div>
-          
-          <div className="flex-1 p-6 flex flex-col items-center justify-center">
-            {/* Mock Chart Area */}
-            <div className="relative flex h-48 w-48 items-center justify-center rounded-lg bg-[var(--color-surface-hover)] border-4 border-t-[var(--color-primary)] border-r-[var(--color-primary)] border-b-[var(--color-primary)] border-l-transparent mb-6 shadow-inner">
+
+          <div className="flex flex-1 flex-col items-center justify-center p-6">
+            <div className="relative mb-6 flex h-48 w-48 items-center justify-center rounded-lg border-4 border-b-[var(--color-primary)] border-l-transparent border-r-[var(--color-primary)] border-t-[var(--color-primary)] bg-[var(--color-surface-hover)] shadow-inner">
               <div className="text-center">
-                <div className="text-5xl font-title font-bold text-[var(--color-text)]">65%</div>
-                <div className="mt-1 text-xs font-bold tracking-widest uppercase text-[var(--color-muted)]">OCUPACIÓN</div>
+                <div className="font-title text-5xl font-bold text-[var(--color-text)]">
+                  {occupancyPct}%
+                </div>
+                <div className="mt-1 text-xs font-bold uppercase tracking-widest text-[var(--color-muted)]">
+                  {d.dashboard.occupancy}
+                </div>
               </div>
             </div>
-            
-            <div className="w-full border border-[var(--color-border)] rounded-md p-4 space-y-3">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-[var(--color-text)] font-medium">Aforo Máximo</span>
-                <span className="text-[var(--color-text)] font-bold">120 personas</span>
+
+            <div className="w-full space-y-3 rounded-md border border-[var(--color-border)] p-4">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium text-[var(--color-text)]">
+                  {d.dashboard.maxCapacity}
+                </span>
+                <span className="font-bold text-[var(--color-text)]">
+                  {maxCapacity} {d.dashboard.people}
+                </span>
               </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-[var(--color-text)] font-medium">Presentes</span>
-                <span className="text-[var(--color-primary)] font-bold">78 personas</span>
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium text-[var(--color-text)]">
+                  {d.dashboard.present}
+                </span>
+                <span className="font-bold text-[var(--color-primary)]">
+                  {present} {d.dashboard.people}
+                </span>
               </div>
             </div>
           </div>

@@ -74,7 +74,7 @@ export function LandingNav({ locale, d, labels }: Props) {
           <AmrapLogo priority className={scrolled ? "h-8 w-auto" : "h-10 w-auto transition-all duration-500"} />
         </Link>
 
-        <nav className="landing-nav-links hidden items-center md:flex" aria-label="Main">
+        <nav className="landing-nav-links flex items-center overflow-x-auto max-md:gap-1 max-md:text-xs md:overflow-visible" aria-label={d.nav.mainAria}>
           {navItems.map(({ key, section }) => {
             const isActive = active === section;
             return (
@@ -82,7 +82,7 @@ export function LandingNav({ locale, d, labels }: Props) {
                 key={section}
                 type="button"
                 onClick={() => scrollTo(section)}
-                className={`landing-nav-pill px-5 py-2.5 text-sm font-medium transition-all duration-300 ${
+                className={`landing-nav-pill shrink-0 px-3 py-2 text-sm font-medium transition-all duration-300 sm:px-5 sm:py-2.5 ${
                   isActive
                     ? "landing-nav-pill--active"
                     : "text-[var(--landing-ink)] hover:bg-[var(--landing-ink)]/5"
@@ -95,7 +95,10 @@ export function LandingNav({ locale, d, labels }: Props) {
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <ThemeToggle className="!text-[var(--landing-ink)] hover:!bg-[var(--landing-ink)]/5" />
+          <ThemeToggle
+            label={d.nav.toggleTheme}
+            className="!text-[var(--landing-ink)] hover:!bg-[var(--landing-ink)]/5"
+          />
           <Link href={`${prefix}/login`} className="landing-nav-login">
             {d.nav.login}
           </Link>

@@ -3,8 +3,11 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { runCheckIn, type CheckinResult } from "@/app/[locale]/(app)/checkin/actions";
+import { FormField } from "@/components/ui/form-field";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
-export type CheckinLabels = {
+type CheckinLabels = {
   manualLabel: string;
   manualPlaceholder: string;
   lookup: string;
@@ -16,6 +19,7 @@ export type CheckinLabels = {
   memberNotFound: string;
   cameraError: string;
   forbidden: string;
+  saveFailed: string;
 };
 
 type Props = {
@@ -37,6 +41,7 @@ export function CheckinClient({ labels, runCheckIn }: Props) {
       else if (r.status === "denied") setMessage(labels.resultDenied);
       else if (r.status === "not_found") setMessage(labels.memberNotFound);
       else if (r.status === "forbidden") setMessage(labels.forbidden);
+      else if (r.status === "error") setMessage(labels.saveFailed);
       else setMessage(null);
     },
     [labels],
@@ -109,13 +114,9 @@ export function CheckinClient({ labels, runCheckIn }: Props) {
 
       <div className="flex flex-wrap gap-2">
         {!cameraOn ? (
-          <button
-            type="button"
-            onClick={() => void startCamera()}
-            className="bg-[var(--color-primary)] px-3 py-2 text-sm text-[var(--color-text)]"
-          >
+          <Button type="button" variant="appPrimary" className="mt-0" onClick={() => void startCamera()}>
             {labels.startCamera}
-          </button>
+          </Button>
         ) : (
           <button
             type="button"
@@ -135,18 +136,16 @@ export function CheckinClient({ labels, runCheckIn }: Props) {
           handleCode(manual);
         }}
       >
-        <label className="flex flex-col gap-1">
-          <span className="text-[var(--color-muted)]">{labels.manualLabel}</span>
-          <input
+        <FormField label={labels.manualLabel}>
+          <Input
             value={manual}
             onChange={(e) => setManual(e.target.value)}
             placeholder={labels.manualPlaceholder}
-            className="border border-[var(--color-muted)]/40 bg-[var(--color-bg)] px-2 py-2"
           />
-        </label>
-        <button type="submit" className="w-fit bg-[var(--color-primary)] px-3 py-2 text-[var(--color-text)]">
+        </FormField>
+        <Button type="submit" variant="appPrimary" className="w-fit">
           {labels.lookup}
-        </button>
+        </Button>
       </form>
 
       {message && <p className="text-lg">{message}</p>}

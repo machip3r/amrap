@@ -10,7 +10,7 @@ export function memberStatusFromExpires(
   return t > new Date() ? "active" : "expired";
 }
 
-export function addDays(base: Date, days: number): Date {
+function addDays(base: Date, days: number): Date {
   const d = new Date(base);
   d.setDate(d.getDate() + days);
   return d;

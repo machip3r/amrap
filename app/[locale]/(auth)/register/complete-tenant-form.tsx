@@ -1,9 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useId } from "react";
 import type { Locale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { completeTenantAction, type RegisterState } from "./actions";
+import { FormField } from "@/components/ui/form-field";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export function CompleteTenantForm({ locale }: { locale: Locale }) {
   const d = getDictionary(locale);
@@ -11,42 +14,42 @@ export function CompleteTenantForm({ locale }: { locale: Locale }) {
     completeTenantAction,
     null as RegisterState,
   );
+  const tenantId = useId();
+  const nameId = useId();
 
   return (
-    <div className="w-full flex flex-col gap-5 mt-4">
+    <div className="mt-4 flex w-full flex-col gap-5">
       <form action={formAction} className="flex flex-col gap-4">
         <input type="hidden" name="locale" value={locale} />
-        
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-[var(--color-text)]">{d.register.tenantName}</label>
-          <input
+
+        <FormField label={d.register.tenantName} htmlFor={tenantId} variant="auth">
+          <Input
+            id={tenantId}
             required
             name="tenantName"
-            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] px-4 py-2.5 text-[var(--color-text)] placeholder-[var(--color-muted)] transition-colors focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)]"
-            placeholder="My Awesome Gym"
+            variant="auth"
+            placeholder={d.register.tenantNamePlaceholder}
           />
-        </div>
-        
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-[var(--color-text)]">{d.register.fullName}</label>
-          <input 
-            name="fullName" 
-            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] px-4 py-2.5 text-[var(--color-text)] placeholder-[var(--color-muted)] transition-colors focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)]"
-            placeholder="Jane Doe"
+        </FormField>
+
+        <FormField label={d.register.fullName} htmlFor={nameId} variant="auth">
+          <Input
+            id={nameId}
+            name="fullName"
+            variant="auth"
+            placeholder={d.register.fullNamePlaceholder}
           />
-        </div>
-        
+        </FormField>
+
         {state?.error && (
-          <p className="whitespace-pre-wrap text-sm font-medium text-[var(--color-primary)] p-3 rounded-lg bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20">{state.error}</p>
+          <p className="whitespace-pre-wrap rounded-lg border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 p-3 text-sm font-medium text-[var(--color-primary)]">
+            {state.error}
+          </p>
         )}
-        
-        <button
-          type="submit"
-          disabled={pending}
-          className="mt-2 w-full rounded-lg bg-gradient-to-r from-[var(--color-primary)] to-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-rose-600 hover:to-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2 focus:ring-offset-[var(--color-bg)] disabled:opacity-70 disabled:cursor-not-allowed"
-        >
-          {pending ? "..." : d.completeSetup.submit}
-        </button>
+
+        <Button type="submit" variant="primaryBlock" disabled={pending}>
+          {pending ? d.common.loading : d.completeSetup.submit}
+        </Button>
       </form>
     </div>
   );

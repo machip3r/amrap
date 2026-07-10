@@ -1,0 +1,21 @@
+---
+description: AMRAP project coding standards — always follow AGENTS.md
+alwaysApply: true
+---
+
+# AMRAP agent rules
+
+Follow the full project standards in **`AGENTS.md`** (repo root) for every change. `CLAUDE.md` also points there.
+
+## Non-negotiables
+
+- **pnpm only** — never npm/yarn
+- **Do not run `pnpm run build`** unless the user asks or the task is build/CI failure
+- **Read Next.js docs in `node_modules/next/dist/docs/`** before using Next APIs — this app’s Next version may differ from training data
+- **Reuse / extend shared components** — one Input, Button, form field pattern, etc.; extract on the second copy; no one-off duplicates
+- **i18n** — all user-facing strings in `es` + `en` dictionaries in the same change; no hardcoded UI copy
+- **Folder structure** — `app/[locale]/(marketing|auth|app)`, `components/`, `lib/`, `types/`, `supabase/migrations/`; colocate `actions.ts` with routes
+- **Validate inputs on the server**; prefer schemas/DTOs; sanitize outputs (no unsafe HTML from user data)
+- **Backend on the server** — Server Actions / server components + `lib/supabase/server.ts`; REST route handlers when needed; no GraphQL unless asked; safe, dictionary-based errors
+- **Design system + responsive + a11y** — CSS variables, labels, focus, icon `aria-label`s
+- **Tenant/RLS/secrets** — session-scoped data; service role server-only; never expose service keys

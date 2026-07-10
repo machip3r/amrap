@@ -11,11 +11,13 @@ export type CheckinResult =
   | { status: "denied" }
   | { status: "not_found" }
   | { status: "forbidden" }
-  | { status: "empty" };
+  | { status: "empty" }
+  | { status: "error" };
 
 export async function runCheckIn(raw: string): Promise<CheckinResult> {
   const trimmed = raw.trim();
   if (!trimmed) return { status: "empty" };
+  if (trimmed.length > 200) return { status: "empty" };
 
   const profile = await getProfile();
   if (!profile || !can(profile.role, "checkin")) {
@@ -47,12 +49,20 @@ export async function runCheckIn(raw: string): Promise<CheckinResult> {
   }
 
   const ok = memberStatusFromExpires(member.membership_expires_at) === "active";
+  if (!ok) {
+    return { status: "denied" };
+  }
 
-  await supabase.from("check_ins").insert({
+  const { error } = await supabase.from("check_ins").insert({
     tenant_id: profile.tenant_id,
     member_id: member.id,
   });
 
+  if (error) {
+    console.error("runCheckIn", error.message);
+    return { status: "error" };
+  }
+
   revalidatePath("/", "layout");
-  return ok ? { status: "ok" } : { status: "denied" };
+  return { status: "ok" };
 }

@@ -5,9 +5,17 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { bootstrapTenantForUser } from "@/lib/supabase/admin";
 import { getSessionUser, getProfile } from "@/lib/auth/session";
-import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { headers } from "next/headers";
+import { z } from "zod";
+import {
+  emailSchema,
+  formString,
+  localeSchema,
+  nonEmptyString,
+  optionalTrimmed,
+  passwordSchema,
+} from "@/lib/validation/schemas";
 
 export type RegisterState = { error?: string } | null;
 
@@ -21,27 +29,46 @@ function looksLikeEmailAlreadyRegistered(msg: string): boolean {
   );
 }
 
+const registerSchema = z
+  .object({
+    locale: localeSchema,
+    email: emailSchema,
+    password: passwordSchema,
+    confirmPassword: z.string(),
+    tenantName: nonEmptyString(120),
+    fullName: optionalTrimmed(120),
+  })
+  .refine((v) => v.password === v.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "mismatch",
+  });
+
 export async function registerAction(
   _prev: RegisterState,
   formData: FormData,
 ): Promise<RegisterState> {
-  const localeRaw = String(formData.get("locale") ?? "es");
-  const locale = isLocale(localeRaw) ? localeRaw : "es";
+  const localeRaw = formString(formData, "locale") || "es";
+  const localeParsed = localeSchema.safeParse(localeRaw);
+  const locale = localeParsed.success ? localeParsed.data : "es";
   const d = getDictionary(locale);
 
-  const email = String(formData.get("email") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
-  const confirmPassword = String(formData.get("confirmPassword") ?? "");
-  const tenantName = String(formData.get("tenantName") ?? "").trim();
-  const fullName = String(formData.get("fullName") ?? "").trim();
+  const parsed = registerSchema.safeParse({
+    locale: localeRaw,
+    email: formString(formData, "email"),
+    password: formString(formData, "password"),
+    confirmPassword: formString(formData, "confirmPassword"),
+    tenantName: formString(formData, "tenantName"),
+    fullName: formString(formData, "fullName"),
+  });
 
-  if (!tenantName || !email || !password) {
-    return { error: d.register.error };
+  if (!parsed.success) {
+    if (parsed.error.issues.some((i) => i.message === "mismatch")) {
+      return { error: d.register.passwordMismatch };
+    }
+    return { error: d.common.invalidInput };
   }
 
-  if (password !== confirmPassword) {
-    return { error: "Passwords do not match." };
-  }
+  const { email, password, tenantName, fullName } = parsed.data;
 
   const supabase = await createClient();
   const origin = (await headers()).get("origin");
@@ -49,15 +76,16 @@ export async function registerAction(
     email,
     password,
     options: {
-      emailRedirectTo: `${origin}/auth/confirm`,
+      emailRedirectTo: `${origin}/auth/confirm?next=/${locale}/dashboard`,
     },
   });
 
   if (error) {
+    console.error("registerAction signUp", error.message);
     if (looksLikeEmailAlreadyRegistered(error.message)) {
       return { error: d.register.emailInUse };
     }
-    return { error: `${d.register.error}: ${error.message}` };
+    return { error: d.register.error };
   }
 
   if (!data.user) {
@@ -65,7 +93,7 @@ export async function registerAction(
   }
 
   if (!data.session) {
-    const boot = await bootstrapTenantForUser(data.user.id, tenantName, fullName || null);
+    const boot = await bootstrapTenantForUser(data.user.id, tenantName, fullName);
     if (boot.ok) {
       revalidatePath("/", "layout");
       redirect(`/${locale}/login?registered=pending_confirm`);
@@ -73,36 +101,45 @@ export async function registerAction(
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return { error: d.register.confirmEmail };
     }
-    return { error: `${d.register.rpcFailed}: ${boot.message}` };
+    console.error("registerAction bootstrap", boot.message);
+    return { error: d.register.rpcFailed };
   }
 
   const { error: rpcError } = await supabase.rpc("register_tenant", {
     p_tenant_name: tenantName,
-    p_full_name: fullName || null,
+    p_full_name: fullName,
   });
 
   if (rpcError) {
-    return { error: `${d.register.rpcFailed}: ${rpcError.message}` };
+    console.error("registerAction rpc", rpcError.message);
+    return { error: d.register.rpcFailed };
   }
 
   revalidatePath("/", "layout");
   redirect(`/${locale}/dashboard`);
 }
 
+const completeSchema = z.object({
+  locale: localeSchema,
+  tenantName: nonEmptyString(120),
+  fullName: optionalTrimmed(120),
+});
+
 export async function completeTenantAction(
   _prev: RegisterState,
   formData: FormData,
 ): Promise<RegisterState> {
-  const localeRaw = String(formData.get("locale") ?? "es");
-  const locale = isLocale(localeRaw) ? localeRaw : "es";
+  const localeRaw = formString(formData, "locale") || "es";
+  const localeParsed = localeSchema.safeParse(localeRaw);
+  const locale = localeParsed.success ? localeParsed.data : "es";
   const d = getDictionary(locale);
 
-  const tenantName = String(formData.get("tenantName") ?? "").trim();
-  const fullName = String(formData.get("fullName") ?? "").trim();
-
-  if (!tenantName) {
-    return { error: d.completeSetup.error };
-  }
+  const parsed = completeSchema.safeParse({
+    locale: localeRaw,
+    tenantName: formString(formData, "tenantName"),
+    fullName: formString(formData, "fullName"),
+  });
+  if (!parsed.success) return { error: d.common.invalidInput };
 
   const user = await getSessionUser();
   if (!user) {
@@ -116,12 +153,13 @@ export async function completeTenantAction(
 
   const supabase = await createClient();
   const { error: rpcError } = await supabase.rpc("register_tenant", {
-    p_tenant_name: tenantName,
-    p_full_name: fullName || null,
+    p_tenant_name: parsed.data.tenantName,
+    p_full_name: parsed.data.fullName,
   });
 
   if (rpcError) {
-    return { error: `${d.register.rpcFailed}: ${rpcError.message}` };
+    console.error("completeTenantAction", rpcError.message);
+    return { error: d.completeSetup.error };
   }
 
   revalidatePath("/", "layout");

@@ -1,7 +1,7 @@
 import type { Locale } from "./config";
 
 export type Dictionary = {
-  meta: { title: string };
+  meta: { title: string; description: string };
   nav: {
     dashboard: string;
     members: string;
@@ -9,31 +9,55 @@ export type Dictionary = {
     checkin: string;
     plans: string;
     logout: string;
+    settings: string;
+    brandTitle: string;
+    brandSubtitle: string;
+  };
+  shell: {
+    searchPlaceholder: string;
+    searchLabel: string;
+    gymAdmin: string;
+    notifications: string;
+    help: string;
+  };
+  a11y: {
+    toggleTheme: string;
+    moreActions: string;
   };
   login: {
     title: string;
+    subtitle: string;
     email: string;
+    emailPlaceholder: string;
     password: string;
     submit: string;
+    submitting: string;
     registerLink: string;
+    registerPrompt: string;
     error: string;
-    /** After register with email confirmation — gym created server-side */
     pendingConfirmBanner: string;
   };
   register: {
     title: string;
+    subtitle: string;
     tenantName: string;
+    tenantNamePlaceholder: string;
     fullName: string;
+    fullNamePlaceholder: string;
     email: string;
+    emailPlaceholder: string;
     password: string;
+    confirmPassword: string;
+    passwordMismatch: string;
+    showPassword: string;
+    hidePassword: string;
     submit: string;
+    submitting: string;
     loginLink: string;
+    loginPrompt: string;
     error: string;
-    /** Shown when Auth requires email confirmation — no session yet, so gym row cannot be created. */
     confirmEmail: string;
-    /** Prefix before technical RPC / DB message */
     rpcFailed: string;
-    /** Auth signUp when email is already registered */
     emailInUse: string;
   };
   completeSetup: {
@@ -44,10 +68,24 @@ export type Dictionary = {
   };
   dashboard: {
     title: string;
+    subtitle: string;
+    dateLabel: string;
     totalMembers: string;
     activeMembers: string;
     expiredMembers: string;
     paymentsToday: string;
+    renewals: string;
+    accessLog: string;
+    viewAll: string;
+    colMember: string;
+    colTime: string;
+    colMembershipStatus: string;
+    colAction: string;
+    capacityTitle: string;
+    occupancy: string;
+    maxCapacity: string;
+    present: string;
+    people: string;
   };
   members: {
     title: string;
@@ -74,6 +112,8 @@ export type Dictionary = {
     delete: string;
     confirmDelete: string;
     noMembers: string;
+    error: string;
+    notFound: string;
   };
   payments: {
     title: string;
@@ -85,6 +125,7 @@ export type Dictionary = {
     selectMember: string;
     submit: string;
     noPayments: string;
+    error: string;
   };
   checkin: {
     title: string;
@@ -108,17 +149,23 @@ export type Dictionary = {
     save: string;
     delete: string;
     noPlans: string;
+    error: string;
   };
   common: {
     loading: string;
     forbidden: string;
     back: string;
     locale: string;
+    saveFailed: string;
+    invalidInput: string;
   };
 };
 
 const es: Dictionary = {
-  meta: { title: "Control de membresías" },
+  meta: {
+    title: "Control de membresías",
+    description: "Administración de membresías para gimnasios",
+  },
   nav: {
     dashboard: "Panel",
     members: "Socios",
@@ -126,44 +173,86 @@ const es: Dictionary = {
     checkin: "Entrada",
     plans: "Planes",
     logout: "Salir",
+    settings: "Configuración",
+    brandTitle: "Admin Central",
+    brandSubtitle: "Recepción",
+  },
+  shell: {
+    searchPlaceholder: "Buscar socios, pagos…",
+    searchLabel: "Buscar",
+    gymAdmin: "GYM ADMIN",
+    notifications: "Notificaciones",
+    help: "Ayuda",
+  },
+  a11y: {
+    toggleTheme: "Cambiar tema",
+    moreActions: "Más acciones",
   },
   login: {
     title: "Iniciar sesión",
+    subtitle: "Bienvenido de nuevo a tu espacio de gimnasio",
     email: "Correo",
+    emailPlaceholder: "tu@correo.com",
     password: "Contraseña",
     submit: "Entrar",
+    submitting: "Entrando…",
     registerLink: "Registrar gimnasio",
+    registerPrompt: "¿No tienes cuenta?",
     error: "Credenciales inválidas",
     pendingConfirmBanner:
       "Tu gimnasio ya está creado. Abre el enlace de confirmación en tu correo y luego entra aquí con tu correo y contraseña.",
   },
   register: {
     title: "Registrar gimnasio",
+    subtitle: "Crea el espacio de tu gimnasio",
     tenantName: "Nombre del gimnasio",
+    tenantNamePlaceholder: "Mi gimnasio",
     fullName: "Tu nombre",
+    fullNamePlaceholder: "Nombre completo",
     email: "Correo",
+    emailPlaceholder: "tu@correo.com",
     password: "Contraseña",
+    confirmPassword: "Confirmar contraseña",
+    passwordMismatch: "Las contraseñas no coinciden.",
+    showPassword: "Mostrar contraseña",
+    hidePassword: "Ocultar contraseña",
     submit: "Crear cuenta",
-    loginLink: "¿Ya tienes cuenta? Entrar",
+    submitting: "Creando…",
+    loginLink: "Entrar",
+    loginPrompt: "¿Ya tienes cuenta?",
     error: "No se pudo completar el registro",
     confirmEmail:
       "Por favor revisa tu correo electrónico para confirmar tu cuenta y completar el registro.",
     rpcFailed: "Error al crear el gimnasio",
-    emailInUse: "Ese correo ya está registrado. Inicia sesión o usa «Terminar registro» si confirmaste el correo y no ves tu gimnasio.",
+    emailInUse:
+      "Ese correo ya está registrado. Inicia sesión o usa «Terminar registro» si confirmaste el correo y no ves tu gimnasio.",
   },
   completeSetup: {
     title: "Terminar registro del gimnasio",
-    description:
-      "Ya iniciaste sesión pero falta crear tu gimnasio (tenant). Completa estos datos.",
+    description: "Solo un paso más para empezar",
     submit: "Crear gimnasio",
     error: "No se pudo crear el gimnasio",
   },
   dashboard: {
-    title: "Panel",
+    title: "Resumen diario",
+    subtitle: "Métricas de rendimiento y actividad reciente del gimnasio.",
+    dateLabel: "Fecha",
     totalMembers: "Socios totales",
     activeMembers: "Activos",
     expiredMembers: "Vencidos",
     paymentsToday: "Pagos hoy",
+    renewals: "renovaciones",
+    accessLog: "Registro de accesos",
+    viewAll: "Ver todos",
+    colMember: "Socio",
+    colTime: "Hora",
+    colMembershipStatus: "Estado de membresía",
+    colAction: "Acción",
+    capacityTitle: "Capacidad actual",
+    occupancy: "Ocupación",
+    maxCapacity: "Aforo máximo",
+    present: "Presentes",
+    people: "personas",
   },
   members: {
     title: "Socios",
@@ -190,6 +279,8 @@ const es: Dictionary = {
     delete: "Eliminar",
     confirmDelete: "¿Eliminar socio?",
     noMembers: "No hay socios aún.",
+    error: "No se pudo guardar el socio",
+    notFound: "Socio o plan no encontrado",
   },
   payments: {
     title: "Pagos",
@@ -201,6 +292,7 @@ const es: Dictionary = {
     selectMember: "Seleccionar socio",
     submit: "Registrar",
     noPayments: "Sin pagos registrados.",
+    error: "No se pudo registrar el pago",
   },
   checkin: {
     title: "Entrada",
@@ -224,17 +316,23 @@ const es: Dictionary = {
     save: "Guardar",
     delete: "Eliminar",
     noPlans: "No hay planes. Crea uno para renovar membresías.",
+    error: "No se pudo guardar el plan",
   },
   common: {
     loading: "Cargando…",
     forbidden: "No tienes permiso",
     back: "Volver",
     locale: "Idioma",
+    saveFailed: "No se pudo guardar",
+    invalidInput: "Revisa los datos e inténtalo de nuevo",
   },
 };
 
 const en: Dictionary = {
-  meta: { title: "Membership control" },
+  meta: {
+    title: "Membership control",
+    description: "Membership admin for gyms",
+  },
   nav: {
     dashboard: "Dashboard",
     members: "Members",
@@ -242,25 +340,53 @@ const en: Dictionary = {
     checkin: "Check-in",
     plans: "Plans",
     logout: "Log out",
+    settings: "Settings",
+    brandTitle: "Admin Central",
+    brandSubtitle: "Front desk",
+  },
+  shell: {
+    searchPlaceholder: "Search members, payments…",
+    searchLabel: "Search",
+    gymAdmin: "GYM ADMIN",
+    notifications: "Notifications",
+    help: "Help",
+  },
+  a11y: {
+    toggleTheme: "Toggle theme",
+    moreActions: "More actions",
   },
   login: {
     title: "Log in",
+    subtitle: "Welcome back to your gym workspace",
     email: "Email",
+    emailPlaceholder: "you@example.com",
     password: "Password",
     submit: "Sign in",
+    submitting: "Signing in…",
     registerLink: "Register gym",
+    registerPrompt: "Don't have an account?",
     error: "Invalid credentials",
     pendingConfirmBanner:
       "Your gym is ready. Open the confirmation link in your email, then sign in here with your email and password.",
   },
   register: {
     title: "Register gym",
+    subtitle: "Create your gym workspace",
     tenantName: "Gym name",
+    tenantNamePlaceholder: "My gym",
     fullName: "Your name",
+    fullNamePlaceholder: "Full name",
     email: "Email",
+    emailPlaceholder: "you@example.com",
     password: "Password",
+    confirmPassword: "Confirm password",
+    passwordMismatch: "Passwords do not match.",
+    showPassword: "Show password",
+    hidePassword: "Hide password",
     submit: "Create account",
-    loginLink: "Already have an account? Log in",
+    submitting: "Creating…",
+    loginLink: "Log in",
+    loginPrompt: "Already have an account?",
     error: "Registration failed",
     confirmEmail:
       "Please check your email to confirm your account and complete the registration.",
@@ -270,17 +396,30 @@ const en: Dictionary = {
   },
   completeSetup: {
     title: "Finish gym setup",
-    description:
-      "You are signed in but your gym (tenant) was not created yet. Complete the fields below.",
+    description: "Just one more step to get started",
     submit: "Create gym",
     error: "Could not create gym",
   },
   dashboard: {
-    title: "Dashboard",
+    title: "Daily overview",
+    subtitle: "Performance metrics and recent gym activity.",
+    dateLabel: "Date",
     totalMembers: "Total members",
     activeMembers: "Active",
     expiredMembers: "Expired",
     paymentsToday: "Payments today",
+    renewals: "renewals",
+    accessLog: "Access log",
+    viewAll: "View all",
+    colMember: "Member",
+    colTime: "Time",
+    colMembershipStatus: "Membership status",
+    colAction: "Action",
+    capacityTitle: "Current capacity",
+    occupancy: "Occupancy",
+    maxCapacity: "Max capacity",
+    present: "Present",
+    people: "people",
   },
   members: {
     title: "Members",
@@ -307,6 +446,8 @@ const en: Dictionary = {
     delete: "Delete",
     confirmDelete: "Delete member?",
     noMembers: "No members yet.",
+    error: "Could not save member",
+    notFound: "Member or plan not found",
   },
   payments: {
     title: "Payments",
@@ -318,6 +459,7 @@ const en: Dictionary = {
     selectMember: "Select member",
     submit: "Save",
     noPayments: "No payments recorded.",
+    error: "Could not record payment",
   },
   checkin: {
     title: "Check-in",
@@ -341,16 +483,19 @@ const en: Dictionary = {
     save: "Save",
     delete: "Delete",
     noPlans: "No plans yet. Create one to renew memberships.",
+    error: "Could not save plan",
   },
   common: {
     loading: "Loading…",
     forbidden: "You do not have permission",
     back: "Back",
     locale: "Language",
+    saveFailed: "Could not save",
+    invalidInput: "Check the form and try again",
   },
 };
 
-export const dictionaries: Record<Locale, Dictionary> = { es, en };
+const dictionaries: Record<Locale, Dictionary> = { es, en };
 
 export function getDictionary(locale: Locale): Dictionary {
   return dictionaries[locale] ?? dictionaries.es;

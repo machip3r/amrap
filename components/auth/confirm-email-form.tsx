@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useId, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import type { Locale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import {
@@ -9,10 +9,8 @@ import {
   verifySignupOtpAction,
   type ConfirmEmailState,
 } from "@/app/[locale]/(auth)/confirm-email/actions";
-import { FormField } from "@/components/ui/form-field";
-import { Input } from "@/components/ui/input";
+import { OtpDigitsInput, OTP_LENGTH } from "@/components/ui/otp-digits-input";
 import { Button } from "@/components/ui/button";
-import { LIMITS } from "@/lib/validation/schemas";
 
 type Props = {
   locale: Locale;
@@ -29,13 +27,33 @@ export function ConfirmEmailForm({ locale, email }: Props) {
     resendSignupOtpAction,
     null as ConfirmEmailState,
   );
-  const otpId = useId();
+  const formRef = useRef<HTMLFormElement>(null);
   const [otp, setOtp] = useState("");
+  const [prevVerifyState, setPrevVerifyState] = useState(verifyState);
   const displayEmail = verifyState?.email || resendState?.email || email;
   const error = verifyState?.error || resendState?.error;
   const otpError = verifyState?.fieldErrors?.otp;
   const success = resendState?.success;
-  const canVerify = otp.trim().length >= LIMITS.otp.min;
+  const canVerify = otp.length === OTP_LENGTH;
+
+  if (verifyState !== prevVerifyState) {
+    setPrevVerifyState(verifyState);
+    if (verifyState?.fieldErrors?.otp || verifyState?.error) {
+      setOtp("");
+    }
+  }
+
+  function submitIfComplete(code: string) {
+    if (code.length !== OTP_LENGTH || verifyPending) return;
+    setOtp(code);
+    requestAnimationFrame(() => {
+      const hidden = formRef.current?.querySelector<HTMLInputElement>(
+        'input[name="otp"]',
+      );
+      if (hidden) hidden.value = code;
+      formRef.current?.requestSubmit();
+    });
+  }
 
   return (
     <div className="flex w-full flex-col gap-5">
@@ -49,33 +67,24 @@ export function ConfirmEmailForm({ locale, email }: Props) {
         </p>
       </div>
 
-      <form action={verifyAction} className="flex flex-col gap-4" noValidate>
+      <form
+        ref={formRef}
+        action={verifyAction}
+        className="flex flex-col gap-4"
+        noValidate
+      >
         <input type="hidden" name="locale" value={locale} />
         <input type="hidden" name="email" value={displayEmail} />
-        <FormField
+        <input type="hidden" name="otp" value={otp} />
+
+        <OtpDigitsInput
           label={d.confirmEmail.otpLabel}
-          htmlFor={otpId}
-          variant="auth"
+          value={otp}
+          onChange={setOtp}
+          onComplete={submitIfComplete}
+          disabled={verifyPending}
           error={otpError}
-        >
-          <Input
-            id={otpId}
-            required
-            name="otp"
-            inputMode="text"
-            autoComplete="one-time-code"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            pattern="[0-9A-Za-z]+"
-            variant="auth"
-            placeholder={d.confirmEmail.otpPlaceholder}
-            minLength={LIMITS.otp.min}
-            maxLength={LIMITS.otp.max}
-            value={otp}
-            onChange={(e) => setOtp(e.target.value.replace(/[^0-9A-Za-z]/g, ""))}
-          />
-        </FormField>
+        />
 
         {error ? (
           <p className="text-sm font-medium text-[var(--color-primary)]" role="alert">

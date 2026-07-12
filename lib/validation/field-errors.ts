@@ -16,6 +16,7 @@ export type ValidationMessages = {
   duration: string;
   date: string;
   invalid: string;
+  hexColor: string;
 };
 
 const FIELD_KIND: Record<string, keyof ValidationMessages> = {
@@ -34,10 +35,16 @@ const FIELD_KIND: Record<string, keyof ValidationMessages> = {
   price: "amount",
   duration_days: "duration",
   membership_expires_at: "date",
-  plan_id: "invalid",
+  plan_id: "required",
   member_id: "invalid",
-  method: "invalid",
+  method: "required",
   roleIntent: "required",
+  lightPrimary: "hexColor",
+  lightBg: "hexColor",
+  lightSurface: "hexColor",
+  darkPrimary: "hexColor",
+  darkBg: "hexColor",
+  darkSurface: "hexColor",
 };
 
 /** Plan / member create both use `name` — pass overrides when needed. */

@@ -15,6 +15,7 @@
   --color-primary: #ff6b6b;
   --color-primary-hover: #fa5252;
   --color-primary-soft: #ffe4e4;
+  --color-primary-on: #ffffff;
   --color-text: #0f172a;
   --color-muted: #64748b;
   --color-border: #e2e8f0;
@@ -35,6 +36,7 @@
   --color-primary: #ff7171;
   --color-primary-hover: #ff8787;
   --color-primary-soft: rgba(255, 113, 113, 0.18);
+  --color-primary-on: #ffffff;
   --color-text: #f8fafc;
   --color-muted: #94a3b8;
   --color-border: #233045;
@@ -71,14 +73,17 @@ h6,
   font-family: var(--font-sans);
 }
 
-a {
-  color: var(--color-primary);
-  text-decoration: none;
-  transition: color 0.2s ease-in-out;
-}
+/* Keep in @layer base so Tailwind text-* utilities can override link color */
+@layer base {
+  a {
+    color: var(--color-primary);
+    text-decoration: none;
+    transition: color 0.2s ease-in-out;
+  }
 
-a:hover {
-  color: var(--color-primary-hover);
+  a:hover {
+    color: var(--color-primary-hover);
+  }
 }
 
 input,
@@ -120,6 +125,7 @@ textarea:focus {
     opacity: 0;
     transform: translateY(10px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
@@ -128,6 +134,32 @@ textarea:focus {
 
 .animate-fade-in-up {
   animation: fade-in-up 0.5s ease-out forwards;
+}
+
+/* html5-qrcode: size preview to the camera stream (no forced square letterbox) */
+.checkin-qr-reader {
+  width: 100%;
+  line-height: 0;
+}
+
+.checkin-qr-reader>div,
+.checkin-qr-reader #qr-shaded-region {
+  width: 100% !important;
+  border: none !important;
+}
+
+.checkin-qr-reader video {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  max-height: min(70vh, 560px);
+  object-fit: contain;
+  background: #000;
+  transform: scaleX(1);
+}
+
+.checkin-qr-reader img {
+  display: none !important;
 }
 
 /* ——— Marketing landing ——— */
@@ -443,12 +475,15 @@ textarea:focus {
 .landing-nav-sheet-link:nth-child(1) {
   animation-delay: 0.04s;
 }
+
 .landing-nav-sheet-link:nth-child(2) {
   animation-delay: 0.08s;
 }
+
 .landing-nav-sheet-link:nth-child(3) {
   animation-delay: 0.12s;
 }
+
 .landing-nav-sheet-link:nth-child(4) {
   animation-delay: 0.16s;
 }
@@ -468,6 +503,7 @@ textarea:focus {
     opacity: 0;
     transform: translateY(-8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -479,6 +515,7 @@ textarea:focus {
     opacity: 0;
     transform: translateY(-4px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -551,12 +588,10 @@ textarea:focus {
 .landing-hero-shade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    105deg,
-    rgba(0, 0, 0, 0.72) 0%,
-    rgba(0, 0, 0, 0.45) 45%,
-    rgba(0, 0, 0, 0.35) 100%
-  );
+  background: linear-gradient(105deg,
+      rgba(0, 0, 0, 0.72) 0%,
+      rgba(0, 0, 0, 0.45) 45%,
+      rgba(0, 0, 0, 0.35) 100%);
   pointer-events: none;
 }
 
@@ -674,6 +709,7 @@ textarea:focus {
     opacity: 0;
     transform: translateY(12px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

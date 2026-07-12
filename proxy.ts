@@ -19,6 +19,14 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // App Router handlers under app/auth/* (confirm, ensure-org) — no locale prefix.
+  if (pathname.startsWith("/auth/")) {
+    const { supabaseResponse } = await updateSession(request);
+    const res = NextResponse.next();
+    applyCookies(supabaseResponse, res);
+    return res;
+  }
+
   const segments = pathname.split("/").filter(Boolean);
   const first = segments[0];
 

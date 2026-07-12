@@ -139,9 +139,9 @@ Visible para dueño / staff (y coach en fases):
 | Logo / home | Dashboard del gym activo |
 | Selector gym | Lista de gyms donde tiene rol ops; badge plan org |
 | Selector branch (si >1) | Filtra asistencia / kiosk |
-| Nav | Dashboard · Socios · Planes · Pagos* · Check-in · Inbox · Equipo* · Ajustes |
+| Nav | Dashboard · Miembros · Planes · Pagos* · Check-in · Inbox · Equipo* · Ajustes |
 | Avatar menú | Perfil · mis roles · cambiar idioma · tema · cerrar sesión |
-| Banner límites | Freemium cerca de 30 socios · grace unpaid · gym read-only |
+| Banner límites | Freemium cerca de 30 miembros · grace unpaid · gym read-only |
 
 \*Pagos ricos / equipo completo según fase y plan.
 
@@ -153,11 +153,11 @@ Visible para dueño / staff (y coach en fases):
 
 ### 4.1 Dashboard
 
-**UI (MVP):** Hoy — check-ins · activos · vencidos / por vencer · renovaciones · alertas operativas · atajos (nuevo socio, check-in, planes).
+**UI (MVP):** Hoy — check-ins · activos · vencidos / por vencer · renovaciones · alertas operativas · atajos (nuevo miembro, check-in, planes).
 
 **Fases:** Multi-gym rollup · trends · health de facturación AMRAP.
 
-### 4.2 Socios / membresías
+### 4.2 Miembros / membresías
 
 **Lista:** Buscar · filtros (activo, vencido, temporal) · estado · plan · última visita.
 
@@ -182,7 +182,7 @@ Visible para dueño / staff (y coach en fases):
 
 ### 4.3 Planes
 
-CRUD planes a nivel gym (o branch). Precio, duración, activo/archivado. Freemium: max 2.
+CRUD planes a nivel gym (o branch). Precio, duración, activo/archivado. Freemium: max 2 activos.
 
 ### 4.4 Pagos (registro ops)
 
@@ -204,7 +204,11 @@ Invitar staff · roles · permisos granulares · asignar branches. Invitar dueñ
 
 ### 4.8 Ajustes del gym / org
 
-Datos gym · branches · branding (white-label en pagados) · facturación AMRAP (plan, método, facturas) · export / delete gym · delete org (aviso 30 días + CSV).
+Datos gym · branches · branding (white-label en pagados). Facturación AMRAP, multi-gym y borrados: **`/[locale]/organization`**.
+
+### 4.8.1 Organización (`/organization`)
+
+Suscripción AMRAP (Freemium → Starter / Growth / Pro) · lista de gyms · programar borrado gym/org (retención 30 días) · crear gym adicional (fase billing).
 
 ### 4.9 Multi-gym
 
@@ -322,10 +326,10 @@ En planes de pago: colores/logo del gym en superficie member; Freemium muestra m
 
 | Caso | UI |
 | ---- | -- |
-| Upgrade por límite (30 socios, 2 planes, etc.) | Paywall contextual en la acción bloqueada |
+| Upgrade por límite (30 miembros, 2 planes, etc.) | Paywall contextual en la acción bloqueada |
 | Impago | Banner gracia 3 días → drop a Freemium: gyms extra **read-only**; elegir **un** gym editable |
 | Downgrade | Confirmar qué gyms quedan activos / read-only |
-| Gateway socios | Solo Starter+; conectar cuenta merchant (onboarding legal) |
+| Gateway miembros | Solo Starter+; conectar cuenta merchant (onboarding legal) |
 
 ---
 
@@ -353,7 +357,7 @@ Disponible en landing, auth y app. Preferencia persistida.
 
 ### 12.2 Errores y vacíos
 
-Mensajes desde dictionaries (`es`/`en`). Empty states con CTA (sin socios → alta; sin planes → crear/omitir).
+Mensajes desde dictionaries (`es`/`en`). Empty states con CTA (sin miembros → alta; sin planes → crear/omitir).
 
 ### 12.3 Eliminación
 
@@ -384,7 +388,7 @@ Dueño publica página del gym (horarios, planes, CTA) — opcional; no confundi
 | ------ | ----- | ----------- | ----- | ----- | ------ | -------- |
 | Onboarding org | ✓ | ✓ | — | — | — | — |
 | Dashboard ops | ✓ | ✓ | ✓* | parcial* | — | global |
-| Socios CRUD | ✓ | ✓ | ✓* | lectura* | — | soporte |
+| Miembros CRUD | ✓ | ✓ | ✓* | lectura* | — | soporte |
 | Planes | ✓ | ✓ | ✓* | — | ver propios | — |
 | Pagos registro | ✓ | ✓ | ✓* | — | pagar* | — |
 | Check-in kiosk | ✓ | ✓ | ✓ | — | mostrar QR | — |
@@ -402,13 +406,13 @@ Dueño publica página del gym (horarios, planes, CTA) — opcional; no confundi
 ## 14. Orden sugerido de pantallas a construir
 
 1. Auth + confirm OTP + onboarding (base actual).
-2. Dashboard día + socios + planes + check-in kiosk + inbox.
+2. Dashboard día + miembros + planes + check-in kiosk + inbox.
 3. Equipo / invites + selector multi-gym + banners Freemium/unpaid.
 4. Billing org + upgrade paywalls.
 5. Área member (QR + membresías).
 6. Ownership transfer UI.
 7. Coach + anuncios + penalties.
-8. Gateway pagos socios + white-label.
+8. Gateway pagos miembros + white-label.
 9. Community + routines + landing builder + hardware.
 10. Platform admin + impersonación.
 

@@ -29,11 +29,21 @@ export type Organization = {
   created_at: string;
 };
 
+export type BrandThemeTokens = {
+  primary?: string;
+  bg?: string;
+  surface?: string;
+};
+
 export type Gym = {
   id: string;
   organization_id: string;
   name: string;
   owner_user_id: string | null;
+  logo_url_light: string | null;
+  logo_url_dark: string | null;
+  theme_light: BrandThemeTokens;
+  theme_dark: BrandThemeTokens;
   created_at: string;
 };
 
@@ -65,6 +75,10 @@ export type Workspace = {
   planTier: OrgPlanTier;
   gymId: string;
   gymName: string;
+  logoUrlLight: string | null;
+  logoUrlDark: string | null;
+  themeLight: BrandThemeTokens;
+  themeDark: BrandThemeTokens;
   role: Role;
   isProvisionalOwner: boolean;
   /** Effective owner powers (real owner or provisional). */
@@ -102,6 +116,8 @@ export type Member = {
   membership_expires_at: string;
   qr_code: string;
   created_at: string;
+  plan_id: string | null;
+  plan_name: string | null;
 };
 
 export type Plan = {
@@ -111,6 +127,8 @@ export type Plan = {
   name: string;
   price: number;
   duration_days: number;
+  is_active: boolean;
+  created_at?: string;
 };
 
 export type Payment = {

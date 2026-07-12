@@ -1,9 +1,9 @@
 "use client";
 
-import { useActionState, useId } from "react";
+import { useActionState, useId, useState } from "react";
 import type { Locale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import type { OnboardingState } from "@/lib/auth/session";
+import type { OnboardingState, OnboardingStep } from "@/lib/auth/session";
 import {
   addOnboardingPlanAction,
   finishOnboardingAction,
@@ -28,25 +28,38 @@ type Props = {
 
 export function OnboardingStepper({ locale, state, plans, showError }: Props) {
   const d = getDictionary(locale);
-  const step = state.step;
+  const maxStep = state.step;
+  const [viewStep, setViewStep] = useState<OnboardingStep>(maxStep);
+  const [prevMaxStep, setPrevMaxStep] = useState(maxStep);
+
+  if (maxStep !== prevMaxStep) {
+    setPrevMaxStep(maxStep);
+    setViewStep(maxStep);
+  }
+
+  function goBack() {
+    setViewStep((current) => (current > 1 ? ((current - 1) as OnboardingStep) : current));
+  }
 
   return (
     <div className="flex w-full flex-col gap-8">
       <nav aria-label={d.onboarding.stepsLabel} className="flex gap-2">
         {([1, 2, 3, 4] as const).map((n) => {
-          const active = step === n;
-          const done = step > n;
+          const active = viewStep === n;
+          const reached = maxStep >= n;
           return (
-            <div
+            <button
               key={n}
-              className={`flex flex-1 flex-col gap-1 ${active ? "opacity-100" : done ? "opacity-70" : "opacity-40"}`}
+              type="button"
+              disabled={!reached}
+              onClick={() => setViewStep(n)}
+              className={`flex flex-1 flex-col gap-1 text-left ${active ? "opacity-100" : reached ? "opacity-70" : "opacity-40"} ${reached ? "cursor-pointer" : "cursor-default"}`}
             >
               <div
-                className={`h-1 rounded-full ${
-                  active || done
-                    ? "bg-[var(--color-primary)]"
-                    : "bg-[var(--color-muted)]/30"
-                }`}
+                className={`h-1 rounded-full ${reached
+                  ? "bg-[var(--color-primary)]"
+                  : "bg-[var(--color-muted)]/30"
+                  }`}
               />
               <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
                 {n === 1
@@ -57,7 +70,7 @@ export function OnboardingStepper({ locale, state, plans, showError }: Props) {
                       ? d.onboarding.stepPlans
                       : d.onboarding.stepDone}
               </span>
-            </div>
+            </button>
           );
         })}
       </nav>
@@ -68,12 +81,25 @@ export function OnboardingStepper({ locale, state, plans, showError }: Props) {
         </p>
       ) : null}
 
-      {step === 1 ? <StepProfile locale={locale} state={state} /> : null}
-      {step === 2 ? <StepGym locale={locale} state={state} /> : null}
-      {step === 3 ? (
-        <StepPlans locale={locale} state={state} plans={plans} />
-      ) : null}
-      {step === 4 ? <StepDone locale={locale} state={state} /> : null}
+      <div className="flex flex-col gap-3">
+        {viewStep === 1 ? <StepProfile locale={locale} state={state} /> : null}
+        {viewStep === 2 ? <StepGym locale={locale} state={state} /> : null}
+        {viewStep === 3 ? (
+          <StepPlans locale={locale} state={state} plans={plans} />
+        ) : null}
+        {viewStep === 4 ? <StepDone locale={locale} state={state} /> : null}
+
+        {viewStep > 1 ? (
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full py-2 text-sm"
+            onClick={goBack}
+          >
+            {d.common.back}
+          </Button>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -132,43 +158,53 @@ function StepProfile({
         </FormField>
 
         <fieldset className="flex flex-col gap-2">
-          <legend className="text-sm font-medium text-[var(--color-text)]">
+          <legend className="mb-1 text-sm font-medium text-[var(--color-text)]">
             {d.onboarding.roleLegend}
           </legend>
-          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-[var(--color-border)] p-3 transition-colors hover:bg-[var(--color-surface-hover)]">
-            <input
-              type="radio"
-              name="roleIntent"
-              value="owner"
-              defaultChecked={!state.pendingAsProvisional}
-              className="mt-1"
-            />
-            <span>
-              <span className="block text-sm font-semibold text-[var(--color-text)]">
-                {d.onboarding.roleOwner}
+          <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+            <label className="group relative cursor-pointer rounded-lg px-3 py-3 transition-colors hover:bg-[var(--color-surface-hover)] has-[:checked]:bg-[var(--color-primary-soft)] has-[:checked]:hover:bg-[var(--color-primary-soft)]">
+              <input
+                type="radio"
+                name="roleIntent"
+                value="owner"
+                defaultChecked={!state.pendingAsProvisional}
+                className="sr-only"
+              />
+              <span className="flex flex-col gap-0.5">
+                <span className="text-sm font-semibold text-[var(--color-text)] group-has-[:checked]:text-[var(--color-primary)]">
+                  {d.onboarding.roleOwner}
+                </span>
+                <span className="text-xs leading-snug text-[var(--color-muted)]">
+                  {d.onboarding.roleOwnerHint}
+                </span>
               </span>
-              <span className="text-xs text-[var(--color-muted)]">
-                {d.onboarding.roleOwnerHint}
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-x-3 bottom-0 h-0.5 origin-left scale-x-0 bg-[var(--color-primary)] transition-transform group-has-[:checked]:scale-x-100"
+              />
+            </label>
+            <label className="group relative cursor-pointer rounded-lg px-3 py-3 transition-colors hover:bg-[var(--color-surface-hover)] has-[:checked]:bg-[var(--color-primary-soft)] has-[:checked]:hover:bg-[var(--color-primary-soft)]">
+              <input
+                type="radio"
+                name="roleIntent"
+                value="manager"
+                defaultChecked={state.pendingAsProvisional}
+                className="sr-only"
+              />
+              <span className="flex flex-col gap-0.5">
+                <span className="text-sm font-semibold text-[var(--color-text)] group-has-[:checked]:text-[var(--color-primary)]">
+                  {d.onboarding.roleManager}
+                </span>
+                <span className="text-xs leading-snug text-[var(--color-muted)]">
+                  {d.onboarding.roleManagerHint}
+                </span>
               </span>
-            </span>
-          </label>
-          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-[var(--color-border)] p-3 transition-colors hover:bg-[var(--color-surface-hover)]">
-            <input
-              type="radio"
-              name="roleIntent"
-              value="manager"
-              defaultChecked={state.pendingAsProvisional}
-              className="mt-1"
-            />
-            <span>
-              <span className="block text-sm font-semibold text-[var(--color-text)]">
-                {d.onboarding.roleManager}
-              </span>
-              <span className="text-xs text-[var(--color-muted)]">
-                {d.onboarding.roleManagerHint}
-              </span>
-            </span>
-          </label>
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-x-3 bottom-0 h-0.5 origin-left scale-x-0 bg-[var(--color-primary)] transition-transform group-has-[:checked]:scale-x-100"
+              />
+            </label>
+          </div>
         </fieldset>
 
         {formState?.error ? (
@@ -383,7 +419,11 @@ function StepPlans({
 
       <form action={skipOnboardingPlansAction}>
         <input type="hidden" name="locale" value={locale} />
-        <Button type="submit" variant="ghost" className="w-full py-2 text-sm">
+        <Button
+          type="submit"
+          variant={plans.length > 0 ? "primaryBlock" : "ghost"}
+          className={plans.length > 0 ? undefined : "w-full py-2 text-sm"}
+        >
           {plans.length > 0 ? d.onboarding.continue : d.onboarding.skipPlans}
         </Button>
       </form>

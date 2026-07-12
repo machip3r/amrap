@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { LIMITS } from "@/lib/validation/schemas";
 
+/** Compact form used by onboarding; plans page uses PlansClient dialogs. */
 export function CreatePlanForm({ locale }: { locale: Locale }) {
   const d = getDictionary(locale);
   const [state, formAction, pending] = useActionState(
@@ -19,7 +20,7 @@ export function CreatePlanForm({ locale }: { locale: Locale }) {
   const fe = state?.fieldErrors;
 
   useEffect(() => {
-    if (state === null) formRef.current?.reset();
+    if (state?.success) formRef.current?.reset();
   }, [state]);
 
   return (
@@ -62,7 +63,7 @@ export function CreatePlanForm({ locale }: { locale: Locale }) {
         </p>
       ) : null}
       <Button type="submit" variant="appPrimary" disabled={pending}>
-        {d.plans.save}
+        {pending ? d.plans.saving : d.plans.save}
       </Button>
     </form>
   );

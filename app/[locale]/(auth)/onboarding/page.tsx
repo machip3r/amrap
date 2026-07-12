@@ -10,6 +10,7 @@ import {
 } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { AmrapLogo } from "@/components/landing/amrap-logo";
+import { LogoutButton } from "@/components/logout-button";
 import { OnboardingStepper } from "./onboarding-stepper";
 
 export default async function OnboardingPage({
@@ -31,8 +32,37 @@ export default async function OnboardingPage({
   const state = await getOnboardingState();
   if (!state) redirect(`/${locale}/login`);
 
+  // Authenticated but org missing (e.g. confirm before RPC finished).
+  // Org create + cookie clear must run in a Route Handler, not RSC render.
   if (!state.organizationId) {
-    redirect(`/${locale}/register`);
+    if (sp.error === "org") {
+      return (
+        <div className="auth-container flex min-h-screen flex-col items-center justify-center p-6">
+          <div className="glass-panel flex w-full max-w-md flex-col items-center rounded-2xl p-8 text-center shadow-2xl sm:p-10">
+            <AmrapLogo priority className="mb-6 h-12 w-auto" />
+            <h1 className="text-xl font-bold text-[var(--color-text)]">
+              {d.onboarding.title}
+            </h1>
+            <p className="mt-3 text-sm text-[var(--color-primary)]" role="alert">
+              {d.onboarding.errorSave}
+            </p>
+            <Link
+              href={`/auth/ensure-organization?locale=${locale}`}
+              className="mt-6 text-sm font-semibold text-[var(--color-primary)] underline"
+            >
+              {d.common.back}
+            </Link>
+            <LogoutButton
+              locale={locale}
+              className="mt-4 text-sm text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
+            >
+              {d.nav.logout}
+            </LogoutButton>
+          </div>
+        </div>
+      );
+    }
+    redirect(`/auth/ensure-organization?locale=${locale}`);
   }
 
   const workspace = await getWorkspace();
@@ -80,6 +110,14 @@ export default async function OnboardingPage({
           plans={plans}
           showError={Boolean(sp.error)}
         />
+        <div className="mt-8 border-t border-[var(--color-border)] pt-5 text-center">
+          <LogoutButton
+            locale={locale}
+            className="text-sm text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
+          >
+            {d.nav.logout}
+          </LogoutButton>
+        </div>
       </div>
     </div>
   );

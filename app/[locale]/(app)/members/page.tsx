@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getWorkspace } from "@/lib/auth/session";
@@ -6,7 +5,8 @@ import { canInWorkspace } from "@/lib/auth/permissions";
 import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { CreateMemberForm } from "./create-member-form";
+import { RegisterUserButton } from "@/components/register-user-dialog";
+import { MembersClient } from "@/components/members-client";
 import {
   MEMBERSHIP_LIST_SELECT,
   mapMembershipRow,
@@ -34,81 +34,96 @@ export default async function MembersPage({
 
   const d = getDictionary(locale);
   const supabase = await createClient();
-  const { data: rows } = await supabase
-    .from("memberships")
-    .select(MEMBERSHIP_LIST_SELECT)
-    .eq("gym_id", workspace.gymId)
-    .order("created_at", { ascending: false });
+  const [{ data: rows }, { data: planRows }] = await Promise.all([
+    supabase
+      .from("memberships")
+      .select(MEMBERSHIP_LIST_SELECT)
+      .eq("gym_id", workspace.gymId)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("plans")
+      .select("id, name, price, duration_days, is_active")
+      .eq("gym_id", workspace.gymId)
+      .order("created_at", { ascending: false }),
+  ]);
 
   const members = (rows ?? [])
     .map((r) => mapMembershipRow(r as Parameters<typeof mapMembershipRow>[0]))
     .filter((m): m is NonNullable<typeof m> => m != null);
 
+  const plans = (planRows ?? []).map((p) => ({
+    id: p.id,
+    name: p.name,
+    price: Number(p.price),
+    duration_days: p.duration_days,
+    is_active: p.is_active !== false,
+  }));
+  const activePlans = plans
+    .filter((p) => p.is_active)
+    .map(({ id, name, price, duration_days }) => ({
+      id,
+      name,
+      price,
+      duration_days,
+    }));
+
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">{d.members.title}</h1>
-      </div>
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="font-title text-3xl font-bold tracking-tight text-[var(--color-text)]">
+            {d.members.title}
+          </h1>
+          <p className="mt-1 text-sm text-[var(--color-muted)]">
+            {d.members.subtitle}
+          </p>
+        </div>
+        <RegisterUserButton
+          locale={locale}
+          canManageMembers
+          canManageStaff={false}
+          plans={activePlans}
+          defaultRole="member"
+          allowedRoles={["member"]}
+          label={d.members.newMember}
+        />
+      </header>
 
       {sp.error ? (
-        <p className="text-sm font-medium text-[var(--color-primary)]">{d.members.error}</p>
+        <p
+          className="rounded-lg border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 px-4 py-3 text-sm font-medium text-[var(--color-primary)]"
+          role="alert"
+        >
+          {d.members.error}
+        </p>
       ) : null}
 
-      <section className="max-w-md space-y-3 rounded border border-[var(--color-muted)]/30 bg-[var(--color-surface)]/40 p-4">
-        <h2 className="text-lg font-medium">{d.members.createTitle}</h2>
-        <CreateMemberForm locale={locale} defaultExpires={toLocalInput(new Date())} />
-      </section>
-
-      <section>
-        <table className="w-full border-collapse text-left text-sm">
-          <thead>
-            <tr className="border-b border-[var(--color-muted)]/40 text-[var(--color-muted)]">
-              <th className="py-2 pr-4">{d.members.name}</th>
-              <th className="py-2 pr-4">{d.members.phone}</th>
-              <th className="py-2 pr-4">{d.members.status}</th>
-              <th className="py-2 pr-4">{d.members.expires}</th>
-              <th className="py-2">{d.members.actions}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {members.length === 0 && (
-              <tr>
-                <td colSpan={5} className="py-6 text-[var(--color-muted)]">
-                  {d.members.noMembers}
-                </td>
-              </tr>
-            )}
-            {members.map((m) => (
-              <tr key={m.id} className="border-b border-[var(--color-muted)]/20">
-                <td className="py-2 pr-4">{m.name}</td>
-                <td className="py-2 pr-4">{m.phone ?? "—"}</td>
-                <td className="py-2 pr-4">
-                  {m.status === "active" ? d.members.active : d.members.expired}
-                </td>
-                <td className="py-2 pr-4">{formatDate(m.membership_expires_at, locale)}</td>
-                <td className="py-2">
-                  <Link className="text-[var(--color-primary)]" href={`/${locale}/members/${m.id}`}>
-                    {d.members.view}
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+      <MembersClient
+        locale={locale}
+        members={members}
+        plans={plans.map((p) => ({ id: p.id, name: p.name }))}
+        labels={{
+          name: d.members.name,
+          email: d.members.email,
+          plan: d.members.plan,
+          noPlan: d.members.noPlan,
+          status: d.members.status,
+          expires: d.members.expires,
+          active: d.members.active,
+          expired: d.members.expired,
+          actions: d.members.actions,
+          view: d.members.view,
+          noMembers: d.members.noMembers,
+          noResults: d.members.noResults,
+          searchPlaceholder: d.members.searchPlaceholder,
+          filterAll: d.members.filterAll,
+          filterActive: d.members.filterActive,
+          filterExpired: d.members.filterExpired,
+          filterPlan: d.members.filterPlan,
+          filterPlanAll: d.members.filterPlanAll,
+          showing: d.members.showing,
+        }}
+      />
     </div>
   );
-}
-
-function formatDate(iso: string, locale: Locale) {
-  try {
-    return new Date(iso).toLocaleString(locale);
-  } catch {
-    return iso;
-  }
-}
-
-function toLocalInput(d: Date) {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }

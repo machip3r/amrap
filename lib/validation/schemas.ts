@@ -8,7 +8,7 @@ export const LIMITS = {
   personName: 120,
   entityName: 120,
   phone: 40,
-  otp: { min: 6, max: 12 },
+  otp: { min: 6, max: 6 },
   message: 2000,
   search: 100,
   checkInCode: 200,
@@ -31,8 +31,8 @@ export const PHONE_PATTERN = /^\+?[\d\s().-]{7,40}$/;
 /** Printable password chars only (no control characters). */
 export const PASSWORD_PATTERN = /^[\x20-\x7E]+$/;
 
-/** Signup / email OTP tokens. */
-export const OTP_PATTERN = /^[0-9A-Za-z]+$/;
+/** Signup / email OTP tokens (6 digits). */
+export const OTP_PATTERN = /^\d{6}$/;
 
 /** HTML date input value. */
 export const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -112,8 +112,7 @@ export const optionalPhoneSchema = z
 export const otpSchema = z
   .string()
   .trim()
-  .min(LIMITS.otp.min)
-  .max(LIMITS.otp.max)
+  .length(LIMITS.otp.min)
   .regex(OTP_PATTERN);
 
 export const isoDateSchema = z
@@ -181,6 +180,22 @@ export const paymentMethodSchema = z.enum(["cash", "transfer"]);
 export const amountSchema = z.coerce.number().finite().min(0).max(1_000_000);
 
 export const durationDaysSchema = z.coerce.number().int().min(1).max(3650);
+
+/** HTML hex color (#RRGGBB). */
+export const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+
+export const hexColorSchema = z
+  .string()
+  .trim()
+  .regex(HEX_COLOR_PATTERN)
+  .transform((v) => v.toLowerCase());
+
+/** Optional hex — empty string becomes undefined (use default). */
+export const optionalHexColorSchema = z
+  .string()
+  .trim()
+  .transform((v) => (v === "" ? undefined : v))
+  .pipe(z.union([hexColorSchema, z.undefined()]));
 
 export function formString(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "");

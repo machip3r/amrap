@@ -25,3 +25,8 @@ export function computeRenewedExpiry(
   const start = currentExpiresAt > now ? currentExpiresAt : now;
   return addDays(start, durationDays);
 }
+
+/** New membership: starts now + plan duration. */
+export function computeNewMembershipExpiry(durationDays: number): Date {
+  return addDays(new Date(), durationDays);
+}

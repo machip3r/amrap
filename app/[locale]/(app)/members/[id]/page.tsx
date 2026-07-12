@@ -51,6 +51,7 @@ export default async function MemberDetailPage({
     .from("plans")
     .select("id, name, price, duration_days")
     .eq("gym_id", workspace.gymId)
+    .eq("is_active", true)
     .order("created_at", { ascending: false });
 
   return (

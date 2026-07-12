@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import type { OrgPlanTier, Profile, Role, Workspace } from "@/types";
+import { parseBrandThemeTokens } from "@/lib/branding/theme";
+import { gymLogoPublicUrl } from "@/lib/branding/logo";
+import type { BrandThemeTokens, OrgPlanTier, Profile, Role, Workspace } from "@/types";
 
 export const ACTIVE_GYM_COOKIE = "amrap_gym_id";
 
@@ -36,17 +38,44 @@ type GymRoleRow = {
   gym_id: string;
   role: Role;
   is_provisional_owner: boolean;
-  gyms: {
-    id: string;
-    name: string;
-    organization_id: string;
-    organizations: {
-      id: string;
-      name: string;
-      plan_tier: OrgPlanTier;
-    } | null;
-  } | null;
+  gyms:
+    | {
+        id: string;
+        name: string;
+        organization_id: string;
+        logo_url_light: string | null;
+        logo_url_dark: string | null;
+        updated_at: string | null;
+        theme_light: unknown;
+        theme_dark: unknown;
+        organizations: {
+          id: string;
+          name: string;
+          plan_tier: OrgPlanTier;
+        } | null;
+      }
+    | {
+        id: string;
+        name: string;
+        organization_id: string;
+        logo_url_light: string | null;
+        logo_url_dark: string | null;
+        updated_at: string | null;
+        theme_light: unknown;
+        theme_dark: unknown;
+        organizations: {
+          id: string;
+          name: string;
+          plan_tier: OrgPlanTier;
+        } | null;
+      }[]
+    | null;
 };
+
+function firstEmbed<T>(value: T | T[] | null | undefined): T | null {
+  if (!value) return null;
+  return Array.isArray(value) ? (value[0] ?? null) : value;
+}
 
 function toWorkspace(
   userId: string,
@@ -54,10 +83,15 @@ function toWorkspace(
   fullName: string | null,
   row: GymRoleRow,
 ): Workspace {
-  const gym = row.gyms;
-  const org = gym?.organizations;
+  const gym = firstEmbed(row.gyms);
+  const org = firstEmbed(gym?.organizations ?? null);
   const isProvisionalOwner = row.is_provisional_owner;
   const role = row.role;
+  const themeLight: BrandThemeTokens = parseBrandThemeTokens(gym?.theme_light);
+  const themeDark: BrandThemeTokens = parseBrandThemeTokens(gym?.theme_dark);
+  const cacheKey = gym?.updated_at ?? null;
+  const lightPath = gym?.logo_url_light ?? gym?.logo_url_dark ?? null;
+  const darkPath = gym?.logo_url_dark ?? gym?.logo_url_light ?? null;
   return {
     userId,
     personId,
@@ -67,6 +101,10 @@ function toWorkspace(
     planTier: org?.plan_tier ?? "FREEMIUM",
     gymId: row.gym_id,
     gymName: gym?.name ?? "",
+    logoUrlLight: gymLogoPublicUrl(lightPath, cacheKey),
+    logoUrlDark: gymLogoPublicUrl(darkPath, cacheKey),
+    themeLight,
+    themeDark,
     role,
     isProvisionalOwner,
     canActAsOwner: role === "OWNER" || isProvisionalOwner,
@@ -108,6 +146,11 @@ export async function getWorkspace(): Promise<Workspace | null> {
         id,
         name,
         organization_id,
+        logo_url_light,
+        logo_url_dark,
+        updated_at,
+        theme_light,
+        theme_dark,
         organizations (
           id,
           name,
@@ -128,12 +171,28 @@ export async function getWorkspace(): Promise<Workspace | null> {
 
   if (!selected?.gyms) return null;
 
-  return toWorkspace(
+  const workspace = toWorkspace(
     user.id,
     person?.id ?? "",
     person?.full_name ?? null,
     selected,
   );
+
+  // Always resolve logos from the gym row (more reliable than nested embeds).
+  const { data: gymRow } = await supabase
+    .from("gyms")
+    .select("logo_url_light, logo_url_dark, updated_at")
+    .eq("id", workspace.gymId)
+    .maybeSingle();
+  if (gymRow) {
+    const cacheKey = gymRow.updated_at ?? null;
+    const lightPath = gymRow.logo_url_light ?? gymRow.logo_url_dark ?? null;
+    const darkPath = gymRow.logo_url_dark ?? gymRow.logo_url_light ?? null;
+    workspace.logoUrlLight = gymLogoPublicUrl(lightPath, cacheKey);
+    workspace.logoUrlDark = gymLogoPublicUrl(darkPath, cacheKey);
+  }
+
+  return workspace;
 }
 
 /** @deprecated Use getWorkspace — returns Profile-shaped workspace for existing callers. */
@@ -148,7 +207,7 @@ export async function getOnboardingState(): Promise<OnboardingState | null> {
   const user = await getSessionUser();
   if (!user) return null;
 
-  const { data: org } = await supabase
+  const { data: orgRows, error: orgError } = await supabase
     .from("organizations")
     .select(
       "id, name, pending_as_provisional, onboarding_plans_done, onboarding_completed_at",
@@ -156,21 +215,30 @@ export async function getOnboardingState(): Promise<OnboardingState | null> {
     .eq("created_by", user.id)
     .is("deleted_at", null)
     .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    .limit(1);
+  if (orgError) {
+    console.error("getOnboardingState organizations", orgError.message);
+  }
+  const org = orgRows?.[0] ?? null;
 
-  const { data: person } = await supabase
+  const { data: person, error: personError } = await supabase
     .from("persons")
     .select("id, full_name")
     .eq("user_id", user.id)
     .maybeSingle();
+  if (personError) {
+    console.error("getOnboardingState persons", personError.message);
+  }
 
-  const { data: role } = await supabase
+  const { data: roleRows, error: roleError } = await supabase
     .from("gym_roles")
     .select("gym_id, gyms ( id, name )")
     .eq("user_id", user.id)
-    .limit(1)
-    .maybeSingle();
+    .limit(1);
+  if (roleError) {
+    console.error("getOnboardingState gym_roles", roleError.message);
+  }
+  const role = roleRows?.[0] ?? null;
 
   const gyms = role?.gyms as unknown as { id: string; name: string } | null;
   const hasGym = Boolean(role?.gym_id);

@@ -1,14 +1,60 @@
-import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+import { redirect, notFound } from "next/navigation";
 import { getOnboardingState, getWorkspace } from "@/lib/auth/session";
 import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { AppNav } from "@/components/app-nav";
+import { AmrapWatermark } from "@/components/amrap-watermark";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Input } from "@/components/ui/input";
-import { notFound } from "next/navigation";
-import { Search, Bell, HelpCircle } from "lucide-react";
-import { LIMITS } from "@/lib/validation/schemas";
+import { canInWorkspace } from "@/lib/auth/permissions";
+import { brandThemeCssVars } from "@/lib/branding/theme";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const workspace = await getWorkspace();
+  if (!workspace) {
+    return { title: "AMRAP" };
+  }
+
+  const gymName = workspace.gymName.trim() || "AMRAP";
+  const light = workspace.logoUrlLight;
+  const dark = workspace.logoUrlDark;
+  const iconLight = light || dark;
+  const iconDark = dark || light;
+
+  const icons: Metadata["icons"] = iconLight
+    ? {
+        icon: [
+          {
+            url: iconLight,
+            type: "image/png",
+            ...(iconDark && iconDark !== iconLight
+              ? { media: "(prefers-color-scheme: light)" as const }
+              : {}),
+          },
+          ...(iconDark && iconDark !== iconLight
+            ? [
+                {
+                  url: iconDark,
+                  type: "image/png",
+                  media: "(prefers-color-scheme: dark)" as const,
+                },
+              ]
+            : []),
+        ],
+        apple: [{ url: iconLight }],
+      }
+    : undefined;
+
+  return {
+    title: {
+      default: gymName,
+      template: `%s | ${gymName}`,
+    },
+    description: gymName,
+    icons,
+  };
+}
 
 export default async function AppShellLayout({
   children,
@@ -36,61 +82,49 @@ export default async function AppShellLayout({
     workspace.fullName?.charAt(0).toUpperCase() ||
     workspace.userId.slice(0, 2).toUpperCase();
 
+  const { light, dark } = brandThemeCssVars(
+    workspace.themeLight,
+    workspace.themeDark,
+  );
+  const lightDecls = Object.entries(light)
+    .map(([k, v]) => `${k}:${v}`)
+    .join(";");
+  const darkDecls = Object.entries(dark)
+    .map(([k, v]) => `${k}:${v}`)
+    .join(";");
+
   return (
-    <div className="flex h-screen overflow-hidden bg-[var(--color-bg)]">
-      <AppNav locale={locale} role={workspace.role} />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-6">
-          <div className="flex flex-1 items-center">
-            <div className="relative w-full max-w-md">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <Search className="h-4 w-4 text-[var(--color-muted)]" aria-hidden />
+    <>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `.amrap-branded{${lightDecls}}.dark .amrap-branded{${darkDecls}}`,
+        }}
+      />
+      <div className="amrap-branded flex h-screen flex-col overflow-hidden bg-[var(--color-bg)]">
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          <AppNav
+            locale={locale}
+            role={workspace.role}
+            canManageSettings={canInWorkspace(workspace, "manage_billing")}
+            canManageStaff={canInWorkspace(workspace, "manage_staff")}
+            logoUrlLight={workspace.logoUrlLight}
+            logoUrlDark={workspace.logoUrlDark}
+            gymName={workspace.gymName}
+            organizationName={workspace.organizationName}
+            isProvisionalOwner={workspace.isProvisionalOwner}
+          />
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <header className="flex h-16 shrink-0 items-center justify-end gap-4 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-6">
+              <ThemeToggle label={d.a11y.toggleTheme} />
+              <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[var(--color-primary)]/20 text-xs font-bold text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30">
+                {initial}
               </div>
-              <Input
-                type="search"
-                variant="search"
-                name="q"
-                aria-label={d.shell.searchLabel}
-                placeholder={d.shell.searchPlaceholder}
-                maxLength={LIMITS.search}
-                autoCapitalize="none"
-                autoCorrect="off"
-              />
-            </div>
+            </header>
+            <main className="flex-1 overflow-y-auto p-6 lg:p-8">{children}</main>
           </div>
-          <div className="flex flex-1 flex-col items-center justify-center text-center">
-            <span className="text-sm font-bold tracking-widest text-[var(--color-primary)]">
-              {workspace.gymName || d.shell.gymAdmin}
-            </span>
-            {workspace.isProvisionalOwner ? (
-              <span className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
-                {d.shell.provisionalOwner}
-              </span>
-            ) : null}
-          </div>
-          <div className="flex flex-1 items-center justify-end gap-4">
-            <button
-              type="button"
-              className="text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
-              aria-label={d.shell.notifications}
-            >
-              <Bell className="h-5 w-5" aria-hidden />
-            </button>
-            <button
-              type="button"
-              className="text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
-              aria-label={d.shell.help}
-            >
-              <HelpCircle className="h-5 w-5" aria-hidden />
-            </button>
-            <ThemeToggle label={d.a11y.toggleTheme} />
-            <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[var(--color-primary)]/20 text-xs font-bold text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30">
-              {initial}
-            </div>
-          </div>
-        </header>
-        <main className="flex-1 overflow-y-auto p-6 lg:p-8">{children}</main>
+        </div>
+        <AmrapWatermark locale={locale} label={d.shell.poweredBy} />
       </div>
-    </div>
+    </>
   );
 }

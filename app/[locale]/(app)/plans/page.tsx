@@ -5,9 +5,8 @@ import { canInWorkspace } from "@/lib/auth/permissions";
 import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { deletePlan } from "./actions";
-import { Button } from "@/components/ui/button";
-import { CreatePlanForm } from "./create-plan-form";
+import { canCreatePlan, maxActivePlans } from "@/lib/plans/limits";
+import { PlansClient } from "@/components/plans-client";
 
 export default async function PlansPage({
   params,
@@ -31,60 +30,93 @@ export default async function PlansPage({
 
   const d = getDictionary(locale);
   const supabase = await createClient();
-  const { data: plans } = await supabase
-    .from("plans")
-    .select("*")
-    .eq("gym_id", workspace.gymId)
-    .order("created_at", { ascending: false });
+  const [{ data: planRows }, { data: membershipRows }] = await Promise.all([
+    supabase
+      .from("plans")
+      .select("id, name, price, duration_days, is_active, created_at")
+      .eq("gym_id", workspace.gymId)
+      .order("is_active", { ascending: false })
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("memberships")
+      .select("plan_id")
+      .eq("gym_id", workspace.gymId)
+      .not("plan_id", "is", null),
+  ]);
+
+  const memberCounts = new Map<string, number>();
+  for (const row of membershipRows ?? []) {
+    if (!row.plan_id) continue;
+    memberCounts.set(row.plan_id, (memberCounts.get(row.plan_id) ?? 0) + 1);
+  }
+
+  const plans = (planRows ?? []).map((p) => ({
+    id: p.id,
+    name: p.name,
+    price: Number(p.price),
+    duration_days: p.duration_days,
+    is_active: p.is_active !== false,
+    member_count: memberCounts.get(p.id) ?? 0,
+  }));
+
+  const activeCount = plans.filter((p) => p.is_active).length;
+  const maxPlans = maxActivePlans(workspace.planTier);
+  const canAdd = canCreatePlan(workspace.planTier, activeCount);
+
+  const errorMessage =
+    sp.error === "limit"
+      ? d.plans.planLimit
+      : sp.error
+        ? d.plans.error
+        : null;
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-2xl font-semibold">{d.plans.title}</h1>
-
-      {sp.error ? (
-        <p className="text-sm font-medium text-[var(--color-primary)]">{d.plans.error}</p>
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
+      {errorMessage ? (
+        <p
+          className="rounded-lg border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 px-4 py-3 text-sm font-medium text-[var(--color-primary)]"
+          role="alert"
+        >
+          {errorMessage}
+        </p>
       ) : null}
 
-      <section className="max-w-md space-y-3 rounded border border-[var(--color-muted)]/30 bg-[var(--color-surface)]/40 p-4">
-        <h2 className="text-lg font-medium">{d.plans.newPlan}</h2>
-        <CreatePlanForm locale={locale} />
-      </section>
-
-      <table className="w-full border-collapse text-left text-sm">
-        <thead>
-          <tr className="border-b border-[var(--color-muted)]/40 text-[var(--color-muted)]">
-            <th className="py-2 pr-4">{d.plans.planName}</th>
-            <th className="py-2 pr-4">{d.plans.price}</th>
-            <th className="py-2 pr-4">{d.plans.durationDays}</th>
-            <th className="py-2" />
-          </tr>
-        </thead>
-        <tbody>
-          {(plans ?? []).length === 0 && (
-            <tr>
-              <td colSpan={4} className="py-6 text-[var(--color-muted)]">
-                {d.plans.noPlans}
-              </td>
-            </tr>
-          )}
-          {(plans ?? []).map((p) => (
-            <tr key={p.id} className="border-b border-[var(--color-muted)]/20">
-              <td className="py-2 pr-4">{p.name}</td>
-              <td className="py-2 pr-4">{p.price}</td>
-              <td className="py-2 pr-4">{p.duration_days}</td>
-              <td className="py-2">
-                <form action={deletePlan}>
-                  <input type="hidden" name="locale" value={locale} />
-                  <input type="hidden" name="plan_id" value={p.id} />
-                  <Button type="submit" variant="link">
-                    {d.plans.delete}
-                  </Button>
-                </form>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <PlansClient
+        locale={locale}
+        plans={plans}
+        canAdd={canAdd}
+        activeCount={activeCount}
+        maxPlans={maxPlans}
+        labels={{
+          subtitle: d.plans.subtitle,
+          newPlan: d.plans.newPlan,
+          planName: d.plans.planName,
+          price: d.plans.price,
+          durationDays: d.plans.durationDays,
+          save: d.plans.save,
+          cancel: d.plans.cancel,
+          close: d.plans.close,
+          edit: d.plans.edit,
+          archive: d.plans.archive,
+          restore: d.plans.restore,
+          active: d.plans.active,
+          archived: d.plans.archived,
+          noPlans: d.plans.noPlans,
+          membersEnrolled: d.plans.membersEnrolled,
+          perDays: d.plans.perDays,
+          perMonth: d.plans.perMonth,
+          perMonths: d.plans.perMonths,
+          createTitle: d.plans.createTitle,
+          createDescription: d.plans.createDescription,
+          editTitle: d.plans.editTitle,
+          editDescription: d.plans.editDescription,
+          limitReached: d.plans.limitReached,
+          limitReachedHint: d.plans.limitReachedHint,
+          upgradePlans: d.plans.upgradePlans,
+          quotaLabel: d.plans.quotaLabel,
+          freemium: d.plans.freemium,
+        }}
+      />
     </div>
   );
 }

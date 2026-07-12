@@ -89,6 +89,8 @@ Billing account for AMRAP.
 | `organization_id` | Cascade delete with org |
 | `name` | |
 | `owner_user_id` | Convenience pointer; authoritative OWNER is `gym_roles` |
+| `logo_url_light` / `logo_url_dark` | Storage object paths in bucket `gym-logos` (e.g. `{gym_id}/logo-light.png`) |
+| `theme_light` / `theme_dark` | `jsonb` hex overrides: `primary`, `bg`, `surface` (`{}` = defaults) |
 | `deleted_at` | Soft delete |
 
 ---
@@ -134,8 +136,9 @@ Membership products sold by the gym.
 | `gym_id` | Required |
 | `branch_id` | Optional; null = gym-wide |
 | `name`, `price`, `duration_days` | `price >= 0`, `duration_days > 0` |
+| `is_active` | Soft-archive; Freemium max **2 active** plans (app-enforced) |
 
-Freemium **product** limit (max 2 plans) is enforced in app / future checks, not a DB check today.
+Freemium **product** limit (max 2 active plans) is enforced in app code (`lib/plans/limits.ts`), not a DB check.
 
 ---
 
@@ -246,6 +249,7 @@ Legacy wrappers may exist (`register_organization`, `register_tenant`) for older
 | -------- | -------- |
 | `record_check_in(gym_id, qr?, membership_id?, branch_id?, source?)` | Validates membership ACTIVE + not expired; blocks cross-gym active session; inserts check-in with 4h `session_expires_at` |
 | `create_gym_membership(gym_id, full_name, expires_at, …)` | Creates **new** `persons` row + membership (staff); does not yet merge/claim existing persons by email |
+| `update_gym_branding(gym_id, theme_light?, theme_dark?, logo_url_light?, logo_url_dark?, clear_logo_light?, clear_logo_dark?)` | Owner/provisional: set gym logos and/or light/dark theme jsonb |
 
 ### Triggers
 
@@ -293,7 +297,7 @@ Expect future migrations for:
 - Class/events, announcements, penalties, routines, community
 - Org billing (Stripe/MP subscriptions), member payment gateway accounts
 - Impersonation audit log
-- White-label / branding assets
+- Member white-label / custom domain (gym branding columns exist for admin dashboard)
 - Hardware device registry
 
 ---

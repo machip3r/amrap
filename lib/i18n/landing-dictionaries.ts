@@ -85,25 +85,25 @@ const es: LandingDictionary = {
     brand: "AMRAP",
     title: "Opera tu gym. Escala a varios.",
     subtitle:
-      "Check-in con QR, socios, planes y el panel del día en un solo sistema. Una organización, una factura; un socio, una cuenta.",
+      "Check-in con QR, miembros, planes y el panel del día en un solo sistema. Una organización, una factura; un miembro, una cuenta.",
     primaryCta: "Empezar gratis",
     secondaryCta: "Ver producto",
   },
   focus: {
     title: "Hecho para la operación diaria",
     subtitle:
-      "AMRAP es software para dueños y staff: membresías, acceso y control del día. Misma cuenta si eres dueño aquí y socio en otro gym.",
+      "AMRAP es software para dueños y staff: membresías, acceso y control del día. Misma cuenta si eres dueño aquí y miembro en otro gym.",
     items: [
       {
         title: "Un QR por persona",
         body: "Credencial única en toda la plataforma. Entrada desde el teléfono del socio o en recepción (cámara o búsqueda). Sin uso simultáneo en otro gym por 4 horas.",
       },
       {
-        title: "Socios y planes",
+        title: "Miembros y planes",
         body: "Altas, vencimientos y precios por gym o sucursal. Renueva y registra pagos en el flujo de operación — el socio paga al gym, no a AMRAP.",
       },
       {
-        title: "Panel del día",
+        title: "Tablero del día",
         body: "Asistencia, activos vs vencidos, renovaciones y alertas. Dueño y encargados ven lo que importa hoy, no un dashboard genérico.",
       },
       {
@@ -115,7 +115,7 @@ const es: LandingDictionary = {
   pricing: {
     title: "Precios",
     subtitle:
-      "Paga la organización (no el socio). Precios antes de impuestos. Anual ~17% menos. Freemium para operar en chico; planes de pago desbloquean multi-gym y cobros en línea a socios.",
+      "Paga la organización (no el miembro). Precios antes de impuestos. Anual ~17% menos. Freemium para operar en chico; planes de pago desbloquean multi-gym y cobros en línea a miembros.",
     select: "Empezar",
     plans: [
       {
@@ -124,7 +124,7 @@ const es: LandingDictionary = {
         period: "/mes",
         note: "1 gym · 1 sucursal",
         features: [
-          "Hasta 30 socios activos",
+          "Hasta 30 miembros activos",
           "QR + check-in manual",
           "2 asientos de staff",
           "2 planes de membresía",
@@ -139,9 +139,9 @@ const es: LandingDictionary = {
         note: "1 gym · por organización",
         highlighted: true,
         features: [
-          "Pasarela de pagos para socios",
+          "Pasarela de pagos para miembros",
           "White-label básico",
-          "~250 socios activos",
+          "~250 miembros activos",
           "Hasta 5 staff · 2 sucursales",
           "Historial completo · CSV",
           "Inbox sin tope Freemium",
@@ -155,7 +155,7 @@ const es: LandingDictionary = {
         features: [
           "Hasta 5 gyms activos",
           "Stats multi-gym",
-          "~500 socios activos por gym",
+          "~500 miembros activos por gym",
           "Todo lo de Starter",
           "Operación multi-sede",
         ],

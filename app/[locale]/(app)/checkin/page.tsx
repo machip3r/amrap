@@ -1,6 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { getWorkspace } from "@/lib/auth/session";
 import { canInWorkspace } from "@/lib/auth/permissions";
+import { createClient } from "@/lib/supabase/server";
 import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -25,28 +26,69 @@ export default async function CheckinPage({
   }
 
   const d = getDictionary(locale);
+  const canManageMembers = canInWorkspace(workspace, "manage_members");
+  const canManageStaff = canInWorkspace(workspace, "manage_staff");
+
+  let plans: {
+    id: string;
+    name: string;
+    price: number;
+    duration_days: number;
+  }[] = [];
+
+  if (canManageMembers) {
+    const supabase = await createClient();
+    const { data: planRows } = await supabase
+      .from("plans")
+      .select("id, name, price, duration_days")
+      .eq("gym_id", workspace.gymId)
+      .eq("is_active", true)
+      .order("created_at", { ascending: false });
+    plans = (planRows ?? []).map((p) => ({
+      id: p.id,
+      name: p.name,
+      price: Number(p.price),
+      duration_days: p.duration_days,
+    }));
+  }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">{d.checkin.title}</h1>
-      <CheckinClient
-        runCheckIn={runCheckIn}
-        labels={{
-          manualLabel: d.checkin.manualLabel,
-          manualPlaceholder: d.checkin.manualPlaceholder,
-          lookup: d.checkin.lookup,
-          scanning: d.checkin.scanning,
-          stopCamera: d.checkin.stopCamera,
-          startCamera: d.checkin.startCamera,
-          resultOk: d.checkin.resultOk,
-          resultDenied: d.checkin.resultDenied,
-          memberNotFound: d.checkin.memberNotFound,
-          qrInUse: d.checkin.qrInUse,
-          cameraError: d.checkin.cameraError,
-          forbidden: d.common.forbidden,
-          saveFailed: d.common.saveFailed,
-        }}
-      />
-    </div>
+    <CheckinClient
+      locale={locale}
+      canManageMembers={canManageMembers}
+      canManageStaff={canManageStaff}
+      plans={plans}
+      runCheckIn={runCheckIn}
+      labels={{
+        title: d.checkin.title,
+        subtitle: d.checkin.subtitle,
+        scanTitle: d.checkin.scanTitle,
+        scanHint: d.checkin.scanHint,
+        manualTitle: d.checkin.manualTitle,
+        manualLabel: d.checkin.manualLabel,
+        manualPlaceholder: d.checkin.manualPlaceholder,
+        lookup: d.checkin.lookup,
+        clear: d.checkin.clear,
+        scanning: d.checkin.scanning,
+        stopCamera: d.checkin.stopCamera,
+        startCamera: d.checkin.startCamera,
+        resultOk: d.checkin.resultOk,
+        resultDenied: d.checkin.resultDenied,
+        memberNotFound: d.checkin.memberNotFound,
+        qrInUse: d.checkin.qrInUse,
+        cameraError: d.checkin.cameraError,
+        forbidden: d.common.forbidden,
+        saveFailed: d.common.saveFailed,
+        accessGranted: d.checkin.accessGranted,
+        accessDenied: d.checkin.accessDenied,
+        waitingResult: d.checkin.waitingResult,
+        waitingResultHint: d.checkin.waitingResultHint,
+        expiresIn: d.checkin.expiresIn,
+        days: d.checkin.days,
+        weekAttendance: d.checkin.weekAttendance,
+        noPlan: d.checkin.noPlan,
+        nextScan: d.checkin.nextScan,
+      }}
+    />
   );
 }

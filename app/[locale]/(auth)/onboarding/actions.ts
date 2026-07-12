@@ -159,7 +159,8 @@ export async function addOnboardingPlanAction(
   const { count } = await supabase
     .from("plans")
     .select("id", { count: "exact", head: true })
-    .eq("gym_id", state.gymId);
+    .eq("gym_id", state.gymId)
+    .eq("is_active", true);
 
   if ((count ?? 0) >= 2) {
     return { error: d.onboarding.planLimit };
@@ -170,6 +171,7 @@ export async function addOnboardingPlanAction(
     name: parsed.data.name,
     price: parsed.data.price,
     duration_days: parsed.data.duration_days,
+    is_active: true,
   });
 
   if (error) {

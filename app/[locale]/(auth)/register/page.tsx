@@ -34,6 +34,8 @@ export default async function RegisterPage({
 
   const user = await getSessionUser();
   if (user) {
+    // Logged in without a gym workspace → finish onboarding (creates org if needed).
+    // Do not keep them on /register once they have a session.
     redirect(`/${locale}/onboarding`);
   }
 

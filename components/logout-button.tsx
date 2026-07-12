@@ -8,10 +8,12 @@ export function LogoutButton({
   children,
   className,
   locale,
+  title,
 }: {
   children: React.ReactNode;
   className?: string;
   locale: Locale;
+  title?: string;
 }) {
   const router = useRouter();
 
@@ -27,6 +29,7 @@ export function LogoutButton({
       type="button"
       onClick={() => void logout()}
       className={className || "text-[var(--color-primary)] hover:underline"}
+      title={title}
     >
       {children}
     </button>

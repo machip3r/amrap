@@ -23,14 +23,18 @@ export async function bootstrapTenantForUser(
   userId: string,
   organizationName: string,
   _fullName: string | null = null,
-): Promise<{ ok: true } | { ok: false; message: string }> {
+): Promise<
+  { ok: true; organizationId: string } | { ok: false; message: string }
+> {
   return bootstrapOrganizationAccount(userId, organizationName);
 }
 
 export async function bootstrapOrganizationAccount(
   userId: string,
   organizationName: string,
-): Promise<{ ok: true } | { ok: false; message: string }> {
+): Promise<
+  { ok: true; organizationId: string } | { ok: false; message: string }
+> {
   const admin = createServiceRoleClient();
   if (!admin) {
     return { ok: false, message: "Missing SUPABASE_SERVICE_ROLE_KEY" };
@@ -45,7 +49,7 @@ export async function bootstrapOrganizationAccount(
     .maybeSingle();
 
   if (existingOrg) {
-    return { ok: true };
+    return { ok: true, organizationId: existingOrg.id };
   }
 
   const { data: org, error: oErr } = await admin
@@ -78,5 +82,5 @@ export async function bootstrapOrganizationAccount(
     return { ok: false, message: pErr.message };
   }
 
-  return { ok: true };
+  return { ok: true, organizationId: org.id };
 }

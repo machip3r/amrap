@@ -123,7 +123,6 @@ export async function updatePlan(
     return {
       fieldErrors: zodFieldErrors(parsed.error, d.validation, {
         name: "entityName",
-        plan_id: "uuid",
       }),
     };
   }

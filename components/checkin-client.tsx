@@ -6,6 +6,7 @@ import { runCheckIn, type CheckinResult } from "@/app/[locale]/(app)/checkin/act
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { LIMITS } from "@/lib/validation/schemas";
 
 type CheckinLabels = {
   manualLabel: string;
@@ -17,6 +18,7 @@ type CheckinLabels = {
   resultOk: string;
   resultDenied: string;
   memberNotFound: string;
+  qrInUse: string;
   cameraError: string;
   forbidden: string;
   saveFailed: string;
@@ -40,6 +42,7 @@ export function CheckinClient({ labels, runCheckIn }: Props) {
       if (r.status === "ok") setMessage(labels.resultOk);
       else if (r.status === "denied") setMessage(labels.resultDenied);
       else if (r.status === "not_found") setMessage(labels.memberNotFound);
+      else if (r.status === "busy") setMessage(labels.qrInUse);
       else if (r.status === "forbidden") setMessage(labels.forbidden);
       else if (r.status === "error") setMessage(labels.saveFailed);
       else setMessage(null);
@@ -141,6 +144,10 @@ export function CheckinClient({ labels, runCheckIn }: Props) {
             value={manual}
             onChange={(e) => setManual(e.target.value)}
             placeholder={labels.manualPlaceholder}
+            maxLength={LIMITS.checkInCode}
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
           />
         </FormField>
         <Button type="submit" variant="appPrimary" className="w-fit">

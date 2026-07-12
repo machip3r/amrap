@@ -1,17 +1,20 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getProfile } from "@/lib/auth/session";
-import { can } from "@/lib/auth/permissions";
+import { getWorkspace } from "@/lib/auth/session";
+import { canInWorkspace } from "@/lib/auth/permissions";
 import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { memberStatusFromExpires } from "@/lib/members/dates";
 import { MemberQrImage } from "@/components/member-qr";
 import { deleteMemberAction, renewMember } from "../actions";
 import { FormField } from "@/components/ui/form-field";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import {
+  MEMBERSHIP_LIST_SELECT,
+  mapMembershipRow,
+} from "@/lib/members/queries";
 
 export default async function MemberDetailPage({
   params,
@@ -22,9 +25,9 @@ export default async function MemberDetailPage({
   if (!isLocale(raw)) notFound();
   const locale = raw as Locale;
 
-  const profile = await getProfile();
-  if (!profile) redirect(`/${locale}/login`);
-  if (!can(profile.role, "manage_members")) {
+  const workspace = await getWorkspace();
+  if (!workspace) redirect(`/${locale}/login`);
+  if (!canInWorkspace(workspace, "manage_members")) {
     return (
       <p className="text-[var(--color-muted)]">{getDictionary(locale).common.forbidden}</p>
     );
@@ -32,21 +35,22 @@ export default async function MemberDetailPage({
 
   const d = getDictionary(locale);
   const supabase = await createClient();
-  const { data: member } = await supabase
-    .from("members")
-    .select("*")
+  const { data: row } = await supabase
+    .from("memberships")
+    .select(MEMBERSHIP_LIST_SELECT)
     .eq("id", id)
-    .eq("tenant_id", profile.tenant_id)
+    .eq("gym_id", workspace.gymId)
     .maybeSingle();
 
+  const member = row
+    ? mapMembershipRow(row as Parameters<typeof mapMembershipRow>[0])
+    : null;
   if (!member) notFound();
-
-  const live = memberStatusFromExpires(member.membership_expires_at);
 
   const { data: plans } = await supabase
     .from("plans")
     .select("id, name, price, duration_days")
-    .eq("tenant_id", profile.tenant_id)
+    .eq("gym_id", workspace.gymId)
     .order("created_at", { ascending: false });
 
   return (
@@ -65,7 +69,8 @@ export default async function MemberDetailPage({
             {new Date(member.membership_expires_at).toLocaleString(locale)}
           </p>
           <p className="text-sm">
-            {d.members.status}: {live === "active" ? d.members.active : d.members.expired}
+            {d.members.status}:{" "}
+            {member.status === "active" ? d.members.active : d.members.expired}
           </p>
           <p className="break-all text-xs text-[var(--color-muted)]">
             {d.members.qrCode}: {member.qr_code}

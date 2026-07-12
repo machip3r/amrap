@@ -1,6 +1,6 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getProfile } from "@/lib/auth/session";
+import { getWorkspace } from "@/lib/auth/session";
 import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -16,38 +16,45 @@ export default async function DashboardPage({
   if (!isLocale(raw)) notFound();
   const locale = raw as Locale;
 
-  const profile = await getProfile();
-  if (!profile) redirect(`/${locale}/login`);
+  const workspace = await getWorkspace();
+  if (!workspace) redirect(`/${locale}/login`);
 
   const d = getDictionary(locale);
   const supabase = await createClient();
-  const tid = profile.tenant_id;
+  const gymId = workspace.gymId;
   const now = new Date().toISOString();
 
   const { count: total } = await supabase
-    .from("members")
+    .from("memberships")
     .select("id", { count: "exact", head: true })
-    .eq("tenant_id", tid);
+    .eq("gym_id", gymId);
 
   const { count: active } = await supabase
-    .from("members")
+    .from("memberships")
     .select("id", { count: "exact", head: true })
-    .eq("tenant_id", tid)
-    .gte("membership_expires_at", now);
+    .eq("gym_id", gymId)
+    .gte("expires_at", now);
 
   const { count: expired } = await supabase
-    .from("members")
+    .from("memberships")
     .select("id", { count: "exact", head: true })
-    .eq("tenant_id", tid)
-    .lt("membership_expires_at", now);
+    .eq("gym_id", gymId)
+    .lt("expires_at", now);
 
   const start = new Date();
   start.setUTCHours(0, 0, 0, 0);
   const { count: paymentsToday } = await supabase
     .from("payments")
     .select("id", { count: "exact", head: true })
-    .eq("tenant_id", tid)
+    .eq("gym_id", gymId)
     .gte("created_at", start.toISOString());
+
+  const sessionEnd = now;
+  const { count: present } = await supabase
+    .from("check_ins")
+    .select("id", { count: "exact", head: true })
+    .eq("gym_id", gymId)
+    .gt("session_expires_at", sessionEnd);
 
   const todayDate = new Intl.DateTimeFormat(locale, {
     day: "numeric",
@@ -55,10 +62,12 @@ export default async function DashboardPage({
     year: "numeric",
   }).format(new Date());
 
-  // Placeholder capacity until live occupancy exists
   const maxCapacity = 120;
-  const present = 0;
-  const occupancyPct = 0;
+  const presentCount = present ?? 0;
+  const occupancyPct = Math.min(
+    100,
+    Math.round((presentCount / maxCapacity) * 100),
+  );
 
   return (
     <div className="animate-fade-in-up space-y-8">
@@ -196,7 +205,7 @@ export default async function DashboardPage({
                   {d.dashboard.present}
                 </span>
                 <span className="font-bold text-[var(--color-primary)]">
-                  {present} {d.dashboard.people}
+                  {presentCount} {d.dashboard.people}
                 </span>
               </div>
             </div>

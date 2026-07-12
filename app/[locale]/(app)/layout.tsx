@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getProfile } from "@/lib/auth/session";
+import { getOnboardingState, getWorkspace } from "@/lib/auth/session";
 import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Input } from "@/components/ui/input";
 import { notFound } from "next/navigation";
 import { Search, Bell, HelpCircle } from "lucide-react";
+import { LIMITS } from "@/lib/validation/schemas";
 
 export default async function AppShellLayout({
   children,
@@ -20,16 +21,24 @@ export default async function AppShellLayout({
   if (!isLocale(raw)) notFound();
   const locale = raw as Locale;
 
-  const profile = await getProfile();
-  if (!profile) {
-    redirect(`/${locale}/complete-setup`);
+  const onboarding = await getOnboardingState();
+  if (!onboarding?.completed) {
+    redirect(`/${locale}/onboarding`);
+  }
+
+  const workspace = await getWorkspace();
+  if (!workspace) {
+    redirect(`/${locale}/onboarding`);
   }
 
   const d = getDictionary(locale);
+  const initial =
+    workspace.fullName?.charAt(0).toUpperCase() ||
+    workspace.userId.slice(0, 2).toUpperCase();
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--color-bg)]">
-      <AppNav locale={locale} role={profile.role} />
+      <AppNav locale={locale} role={workspace.role} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-6">
           <div className="flex flex-1 items-center">
@@ -43,11 +52,21 @@ export default async function AppShellLayout({
                 name="q"
                 aria-label={d.shell.searchLabel}
                 placeholder={d.shell.searchPlaceholder}
+                maxLength={LIMITS.search}
+                autoCapitalize="none"
+                autoCorrect="off"
               />
             </div>
           </div>
-          <div className="flex flex-1 justify-center text-sm font-bold tracking-widest text-[var(--color-primary)]">
-            {d.shell.gymAdmin}
+          <div className="flex flex-1 flex-col items-center justify-center text-center">
+            <span className="text-sm font-bold tracking-widest text-[var(--color-primary)]">
+              {workspace.gymName || d.shell.gymAdmin}
+            </span>
+            {workspace.isProvisionalOwner ? (
+              <span className="text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
+                {d.shell.provisionalOwner}
+              </span>
+            ) : null}
           </div>
           <div className="flex flex-1 items-center justify-end gap-4">
             <button
@@ -66,9 +85,7 @@ export default async function AppShellLayout({
             </button>
             <ThemeToggle label={d.a11y.toggleTheme} />
             <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[var(--color-primary)]/20 text-xs font-bold text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30">
-              {profile.full_name
-                ? profile.full_name.charAt(0).toUpperCase()
-                : profile.id.slice(0, 2).toUpperCase()}
+              {initial}
             </div>
           </div>
         </header>

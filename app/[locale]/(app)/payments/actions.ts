@@ -1,10 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getProfile } from "@/lib/auth/session";
-import { can } from "@/lib/auth/permissions";
+import { getWorkspace } from "@/lib/auth/session";
+import { canInWorkspace } from "@/lib/auth/permissions";
 import {
   amountSchema,
   formString,
@@ -12,7 +11,9 @@ import {
   paymentMethodSchema,
   uuidSchema,
 } from "@/lib/validation/schemas";
+import { zodFieldErrors } from "@/lib/validation/field-errors";
 import { toDbPaymentMethod } from "@/lib/validation/db-enums";
+import { getDictionary } from "@/lib/i18n/dictionaries";
 import { z } from "zod";
 
 function localeFromForm(formData: FormData) {
@@ -28,11 +29,20 @@ const createPaymentSchema = z.object({
   method: paymentMethodSchema,
 });
 
-export async function createPayment(formData: FormData): Promise<void> {
+export type CreatePaymentState = {
+  error?: string;
+  fieldErrors?: Record<string, string>;
+} | null;
+
+export async function createPayment(
+  _prev: CreatePaymentState,
+  formData: FormData,
+): Promise<CreatePaymentState> {
   const locale = localeFromForm(formData);
-  const profile = await getProfile();
-  if (!profile || !can(profile.role, "record_payment")) {
-    redirect(`/${locale}/payments?error=1`);
+  const d = getDictionary(locale);
+  const workspace = await getWorkspace();
+  if (!workspace || !canInWorkspace(workspace, "record_payment")) {
+    return { error: d.common.forbidden };
   }
 
   const parsed = createPaymentSchema.safeParse({
@@ -41,31 +51,37 @@ export async function createPayment(formData: FormData): Promise<void> {
     amount: formString(formData, "amount"),
     method: formString(formData, "method") || "cash",
   });
-  if (!parsed.success) redirect(`/${locale}/payments?error=1`);
+  if (!parsed.success) {
+    return { fieldErrors: zodFieldErrors(parsed.error, d.validation) };
+  }
 
   const supabase = await createClient();
 
-  const { data: member, error: memErr } = await supabase
-    .from("members")
+  const { data: membership, error: memErr } = await supabase
+    .from("memberships")
     .select("id")
     .eq("id", parsed.data.member_id)
-    .eq("tenant_id", profile.tenant_id)
+    .eq("gym_id", workspace.gymId)
     .maybeSingle();
 
-  if (memErr || !member) redirect(`/${locale}/payments?error=1`);
+  if (memErr || !membership) {
+    return { fieldErrors: { member_id: d.validation.invalid } };
+  }
 
   const { error } = await supabase.from("payments").insert({
-    tenant_id: profile.tenant_id,
-    member_id: member.id,
+    gym_id: workspace.gymId,
+    membership_id: membership.id,
     amount: parsed.data.amount,
     method: toDbPaymentMethod(parsed.data.method),
+    recorded_by: workspace.userId,
   });
 
   if (error) {
     console.error("createPayment", error.message);
-    redirect(`/${locale}/payments?error=1`);
+    return { error: d.payments.error };
   }
 
   revalidatePath(`/${locale}/payments`, "page");
   revalidatePath(`/${locale}/dashboard`, "page");
+  return null;
 }

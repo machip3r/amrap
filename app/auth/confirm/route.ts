@@ -3,6 +3,7 @@ import { type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { defaultLocale, isLocale } from "@/lib/i18n/config";
+import { ensureOrganizationAfterConfirm } from "@/lib/auth/ensure-organization";
 
 const OTP_TYPES = new Set<string>([
   "signup",
@@ -16,7 +17,7 @@ const OTP_TYPES = new Set<string>([
 /** Only allow relative in-app paths (open-redirect safe). */
 function safeNextPath(raw: string | null): string {
   if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.includes("://")) {
-    return `/${defaultLocale}/dashboard`;
+    return `/${defaultLocale}/onboarding`;
   }
   return raw;
 }
@@ -32,15 +33,19 @@ export async function GET(request: NextRequest) {
 
   if (token_hash && typeRaw && OTP_TYPES.has(typeRaw)) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.verifyOtp({
+    const { data, error } = await supabase.auth.verifyOtp({
       type: typeRaw as EmailOtpType,
       token_hash,
     });
     if (!error) {
+      const email = data.user?.email ?? "";
+      if (email) {
+        await ensureOrganizationAfterConfirm(email);
+      }
       redirect(next);
     }
     console.error("auth/confirm", error.message);
   }
 
-  redirect(`/${locale}/login?error=confirmation_failed`);
+  redirect(`/${locale}/login`);
 }

@@ -2,22 +2,26 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getRequestOrigin } from "@/lib/http/origin";
 import { createClient } from "@/lib/supabase/server";
-import { bootstrapTenantForUser } from "@/lib/supabase/admin";
-import { getSessionUser, getProfile } from "@/lib/auth/session";
+import { bootstrapOrganizationAccount } from "@/lib/supabase/admin";
+import { setPendingConfirmSignup } from "@/lib/auth/pending-confirm";
+import { getSessionUser, getWorkspace } from "@/lib/auth/session";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { headers } from "next/headers";
 import { z } from "zod";
 import {
   emailSchema,
+  entityNameSchema,
   formString,
   localeSchema,
-  nonEmptyString,
-  optionalTrimmed,
   passwordSchema,
 } from "@/lib/validation/schemas";
+import { zodFieldErrors } from "@/lib/validation/field-errors";
 
-export type RegisterState = { error?: string } | null;
+export type RegisterState = {
+  error?: string;
+  fieldErrors?: Record<string, string>;
+} | null;
 
 function looksLikeEmailAlreadyRegistered(msg: string): boolean {
   const m = msg.toLowerCase();
@@ -29,14 +33,23 @@ function looksLikeEmailAlreadyRegistered(msg: string): boolean {
   );
 }
 
+function looksLikeEmailRateLimited(msg: string): boolean {
+  const m = msg.toLowerCase();
+  return (
+    m.includes("rate limit") ||
+    m.includes("email rate limit exceeded") ||
+    m.includes("only request this after") ||
+    m.includes("too many requests")
+  );
+}
+
 const registerSchema = z
   .object({
     locale: localeSchema,
     email: emailSchema,
     password: passwordSchema,
-    confirmPassword: z.string(),
-    tenantName: nonEmptyString(120),
-    fullName: optionalTrimmed(120),
+    confirmPassword: passwordSchema,
+    organizationName: entityNameSchema,
   })
   .refine((v) => v.password === v.confirmPassword, {
     path: ["confirmPassword"],
@@ -57,26 +70,22 @@ export async function registerAction(
     email: formString(formData, "email"),
     password: formString(formData, "password"),
     confirmPassword: formString(formData, "confirmPassword"),
-    tenantName: formString(formData, "tenantName"),
-    fullName: formString(formData, "fullName"),
+    organizationName: formString(formData, "organizationName"),
   });
 
   if (!parsed.success) {
-    if (parsed.error.issues.some((i) => i.message === "mismatch")) {
-      return { error: d.register.passwordMismatch };
-    }
-    return { error: d.common.invalidInput };
+    return { fieldErrors: zodFieldErrors(parsed.error, d.validation) };
   }
 
-  const { email, password, tenantName, fullName } = parsed.data;
+  const { email, password, organizationName } = parsed.data;
 
   const supabase = await createClient();
-  const origin = (await headers()).get("origin");
+  const origin = await getRequestOrigin();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${origin}/auth/confirm?next=/${locale}/dashboard`,
+      emailRedirectTo: `${origin}/auth/confirm?next=/${locale}/onboarding`,
     },
   });
 
@@ -85,6 +94,9 @@ export async function registerAction(
     if (looksLikeEmailAlreadyRegistered(error.message)) {
       return { error: d.register.emailInUse };
     }
+    if (looksLikeEmailRateLimited(error.message)) {
+      return { error: d.register.emailRateLimited };
+    }
     return { error: d.register.error };
   }
 
@@ -92,23 +104,28 @@ export async function registerAction(
     return { error: d.register.error };
   }
 
+  // Email confirmation required (no session yet) → always show OTP UI
   if (!data.session) {
-    const boot = await bootstrapTenantForUser(data.user.id, tenantName, fullName);
-    if (boot.ok) {
-      revalidatePath("/", "layout");
-      redirect(`/${locale}/login?registered=pending_confirm`);
+    const boot = await bootstrapOrganizationAccount(
+      data.user.id,
+      organizationName,
+    );
+    if (!boot.ok) {
+      // Org will be created after OTP when the user has a session
+      console.warn("registerAction bootstrap deferred", boot.message);
     }
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      return { error: d.register.confirmEmail };
-    }
-    console.error("registerAction bootstrap", boot.message);
-    return { error: d.register.rpcFailed };
+
+    await setPendingConfirmSignup({ email, organizationName });
+    revalidatePath("/", "layout");
+    redirect(`/${locale}/register`);
   }
 
-  const { error: rpcError } = await supabase.rpc("register_tenant", {
-    p_tenant_name: tenantName,
-    p_full_name: fullName,
-  });
+  const { error: rpcError } = await supabase.rpc(
+    "register_organization_account",
+    {
+      p_organization_name: organizationName,
+    },
+  );
 
   if (rpcError) {
     console.error("registerAction rpc", rpcError.message);
@@ -116,52 +133,29 @@ export async function registerAction(
   }
 
   revalidatePath("/", "layout");
-  redirect(`/${locale}/dashboard`);
+  redirect(`/${locale}/onboarding`);
 }
 
-const completeSchema = z.object({
-  locale: localeSchema,
-  tenantName: nonEmptyString(120),
-  fullName: optionalTrimmed(120),
-});
-
-export async function completeTenantAction(
-  _prev: RegisterState,
-  formData: FormData,
-): Promise<RegisterState> {
-  const localeRaw = formString(formData, "locale") || "es";
-  const localeParsed = localeSchema.safeParse(localeRaw);
-  const locale = localeParsed.success ? localeParsed.data : "es";
-  const d = getDictionary(locale);
-
-  const parsed = completeSchema.safeParse({
-    locale: localeRaw,
-    tenantName: formString(formData, "tenantName"),
-    fullName: formString(formData, "fullName"),
-  });
-  if (!parsed.success) return { error: d.common.invalidInput };
-
+/** Ensures a logged-in user without org can still start onboarding. */
+export async function ensureOrganizationAction(
+  organizationName: string,
+): Promise<{ error?: string }> {
   const user = await getSessionUser();
-  if (!user) {
-    return { error: d.register.error };
-  }
+  if (!user) return { error: "auth" };
 
-  const existing = await getProfile();
-  if (existing) {
-    redirect(`/${locale}/dashboard`);
-  }
+  const nameParsed = entityNameSchema.safeParse(organizationName);
+  if (!nameParsed.success) return { error: "invalid" };
+
+  const ws = await getWorkspace();
+  if (ws) return {};
 
   const supabase = await createClient();
-  const { error: rpcError } = await supabase.rpc("register_tenant", {
-    p_tenant_name: parsed.data.tenantName,
-    p_full_name: parsed.data.fullName,
+  const { error } = await supabase.rpc("register_organization_account", {
+    p_organization_name: nameParsed.data,
   });
-
-  if (rpcError) {
-    console.error("completeTenantAction", rpcError.message);
-    return { error: d.completeSetup.error };
+  if (error) {
+    console.error("ensureOrganizationAction", error.message);
+    return { error: error.message };
   }
-
-  revalidatePath("/", "layout");
-  redirect(`/${locale}/dashboard`);
+  return {};
 }

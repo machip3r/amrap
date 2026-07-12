@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Locale } from "@/lib/i18n/config";
 import type { LandingDictionary } from "@/lib/i18n/landing-dictionaries";
 import { LandingNav } from "./landing-nav";
+import { LandingContact } from "./landing-contact";
 
 type Props = {
   locale: Locale;
@@ -22,10 +23,11 @@ export function LandingPage({ locale, d }: Props) {
   };
 
   return (
-    <div className="landing-page min-h-screen bg-[var(--landing-bg)] text-[var(--landing-ink)]">
+    <div className="landing-page min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]">
+      <div className="landing-nav-spacer" aria-hidden />
       <LandingNav locale={locale} d={d} labels={navLabels} />
 
-      <section id="inicio" className="landing-hero scroll-mt-[100px]">
+      <section id="start" className="landing-hero">
         <div className="landing-hero-bg" aria-hidden>
           <Image
             src="/images/hero-gym.png"
@@ -41,37 +43,33 @@ export function LandingPage({ locale, d }: Props) {
 
         <div className="landing-hero-content">
           <div className="landing-hero-copy">
-            <h1 className="font-title landing-hero-title">
-              {d.hero.titleBefore}
-              <span className="text-[var(--landing-accent)]">{d.hero.titleHighlight}</span>
-              {d.hero.titleAfter}
-            </h1>
-          </div>
-
-          <div className="landing-hero-aside">
-            <div className="landing-hero-glass">
-              <ul className="landing-hero-benefits">
-                {d.hero.benefits.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
+            <p className="font-title landing-hero-brand" aria-label={d.hero.brand}>
+              {d.hero.brand}
+            </p>
+            <h1 className="font-title landing-hero-title">{d.hero.title}</h1>
+            <p className="landing-hero-subtitle">{d.hero.subtitle}</p>
+            <div className="landing-hero-ctas">
+              <Link href={`${prefix}/register`} className="landing-hero-primary">
+                {d.hero.primaryCta}
+              </Link>
+              <button
+                type="button"
+                className="landing-hero-secondary"
+                onClick={() =>
+                  document.getElementById("enfoque")?.scrollIntoView({ behavior: "smooth" })
+                }
+              >
+                {d.hero.secondaryCta}
+              </button>
             </div>
-            <button
-              type="button"
-              className="landing-hero-secondary"
-              onClick={() =>
-                document.getElementById("enfoque")?.scrollIntoView({ behavior: "smooth" })
-              }
-            >
-              {d.hero.secondaryCta}
-            </button>
           </div>
         </div>
       </section>
 
-      <section id="enfoque" className="landing-section scroll-mt-[100px]">
+      <section id="enfoque" className="landing-section">
         <div className="landing-container">
           <h2 className="font-title landing-section-title">{d.focus.title}</h2>
+          <p className="landing-section-subtitle">{d.focus.subtitle}</p>
           <div className="landing-features-grid">
             {d.focus.items.map((item) => (
               <article key={item.title} className="landing-feature">
@@ -83,9 +81,10 @@ export function LandingPage({ locale, d }: Props) {
         </div>
       </section>
 
-      <section id="precios" className="landing-section landing-section--muted scroll-mt-[100px]">
+      <section id="precios" className="landing-section landing-section--muted">
         <div className="landing-container">
           <h2 className="font-title landing-section-title">{d.pricing.title}</h2>
+          <p className="landing-pricing-subtitle">{d.pricing.subtitle}</p>
           <div className="landing-pricing-grid">
             {d.pricing.plans.map((plan) => (
               <article
@@ -97,6 +96,9 @@ export function LandingPage({ locale, d }: Props) {
                   <span className="font-title">{plan.price}</span>
                   <span className="landing-price-period">{plan.period}</span>
                 </p>
+                {plan.note ? (
+                  <p className="landing-price-note">{plan.note}</p>
+                ) : null}
                 <ul className="landing-price-features">
                   {plan.features.map((f) => (
                     <li key={f}>
@@ -116,7 +118,9 @@ export function LandingPage({ locale, d }: Props) {
         </div>
       </section>
 
-      <footer id="contacto" className="landing-footer scroll-mt-[100px]">
+      <LandingContact d={d} />
+
+      <footer className="landing-footer">
         <div className="landing-container landing-footer-grid">
           <div className="landing-footer-brand">
             <Image
@@ -136,17 +140,6 @@ export function LandingPage({ locale, d }: Props) {
           </div>
 
           <div>
-            <h4 className="landing-footer-heading">{d.footer.quickLinks}</h4>
-            <ul className="landing-footer-list">
-              {d.footer.links.map((l) => (
-                <li key={l.label}>
-                  <a href={l.href}>{l.label}</a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
             <h4 className="landing-footer-heading">{d.footer.legal}</h4>
             <ul className="landing-footer-list">
               {d.footer.legalLinks.map((l) => (
@@ -155,35 +148,6 @@ export function LandingPage({ locale, d }: Props) {
                 </li>
               ))}
             </ul>
-          </div>
-
-          <div>
-            <h4 className="landing-footer-heading">{d.footer.follow}</h4>
-            <div className="landing-footer-social" aria-label={d.footer.follow}>
-              {["𝕏", "f", "◎", "in"].map((s) => (
-                <span key={s} className="landing-footer-social-dot">
-                  {s}
-                </span>
-              ))}
-            </div>
-            <h4 className="landing-footer-heading mt-8">{d.footer.newsletter}</h4>
-            <form
-              className="landing-newsletter"
-              onSubmit={(e) => {
-                e.preventDefault();
-              }}
-            >
-              <input
-                type="email"
-                name="email"
-                placeholder={d.footer.newsletterPlaceholder}
-                className="landing-newsletter-input"
-                aria-label={d.footer.newsletterPlaceholder}
-              />
-              <button type="submit" className="landing-newsletter-btn">
-                {d.footer.newsletterCta}
-              </button>
-            </form>
           </div>
         </div>
 

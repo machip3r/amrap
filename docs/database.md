@@ -1,0 +1,315 @@
+# AMRAP — Database overview
+
+English reference for the Postgres schema (Supabase). Source of truth: migrations under `supabase/migrations/`.
+
+| Migration | Purpose |
+| --------- | ------- |
+| `001_initial.sql` | Full MVP schema, RLS, RPCs |
+| `002_onboarding.sql` | Onboarding columns / RPC refresh + org select policy (upgrade path) |
+
+**Rule:** never edit an applied migration. Append `003_…`, `004_…`, etc.
+
+Auth lives in Supabase **`auth.users`**. App tables are in **`public`**.
+
+---
+
+## Mental model
+
+```
+auth.users ──────────────────────────────┐
+                                         │
+persons (global identity + QR) ◄─────────┤ optional user_id
+                                         │
+organizations (billing account) ◄────────┘ created_by
+ └── gyms
+      ├── owner_user_id (exactly one OWNER via gym_roles)
+      ├── branches
+      ├── gym_roles (OWNER | STAFF | TRAINER per user)
+      ├── branch_assignments (staff ↔ branch, same gym)
+      ├── plans (gym-wide or branch-scoped)
+      ├── memberships → persons
+      ├── payments → memberships
+      ├── check_ins → memberships + persons
+      └── feedback_messages
+platform_admins → auth.users
+```
+
+| Boundary | Table | Meaning |
+| -------- | ----- | ------- |
+| Billing | `organizations` | Pays AMRAP; one invoice per org |
+| Operations | `gyms` | Brand/unit; one owner |
+| Place | `branches` | Physical site |
+| Identity | `persons` | One human; one `qr_code` platform-wide |
+| Access to ops | `gym_roles` | Contextual role at a gym |
+| Access to train | `memberships` | Person ↔ gym (unique pair) |
+
+**Users are global; roles and memberships are contextual.** The same `auth.users` row can own gym A, staff gym B, and be a member (via `persons`) at gym C.
+
+---
+
+## Tables
+
+### `persons`
+
+Platform-wide person profile. May exist **without** `user_id` (staff-created member profile until they claim an account).
+
+| Column | Notes |
+| ------ | ----- |
+| `id` | PK |
+| `user_id` | Unique FK → `auth.users`, nullable, `on delete set null` |
+| `full_name` | Required |
+| `email`, `phone` | Optional; partial indexes when present |
+| `qr_code` | **Unique** credential; default random UUID text |
+| `created_at`, `updated_at` | |
+
+Indexes: `user_id`, `email`, `phone`, `qr_code`.
+
+---
+
+### `organizations`
+
+Billing account for AMRAP.
+
+| Column | Notes |
+| ------ | ----- |
+| `name` | Display name |
+| `plan_tier` | `FREEMIUM` \| `STARTER` \| `GROWTH` \| `PRO` (default Freemium) |
+| `created_by` | Signup user |
+| `pending_as_provisional` | Signup/onboarding: acting as provisional owner |
+| `onboarding_plans_done` | Step “plans” finished or skipped |
+| `onboarding_completed_at` | Null until onboarding done; app guards on this |
+| `deleted_at` | Soft delete / retention window |
+
+---
+
+### `gyms`
+
+| Column | Notes |
+| ------ | ----- |
+| `organization_id` | Cascade delete with org |
+| `name` | |
+| `owner_user_id` | Convenience pointer; authoritative OWNER is `gym_roles` |
+| `deleted_at` | Soft delete |
+
+---
+
+### `branches`
+
+| Column | Notes |
+| ------ | ----- |
+| `gym_id` | Cascade |
+| `name` | |
+
+---
+
+### `gym_roles`
+
+Staff / owner / trainer at a gym. **One row per `(gym_id, user_id)`.**
+
+| Column | Notes |
+| ------ | ----- |
+| `role` | `OWNER` \| `STAFF` \| `TRAINER` |
+| `is_provisional_owner` | Full owner powers until real owner accepts |
+| `permissions` | `jsonb` for granular grants (default `{}`) |
+
+Constraints:
+
+- Unique index: at most **one** `OWNER` per gym.
+- Unique index: at most **one** provisional owner per gym.
+
+---
+
+### `branch_assignments`
+
+Links a user to a branch. Trigger `enforce_branch_assignment_same_gym` requires an existing `gym_roles` row for that branch’s gym.
+
+---
+
+### `plans`
+
+Membership products sold by the gym.
+
+| Column | Notes |
+| ------ | ----- |
+| `gym_id` | Required |
+| `branch_id` | Optional; null = gym-wide |
+| `name`, `price`, `duration_days` | `price >= 0`, `duration_days > 0` |
+
+Freemium **product** limit (max 2 plans) is enforced in app / future checks, not a DB check today.
+
+---
+
+### `memberships`
+
+Person trains at a gym. **Unique `(gym_id, person_id)`.**
+
+| Column | Notes |
+| ------ | ----- |
+| `branch_id` | Optional home branch |
+| `plan_id` | Set null if plan deleted |
+| `status` | `ACTIVE` \| `INACTIVE` \| `EXPIRED` \| `CANCELLED` |
+| `expires_at` | Required |
+
+---
+
+### `payments`
+
+Ops-recorded payments (cash, transfer, etc.). Gateway / recurring billing is a later layer.
+
+| Column | Notes |
+| ------ | ----- |
+| `gym_id`, `membership_id` | |
+| `amount`, `method` | `CASH` \| `TRANSFER` \| `CARD` \| `OTHER` |
+| `recorded_by` | Staff user |
+
+---
+
+### `check_ins`
+
+| Column | Notes |
+| ------ | ----- |
+| `gym_id`, `branch_id` | |
+| `membership_id`, `person_id` | Denormalized person for session queries |
+| `source` | `QR` \| `MANUAL` \| `KIOSK` |
+| `checked_in_at` | |
+| `session_expires_at` | Typically `now() + 4 hours` |
+| `recorded_by` | Staff who recorded it |
+
+Anti-abuse is enforced in `record_check_in`: no new check-in at gym B while person has an **active session** (`session_expires_at > now()`) at another gym.
+
+---
+
+### `feedback_messages`
+
+Internal inbox (MVP: text only).
+
+| Column | Notes |
+| ------ | ----- |
+| `gym_id` | |
+| `body` | 1–4000 chars |
+| `author_person_id` | Optional |
+
+---
+
+### `platform_admins`
+
+AMRAP operator seats (not gym staff).
+
+| Column | Notes |
+| ------ | ----- |
+| `user_id` | PK → `auth.users` |
+| `role` | `OWNER` \| `SUPPORT` \| `SALES` \| `BILLING` |
+
+---
+
+## Enumerations (check constraints)
+
+| Domain | Values |
+| ------ | ------ |
+| Org plan | `FREEMIUM`, `STARTER`, `GROWTH`, `PRO` |
+| Gym role | `OWNER`, `STAFF`, `TRAINER` |
+| Membership status | `ACTIVE`, `INACTIVE`, `EXPIRED`, `CANCELLED` |
+| Payment method | `CASH`, `TRANSFER`, `CARD`, `OTHER` |
+| Check-in source | `QR`, `MANUAL`, `KIOSK` |
+| Platform admin role | `OWNER`, `SUPPORT`, `SALES`, `BILLING` |
+
+---
+
+## RPC / functions (security definer)
+
+Granted to `authenticated` unless noted. Prefer these over raw inserts for signup, onboarding, check-in, and member create.
+
+### Auth helpers (RLS)
+
+| Function | Returns | Use |
+| -------- | ------- | --- |
+| `is_platform_admin()` | boolean | Current user in `platform_admins` |
+| `user_gym_ids()` | set of uuid | Gyms where user has any `gym_roles` row |
+| `has_gym_role(gym_id, roles[])` | boolean | Role match; provisional counts as allowed |
+| `can_manage_gym(gym_id)` | boolean | OWNER or STAFF (or provisional via `has_gym_role`) |
+
+### Signup & onboarding
+
+| Function | Behavior |
+| -------- | -------- |
+| `register_organization_account(name)` | Creates Freemium org + ensures `persons` row for caller; idempotent if org already exists for `created_by` |
+| `onboarding_save_profile(full_name, as_provisional?)` | Updates person name; sets org `pending_as_provisional` |
+| `onboarding_create_gym(name, branch_name?)` | First gym + optional branch + `gym_roles` OWNER (or provisional) |
+| `onboarding_mark_plans_done()` | Sets `onboarding_plans_done` |
+| `onboarding_complete()` | Sets `onboarding_completed_at` |
+
+Legacy wrappers may exist (`register_organization`, `register_tenant`) for older call sites; prefer the onboarding path above.
+
+### Operations
+
+| Function | Behavior |
+| -------- | -------- |
+| `record_check_in(gym_id, qr?, membership_id?, branch_id?, source?)` | Validates membership ACTIVE + not expired; blocks cross-gym active session; inserts check-in with 4h `session_expires_at` |
+| `create_gym_membership(gym_id, full_name, expires_at, …)` | Creates **new** `persons` row + membership (staff); does not yet merge/claim existing persons by email |
+
+### Triggers
+
+| Trigger | Table | Rule |
+| ------- | ----- | ---- |
+| `branch_assignments_same_gym` | `branch_assignments` | User must have `gym_roles` on that branch’s gym |
+
+---
+
+## Row Level Security (RLS)
+
+All listed `public` tables have RLS enabled. Pattern summary:
+
+| Table | Typical access |
+| ----- | -------------- |
+| `persons` | Self (`user_id`); staff at gyms where person has membership; platform admin |
+| `organizations` | Creator / members of org’s gyms / platform admin |
+| `gyms` / `branches` / `plans` / `payments` | Users with roles on that gym; platform admin |
+| `gym_roles` | Select peers at same gyms; manage if can manage gym / owner |
+| `memberships` / `check_ins` | Gym managers; member may see own via person link (per policies) |
+| `feedback_messages` | Select for gym managers; insert rules for authors |
+| `platform_admins` | Select self / admins only |
+
+Exact predicates live in `001_initial.sql` (and `002` for org select). Always re-read policies when changing access rules.
+
+**Service role** (`lib/supabase/admin.ts`) bypasses RLS — server-only, never expose to the client.
+
+---
+
+## Soft delete & retention
+
+- `organizations.deleted_at` / `gyms.deleted_at` support scheduled deletion (product: ~30 days + optional CSV export). Hard purge is application/ops work, not fully automated in MVP SQL.
+- Cascade FKs remove children when a gym/org row is **hard**-deleted.
+
+---
+
+## What is *not* in the schema yet (by design)
+
+Expect future migrations for:
+
+- Ownership transfer invites / acceptance audit
+- Granular permission templates beyond raw `permissions` jsonb
+- Person “claim” / merge when a profile gains `user_id`
+- Freemium numeric caps as DB constraints or trigger checks
+- Class/events, announcements, penalties, routines, community
+- Org billing (Stripe/MP subscriptions), member payment gateway accounts
+- Impersonation audit log
+- White-label / branding assets
+- Hardware device registry
+
+---
+
+## Local / remote apply
+
+```bash
+# Local Supabase
+supabase db reset   # applies 001 then 002 on a clean DB
+```
+
+Or run `001_initial.sql` then `002_onboarding.sql` in the SQL editor on a **fresh** project. Do not re-apply `001` on a DB that already had an older incompatible `001`.
+
+---
+
+## Related docs
+
+- Product / business rules: [`README.md`](../README.md)
+- UI flows by role: [`docs/product-flows.md`](product-flows.md)

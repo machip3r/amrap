@@ -1,6 +1,6 @@
 import { redirect, notFound } from "next/navigation";
-import { getProfile } from "@/lib/auth/session";
-import { can } from "@/lib/auth/permissions";
+import { getWorkspace } from "@/lib/auth/session";
+import { canInWorkspace } from "@/lib/auth/permissions";
 import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -16,9 +16,9 @@ export default async function CheckinPage({
   if (!isLocale(raw)) notFound();
   const locale = raw as Locale;
 
-  const profile = await getProfile();
-  if (!profile) redirect(`/${locale}/login`);
-  if (!can(profile.role, "checkin")) {
+  const workspace = await getWorkspace();
+  if (!workspace) redirect(`/${locale}/login`);
+  if (!canInWorkspace(workspace, "checkin")) {
     return (
       <p className="text-[var(--color-muted)]">{getDictionary(locale).common.forbidden}</p>
     );
@@ -41,6 +41,7 @@ export default async function CheckinPage({
           resultOk: d.checkin.resultOk,
           resultDenied: d.checkin.resultDenied,
           memberNotFound: d.checkin.memberNotFound,
+          qrInUse: d.checkin.qrInUse,
           cameraError: d.checkin.cameraError,
           forbidden: d.common.forbidden,
           saveFailed: d.common.saveFailed,

@@ -15,7 +15,9 @@ Follow the full project standards in **`AGENTS.md`** (repo root) for every chang
 - **Reuse / extend shared components** — one Input, Button, form field pattern, etc.; extract on the second copy; no one-off duplicates
 - **i18n** — all user-facing strings in `es` + `en` dictionaries in the same change; no hardcoded UI copy
 - **Folder structure** — `app/[locale]/(marketing|auth|app)`, `components/`, `lib/`, `types/`, `supabase/migrations/`; colocate `actions.ts` with routes
-- **Validate inputs on the server**; prefer schemas/DTOs; sanitize outputs (no unsafe HTML from user data)
+- **Product docs** — if business rules or general AMRAP behavior change, update `README.md` in the same change
+- **Database migrations** — every DB change is a **new** file in `supabase/migrations/`; never edit an already-created migration; update `docs/database.md` in the same change
+- **Validate inputs on the server** with Zod schemas that include **regex + length limits** (`lib/validation/schemas.ts`); map failures to **per-field UI errors** via `zodFieldErrors` + `FormField` `error` (dictionary copy); sanitize outputs (no unsafe HTML from user data)
 - **Backend on the server** — Server Actions / server components + `lib/supabase/server.ts`; REST route handlers when needed; no GraphQL unless asked; safe, dictionary-based errors
 - **Design system + responsive + a11y** — CSS variables, labels, focus, icon `aria-label`s
 - **Tenant/RLS/secrets** — session-scoped data; service role server-only; never expose service keys

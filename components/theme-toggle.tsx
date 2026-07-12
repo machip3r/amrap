@@ -22,8 +22,8 @@ export function ThemeToggle({ className = "", label }: Props) {
       className={`relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)] ${className}`}
       aria-label={label}
     >
-      <Sun className="h-5 w-5 scale-100 transition-all dark:scale-0 dark:opacity-0" aria-hidden />
-      <Moon className="absolute h-5 w-5 scale-0 opacity-0 transition-all dark:scale-100 dark:opacity-100" aria-hidden />
+      <Moon className="h-5 w-5 scale-100 transition-all dark:scale-0 dark:opacity-0" aria-hidden />
+      <Sun className="absolute h-5 w-5 scale-0 opacity-0 transition-all dark:scale-100 dark:opacity-100" aria-hidden />
     </button>
   );
 }

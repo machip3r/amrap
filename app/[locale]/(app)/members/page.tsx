@@ -1,17 +1,16 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getProfile } from "@/lib/auth/session";
-import { can } from "@/lib/auth/permissions";
+import { getWorkspace } from "@/lib/auth/session";
+import { canInWorkspace } from "@/lib/auth/permissions";
 import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { memberStatusFromExpires } from "@/lib/members/dates";
-import { notFound } from "next/navigation";
-import { createMember } from "./actions";
-import { FormField } from "@/components/ui/form-field";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { CreateMemberForm } from "./create-member-form";
+import {
+  MEMBERSHIP_LIST_SELECT,
+  mapMembershipRow,
+} from "@/lib/members/queries";
 
 export default async function MembersPage({
   params,
@@ -25,9 +24,9 @@ export default async function MembersPage({
   const locale = raw as Locale;
   const sp = await searchParams;
 
-  const profile = await getProfile();
-  if (!profile) redirect(`/${locale}/login`);
-  if (!can(profile.role, "manage_members")) {
+  const workspace = await getWorkspace();
+  if (!workspace) redirect(`/${locale}/login`);
+  if (!canInWorkspace(workspace, "manage_members")) {
     return (
       <p className="text-[var(--color-muted)]">{getDictionary(locale).common.forbidden}</p>
     );
@@ -35,16 +34,15 @@ export default async function MembersPage({
 
   const d = getDictionary(locale);
   const supabase = await createClient();
-  const { data: members } = await supabase
-    .from("members")
-    .select("id, name, phone, status, membership_expires_at")
-    .eq("tenant_id", profile.tenant_id)
+  const { data: rows } = await supabase
+    .from("memberships")
+    .select(MEMBERSHIP_LIST_SELECT)
+    .eq("gym_id", workspace.gymId)
     .order("created_at", { ascending: false });
 
-  const rows = (members ?? []).map((m) => ({
-    ...m,
-    liveStatus: memberStatusFromExpires(m.membership_expires_at),
-  }));
+  const members = (rows ?? [])
+    .map((r) => mapMembershipRow(r as Parameters<typeof mapMembershipRow>[0]))
+    .filter((m): m is NonNullable<typeof m> => m != null);
 
   return (
     <div className="space-y-8">
@@ -58,26 +56,7 @@ export default async function MembersPage({
 
       <section className="max-w-md space-y-3 rounded border border-[var(--color-muted)]/30 bg-[var(--color-surface)]/40 p-4">
         <h2 className="text-lg font-medium">{d.members.createTitle}</h2>
-        <form action={createMember} className="flex flex-col gap-2 text-sm">
-          <input type="hidden" name="locale" value={locale} />
-          <FormField label={d.members.name}>
-            <Input required name="name" />
-          </FormField>
-          <FormField label={d.members.phone}>
-            <Input name="phone" />
-          </FormField>
-          <FormField label={d.members.membershipExpires}>
-            <Input
-              required
-              type="datetime-local"
-              name="membership_expires_at"
-              defaultValue={toLocalInput(new Date())}
-            />
-          </FormField>
-          <Button type="submit" variant="appPrimary">
-            {d.members.save}
-          </Button>
-        </form>
+        <CreateMemberForm locale={locale} defaultExpires={toLocalInput(new Date())} />
       </section>
 
       <section>
@@ -92,19 +71,19 @@ export default async function MembersPage({
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 && (
+            {members.length === 0 && (
               <tr>
                 <td colSpan={5} className="py-6 text-[var(--color-muted)]">
                   {d.members.noMembers}
                 </td>
               </tr>
             )}
-            {rows.map((m) => (
+            {members.map((m) => (
               <tr key={m.id} className="border-b border-[var(--color-muted)]/20">
                 <td className="py-2 pr-4">{m.name}</td>
                 <td className="py-2 pr-4">{m.phone ?? "—"}</td>
                 <td className="py-2 pr-4">
-                  {m.liveStatus === "active" ? d.members.active : d.members.expired}
+                  {m.status === "active" ? d.members.active : d.members.expired}
                 </td>
                 <td className="py-2 pr-4">{formatDate(m.membership_expires_at, locale)}</td>
                 <td className="py-2">

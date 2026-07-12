@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
+import { Menu, X } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import type { LandingDictionary, LandingSectionId } from "@/lib/i18n/landing-dictionaries";
 import { sectionIdForNav } from "@/lib/i18n/landing-dictionaries";
@@ -24,8 +25,10 @@ type Props = {
 };
 
 export function LandingNav({ locale, d, labels }: Props) {
-  const [active, setActive] = useState<LandingSectionId>("inicio");
+  const [active, setActive] = useState<LandingSectionId>("start");
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuId = useId();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -35,75 +38,168 @@ export function LandingNav({ locale, d, labels }: Props) {
   }, []);
 
   useEffect(() => {
-    const elements = navItems
+    const sections = navItems
       .map((n) => document.getElementById(n.section))
       .filter((el): el is HTMLElement => el != null);
 
-    if (elements.length === 0) return;
+    if (sections.length === 0) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        if (visible[0]?.target.id) {
-          setActive(visible[0].target.id as LandingSectionId);
+    const lastId = sections[sections.length - 1]!.id as LandingSectionId;
+
+    function updateActive() {
+      const scrollBottom = window.scrollY + window.innerHeight;
+      const docHeight = document.documentElement.scrollHeight;
+
+      if (scrollBottom >= docHeight - 120) {
+        setActive(lastId);
+        return;
+      }
+
+      const marker = window.innerHeight * 0.32;
+      let current: LandingSectionId = sections[0]!.id as LandingSectionId;
+
+      for (const el of sections) {
+        if (el.getBoundingClientRect().top <= marker) {
+          current = el.id as LandingSectionId;
         }
-      },
-      { rootMargin: "-28% 0px -52% 0px", threshold: [0, 0.2, 0.4, 0.6] },
-    );
+      }
 
-    elements.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
+      setActive(current);
+    }
+
+    updateActive();
+    window.addEventListener("scroll", updateActive, { passive: true });
+    window.addEventListener("resize", updateActive);
+    return () => {
+      window.removeEventListener("scroll", updateActive);
+      window.removeEventListener("resize", updateActive);
+    };
   }, []);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setMenuOpen(false);
+    }
+
+    function onResize() {
+      if (window.matchMedia("(min-width: 1024px)").matches) {
+        setMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("resize", onResize);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", onResize);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [menuOpen]);
+
   function scrollTo(id: string) {
+    setActive(id as LandingSectionId);
+    setMenuOpen(false);
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   }
 
   const prefix = `/${locale}`;
+  const menuLabel = menuOpen ? d.nav.closeMenu : d.nav.openMenu;
 
   return (
-    <header
-      className={`landing-nav fixed inset-x-0 top-0 z-50 transition-[min-height,padding,background,box-shadow,border-color] duration-500 ease-out ${
-        scrolled ? "landing-nav--scrolled" : ""
-      }`}
-    >
-      <div className="landing-nav-inner mx-auto flex h-full max-w-7xl items-center justify-between gap-6 px-6 sm:px-8 lg:px-10">
-        <Link href={prefix} className="flex shrink-0 items-center">
-          <AmrapLogo priority className={scrolled ? "h-8 w-auto" : "h-10 w-auto transition-all duration-500"} />
-        </Link>
-
-        <nav className="landing-nav-links flex items-center overflow-x-auto max-md:gap-1 max-md:text-xs md:overflow-visible" aria-label={d.nav.mainAria}>
-          {navItems.map(({ key, section }) => {
-            const isActive = active === section;
-            return (
-              <button
-                key={section}
-                type="button"
-                onClick={() => scrollTo(section)}
-                className={`landing-nav-pill shrink-0 px-3 py-2 text-sm font-medium transition-all duration-300 sm:px-5 sm:py-2.5 ${
-                  isActive
-                    ? "landing-nav-pill--active"
-                    : "text-[var(--landing-ink)] hover:bg-[var(--landing-ink)]/5"
-                }`}
-              >
-                {labels[key]}
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="flex items-center gap-2 sm:gap-3">
-          <ThemeToggle
-            label={d.nav.toggleTheme}
-            className="!text-[var(--landing-ink)] hover:!bg-[var(--landing-ink)]/5"
-          />
-          <Link href={`${prefix}/login`} className="landing-nav-login">
-            {d.nav.login}
+    <>
+      <header
+        className={`landing-nav fixed z-50 ${scrolled ? "landing-nav--scrolled" : "landing-nav--top"} ${
+          menuOpen ? "landing-nav--menu-open" : ""
+        }`}
+      >
+        <div className="landing-nav-bar">
+          <Link
+            href={`${prefix}#start`}
+            className="landing-nav-brand"
+            onClick={(e) => {
+              e.preventDefault();
+              setMenuOpen(false);
+              setActive("start");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          >
+            <AmrapLogo priority className="landing-nav-logo w-auto" />
           </Link>
+
+          <nav className="landing-nav-desktop" aria-label={d.nav.mainAria}>
+            {navItems.map(({ key, section }) => {
+              const isActive = active === section;
+              return (
+                <button
+                  key={section}
+                  type="button"
+                  onClick={() => scrollTo(section)}
+                  className={`landing-nav-pill ${
+                    isActive ? "landing-nav-pill--active" : ""
+                  }`}
+                >
+                  {labels[key]}
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className="landing-nav-actions">
+            <Link
+              href={`${prefix}/login`}
+              className="landing-nav-login"
+              onClick={() => setMenuOpen(false)}
+            >
+              {d.nav.login}
+            </Link>
+            <button
+              type="button"
+              className="landing-nav-burger"
+              aria-expanded={menuOpen}
+              aria-controls={menuId}
+              aria-label={menuLabel}
+              onClick={() => setMenuOpen((o) => !o)}
+            >
+              {menuOpen ? (
+                <X className="h-5 w-5" aria-hidden />
+              ) : (
+                <Menu className="h-5 w-5" aria-hidden />
+              )}
+            </button>
+          </div>
         </div>
+
+        {menuOpen ? (
+          <div id={menuId} className="landing-nav-sheet">
+            <nav className="landing-nav-sheet-nav" aria-label={d.nav.mainAria}>
+              {navItems.map(({ key, section }) => {
+                const isActive = active === section;
+                return (
+                  <button
+                    key={section}
+                    type="button"
+                    onClick={() => scrollTo(section)}
+                    className={`landing-nav-sheet-link ${
+                      isActive ? "landing-nav-sheet-link--active" : ""
+                    }`}
+                  >
+                    {labels[key]}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+        ) : null}
+      </header>
+
+      <div className="landing-theme-fab-wrap">
+        <ThemeToggle label={d.nav.toggleTheme} className="landing-theme-fab-btn" />
       </div>
-    </header>
+    </>
   );
 }

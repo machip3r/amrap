@@ -3,16 +3,18 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getProfile } from "@/lib/auth/session";
-import { can } from "@/lib/auth/permissions";
+import { getWorkspace } from "@/lib/auth/session";
+import { canInWorkspace } from "@/lib/auth/permissions";
 import {
   amountSchema,
   durationDaysSchema,
+  entityNameSchema,
   formString,
   localeSchema,
-  nonEmptyString,
   uuidSchema,
 } from "@/lib/validation/schemas";
+import { zodFieldErrors } from "@/lib/validation/field-errors";
+import { getDictionary } from "@/lib/i18n/dictionaries";
 import { z } from "zod";
 
 function localeFromForm(formData: FormData) {
@@ -23,16 +25,25 @@ function localeFromForm(formData: FormData) {
 
 const createPlanSchema = z.object({
   locale: localeSchema,
-  name: nonEmptyString(120),
+  name: entityNameSchema,
   price: amountSchema,
   duration_days: durationDaysSchema,
 });
 
-export async function createPlan(formData: FormData): Promise<void> {
+export type CreatePlanState = {
+  error?: string;
+  fieldErrors?: Record<string, string>;
+} | null;
+
+export async function createPlan(
+  _prev: CreatePlanState,
+  formData: FormData,
+): Promise<CreatePlanState> {
   const locale = localeFromForm(formData);
-  const profile = await getProfile();
-  if (!profile || !can(profile.role, "manage_plans")) {
-    redirect(`/${locale}/plans?error=1`);
+  const d = getDictionary(locale);
+  const workspace = await getWorkspace();
+  if (!workspace || !canInWorkspace(workspace, "manage_plans")) {
+    return { error: d.common.forbidden };
   }
 
   const parsed = createPlanSchema.safeParse({
@@ -41,11 +52,17 @@ export async function createPlan(formData: FormData): Promise<void> {
     price: formString(formData, "price"),
     duration_days: formString(formData, "duration_days"),
   });
-  if (!parsed.success) redirect(`/${locale}/plans?error=1`);
+  if (!parsed.success) {
+    return {
+      fieldErrors: zodFieldErrors(parsed.error, d.validation, {
+        name: "entityName",
+      }),
+    };
+  }
 
   const supabase = await createClient();
   const { error } = await supabase.from("plans").insert({
-    tenant_id: profile.tenant_id,
+    gym_id: workspace.gymId,
     name: parsed.data.name,
     price: parsed.data.price,
     duration_days: parsed.data.duration_days,
@@ -53,16 +70,17 @@ export async function createPlan(formData: FormData): Promise<void> {
 
   if (error) {
     console.error("createPlan", error.message);
-    redirect(`/${locale}/plans?error=1`);
+    return { error: d.plans.error };
   }
 
   revalidatePath(`/${locale}/plans`, "page");
+  return null;
 }
 
 export async function deletePlan(formData: FormData): Promise<void> {
   const locale = localeFromForm(formData);
-  const profile = await getProfile();
-  if (!profile || !can(profile.role, "manage_plans")) {
+  const workspace = await getWorkspace();
+  if (!workspace || !canInWorkspace(workspace, "manage_plans")) {
     redirect(`/${locale}/plans?error=1`);
   }
 
@@ -74,7 +92,7 @@ export async function deletePlan(formData: FormData): Promise<void> {
     .from("plans")
     .delete()
     .eq("id", idParsed.data)
-    .eq("tenant_id", profile.tenant_id);
+    .eq("gym_id", workspace.gymId);
 
   if (error) {
     console.error("deletePlan", error.message);

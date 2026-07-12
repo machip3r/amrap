@@ -1,16 +1,16 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getProfile } from "@/lib/auth/session";
-import { can } from "@/lib/auth/permissions";
+import { getWorkspace } from "@/lib/auth/session";
+import { canInWorkspace } from "@/lib/auth/permissions";
 import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { createPayment } from "./actions";
 import { paymentMethodFromDb } from "@/lib/validation/db-enums";
-import { FormField } from "@/components/ui/form-field";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+import { CreatePaymentForm } from "./create-payment-form";
+import {
+  MEMBERSHIP_LIST_SELECT,
+  mapMembershipRow,
+} from "@/lib/members/queries";
 
 export default async function PaymentsPage({
   params,
@@ -24,9 +24,9 @@ export default async function PaymentsPage({
   const locale = raw as Locale;
   const sp = await searchParams;
 
-  const profile = await getProfile();
-  if (!profile) redirect(`/${locale}/login`);
-  if (!can(profile.role, "record_payment")) {
+  const workspace = await getWorkspace();
+  if (!workspace) redirect(`/${locale}/login`);
+  if (!canInWorkspace(workspace, "record_payment")) {
     return (
       <p className="text-[var(--color-muted)]">{getDictionary(locale).common.forbidden}</p>
     );
@@ -35,20 +35,25 @@ export default async function PaymentsPage({
   const d = getDictionary(locale);
   const supabase = await createClient();
 
-  const { data: members } = await supabase
-    .from("members")
-    .select("id, name")
-    .eq("tenant_id", profile.tenant_id)
-    .order("name", { ascending: true });
+  const { data: membershipRows } = await supabase
+    .from("memberships")
+    .select(MEMBERSHIP_LIST_SELECT)
+    .eq("gym_id", workspace.gymId)
+    .order("created_at", { ascending: false });
+
+  const members = (membershipRows ?? [])
+    .map((r) => mapMembershipRow(r as Parameters<typeof mapMembershipRow>[0]))
+    .filter((m): m is NonNullable<typeof m> => m != null)
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const { data: payments } = await supabase
     .from("payments")
-    .select("id, amount, method, created_at, member_id")
-    .eq("tenant_id", profile.tenant_id)
+    .select("id, amount, method, created_at, membership_id")
+    .eq("gym_id", workspace.gymId)
     .order("created_at", { ascending: false })
     .limit(100);
 
-  const memberName = new Map((members ?? []).map((m) => [m.id, m.name]));
+  const memberName = new Map(members.map((m) => [m.id, m.name]));
 
   function methodLabel(rawMethod: string) {
     const m = paymentMethodFromDb(rawMethod);
@@ -67,37 +72,13 @@ export default async function PaymentsPage({
 
       <section className="max-w-md space-y-3 rounded border border-[var(--color-muted)]/30 bg-[var(--color-surface)]/40 p-4">
         <h2 className="text-lg font-medium">{d.payments.newPayment}</h2>
-        {(members ?? []).length === 0 ? (
+        {members.length === 0 ? (
           <p className="text-[var(--color-muted)]">{d.members.noMembers}</p>
         ) : (
-          <form action={createPayment} className="flex flex-col gap-2 text-sm">
-            <input type="hidden" name="locale" value={locale} />
-            <FormField label={d.payments.member}>
-              <Select
-                required
-                name="member_id"
-                defaultValue={(members ?? [])[0]?.id}
-              >
-                {(members ?? []).map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </Select>
-            </FormField>
-            <FormField label={d.payments.amount}>
-              <Input required name="amount" type="number" min={0} step="0.01" />
-            </FormField>
-            <FormField label={d.payments.method}>
-              <Select name="method" defaultValue="cash">
-                <option value="cash">{d.members.cash}</option>
-                <option value="transfer">{d.members.transfer}</option>
-              </Select>
-            </FormField>
-            <Button type="submit" variant="appPrimary">
-              {d.payments.submit}
-            </Button>
-          </form>
+          <CreatePaymentForm
+            locale={locale}
+            members={members.map((m) => ({ id: m.id, name: m.name }))}
+          />
         )}
       </section>
 
@@ -123,7 +104,9 @@ export default async function PaymentsPage({
               <td className="py-2 pr-4">
                 {new Date(p.created_at).toLocaleString(locale)}
               </td>
-              <td className="py-2 pr-4">{memberName.get(p.member_id) ?? p.member_id}</td>
+              <td className="py-2 pr-4">
+                {memberName.get(p.membership_id) ?? p.membership_id}
+              </td>
               <td className="py-2 pr-4">{p.amount}</td>
               <td className="py-2 pr-4">{methodLabel(p.method)}</td>
             </tr>

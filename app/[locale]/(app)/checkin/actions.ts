@@ -2,9 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getProfile } from "@/lib/auth/session";
-import { can } from "@/lib/auth/permissions";
-import { memberStatusFromExpires } from "@/lib/members/dates";
+import { getWorkspace } from "@/lib/auth/session";
+import { canInWorkspace } from "@/lib/auth/permissions";
+import { checkInCodeSchema } from "@/lib/validation/schemas";
 
 export type CheckinResult =
   | { status: "ok" }
@@ -12,57 +12,62 @@ export type CheckinResult =
   | { status: "not_found" }
   | { status: "forbidden" }
   | { status: "empty" }
+  | { status: "busy" }
   | { status: "error" };
 
 export async function runCheckIn(raw: string): Promise<CheckinResult> {
-  const trimmed = raw.trim();
-  if (!trimmed) return { status: "empty" };
-  if (trimmed.length > 200) return { status: "empty" };
+  const parsed = checkInCodeSchema.safeParse(raw);
+  if (!parsed.success) return { status: "empty" };
+  const trimmed = parsed.data;
 
-  const profile = await getProfile();
-  if (!profile || !can(profile.role, "checkin")) {
+  const workspace = await getWorkspace();
+  if (!workspace || !canInWorkspace(workspace, "checkin")) {
     return { status: "forbidden" };
   }
 
   const supabase = await createClient();
 
-  const { data: byQr } = await supabase
-    .from("members")
-    .select("id, membership_expires_at, tenant_id")
-    .eq("tenant_id", profile.tenant_id)
-    .eq("qr_code", trimmed)
-    .maybeSingle();
-
-  let member = byQr;
-  if (!member) {
-    const { data } = await supabase
-      .from("members")
-      .select("id, membership_expires_at, tenant_id")
-      .eq("tenant_id", profile.tenant_id)
-      .eq("id", trimmed)
-      .maybeSingle();
-    member = data;
-  }
-
-  if (!member) {
-    return { status: "not_found" };
-  }
-
-  const ok = memberStatusFromExpires(member.membership_expires_at) === "active";
-  if (!ok) {
-    return { status: "denied" };
-  }
-
-  const { error } = await supabase.from("check_ins").insert({
-    tenant_id: profile.tenant_id,
-    member_id: member.id,
+  const byQr = await supabase.rpc("record_check_in", {
+    p_gym_id: workspace.gymId,
+    p_qr_code: trimmed,
+    p_membership_id: null,
+    p_branch_id: null,
+    p_source: "QR",
   });
 
-  if (error) {
-    console.error("runCheckIn", error.message);
-    return { status: "error" };
+  if (!byQr.error && byQr.data) {
+    revalidatePath("/", "layout");
+    return { status: "ok" };
   }
 
-  revalidatePath("/", "layout");
-  return { status: "ok" };
+  const byMembership = await supabase.rpc("record_check_in", {
+    p_gym_id: workspace.gymId,
+    p_qr_code: null,
+    p_membership_id: trimmed,
+    p_branch_id: null,
+    p_source: "MANUAL",
+  });
+
+  if (!byMembership.error && byMembership.data) {
+    revalidatePath("/", "layout");
+    return { status: "ok" };
+  }
+
+  return mapCheckInError(
+    byMembership.error?.message ?? byQr.error?.message ?? "error",
+  );
+}
+
+function mapCheckInError(message: string): CheckinResult {
+  const m = message.toLowerCase();
+  if (m.includes("not found") || m.includes("invalid input syntax")) {
+    return { status: "not_found" };
+  }
+  if (m.includes("inactive") || m.includes("expired")) return { status: "denied" };
+  if (m.includes("already in use") || m.includes("another gym")) {
+    return { status: "busy" };
+  }
+  if (m.includes("not allowed")) return { status: "forbidden" };
+  console.error("runCheckIn", message);
+  return { status: "error" };
 }

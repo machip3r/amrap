@@ -16,54 +16,63 @@ function createServiceRoleClient() {
 }
 
 /**
- * Creates tenant + default branch + OWNER profile for a user id.
+ * Creates organization + person for a user id (no gym yet).
  * Used when signUp returns a user but no session (email confirmation flow).
  */
 export async function bootstrapTenantForUser(
   userId: string,
-  tenantName: string,
-  fullName: string | null,
+  organizationName: string,
+  _fullName: string | null = null,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  return bootstrapOrganizationAccount(userId, organizationName);
+}
+
+export async function bootstrapOrganizationAccount(
+  userId: string,
+  organizationName: string,
 ): Promise<{ ok: true } | { ok: false; message: string }> {
   const admin = createServiceRoleClient();
   if (!admin) {
     return { ok: false, message: "Missing SUPABASE_SERVICE_ROLE_KEY" };
   }
 
-  const { data: existing } = await admin
-    .from("profiles")
+  const { data: existingOrg } = await admin
+    .from("organizations")
     .select("id")
-    .eq("id", userId)
+    .eq("created_by", userId)
+    .is("deleted_at", null)
+    .limit(1)
     .maybeSingle();
 
-  if (existing) {
+  if (existingOrg) {
     return { ok: true };
   }
 
-  const { data: tenant, error: tErr } = await admin
-    .from("tenants")
-    .insert({ name: tenantName })
+  const { data: org, error: oErr } = await admin
+    .from("organizations")
+    .insert({
+      name: organizationName,
+      plan_tier: "FREEMIUM",
+      created_by: userId,
+    })
     .select("id")
     .single();
 
-  if (tErr || !tenant) {
-    return { ok: false, message: tErr?.message ?? "tenant insert failed" };
+  if (oErr || !org) {
+    return { ok: false, message: oErr?.message ?? "organization insert failed" };
   }
 
-  const { error: bErr } = await admin.from("branches").insert({
-    tenant_id: tenant.id,
-    name: "Principal",
-  });
+  const { data: authUser } = await admin.auth.admin.getUserById(userId);
+  const email = authUser.user?.email ?? null;
 
-  if (bErr) {
-    return { ok: false, message: bErr.message };
-  }
-
-  const { error: pErr } = await admin.from("profiles").insert({
-    id: userId,
-    tenant_id: tenant.id,
-    role: "OWNER",
-    full_name: fullName ?? "",
-  });
+  const { error: pErr } = await admin.from("persons").upsert(
+    {
+      user_id: userId,
+      full_name: "",
+      email,
+    },
+    { onConflict: "user_id" },
+  );
 
   if (pErr) {
     return { ok: false, message: pErr.message };

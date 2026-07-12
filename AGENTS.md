@@ -16,6 +16,8 @@ Do **not** run `pnpm run build` (or `next build`) on every change unless the use
 
 Multi-tenant gym membership admin (Next.js App Router, Supabase, Tailwind). Marketing at `/[locale]`; app under `/[locale]/dashboard`, etc. Locales: **`es`** (default) and **`en`**.
 
+- **Product / business docs:** [`README.md`](README.md) is the source of truth for AMRAP’s business hierarchy, roles, core product rules, pricing, and phases. If a change alters **business rules**, **product behavior**, **pricing**, **roles**, or **general how AMRAP works**, update `README.md` in the **same change** — do not leave product docs stale. UI flow details live in [`docs/product-flows.md`](docs/product-flows.md); schema details in [`docs/database.md`](docs/database.md).
+
 ---
 
 ## Folder structure (must follow)
@@ -43,6 +45,15 @@ supabase/migrations/ # SQL only — schema changes go here
 
 ---
 
+## Database migrations
+
+- Every schema / SQL change is a **new file** under `supabase/migrations/` (e.g. `003_…sql`, `004_…sql`).
+- **Never** edit an already-created migration that may have been applied — append a new migration instead.
+- Keep migrations SQL-only; name them descriptively after the change.
+- **Keep [`docs/database.md`](docs/database.md) in sync** with every migration and any other database change (tables, columns, constraints, RPCs, triggers, RLS policies, enums). Update that English doc in the **same change** as the SQL — do not leave schema docs stale.
+
+---
+
 ## Reuse components (no one-off duplicates)
 
 - **Never** recreate inputs, buttons, form shells, labels, error text, empty states, or similar if a shared component exists — **reuse or extend** it.
@@ -66,6 +77,14 @@ supabase/migrations/ # SQL only — schema changes go here
 - **Validate all inputs** at the server boundary (Server Actions / Route Handlers) before DB or Auth calls. Client checks are UX only — not security.
 - Prefer **Zod schemas** in `lib/validation/` (or explicit typed parsers shared with `types/`) — do not trust raw `FormData` / JSON shapes.
 - Treat domain shapes in `types/` as the contract; keep action payloads aligned with those DTOs.
+- **Every user-editable field** must have a **Zod rule** with **length limits** and an **allowed-character pattern (regex)** — reject unexpected / control characters early so they never reach Auth, DB, cookies, or mailto/URLs.
+  - Examples: email → lowercase + email regex + max 254; phone → digits and phone punctuation + max length; names → letters/spaces/safe punctuation + max length; passwords → min/max + no control characters; OTP → alphanumeric (or digits) with fixed length bounds.
+  - Prefer reusing helpers from `lib/validation/schemas.ts` (`emailSchema`, `personNameSchema`, `entityNameSchema`, `phoneSchema`, etc.) instead of ad-hoc `z.string()`.
+  - Mirror limits on the client with `maxLength` / `pattern` / `inputMode` / `autoCapitalize` where it improves UX — server schema remains authoritative.
+- **Show validation errors to the user** — never fail silently or with only a generic banner when a specific field is wrong.
+  - Map Zod issues to per-field messages via `lib/validation/field-errors.ts` (`zodFieldErrors`) and dictionary copy (`validation.*` in `lib/i18n/dictionaries.ts`, plus landing contact errors when needed).
+  - Return `{ fieldErrors?: Record<string, string>; error?: string }` from actions; render each message under the matching control with `FormField`’s `error` prop (`aria-invalid` / `role="alert"`).
+  - Form-level `error` is for auth/server failures (wrong password, network, forbidden) — not a substitute for field errors.
 - **Sanitize / escape outputs**: rely on React text escaping; never inject unsanitized user HTML (`dangerouslySetInnerHTML`) with member/gym-provided content. Encode when embedding user data in URLs, QR payloads, or emails.
 - Trim strings; reject empty required fields; constrain lengths and enums (`Role`, `PaymentMethod`, etc.).
 
@@ -87,6 +106,7 @@ supabase/migrations/ # SQL only — schema changes go here
 - **Responsive** by default (mobile → desktop); auth and app layouts must work on small screens.
 - **Accessibility basics**: label every input (`htmlFor` / wrapping label), meaningful button text, `aria-label` for icon-only controls, visible focus, sufficient contrast, do not rely on color alone for errors.
 - Prefer semantic HTML (`button`, `label`, `nav`, headings in order).
+- **Disable submit buttons** until required form fields are filled (client-side). Do not leave primary submit actions enabled on empty required forms (auth, onboarding, and app forms).
 
 ---
 

@@ -2,20 +2,25 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { randomUUID } from "crypto";
 import { createClient } from "@/lib/supabase/server";
-import { getProfile } from "@/lib/auth/session";
-import { can } from "@/lib/auth/permissions";
-import { memberStatusFromExpires, computeRenewedExpiry } from "@/lib/members/dates";
+import { getWorkspace } from "@/lib/auth/session";
+import { canInWorkspace } from "@/lib/auth/permissions";
+import {
+  memberStatusFromExpires,
+  computeRenewedExpiry,
+} from "@/lib/members/dates";
 import {
   formString,
   localeSchema,
-  nonEmptyString,
-  optionalTrimmed,
+  membershipExpiresSchema,
+  optionalPhoneSchema,
   paymentMethodSchema,
+  personNameSchema,
   uuidSchema,
 } from "@/lib/validation/schemas";
+import { zodFieldErrors } from "@/lib/validation/field-errors";
 import { toDbMemberStatus, toDbPaymentMethod } from "@/lib/validation/db-enums";
+import { getDictionary } from "@/lib/i18n/dictionaries";
 import { z } from "zod";
 
 function localeFromForm(formData: FormData) {
@@ -30,16 +35,25 @@ function fail(path: string): never {
 
 const createMemberSchema = z.object({
   locale: localeSchema,
-  name: nonEmptyString(120),
-  phone: optionalTrimmed(40),
-  membership_expires_at: z.string().min(1),
+  name: personNameSchema,
+  phone: optionalPhoneSchema,
+  membership_expires_at: membershipExpiresSchema,
 });
 
-export async function createMember(formData: FormData): Promise<void> {
+export type CreateMemberState = {
+  error?: string;
+  fieldErrors?: Record<string, string>;
+} | null;
+
+export async function createMember(
+  _prev: CreateMemberState,
+  formData: FormData,
+): Promise<CreateMemberState> {
   const locale = localeFromForm(formData);
-  const profile = await getProfile();
-  if (!profile || !can(profile.role, "manage_members")) {
-    fail(`/${locale}/members`);
+  const d = getDictionary(locale);
+  const workspace = await getWorkspace();
+  if (!workspace || !canInWorkspace(workspace, "manage_members")) {
+    return { error: d.common.forbidden };
   }
 
   const parsed = createMemberSchema.safeParse({
@@ -48,33 +62,39 @@ export async function createMember(formData: FormData): Promise<void> {
     phone: formString(formData, "phone"),
     membership_expires_at: formString(formData, "membership_expires_at"),
   });
-  if (!parsed.success) fail(`/${locale}/members`);
+  if (!parsed.success) {
+    return { fieldErrors: zodFieldErrors(parsed.error, d.validation) };
+  }
 
   const expires = new Date(parsed.data.membership_expires_at);
-  if (Number.isNaN(expires.getTime())) fail(`/${locale}/members`);
+  if (Number.isNaN(expires.getTime())) {
+    return { fieldErrors: { membership_expires_at: d.validation.date } };
+  }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("members").insert({
-    tenant_id: profile.tenant_id,
-    name: parsed.data.name,
-    phone: parsed.data.phone,
-    membership_expires_at: expires.toISOString(),
-    status: toDbMemberStatus(memberStatusFromExpires(expires)),
-    qr_code: randomUUID(),
+  const { error } = await supabase.rpc("create_gym_membership", {
+    p_gym_id: workspace.gymId,
+    p_full_name: parsed.data.name,
+    p_expires_at: expires.toISOString(),
+    p_phone: parsed.data.phone,
+    p_email: null,
+    p_branch_id: null,
+    p_plan_id: null,
   });
 
   if (error) {
     console.error("createMember", error.message);
-    fail(`/${locale}/members`);
+    return { error: d.members.error };
   }
 
   revalidatePath(`/${locale}/members`, "page");
+  return null;
 }
 
 export async function deleteMemberAction(formData: FormData): Promise<void> {
   const locale = localeFromForm(formData);
-  const profile = await getProfile();
-  if (!profile || !can(profile.role, "manage_members")) {
+  const workspace = await getWorkspace();
+  if (!workspace || !canInWorkspace(workspace, "manage_members")) {
     fail(`/${locale}/members`);
   }
 
@@ -82,11 +102,21 @@ export async function deleteMemberAction(formData: FormData): Promise<void> {
   if (!idParsed.success) fail(`/${locale}/members`);
 
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("members")
-    .delete()
+
+  const { data: membership } = await supabase
+    .from("memberships")
+    .select("id, person_id")
     .eq("id", idParsed.data)
-    .eq("tenant_id", profile!.tenant_id);
+    .eq("gym_id", workspace.gymId)
+    .maybeSingle();
+
+  if (!membership) fail(`/${locale}/members`);
+
+  const { error } = await supabase
+    .from("memberships")
+    .delete()
+    .eq("id", membership.id)
+    .eq("gym_id", workspace.gymId);
 
   if (error) {
     console.error("deleteMember", error.message);
@@ -106,11 +136,11 @@ const renewSchema = z.object({
 
 export async function renewMember(formData: FormData): Promise<void> {
   const locale = localeFromForm(formData);
-  const profile = await getProfile();
+  const workspace = await getWorkspace();
   const memberId = formString(formData, "member_id");
   const back = `/${locale}/members/${memberId || ""}`;
 
-  if (!profile || !can(profile.role, "manage_members")) {
+  if (!workspace || !canInWorkspace(workspace, "manage_members")) {
     fail(back);
   }
 
@@ -126,32 +156,33 @@ export async function renewMember(formData: FormData): Promise<void> {
 
   const { data: plan, error: planErr } = await supabase
     .from("plans")
-    .select("id, price, duration_days, tenant_id")
+    .select("id, price, duration_days, gym_id")
     .eq("id", parsed.data.plan_id)
-    .eq("tenant_id", profile!.tenant_id)
+    .eq("gym_id", workspace.gymId)
     .maybeSingle();
 
   if (planErr || !plan) fail(back);
 
-  const { data: member, error: memErr } = await supabase
-    .from("members")
-    .select("id, membership_expires_at, tenant_id")
+  const { data: membership, error: memErr } = await supabase
+    .from("memberships")
+    .select("id, expires_at, gym_id")
     .eq("id", parsed.data.member_id)
-    .eq("tenant_id", profile!.tenant_id)
+    .eq("gym_id", workspace.gymId)
     .maybeSingle();
 
-  if (memErr || !member) fail(back);
+  if (memErr || !membership) fail(back);
 
   const newExpires = computeRenewedExpiry(
-    new Date(member!.membership_expires_at),
-    plan!.duration_days,
+    new Date(membership.expires_at),
+    plan.duration_days,
   );
 
   const { error: payErr } = await supabase.from("payments").insert({
-    tenant_id: profile!.tenant_id,
-    member_id: member!.id,
-    amount: plan!.price,
+    gym_id: workspace.gymId,
+    membership_id: membership.id,
+    amount: plan.price,
     method: toDbPaymentMethod(parsed.data.method),
+    recorded_by: workspace.userId,
   });
   if (payErr) {
     console.error("renewMember payment", payErr.message);
@@ -159,14 +190,15 @@ export async function renewMember(formData: FormData): Promise<void> {
   }
 
   const { error: upErr } = await supabase
-    .from("members")
+    .from("memberships")
     .update({
-      membership_expires_at: newExpires.toISOString(),
+      expires_at: newExpires.toISOString(),
       status: toDbMemberStatus(memberStatusFromExpires(newExpires)),
+      plan_id: plan.id,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", member!.id)
-    .eq("tenant_id", profile!.tenant_id);
+    .eq("id", membership.id)
+    .eq("gym_id", workspace.gymId);
 
   if (upErr) {
     console.error("renewMember update", upErr.message);
@@ -174,8 +206,8 @@ export async function renewMember(formData: FormData): Promise<void> {
   }
 
   revalidatePath(`/${locale}/members`, "page");
-  revalidatePath(`/${locale}/members/${member!.id}`, "page");
+  revalidatePath(`/${locale}/members/${membership.id}`, "page");
   revalidatePath(`/${locale}/payments`, "page");
   revalidatePath(`/${locale}/dashboard`, "page");
-  redirect(`/${locale}/members/${member!.id}`);
+  redirect(`/${locale}/members/${membership.id}`);
 }

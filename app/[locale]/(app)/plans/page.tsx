@@ -1,14 +1,13 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getProfile } from "@/lib/auth/session";
-import { can } from "@/lib/auth/permissions";
+import { getWorkspace } from "@/lib/auth/session";
+import { canInWorkspace } from "@/lib/auth/permissions";
 import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { createPlan, deletePlan } from "./actions";
-import { FormField } from "@/components/ui/form-field";
-import { Input } from "@/components/ui/input";
+import { deletePlan } from "./actions";
 import { Button } from "@/components/ui/button";
+import { CreatePlanForm } from "./create-plan-form";
 
 export default async function PlansPage({
   params,
@@ -22,9 +21,9 @@ export default async function PlansPage({
   const locale = raw as Locale;
   const sp = await searchParams;
 
-  const profile = await getProfile();
-  if (!profile) redirect(`/${locale}/login`);
-  if (!can(profile.role, "manage_plans")) {
+  const workspace = await getWorkspace();
+  if (!workspace) redirect(`/${locale}/login`);
+  if (!canInWorkspace(workspace, "manage_plans")) {
     return (
       <p className="text-[var(--color-muted)]">{getDictionary(locale).common.forbidden}</p>
     );
@@ -35,7 +34,7 @@ export default async function PlansPage({
   const { data: plans } = await supabase
     .from("plans")
     .select("*")
-    .eq("tenant_id", profile.tenant_id)
+    .eq("gym_id", workspace.gymId)
     .order("created_at", { ascending: false });
 
   return (
@@ -48,28 +47,7 @@ export default async function PlansPage({
 
       <section className="max-w-md space-y-3 rounded border border-[var(--color-muted)]/30 bg-[var(--color-surface)]/40 p-4">
         <h2 className="text-lg font-medium">{d.plans.newPlan}</h2>
-        <form action={createPlan} className="flex flex-col gap-2 text-sm">
-          <input type="hidden" name="locale" value={locale} />
-          <FormField label={d.plans.planName}>
-            <Input required name="name" />
-          </FormField>
-          <FormField label={d.plans.price}>
-            <Input required name="price" type="number" min={0} step="0.01" />
-          </FormField>
-          <FormField label={d.plans.durationDays}>
-            <Input
-              required
-              name="duration_days"
-              type="number"
-              min={1}
-              step={1}
-              defaultValue={30}
-            />
-          </FormField>
-          <Button type="submit" variant="appPrimary">
-            {d.plans.save}
-          </Button>
-        </form>
+        <CreatePlanForm locale={locale} />
       </section>
 
       <table className="w-full border-collapse text-left text-sm">

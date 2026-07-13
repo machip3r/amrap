@@ -109,8 +109,25 @@ export function LandingPage({ locale, d }: Props) {
                     </li>
                   ))}
                 </ul>
-                <Link href={`${prefix}/register`} className="landing-price-cta">
-                  {d.pricing.select}
+                <Link
+                  href={
+                    plan.cta === "contact"
+                      ? "#contacto"
+                      : `${prefix}/register`
+                  }
+                  className="landing-price-cta"
+                  onClick={
+                    plan.cta === "contact"
+                      ? (e) => {
+                          e.preventDefault();
+                          document
+                            .getElementById("contacto")
+                            ?.scrollIntoView({ behavior: "smooth" });
+                        }
+                      : undefined
+                  }
+                >
+                  {plan.cta === "contact" ? d.pricing.contactCta : d.pricing.select}
                 </Link>
               </article>
             ))}

@@ -208,7 +208,7 @@ Datos gym · branches · branding (white-label en pagados). Facturación AMRAP, 
 
 ### 4.8.1 Organización (`/organization`)
 
-Suscripción AMRAP (Freemium → Starter / Growth / Pro) · lista de gyms · programar borrado gym/org (retención 30 días) · crear gym adicional (fase billing).
+**UI:** Plan actual · Freemium → Starter/Solo → Growth/Multi-Gym (**$1,499** flat, 2–3 gyms) · **Pro = contactar AMRAP** (acuerdo, 4+) · lista de gyms · programar borrado gym/org (retención 30 días) · crear gym adicional (fase billing).
 
 ### 4.9 Multi-gym
 
@@ -320,13 +320,14 @@ En planes de pago: colores/logo del gym en superficie member; Freemium muestra m
 
 **Quién:** Dueño / provisional / billing contact.
 
-**UI:** Plan actual · cambio Freemium → Starter / Growth / Pro · seats gyms activos · facturas · método de pago · anual vs mensual.
+**UI:** Plan actual · cambio Freemium → Starter/Solo → Growth/Multi-Gym (tarifa plana 2–3 gyms) · Pro vía contacto · seats gyms activos · facturas · método de pago · anual vs mensual.
 
 **Casos**
 
 | Caso | UI |
 | ---- | -- |
 | Upgrade por límite (30 miembros, 2 planes, etc.) | Paywall contextual en la acción bloqueada |
+| Más de 3 gyms | CTA Contactar AMRAP (Pro); no checkout self-serve |
 | Impago | Banner gracia 3 días → drop a Freemium: gyms extra **read-only**; elegir **un** gym editable |
 | Downgrade | Confirmar qué gyms quedan activos / read-only |
 | Gateway miembros | Solo Starter+; conectar cuenta merchant (onboarding legal) |
@@ -422,7 +423,7 @@ Dueño publica página del gym (horarios, planes, CTA) — opcional; no confundi
 
 - Organización = factura · Gym = operación · Branch = lugar.
 - Usuarios globales · roles contextuales · **un QR**.
-- Freemium demuestra valor; paid desbloquea dinero y multi-gym.
+- Freemium demuestra valor; paid desbloquea dinero y multi-gym (self-serve hasta 3; Pro por contacto).
 - Misma base visual para gym ops y platform admin; cambia el **scope**.
 - Copy siempre i18n; errores de servidor mapeados a dictionary.
 - Una tarea por pantalla/sección; kiosk sin chrome de dashboard.

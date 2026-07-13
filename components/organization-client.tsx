@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState, useState } from "react";
 import {
   Building2,
@@ -69,9 +68,12 @@ export type OrganizationLabels = {
   close: string;
   save: string;
   upgrade: string;
+  contactSales: string;
   current: string;
   checkoutComingSoon: string;
+  contactProPlan: string;
   createGymComingSoon: string;
+  gymCapContact: string;
   retentionNote: string;
   planFreemium: string;
   planStarter: string;
@@ -80,6 +82,7 @@ export type OrganizationLabels = {
   priceFree: string;
   pricePerOrg: string;
   pricePerGym: string;
+  priceContact: string;
   perMonth: string;
   gymQuota: string;
 };
@@ -112,6 +115,9 @@ function priceLine(
   const plan = AMRAP_PLANS.find((p) => p.tier === tier)!;
   if (plan.priceNote === "free") {
     return { amount: labels.priceFree, note: labels.perMonth };
+  }
+  if (plan.priceNote === "contact") {
+    return { amount: labels.priceContact, note: labels.contactSales };
   }
   const amount = `$${plan.priceMxnMonthly}`;
   const note =
@@ -270,18 +276,33 @@ export function OrganizationClient({
                 </p>
                 <p className="text-xs text-[var(--color-muted)]">{pricing.note}</p>
                 {plan.tier !== "FREEMIUM" && !isCurrent ? (
-                  <form action={checkoutAction} className="mt-auto pt-4">
-                    <input type="hidden" name="locale" value={locale} />
-                    <input type="hidden" name="tier" value={plan.tier} />
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      className="mt-0 w-full shadow-sm"
-                      disabled={checkoutPending}
+                  plan.priceNote === "contact" ? (
+                    <a
+                      href="mailto:hello@amrap.space?subject=AMRAP%20Pro"
+                      className="mt-auto pt-4"
                     >
-                      {labels.upgrade}
-                    </Button>
-                  </form>
+                      <Button
+                        type="button"
+                        variant="primary"
+                        className="mt-0 w-full shadow-sm"
+                      >
+                        {labels.contactSales}
+                      </Button>
+                    </a>
+                  ) : (
+                    <form action={checkoutAction} className="mt-auto pt-4">
+                      <input type="hidden" name="locale" value={locale} />
+                      <input type="hidden" name="tier" value={plan.tier} />
+                      <Button
+                        type="submit"
+                        variant="primary"
+                        className="mt-0 w-full shadow-sm"
+                        disabled={checkoutPending}
+                      >
+                        {labels.upgrade}
+                      </Button>
+                    </form>
+                  )
                 ) : (
                   <div className="mt-auto pt-4" />
                 )}
@@ -308,6 +329,11 @@ export function OrganizationClient({
                 {labels.gymQuota
                   .replace("{used}", String(activeGymCount))
                   .replace("{max}", String(gymCap))}
+              </p>
+            ) : null}
+            {needsUpgradeForGym ? (
+              <p className="mt-2 text-sm text-[var(--color-muted)]">
+                {labels.gymCapContact}
               </p>
             ) : null}
           </div>

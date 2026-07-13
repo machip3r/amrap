@@ -135,30 +135,31 @@ Platform billing for AMRAP itself will use a provider such as **Stripe**, **Merc
 
 ## Subscription plans (AMRAP → Organization)
 
-Hybrid model: **feature tiers** + **price per active gym** (except Freemium / Starter shape below) + soft caps so Freemium stays a trial of real ops, not a forever substitute.
+**Focus:** small operators — **self-serve up to 3 gyms**. Organizations that need **more than 3 gyms** (or custom terms) use **Pro** and **contact AMRAP** for an agreement.
+
+Model: **feature tiers** priced **per organization** (flat) for Freemium, Starter, and Growth — not per-gym on self-serve. Soft caps keep Freemium a real trial, not a forever substitute.
 
 - Billing: **monthly** or **annual** (~**17%** off annual ≈ 10 months priced for 12).
 - Prices below are **before tax** (e.g. IVA in Mexico billed separately where applicable).
 - **Member payment gateway:** Starter, Growth, and Pro — **not** Freemium.
+- **Self-serve ceiling:** Growth covers **2–3** active gyms under one org. Beyond 3 → contact sales (Pro).
 
-### Price list (Option B)
+### Price list
 
-| Plan | Gyms | MXN | USD | Notes |
-| ---- | ---- | --- | --- | ----- |
-| **Freemium** | 1 | $0 | $0 | Limits below |
-| **Starter** | 1 | **$799 / mo** | **$39 / mo** | Per organization (single gym) |
-| **Growth** | Up to **5** | **$599 / gym / mo** | **$29 / gym / mo** | Billed per active gym |
-| **Pro** | **5 or more** | **$699 / gym / mo** | **$35 / gym / mo** | Per active gym; advanced modules over time |
+| Plan | Who it’s for | Gyms | MXN / mo | USD / mo | Notes |
+| ---- | ------------ | ---- | -------- | -------- | ----- |
+| **Freemium** (*the hook*) | Indie coaches, garage studios, gyms just starting | 1 | **$0** | **$0** | Strict 30 active members — prove QR + day ops |
+| **Starter** (*Solo*) | One established gym ready to automate | 1 | **$849** | **$42** | List price in the **$799–$899** band; high practical member cap |
+| **Growth** (*Multi-Gym*) | Owner running 2–3 locations | **2–3** | **$1,499** | **$73** | **Flat org rate** (third gym included — no software surprise) |
+| **Pro** | 4+ gyms or custom needs | Custom | **Custom** | **Custom** | **Contact AMRAP** — agreement-based |
 
-Examples (monthly): Growth with 3 gyms → $1,797 MXN / $87 USD. Pro with 5 gyms → $3,495 MXN / $175 USD.
+Annual (illustrative, ~17% off): Starter ≈ $8,490 MXN / $420 USD per year; Growth ≈ $14,990 MXN / $730 USD per year. Pro is quoted per deal.
 
-Annual (illustrative, ~17% off): Starter ≈ $7,990 MXN / $390 USD per year; Growth/Pro = per-gym annual rate on the same discount.
+**Why Growth is flat $1,499:** with 2 gyms already covered, opening the third does not raise the AMRAP bill — loyalty through expansion. (Alternative per-gym pricing was considered; flat is the list offer.)
 
-At exactly five gyms, **Growth** is the multi-gym operations package; **Pro** is for five or more with higher limits and later advanced modules (coaches, richer community, etc.).
+### Freemium limits (*the hook*)
 
-### Freemium limits
-
-Usable for a very small box; tight enough to push upgrade when the gym is real.
+Prove QR speed, stability, and the ops UI with **no risk**. Tight enough to push upgrade when the box is real.
 
 | Limit | Freemium |
 | ----- | -------- |
@@ -171,17 +172,43 @@ Usable for a very small box; tight enough to push upgrade when the gym is real.
 | Basic day dashboard | Yes |
 | Feedback inbox | Yes (internal; short retention) |
 | Payment gateway | **No** |
+| Financial reports / CSV | **No** |
 | White-label | **No** (AMRAP branding) |
-| Multi-gym / aggregated stats | **No** |
-| CSV export | **No** |
+| Multi-gym / consolidated stats | **No** |
 
-**Starter** (indicative unlocks): gateway, white-label basics, higher caps (e.g. ~250 active members, ~5 staff, up to 2 branches), full history, CSV, inbox without Freemium retention ceiling.
+### Starter (*Solo* — one complete gym)
 
-**Growth:** up to 5 gyms, multi-gym stats, higher caps (e.g. ~500 active members per gym).
+| Limit / unlock | Starter |
+| -------------- | ------- |
+| Gyms / branches | **1 / 1** |
+| Active members | **~500** practical soft cap (protects infra without choking a busy single site) |
+| Staff seats | ~5 |
+| Membership plans | Unlimited (practical) |
+| Attendance history | Full |
+| Payment gateway (member billing) | **Yes** — core retention unlock |
+| Basic financial reports | **Yes** |
+| CSV / data export | **Yes** |
+| Inbox | Without Freemium retention ceiling |
+| White-label basics | Optional / later on same tier |
+| Multi-gym | **No** |
 
-**Pro:** 5+ gyms, high/unlimited practical caps, phase-2+ modules.
+Positioning: much lower monthly than typical competitors (often **$2,000+ MXN**/mo) while giving predictable cash per single-gym customer.
 
-Exact Starter/Growth/Pro numeric caps can be tuned without changing the commercial shape.
+### Growth (*Multi-Gym* — 2 to 3 gyms)
+
+Everything in Starter, plus:
+
+- **2–3 gyms** under the same organization (one invoice)
+- **Consolidated dashboard** (“bird’s-eye” across locations)
+- **Passport-style** member profiles across sites (one person, multi-gym memberships)
+- **Comparative analytics** between gyms / branches
+- Same practical member soft cap **per gym** (~500)
+
+Flat **$1,499 MXN / org / mo** — not billed per gym on the public price list.
+
+### Pro (contact)
+
+For **more than 3 gyms**, higher / custom caps, priority support, and later advanced modules. No public list price — sales sets terms after the organization contacts AMRAP.
 
 ---
 
@@ -224,7 +251,7 @@ Architecture and tenancy from day one: **multi-tenant, multi-organization, multi
 - **Organization is the billing boundary; gym is the operations boundary; branch is the place.**
 - **Users are global; roles are contextual.**
 - **One credential, anti-abuse rules** (4-hour exclusivity / session).
-- **Freemium proves the product; paid plans unlock money movement and multi-gym.**
+- **Freemium proves the product; paid plans unlock money movement and multi-gym (self-serve up to 3 gyms; beyond that, Pro via contact).**
 - **Same system for gyms and for AMRAP admin** — different permission scope, one data model.
 - **White-label and community are per gym**; the platform brand remains AMRAP.
 

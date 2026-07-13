@@ -48,6 +48,13 @@ export async function requestSubscriptionCheckout(
     return { error: d.organization.invalidPlan };
   }
 
+  if (tier === "PRO") {
+    return {
+      success: true,
+      message: d.organization.contactProPlan,
+    };
+  }
+
   // Payment provider not wired yet — surface a clear product message.
   return {
     success: true,

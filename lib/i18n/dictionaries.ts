@@ -327,9 +327,12 @@ export type Dictionary = {
     close: string;
     save: string;
     upgrade: string;
+    contactSales: string;
     current: string;
     checkoutComingSoon: string;
+    contactProPlan: string;
     createGymComingSoon: string;
+    gymCapContact: string;
     retentionNote: string;
     planFreemium: string;
     planStarter: string;
@@ -338,6 +341,7 @@ export type Dictionary = {
     priceFree: string;
     pricePerOrg: string;
     pricePerGym: string;
+    priceContact: string;
     perMonth: string;
     gymQuota: string;
     invalidPlan: string;
@@ -769,20 +773,26 @@ const es: Dictionary = {
     close: "Cerrar",
     save: "Continuar",
     upgrade: "Mejorar plan",
+    contactSales: "Contactar a AMRAP",
     current: "Actual",
     checkoutComingSoon:
       "El pago de suscripción AMRAP llegará pronto. Mientras tanto, contacta soporte para cambiar de plan.",
+    contactProPlan:
+      "Pro es un acuerdo personalizado. Escríbenos a hello@amrap.space (o usa Contacto en la web) si necesitas más de 3 gyms o términos a medida.",
     createGymComingSoon:
-      "La creación de gimnasios adicionales llegará con la facturación multi-gym.",
+      "La creación de gimnasios adicionales llega con Growth / Multi-Gym (2–3 gyms, tarifa plana). Si necesitas más, contacta a AMRAP para Pro.",
+    gymCapContact:
+      "Alcanzaste el límite de gyms de tu plan. Mejora a Growth / Multi-Gym (2–3) o contacta a AMRAP para Pro.",
     retentionNote:
       "Tras confirmar, hay {days} días de retención antes del borrado definitivo (export CSV disponible).",
     planFreemium: "Freemium",
-    planStarter: "Starter",
-    planGrowth: "Growth",
+    planStarter: "Starter / Solo",
+    planGrowth: "Growth / Multi-Gym",
     planPro: "Pro",
     priceFree: "$0",
-    pricePerOrg: "por organización",
+    pricePerOrg: "por organización (tarifa plana)",
     pricePerGym: "por gym activo",
+    priceContact: "A medida",
     perMonth: "/ mes",
     gymQuota: "{used} / {max} gimnasios",
     invalidPlan: "Plan no válido",
@@ -1214,20 +1224,26 @@ const en: Dictionary = {
     close: "Close",
     save: "Continue",
     upgrade: "Upgrade",
+    contactSales: "Contact AMRAP",
     current: "Current",
     checkoutComingSoon:
       "AMRAP subscription checkout is coming soon. Contact support to change plans for now.",
+    contactProPlan:
+      "Pro is a custom agreement. Email hello@amrap.space (or use Contact on the site) if you need more than 3 gyms or tailored terms.",
     createGymComingSoon:
-      "Creating additional gyms ships with multi-gym billing.",
+      "Creating additional gyms ships with Growth / Multi-Gym (2–3 gyms, flat rate). Need more? Contact AMRAP for Pro.",
+    gymCapContact:
+      "You’ve hit your plan’s gym limit. Upgrade to Growth / Multi-Gym (2–3) or contact AMRAP for Pro.",
     retentionNote:
       "After confirmation, there is a {days}-day retention window before permanent deletion (CSV export available).",
     planFreemium: "Freemium",
-    planStarter: "Starter",
-    planGrowth: "Growth",
+    planStarter: "Starter / Solo",
+    planGrowth: "Growth / Multi-Gym",
     planPro: "Pro",
     priceFree: "$0",
-    pricePerOrg: "per organization",
+    pricePerOrg: "per organization (flat rate)",
     pricePerGym: "per active gym",
+    priceContact: "Custom",
     perMonth: "/ month",
     gymQuota: "{used} / {max} gyms",
     invalidPlan: "Invalid plan",

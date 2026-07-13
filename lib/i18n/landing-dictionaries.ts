@@ -115,7 +115,7 @@ const es: LandingDictionary = {
   pricing: {
     title: "Precios",
     subtitle:
-      "Paga la organización (no el miembro). Precios antes de impuestos. Anual ~17% menos. Freemium para operar en chico; planes de pago desbloquean multi-gym y cobros en línea a miembros.",
+      "Precios antes de impuestos. Anual ~17% menos. Freemium para operar en chico; planes de pago desbloquean multi-gym y cobros en línea a miembros.",
     select: "Empezar",
     plans: [
       {
@@ -258,7 +258,7 @@ const en: LandingDictionary = {
   pricing: {
     title: "Pricing",
     subtitle:
-      "The organization pays (not the member). Prices before tax. Annual ~17% off. Freemium for a small box; paid plans unlock multi-gym and online member billing.",
+      "Prices before tax. Annual ~17% off. Freemium for a small box; paid plans unlock multi-gym and online member billing.",
     select: "Get started",
     plans: [
       {

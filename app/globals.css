@@ -155,7 +155,7 @@ textarea:focus {
   max-height: min(70vh, 560px);
   object-fit: contain;
   background: #000;
-  transform: scaleX(1);
+  transform: scaleX(-1);
 }
 
 .checkin-qr-reader img {

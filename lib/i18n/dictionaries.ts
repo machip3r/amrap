@@ -302,7 +302,6 @@ export type Dictionary = {
     subtitle: string;
     currentPlan: string;
     subscriptionTitle: string;
-    subscriptionHint: string;
     gymsTitle: string;
     gymsHint: string;
     addGym: string;
@@ -331,7 +330,6 @@ export type Dictionary = {
     current: string;
     checkoutComingSoon: string;
     createGymComingSoon: string;
-    upgradeForMoreGyms: string;
     retentionNote: string;
     planFreemium: string;
     planStarter: string;
@@ -733,7 +731,7 @@ const es: Dictionary = {
     limitReached: "Límite alcanzado",
     limitReachedHint:
       "Freemium permite hasta 2 planes activos. Archiva uno o mejora tu plan para crear más.",
-    upgradePlans: "Ver planes AMRAP",
+    upgradePlans: "Mejorar plan",
     quotaLabel: "{used} / {max} planes activos",
     freemium: "Freemium",
     planLimit: "Freemium permite hasta 2 planes activos",
@@ -744,8 +742,6 @@ const es: Dictionary = {
     subtitle: "Suscripción AMRAP, gimnasios y eliminación de cuenta",
     currentPlan: "Plan actual",
     subscriptionTitle: "Suscripción AMRAP",
-    subscriptionHint:
-      "La organización paga a AMRAP. Los socios pagan a tu gimnasio.",
     gymsTitle: "Gimnasios",
     gymsHint: "Gestiona las sedes de esta organización.",
     addGym: "Añadir gimnasio",
@@ -778,7 +774,6 @@ const es: Dictionary = {
       "El pago de suscripción AMRAP llegará pronto. Mientras tanto, contacta soporte para cambiar de plan.",
     createGymComingSoon:
       "La creación de gimnasios adicionales llegará con la facturación multi-gym.",
-    upgradeForMoreGyms: "Mejorar para más gyms",
     retentionNote:
       "Tras confirmar, hay {days} días de retención antes del borrado definitivo (export CSV disponible).",
     planFreemium: "Freemium",
@@ -1181,7 +1176,7 @@ const en: Dictionary = {
     limitReached: "Limit reached",
     limitReachedHint:
       "Freemium allows up to 2 active plans. Archive one or upgrade to create more.",
-    upgradePlans: "View AMRAP plans",
+    upgradePlans: "Upgrade plan",
     quotaLabel: "{used} / {max} active plans",
     freemium: "Freemium",
     planLimit: "Freemium allows up to 2 active plans",
@@ -1192,8 +1187,6 @@ const en: Dictionary = {
     subtitle: "AMRAP subscription, gyms, and account deletion",
     currentPlan: "Current plan",
     subscriptionTitle: "AMRAP subscription",
-    subscriptionHint:
-      "The organization pays AMRAP. Members pay your gym.",
     gymsTitle: "Gyms",
     gymsHint: "Manage locations under this organization.",
     addGym: "Add gym",
@@ -1226,7 +1219,6 @@ const en: Dictionary = {
       "AMRAP subscription checkout is coming soon. Contact support to change plans for now.",
     createGymComingSoon:
       "Creating additional gyms ships with multi-gym billing.",
-    upgradeForMoreGyms: "Upgrade for more gyms",
     retentionNote:
       "After confirmation, there is a {days}-day retention window before permanent deletion (CSV export available).",
     planFreemium: "Freemium",

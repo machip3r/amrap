@@ -16,6 +16,13 @@ type Props = {
   d: LandingDictionary;
 };
 
+function formspreeEndpoint() {
+  const id = process.env.NEXT_PUBLIC_FORMSPREE_FORM_ID?.trim();
+  if (!id) return null;
+
+  return `https://formspree.io/f/${id}`;
+}
+
 export function LandingContact({ d }: Props) {
   const c = d.contact;
   const nameId = useId();
@@ -29,7 +36,10 @@ export function LandingContact({ d }: Props) {
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
+  const canSubmit =
+    name.trim().length > 0 && email.trim().length > 0 && message.trim().length > 0;
+
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const nameParsed = personNameSchema.safeParse(name);
     const emailParsed = emailSchema.safeParse(email);
@@ -46,25 +56,47 @@ export function LandingContact({ d }: Props) {
       return;
     }
 
+    const endpoint = formspreeEndpoint();
+    if (!endpoint) {
+      setFieldErrors({});
+      setStatus("error");
+      return;
+    }
+
     setFieldErrors({});
     setPending(true);
     setStatus("idle");
 
-    const trimmedName = nameParsed.data!;
-    const trimmedEmail = emailParsed.data!;
-    const trimmedMessage = messageParsed.data!;
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: nameParsed.data,
+          email: emailParsed.data,
+          message: messageParsed.data,
+          _replyto: emailParsed.data,
+          _subject: `AMRAP contact — ${nameParsed.data}`,
+        }),
+      });
 
-    const subject = encodeURIComponent(`AMRAP — ${trimmedName}`);
-    const body = encodeURIComponent(
-      `${trimmedMessage}\n\n— ${trimmedName}\n${trimmedEmail}`,
-    );
-    window.location.href = `mailto:${d.footer.email}?subject=${subject}&body=${body}`;
+      if (!res.ok) {
+        setStatus("error");
+        return;
+      }
 
-    setPending(false);
-    setStatus("success");
-    setName("");
-    setEmail("");
-    setMessage("");
+      setStatus("success");
+      setName("");
+      setEmail("");
+      setMessage("");
+    } catch {
+      setStatus("error");
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
@@ -113,8 +145,9 @@ export function LandingContact({ d }: Props) {
                 onChange={(e) => {
                   setName(e.target.value);
                   setFieldErrors((prev) => {
-                    const { name: _, ...rest } = prev;
-                    return rest;
+                    const next = { ...prev };
+                    delete next.name;
+                    return next;
                   });
                 }}
                 placeholder={c.namePlaceholder}
@@ -142,8 +175,9 @@ export function LandingContact({ d }: Props) {
                 onChange={(e) => {
                   setEmail(e.target.value.toLowerCase());
                   setFieldErrors((prev) => {
-                    const { email: _, ...rest } = prev;
-                    return rest;
+                    const next = { ...prev };
+                    delete next.email;
+                    return next;
                   });
                 }}
                 placeholder={c.emailPlaceholder}
@@ -166,8 +200,9 @@ export function LandingContact({ d }: Props) {
                 onChange={(e) => {
                   setMessage(e.target.value);
                   setFieldErrors((prev) => {
-                    const { message: _, ...rest } = prev;
-                    return rest;
+                    const next = { ...prev };
+                    delete next.message;
+                    return next;
                   });
                 }}
                 placeholder={c.messagePlaceholder}
@@ -187,7 +222,12 @@ export function LandingContact({ d }: Props) {
               </p>
             ) : null}
 
-            <Button type="submit" variant="primary" className="landing-contact-submit" disabled={pending}>
+            <Button
+              type="submit"
+              variant="primary"
+              className="landing-contact-submit"
+              disabled={!canSubmit || pending}
+            >
               {pending ? c.submitting : c.submit}
             </Button>
           </form>

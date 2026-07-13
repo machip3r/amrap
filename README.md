@@ -288,7 +288,3 @@ Open [http://localhost:3000](http://localhost:3000). Locale follows the browser 
 | `pnpm build` | Production build |
 | `pnpm start` | Run production build |
 | `pnpm lint` | ESLint |
-
-### Environment
-
-Copy `.env.local.example` to `.env.local` and set Supabase URL, publishable key, and (for signup with email confirmation) `SUPABASE_SERVICE_ROLE_KEY`.

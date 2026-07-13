@@ -45,7 +45,6 @@ export type OrganizationLabels = {
   subtitle: string;
   currentPlan: string;
   subscriptionTitle: string;
-  subscriptionHint: string;
   gymsTitle: string;
   gymsHint: string;
   addGym: string;
@@ -73,7 +72,6 @@ export type OrganizationLabels = {
   current: string;
   checkoutComingSoon: string;
   createGymComingSoon: string;
-  upgradeForMoreGyms: string;
   retentionNote: string;
   planFreemium: string;
   planStarter: string;
@@ -141,11 +139,10 @@ function Flash({ state }: { state: OrgActionState }) {
   if (!state?.message && !state?.error) return null;
   return (
     <p
-      className={`rounded-lg border px-4 py-3 text-sm font-medium ${
-        state.error
-          ? "border-[var(--color-danger)]/25 bg-[var(--color-danger)]/10 text-[var(--color-danger)]"
-          : "border-[var(--color-success)]/25 bg-[var(--color-success)]/10 text-[var(--color-success)]"
-      }`}
+      className={`rounded-lg border px-4 py-3 text-sm font-medium ${state.error
+        ? "border-[var(--color-danger)]/25 bg-[var(--color-danger)]/10 text-[var(--color-danger)]"
+        : "border-[var(--color-success)]/25 bg-[var(--color-success)]/10 text-[var(--color-success)]"
+        }`}
       role="status"
     >
       {state.error ?? state.message}
@@ -238,9 +235,6 @@ export function OrganizationClient({
             <h2 className="font-title text-xl font-bold text-[var(--color-text)]">
               {labels.subscriptionTitle}
             </h2>
-            <p className="mt-1 text-sm text-[var(--color-muted)]">
-              {labels.subscriptionHint}
-            </p>
             <p className="mt-2 text-sm text-[var(--color-text)]">
               {labels.currentPlan}:{" "}
               <span className="font-semibold">{planLabel(planTier, labels)}</span>
@@ -255,11 +249,10 @@ export function OrganizationClient({
             return (
               <article
                 key={plan.tier}
-                className={`flex flex-col rounded-xl border p-4 ${
-                  isCurrent
-                    ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5"
-                    : "border-[var(--color-border)]"
-                }`}
+                className={`flex flex-col rounded-xl border p-4 ${isCurrent
+                  ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5"
+                  : "border-[var(--color-border)]"
+                  }`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="font-title text-base font-bold text-[var(--color-text)]">
@@ -318,14 +311,7 @@ export function OrganizationClient({
               </p>
             ) : null}
           </div>
-          {needsUpgradeForGym ? (
-            <Link
-              href={`/${locale}/organization#subscription`}
-              className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-[var(--color-primary)] px-3.5 py-2 text-sm font-semibold text-[var(--color-primary-on)] shadow-sm transition-[filter] hover:brightness-[0.92]"
-            >
-              {labels.upgradeForMoreGyms}
-            </Link>
-          ) : (
+          {!needsUpgradeForGym && (
             <Button
               type="button"
               variant="primary"

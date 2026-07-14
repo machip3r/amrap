@@ -1,0 +1,115 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Role } from "@/types";
+
+export type TeamMember = {
+  id: string;
+  userId: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  role: Extract<Role, "STAFF" | "TRAINER">;
+  createdAt: string;
+};
+
+type RoleFilter = "STAFF" | "TRAINER";
+
+/**
+ * Loads STAFF or TRAINER rows for a gym and enriches with persons profile.
+ */
+export async function loadTeamMembers(
+  supabase: SupabaseClient,
+  gymId: string,
+  role: RoleFilter,
+): Promise<TeamMember[]> {
+  const { data: rows, error } = await supabase
+    .from("gym_roles")
+    .select("id, user_id, role, created_at")
+    .eq("gym_id", gymId)
+    .eq("role", role)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("loadTeamMembers", error.message);
+    return [];
+  }
+
+  return enrichTeamRows(supabase, rows ?? []);
+}
+
+export async function loadTeamMemberById(
+  supabase: SupabaseClient,
+  gymId: string,
+  roleId: string,
+  role: RoleFilter,
+): Promise<TeamMember | null> {
+  const { data: row, error } = await supabase
+    .from("gym_roles")
+    .select("id, user_id, role, created_at")
+    .eq("id", roleId)
+    .eq("gym_id", gymId)
+    .eq("role", role)
+    .maybeSingle();
+
+  if (error) {
+    console.error("loadTeamMemberById", error.message);
+    return null;
+  }
+  if (!row) return null;
+  const list = await enrichTeamRows(supabase, [row]);
+  return list[0] ?? null;
+}
+
+async function enrichTeamRows(
+  supabase: SupabaseClient,
+  list: { id: string; user_id: string; role: string; created_at: string }[],
+): Promise<TeamMember[]> {
+  if (list.length === 0) return [];
+
+  const userIds = list.map((r) => r.user_id);
+  const { data: people, error: peopleErr } = await supabase
+    .from("persons")
+    .select("user_id, full_name, email, phone")
+    .in("user_id", userIds);
+
+  if (peopleErr) {
+    console.error("enrichTeamRows persons", peopleErr.message);
+  }
+
+  const byUser = new Map(
+    (people ?? [])
+      .filter((p) => p.user_id)
+      .map((p) => [p.user_id as string, p] as const),
+  );
+
+  return list
+    .filter((r) => r.role === "STAFF" || r.role === "TRAINER")
+    .map((r) => {
+      const person = byUser.get(r.user_id);
+      return {
+        id: r.id,
+        userId: r.user_id,
+        name: person?.full_name?.trim() || r.user_id.slice(0, 8),
+        email: person?.email ?? null,
+        phone: person?.phone ?? null,
+        role: r.role as RoleFilter,
+        createdAt: r.created_at,
+      };
+    });
+}
+
+export async function countStaffAndTrainers(
+  supabase: SupabaseClient,
+  gymId: string,
+): Promise<number> {
+  const { count, error } = await supabase
+    .from("gym_roles")
+    .select("id", { count: "exact", head: true })
+    .eq("gym_id", gymId)
+    .in("role", ["STAFF", "TRAINER"]);
+
+  if (error) {
+    console.error("countStaffAndTrainers", error.message);
+    return 0;
+  }
+  return count ?? 0;
+}

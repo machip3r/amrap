@@ -5,8 +5,7 @@ import { canInWorkspace } from "@/lib/auth/permissions";
 import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { RegisterUserButton } from "@/components/register-user-dialog";
-import { MembersClient } from "@/components/members-client";
+import { MembersPageClient } from "@/components/members-page-client";
 import {
   MEMBERSHIP_LIST_SELECT,
   mapMembershipRow,
@@ -68,40 +67,24 @@ export default async function MembersPage({
     }));
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="font-title text-3xl font-bold tracking-tight text-[var(--color-text)]">
-            {d.members.title}
-          </h1>
-          <p className="mt-1 text-sm text-[var(--color-muted)]">
-            {d.members.subtitle}
-          </p>
-        </div>
-        <RegisterUserButton
-          locale={locale}
-          canManageMembers
-          canManageStaff={false}
-          plans={activePlans}
-          defaultRole="member"
-          allowedRoles={["member"]}
-          label={d.members.newMember}
-        />
-      </header>
-
+    <>
       {sp.error ? (
         <p
-          className="rounded-lg border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 px-4 py-3 text-sm font-medium text-[var(--color-primary)]"
+          className="mx-auto mb-5 w-full max-w-6xl rounded-lg border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 px-4 py-3 text-sm font-medium text-[var(--color-primary)]"
           role="alert"
         >
           {d.members.error}
         </p>
       ) : null}
 
-      <MembersClient
+      <MembersPageClient
         locale={locale}
+        title={d.members.title}
+        subtitle={d.members.subtitle}
+        newMemberLabel={d.members.newMember}
         members={members}
         plans={plans.map((p) => ({ id: p.id, name: p.name }))}
+        activePlans={activePlans}
         labels={{
           name: d.members.name,
           email: d.members.email,
@@ -122,8 +105,10 @@ export default async function MembersPage({
           filterPlan: d.members.filterPlan,
           filterPlanAll: d.members.filterPlanAll,
           showing: d.members.showing,
+          reload: d.members.reload,
+          newBadge: d.members.newBadge,
         }}
       />
-    </div>
+    </>
   );
 }

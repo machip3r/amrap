@@ -7,8 +7,11 @@ import { getDictionary } from "@/lib/i18n/dictionaries";
 import { AppNav } from "@/components/app-nav";
 import { AmrapWatermark } from "@/components/amrap-watermark";
 import { ThemeToggle } from "@/components/theme-toggle";
+import Link from "next/link";
+import { Settings } from "lucide-react";
 import { canInWorkspace } from "@/lib/auth/permissions";
 import { brandThemeCssVars } from "@/lib/branding/theme";
+import { canUseWhitelabel } from "@/lib/plans/limits";
 
 export async function generateMetadata(): Promise<Metadata> {
   const workspace = await getWorkspace();
@@ -17,8 +20,9 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 
   const gymName = workspace.gymName.trim() || "AMRAP";
-  const light = workspace.logoUrlLight;
-  const dark = workspace.logoUrlDark;
+  const allowBrand = canUseWhitelabel(workspace.planTier);
+  const light = allowBrand ? workspace.logoUrlLight : null;
+  const dark = allowBrand ? workspace.logoUrlDark : null;
   const iconLight = light || dark;
   const iconDark = dark || light;
 
@@ -81,10 +85,12 @@ export default async function AppShellLayout({
   const initial =
     workspace.fullName?.charAt(0).toUpperCase() ||
     workspace.userId.slice(0, 2).toUpperCase();
+  const canManageSettings = canInWorkspace(workspace, "manage_billing");
 
+  const allowBrand = canUseWhitelabel(workspace.planTier);
   const { light, dark } = brandThemeCssVars(
-    workspace.themeLight,
-    workspace.themeDark,
+    allowBrand ? workspace.themeLight : {},
+    allowBrand ? workspace.themeDark : {},
   );
   const lightDecls = Object.entries(light)
     .map(([k, v]) => `${k}:${v}`)
@@ -105,17 +111,27 @@ export default async function AppShellLayout({
           <AppNav
             locale={locale}
             role={workspace.role}
-            canManageSettings={canInWorkspace(workspace, "manage_billing")}
+            canManageSettings={canManageSettings}
             canManageStaff={canInWorkspace(workspace, "manage_staff")}
-            logoUrlLight={workspace.logoUrlLight}
-            logoUrlDark={workspace.logoUrlDark}
+            logoUrlLight={allowBrand ? workspace.logoUrlLight : null}
+            logoUrlDark={allowBrand ? workspace.logoUrlDark : null}
             gymName={workspace.gymName}
             organizationName={workspace.organizationName}
             isProvisionalOwner={workspace.isProvisionalOwner}
           />
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-            <header className="flex h-16 shrink-0 items-center justify-end gap-4 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-6">
+            <header className="flex h-16 shrink-0 items-center justify-end gap-2 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-6 sm:gap-3">
               <ThemeToggle label={d.a11y.toggleTheme} />
+              {canManageSettings ? (
+                <Link
+                  href={`/${locale}/settings`}
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]"
+                  aria-label={d.nav.settings}
+                  title={d.nav.settings}
+                >
+                  <Settings className="h-5 w-5" aria-hidden />
+                </Link>
+              ) : null}
               <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[var(--color-primary)]/20 text-xs font-bold text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30">
                 {initial}
               </div>

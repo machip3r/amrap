@@ -11,11 +11,13 @@ type Props = {
   variant?: "auth" | "app";
   className?: string;
   error?: string;
+  /** Short clarification under the label */
+  hint?: string;
 };
 
 function withA11y(
   children: ReactNode,
-  opts: { errorId: string; invalid: boolean },
+  opts: { errorId: string; invalid: boolean; hintId?: string },
 ): ReactNode {
   return Children.map(children, (child) => {
     if (!isValidElement(child)) return child;
@@ -24,7 +26,11 @@ function withA11y(
       "aria-describedby"?: string;
       className?: string;
     }>;
-    const describedBy = [el.props["aria-describedby"], opts.invalid ? opts.errorId : null]
+    const describedBy = [
+      el.props["aria-describedby"],
+      opts.invalid ? opts.errorId : null,
+      !opts.invalid ? opts.hintId : null,
+    ]
       .filter(Boolean)
       .join(" ");
     return cloneElement(el, {
@@ -49,11 +55,23 @@ export function FormField({
   variant = "app",
   className = "",
   error,
+  hint,
 }: Props) {
   const reactId = useId();
   const errorId = `${reactId}-error`;
+  const hintId = `${reactId}-hint`;
   const invalid = Boolean(error);
-  const control = withA11y(children, { errorId, invalid });
+  const control = withA11y(children, {
+    errorId,
+    invalid,
+    hintId: hint && !error ? hintId : undefined,
+  });
+
+  const hintNode = hint && !error ? (
+    <p id={hintId} className="text-xs leading-snug text-[var(--color-muted)]">
+      {hint}
+    </p>
+  ) : null;
 
   const errorNode = error ? (
     <p
@@ -74,6 +92,7 @@ export function FormField({
         >
           {label}
         </label>
+        {hintNode}
         {control}
         {errorNode}
       </div>
@@ -84,6 +103,7 @@ export function FormField({
     <div className={`flex flex-col gap-1 text-sm ${className}`.trim()}>
       <label htmlFor={htmlFor} className="flex flex-col gap-1">
         <span className="text-[var(--color-muted)]">{label}</span>
+        {hintNode}
         {control}
       </label>
       {errorNode}

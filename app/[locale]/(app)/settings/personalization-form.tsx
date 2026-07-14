@@ -1,8 +1,9 @@
 "use client";
 
 import { useActionState, useEffect, useId, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, X } from "lucide-react";
+import { Check, Lock, X } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { BrandThemeTokens } from "@/types";
@@ -17,6 +18,7 @@ import {
   uploadGymLogoAction,
   type SettingsActionState,
 } from "./actions";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 type Props = {
   locale: Locale;
@@ -24,6 +26,7 @@ type Props = {
   logoUrlDark: string | null;
   themeLight: BrandThemeTokens;
   themeDark: BrandThemeTokens;
+  canCustomizeBrand: boolean;
 };
 
 function LogoModeBlock({
@@ -56,6 +59,7 @@ function LogoModeBlock({
   const previewUrlRef = useRef<string | null>(null);
   const [hasFile, setHasFile] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [removeOpen, setRemoveOpen] = useState(false);
 
   function replacePreview(file: File | null) {
     if (previewUrlRef.current) {
@@ -97,18 +101,15 @@ function LogoModeBlock({
       <div className="flex items-start justify-between gap-2 pr-8">
         <h4 className="text-sm font-semibold text-[var(--color-text)]">{label}</h4>
         {logoUrl && !previewUrl ? (
-          <form action={removeAction} className="absolute right-2 top-2">
-            <input type="hidden" name="locale" value={locale} />
-            <input type="hidden" name="mode" value={mode} />
-            <button
-              type="submit"
-              disabled={removePending}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)] disabled:opacity-50"
-              aria-label={d.settings.removeLogo}
-            >
-              <X className="h-4 w-4" aria-hidden />
-            </button>
-          </form>
+          <button
+            type="button"
+            onClick={() => setRemoveOpen(true)}
+            disabled={removePending}
+            className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-md text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)] disabled:opacity-50"
+            aria-label={d.settings.removeLogo}
+          >
+            <X className="h-4 w-4" aria-hidden />
+          </button>
         ) : null}
       </div>
       {displayUrl ? (
@@ -154,6 +155,21 @@ function LogoModeBlock({
           {uploadPending ? d.settings.saving : d.settings.uploadLogo}
         </Button>
       </form>
+
+      <ConfirmDialog
+        open={removeOpen}
+        onOpenChange={setRemoveOpen}
+        title={d.settings.removeLogo}
+        description={d.settings.confirmRemoveLogo}
+        closeLabel={d.members.cancel}
+        cancelLabel={d.members.cancel}
+        confirmLabel={d.settings.removeLogo}
+        action={removeAction}
+        pending={removePending}
+      >
+        <input type="hidden" name="locale" value={locale} />
+        <input type="hidden" name="mode" value={mode} />
+      </ConfirmDialog>
     </div>
   );
 }
@@ -162,6 +178,7 @@ export function PersonalizationForm({
   locale,
   logoUrlLight,
   logoUrlDark,
+  canCustomizeBrand,
 }: Props) {
   const d = getDictionary(locale);
   const router = useRouter();
@@ -222,6 +239,42 @@ export function PersonalizationForm({
     paletteState?.success || logoState?.success || removeState?.success;
   const error =
     paletteState?.error || logoState?.error || removeState?.error;
+
+  if (!canCustomizeBrand) {
+    return (
+      <div className="flex flex-col gap-5">
+        <div>
+          <h2 className="font-title text-2xl font-bold text-[var(--color-text)]">
+            {d.settings.personalization}
+          </h2>
+          <p className="mt-1 max-w-xl text-sm text-[var(--color-muted)]">
+            {d.settings.personalizationHint}
+          </p>
+        </div>
+        <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/50 p-6 shadow-sm sm:p-8">
+          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+            <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[var(--color-muted)]/15 text-[var(--color-muted)]">
+              <Lock className="h-5 w-5" aria-hidden />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-title text-lg font-bold text-[var(--color-text)]">
+                {d.settings.whitelabelLocked}
+              </h3>
+              <p className="mt-1 text-sm text-[var(--color-muted)]">
+                {d.settings.whitelabelLockedHint}
+              </p>
+            </div>
+            <Link
+              href={`/${locale}/organization#subscription`}
+              className="inline-flex shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--color-primary-on)] shadow-sm transition-opacity hover:opacity-90"
+            >
+              {d.settings.upgradeWhitelabel}
+            </Link>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex flex-col gap-5">

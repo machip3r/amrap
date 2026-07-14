@@ -47,6 +47,8 @@ export type CreateMemberState = {
   error?: string;
   fieldErrors?: Record<string, string>;
   success?: boolean;
+  memberId?: string;
+  emailWarning?: string;
 } | null;
 
 export async function createMember(
@@ -118,11 +120,57 @@ export async function createMember(
     return { error: d.members.error };
   }
 
+  // Invite member to claim/create their account (non-blocking for membership).
+  let emailWarning: string | undefined;
+  try {
+    const { data: membership } = await supabase
+      .from("memberships")
+      .select("person_id")
+      .eq("id", membershipId)
+      .maybeSingle();
+
+    if (membership?.person_id) {
+      const {
+        inviteAuthUserByEmail,
+        linkPersonToUser,
+      } = await import("@/lib/team/invite");
+
+      const invite = await inviteAuthUserByEmail({
+        email: parsed.data.email,
+        fullName: parsed.data.name,
+        locale,
+        gymName: workspace.gymName,
+        kind: "member",
+        nextPath: `/${locale}/dashboard`,
+      });
+
+      if (invite.ok) {
+        await linkPersonToUser({
+          personId: membership.person_id,
+          userId: invite.userId,
+        });
+        if (!invite.emailSent && !invite.emailSkipped) {
+          emailWarning = d.teamInvites.emailFailed;
+        }
+      } else {
+        console.error("createMember invite", invite.message);
+        emailWarning = d.teamInvites.emailFailed;
+      }
+    }
+  } catch (e) {
+    console.error("createMember invite unexpected", e);
+    emailWarning = d.teamInvites.emailFailed;
+  }
+
   revalidatePath(`/${locale}/members`, "page");
   revalidatePath(`/${locale}/dashboard`, "page");
   revalidatePath(`/${locale}/checkin`, "page");
   revalidatePath(`/${locale}/payments`, "page");
-  return { success: true };
+  return {
+    success: true,
+    memberId: String(membershipId),
+    emailWarning,
+  };
 }
 
 export async function deleteMemberAction(formData: FormData): Promise<void> {

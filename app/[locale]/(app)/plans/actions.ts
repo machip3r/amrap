@@ -181,6 +181,52 @@ export async function setPlanActive(formData: FormData): Promise<void> {
   revalidatePath(`/${locale}/plans`, "page");
 }
 
+export type DayPassPriceState = {
+  error?: string;
+  fieldErrors?: Record<string, string>;
+  success?: boolean;
+} | null;
+
+const dayPassSchema = z.object({
+  locale: localeSchema,
+  day_pass_price: amountSchema,
+});
+
+export async function updateDayPassPrice(
+  _prev: DayPassPriceState,
+  formData: FormData,
+): Promise<DayPassPriceState> {
+  const locale = localeFromForm(formData);
+  const d = getDictionary(locale);
+  const workspace = await getWorkspace();
+  if (!workspace || !canInWorkspace(workspace, "manage_plans")) {
+    return { error: d.common.forbidden };
+  }
+
+  const parsed = dayPassSchema.safeParse({
+    locale: formString(formData, "locale") || "es",
+    day_pass_price: formString(formData, "day_pass_price"),
+  });
+  if (!parsed.success) {
+    return { fieldErrors: zodFieldErrors(parsed.error, d.validation) };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("gyms")
+    .update({ day_pass_price: parsed.data.day_pass_price })
+    .eq("id", workspace.gymId);
+
+  if (error) {
+    console.error("updateDayPassPrice", error.message);
+    return { error: d.plans.error };
+  }
+
+  revalidatePath(`/${locale}/plans`, "page");
+  revalidatePath(`/${locale}/payments`, "page");
+  return { success: true };
+}
+
 /** @deprecated Prefer setPlanActive; kept for any lingering forms. */
 export async function deletePlan(formData: FormData): Promise<void> {
   formData.set("is_active", "false");

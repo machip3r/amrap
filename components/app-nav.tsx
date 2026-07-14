@@ -14,12 +14,13 @@ import {
   CreditCard,
   Layers,
   LogOut,
-  Settings,
   PanelLeftClose,
   PanelLeftOpen,
   Dumbbell,
   Briefcase,
   Building2,
+  CalendarDays,
+  ChevronRight,
 } from "lucide-react";
 import { LogoutButton } from "./logout-button";
 import { AmrapLogo } from "./landing/amrap-logo";
@@ -204,6 +205,17 @@ export function AppNav({
             <span className={labelClass}>{d.nav.members}</span>
           </Link>
         )}
+        {can(role, "manage_classes") && (
+          <Link
+            className={navLinkClass(isActive(`${prefix}/classes`), collapsed)}
+            href={`${prefix}/classes`}
+            aria-current={isActive(`${prefix}/classes`) ? "page" : undefined}
+            title={collapsed ? d.nav.classes : undefined}
+          >
+            <CalendarDays className="h-5 w-5 shrink-0" aria-hidden />
+            <span className={labelClass}>{d.nav.classes}</span>
+          </Link>
+        )}
         {(canManageStaff || can(role, "manage_staff")) && (
           <Link
             className={navLinkClass(isActive(`${prefix}/trainers`), collapsed)}
@@ -226,17 +238,6 @@ export function AppNav({
             <span className={labelClass}>{d.nav.staff}</span>
           </Link>
         )}
-        {can(role, "record_payment") && (
-          <Link
-            className={navLinkClass(isActive(`${prefix}/payments`), collapsed)}
-            href={`${prefix}/payments`}
-            aria-current={isActive(`${prefix}/payments`) ? "page" : undefined}
-            title={collapsed ? d.nav.payments : undefined}
-          >
-            <CreditCard className="h-5 w-5 shrink-0" aria-hidden />
-            <span className={labelClass}>{d.nav.payments}</span>
-          </Link>
-        )}
         {can(role, "manage_plans") && (
           <Link
             className={navLinkClass(isActive(`${prefix}/plans`), collapsed)}
@@ -248,15 +249,15 @@ export function AppNav({
             <span className={labelClass}>{d.nav.plans}</span>
           </Link>
         )}
-        {canManageSettings && (
+        {can(role, "record_payment") && (
           <Link
-            className={navLinkClass(isActive(`${prefix}/settings`), collapsed)}
-            href={`${prefix}/settings`}
-            aria-current={isActive(`${prefix}/settings`) ? "page" : undefined}
-            title={collapsed ? d.nav.settings : undefined}
+            className={navLinkClass(isActive(`${prefix}/payments`), collapsed)}
+            href={`${prefix}/payments`}
+            aria-current={isActive(`${prefix}/payments`) ? "page" : undefined}
+            title={collapsed ? d.nav.payments : undefined}
           >
-            <Settings className="h-5 w-5 shrink-0" aria-hidden />
-            <span className={labelClass}>{d.nav.settings}</span>
+            <CreditCard className="h-5 w-5 shrink-0" aria-hidden />
+            <span className={labelClass}>{d.nav.payments}</span>
           </Link>
         )}
       </nav>
@@ -271,7 +272,7 @@ export function AppNav({
             className={
               collapsed
                 ? navLinkClass(isActive(`${prefix}/organization`), collapsed)
-                : `block rounded-md px-3 py-2 transition-colors hover:bg-[var(--color-surface-hover)] ${
+                : `flex items-center gap-2 rounded-md px-3 py-2 transition-colors hover:bg-[var(--color-surface-hover)] ${
                     isActive(`${prefix}/organization`)
                       ? "bg-[var(--color-primary-soft)]"
                       : ""
@@ -290,19 +291,25 @@ export function AppNav({
               <Building2 className="h-5 w-5 shrink-0" aria-hidden />
             ) : (
               <>
-                <p className="truncate text-sm font-semibold text-[var(--color-text)]">
-                  {organizationName || gymName || d.shell.gymAdmin}
-                </p>
-                <p className="truncate text-xs text-[var(--color-muted)]">
-                  {gymName && organizationName && gymName !== organizationName
-                    ? gymName
-                    : d.shell.gymAdmin}
-                </p>
-                {isProvisionalOwner ? (
-                  <p className="mt-0.5 text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
-                    {d.shell.provisionalOwner}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-[var(--color-text)]">
+                    {organizationName || gymName || d.shell.gymAdmin}
                   </p>
-                ) : null}
+                  <p className="truncate text-xs text-[var(--color-muted)]">
+                    {gymName && organizationName && gymName !== organizationName
+                      ? gymName
+                      : d.shell.gymAdmin}
+                  </p>
+                  {isProvisionalOwner ? (
+                    <p className="mt-0.5 text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
+                      {d.shell.provisionalOwner}
+                    </p>
+                  ) : null}
+                </div>
+                <ChevronRight
+                  className="h-4 w-4 shrink-0 text-[var(--color-muted)]"
+                  aria-hidden
+                />
               </>
             )}
           </Link>

@@ -13,6 +13,7 @@ import { zodFieldErrors } from "@/lib/validation/field-errors";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getPaletteTemplate } from "@/lib/branding/palettes";
 import { gymLogoPublicUrl } from "@/lib/branding/logo";
+import { canUseWhitelabel } from "@/lib/plans/limits";
 import type { BrandThemeTokens } from "@/types";
 import { z } from "zod";
 
@@ -86,6 +87,9 @@ export async function saveGymThemeAction(
   if (!workspace || !canInWorkspace(workspace, "manage_billing")) {
     return { error: d.common.forbidden };
   }
+  if (!canUseWhitelabel(workspace.planTier)) {
+    return { error: d.settings.whitelabelLocked };
+  }
 
   const parsed = themeFormSchema.safeParse({
     locale: formString(formData, "locale") || "es",
@@ -138,6 +142,9 @@ export async function applyPaletteTemplateAction(
   if (!workspace || !canInWorkspace(workspace, "manage_billing")) {
     return { error: d.common.forbidden };
   }
+  if (!canUseWhitelabel(workspace.planTier)) {
+    return { error: d.settings.whitelabelLocked };
+  }
 
   const template = getPaletteTemplate(formString(formData, "paletteId"));
   if (!template) {
@@ -170,6 +177,9 @@ export async function uploadGymLogoAction(
   const workspace = await getWorkspace();
   if (!workspace || !canInWorkspace(workspace, "manage_billing")) {
     return { error: d.common.forbidden };
+  }
+  if (!canUseWhitelabel(workspace.planTier)) {
+    return { error: d.settings.whitelabelLocked };
   }
 
   const modeParsed = logoModeSchema.safeParse(formString(formData, "mode"));
@@ -249,6 +259,9 @@ export async function removeGymLogoAction(
   const workspace = await getWorkspace();
   if (!workspace || !canInWorkspace(workspace, "manage_billing")) {
     return { error: d.common.forbidden };
+  }
+  if (!canUseWhitelabel(workspace.planTier)) {
+    return { error: d.settings.whitelabelLocked };
   }
 
   const modeParsed = logoModeSchema.safeParse(formString(formData, "mode"));

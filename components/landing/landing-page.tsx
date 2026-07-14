@@ -43,9 +43,16 @@ export function LandingPage({ locale, d }: Props) {
 
         <div className="landing-hero-content">
           <div className="landing-hero-copy">
-            <p className="font-title landing-hero-brand" aria-label={d.hero.brand}>
-              {d.hero.brand}
-            </p>
+            <div className="landing-hero-brand">
+              <Image
+                src="/amrap-hero-logo-white.png"
+                alt={d.hero.brand}
+                width={1035}
+                height={257}
+                priority
+                className="landing-hero-brand-logo"
+              />
+            </div>
             <h1 className="font-title landing-hero-title">{d.hero.title}</h1>
             <p className="landing-hero-subtitle">{d.hero.subtitle}</p>
             <div className="landing-hero-ctas">

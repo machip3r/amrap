@@ -19,6 +19,10 @@ type Props = {
   closeLabel: string;
   /** Extra classes on the panel (e.g. max-w-xl). Default max-w-md. */
   className?: string;
+  /** Extra classes on the scrollable body. */
+  bodyClassName?: string;
+  /** Focus first field when opened. Default true. */
+  autoFocus?: boolean;
 };
 
 export function Dialog({
@@ -29,7 +33,9 @@ export function Dialog({
   children,
   titleId: titleIdProp,
   closeLabel,
-  className = "",
+  className = "max-w-md",
+  bodyClassName = "px-6 py-5",
+  autoFocus = true,
 }: Props) {
   const autoId = useId();
   const titleId = titleIdProp ?? `${autoId}-title`;
@@ -47,21 +53,23 @@ export function Dialog({
     };
     window.addEventListener("keydown", onKey);
 
-    const panel = panelRef.current;
-    const focusTarget =
-      panel?.querySelector<HTMLElement>(
-        'input:not([type="hidden"]):not([type="radio"]), textarea, select',
-      ) ??
-      panel?.querySelector<HTMLElement>(
-        'button:not([data-dialog-close]), [href], [tabindex]:not([tabindex="-1"])',
-      );
-    focusTarget?.focus();
+    if (autoFocus) {
+      const panel = panelRef.current;
+      const focusTarget =
+        panel?.querySelector<HTMLElement>(
+          'input:not([type="hidden"]):not([type="radio"]), textarea, select',
+        ) ??
+        panel?.querySelector<HTMLElement>(
+          'button:not([data-dialog-close]), [href], [tabindex]:not([tabindex="-1"])',
+        );
+      focusTarget?.focus();
+    }
 
     return () => {
       document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", onKey);
     };
-  }, [open, onOpenChange]);
+  }, [open, onOpenChange, autoFocus]);
 
   if (!open) return null;
 
@@ -79,9 +87,9 @@ export function Dialog({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
-        className={`animate-fade-in-up relative z-10 flex max-h-[min(92vh,44rem)] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl ${className}`.trim()}
+        className={`animate-fade-in-up relative z-10 flex max-h-[min(94vh,56rem)] w-full flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl ${className}`.trim()}
       >
-        <div className="relative border-b border-[var(--color-border)] px-6 pb-4 pt-6 pr-14">
+        <div className="relative shrink-0 border-b border-[var(--color-border)] px-6 pb-4 pt-6 pr-14">
           <h2
             id={titleId}
             className="font-title text-xl font-bold tracking-tight text-[var(--color-text)]"
@@ -103,7 +111,11 @@ export function Dialog({
             <X className="h-4 w-4" aria-hidden />
           </button>
         </div>
-        <div className="overflow-y-auto px-6 py-5">{children}</div>
+        <div
+          className={`min-h-0 flex-1 overflow-y-auto ${bodyClassName}`.trim()}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );

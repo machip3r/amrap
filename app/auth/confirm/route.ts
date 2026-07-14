@@ -39,7 +39,8 @@ export async function GET(request: NextRequest) {
     });
     if (!error) {
       const email = data.user?.email ?? "";
-      if (email) {
+      // Org bootstrap is only for self-serve signup — not team/member invites.
+      if (email && typeRaw === "signup") {
         await ensureOrganizationAfterConfirm(email);
       }
       redirect(next);

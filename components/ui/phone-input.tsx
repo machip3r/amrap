@@ -117,18 +117,15 @@ export function PhoneInput({
   }
 
   const isAuth = variant === "auth";
+  const controlSurface = isAuth
+    ? "h-11 box-border rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] text-sm text-[var(--color-text)] transition-colors focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)] disabled:cursor-not-allowed disabled:opacity-70"
+    : "h-8 box-border rounded border border-[var(--color-muted)]/40 bg-[var(--color-bg)] text-sm text-[var(--color-text)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)] disabled:opacity-70";
 
   return (
     <div ref={rootRef} className={`relative ${className}`.trim()}>
       <input type="hidden" name={name} value={international} readOnly />
-      <div
-        className={
-          isAuth
-            ? "flex gap-2"
-            : "flex gap-1.5"
-        }
-      >
-        <div className="relative shrink-0">
+      <div className={`flex items-center ${isAuth ? "gap-2" : "gap-1.5"}`}>
+        <div className="relative shrink-0 self-stretch">
           <button
             type="button"
             disabled={disabled}
@@ -137,20 +134,20 @@ export function PhoneInput({
             aria-expanded={menuOpen}
             aria-controls={listId}
             onClick={() => setMenuOpen((o) => !o)}
-            className={
+            className={`inline-flex h-full items-center ${
               isAuth
-                ? "inline-flex h-[42px] items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] px-2.5 text-sm font-medium text-[var(--color-text)] transition-colors hover:border-[var(--color-ring)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)] disabled:cursor-not-allowed disabled:opacity-70"
-                : "inline-flex h-8 items-center gap-1 rounded border border-[var(--color-muted)]/40 bg-[var(--color-bg)] px-2 text-sm text-[var(--color-text)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)] disabled:opacity-70"
-            }
+                ? "gap-1.5 px-2.5 font-medium hover:border-[var(--color-ring)]"
+                : "gap-1 px-2"
+            } ${controlSurface}`}
           >
-            <span className="text-base leading-none" aria-hidden>
+            <span className="text-[1rem] leading-none" aria-hidden>
               {flagEmoji(iso2)}
             </span>
-            <span className="tabular-nums text-[var(--color-muted)]">
+            <span className="leading-none tabular-nums text-[var(--color-muted)]">
               +{dial}
             </span>
             <ChevronDown
-              className={`h-3.5 w-3.5 text-[var(--color-muted)] transition-transform ${
+              className={`h-3.5 w-3.5 shrink-0 text-[var(--color-muted)] transition-transform ${
                 menuOpen ? "rotate-180" : ""
               }`}
               aria-hidden
@@ -181,7 +178,7 @@ export function PhoneInput({
                         setMenuOpen(false);
                       }}
                     >
-                      <span className="text-base leading-none" aria-hidden>
+                      <span className="text-[1rem] leading-none" aria-hidden>
                         {flagEmoji(c.iso2)}
                       </span>
                       <span className="min-w-0 flex-1 truncate">{label}</span>
@@ -207,11 +204,7 @@ export function PhoneInput({
           placeholder={placeholder}
           value={national}
           onChange={(e) => commit(iso2, e.target.value)}
-          className={
-            isAuth
-              ? "min-w-0 flex-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] px-4 py-2.5 text-[var(--color-text)] placeholder-[var(--color-muted)] transition-colors focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)] disabled:cursor-not-allowed disabled:opacity-70"
-              : "min-w-0 flex-1 border border-[var(--color-muted)]/40 bg-[var(--color-bg)] px-2 py-1 text-[var(--color-text)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)] disabled:opacity-70"
-          }
+          className={`min-w-0 flex-1 leading-none placeholder-[var(--color-muted)] ${isAuth ? "px-4" : "px-2"} ${controlSurface}`}
         />
       </div>
     </div>

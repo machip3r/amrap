@@ -91,6 +91,7 @@ Billing account for AMRAP.
 | `owner_user_id` | Convenience pointer; authoritative OWNER is `gym_roles` |
 | `logo_url_light` / `logo_url_dark` | Storage object paths in bucket `gym-logos` (e.g. `{gym_id}/logo-light.png`) |
 | `theme_light` / `theme_dark` | `jsonb` hex overrides: `primary`, `bg`, `surface` (`{}` = defaults) |
+| `address` | Optional general / brand address |
 | `deleted_at` | Soft delete |
 
 ---
@@ -100,7 +101,8 @@ Billing account for AMRAP.
 | Column | Notes |
 | ------ | ----- |
 | `gym_id` | Cascade |
-| `name` | |
+| `name` | Display label for the location (e.g. Principal, Centro) |
+| `address` | Optional physical street address |
 
 ---
 
@@ -237,7 +239,7 @@ Granted to `authenticated` unless noted. Prefer these over raw inserts for signu
 | -------- | -------- |
 | `register_organization_account(name)` | Creates Freemium org + ensures `persons` row for caller; idempotent if org already exists for `created_by` |
 | `onboarding_save_profile(full_name, as_provisional?)` | Updates person name; sets org `pending_as_provisional` |
-| `onboarding_create_gym(name, branch_name?)` | First gym + optional branch + `gym_roles` OWNER (or provisional) |
+| `onboarding_create_gym(name, branch_name?, gym_address?, branch_address?)` | First gym + branch + optional addresses + `gym_roles` OWNER (or provisional) |
 | `onboarding_mark_plans_done()` | Sets `onboarding_plans_done` |
 | `onboarding_complete()` | Sets `onboarding_completed_at` |
 
@@ -294,11 +296,18 @@ Expect future migrations for:
 - Granular permission templates beyond raw `permissions` jsonb
 - Person “claim” / merge when a profile gains `user_id`
 - Freemium numeric caps as DB constraints or trigger checks
-- Class/events, announcements, penalties, routines, community
+- Class sessions/schedules, announcements, penalties, routines, community
 - Org billing (Stripe/MP subscriptions), member payment gateway accounts
 - Impersonation audit log
 - Member white-label / custom domain (gym branding columns exist for admin dashboard)
 - Hardware device registry
+
+### Classes (shipped)
+
+| Table | Purpose |
+|-------|---------|
+| `classes` | Class catalog per gym (`name`, optional `description` / `capacity`, `is_active`) |
+| `class_trainers` | Many-to-many assignment of `auth.users` (trainers) to a class |
 
 ---
 

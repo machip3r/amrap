@@ -5,7 +5,7 @@ import { getSupabaseUrl } from "@/lib/supabase/env";
  * Server-only Supabase client with the service role key. Bypasses RLS.
  * Never import this module from client components or expose the key publicly.
  */
-function createServiceRoleClient() {
+export function createServiceRoleClient() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!key) {
     return null;

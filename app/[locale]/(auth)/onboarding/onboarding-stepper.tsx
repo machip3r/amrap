@@ -1,20 +1,24 @@
 "use client";
 
 import { useActionState, useId, useState } from "react";
+import { Pencil, Trash2 } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { OnboardingState, OnboardingStep } from "@/lib/auth/session";
 import {
   addOnboardingPlanAction,
+  deleteOnboardingPlanAction,
   finishOnboardingAction,
   saveOnboardingGymAction,
   saveOnboardingProfileAction,
   skipOnboardingPlansAction,
+  updateOnboardingPlanAction,
   type OnboardingActionState,
 } from "./actions";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { LIMITS } from "@/lib/validation/schemas";
 
 type PlanRow = { id: string; name: string; price: number; duration_days: number };
@@ -234,7 +238,9 @@ function StepGym({
     null as OnboardingActionState,
   );
   const gymId = useId();
+  const gymAddressId = useId();
   const branchId = useId();
+  const branchAddressId = useId();
 
   return (
     <section className="flex flex-col gap-4">
@@ -253,6 +259,7 @@ function StepGym({
           label={d.onboarding.gymName}
           htmlFor={gymId}
           variant="auth"
+          hint={d.onboarding.gymNameHint}
           error={formState?.fieldErrors?.gymName}
         >
           <Input
@@ -266,9 +273,26 @@ function StepGym({
           />
         </FormField>
         <FormField
+          label={d.onboarding.gymAddress}
+          htmlFor={gymAddressId}
+          variant="auth"
+          hint={d.onboarding.gymAddressHint}
+          error={formState?.fieldErrors?.gymAddress}
+        >
+          <Input
+            id={gymAddressId}
+            name="gymAddress"
+            variant="auth"
+            placeholder={d.onboarding.gymAddressPlaceholder}
+            autoComplete="street-address"
+            maxLength={LIMITS.address}
+          />
+        </FormField>
+        <FormField
           label={d.onboarding.branchName}
           htmlFor={branchId}
           variant="auth"
+          hint={d.onboarding.branchNameHint}
           error={formState?.fieldErrors?.branchName}
         >
           <Input
@@ -277,6 +301,22 @@ function StepGym({
             variant="auth"
             placeholder={d.onboarding.branchNamePlaceholder}
             maxLength={LIMITS.entityName}
+          />
+        </FormField>
+        <FormField
+          label={d.onboarding.branchAddress}
+          htmlFor={branchAddressId}
+          variant="auth"
+          hint={d.onboarding.branchAddressHint}
+          error={formState?.fieldErrors?.branchAddress}
+        >
+          <Input
+            id={branchAddressId}
+            name="branchAddress"
+            variant="auth"
+            placeholder={d.onboarding.branchAddressPlaceholder}
+            autoComplete="street-address"
+            maxLength={LIMITS.address}
           />
         </FormField>
 
@@ -304,14 +344,24 @@ function StepPlans({
   plans: PlanRow[];
 }) {
   const d = getDictionary(locale);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<PlanRow | null>(null);
   const [formState, formAction, pending] = useActionState(
     addOnboardingPlanAction,
+    null as OnboardingActionState,
+  );
+  const [editState, editAction, editPending] = useActionState(
+    updateOnboardingPlanAction,
     null as OnboardingActionState,
   );
   const nameId = useId();
   const priceId = useId();
   const daysId = useId();
+  const editNameId = useId();
+  const editPriceId = useId();
+  const editDaysId = useId();
   const atLimit = plans.length >= 2;
+  const editingPlan = plans.find((p) => p.id === editingId) ?? null;
 
   return (
     <section className="flex flex-col gap-4">
@@ -321,6 +371,9 @@ function StepPlans({
         </h2>
         <p className="mt-1 text-sm text-[var(--color-muted)]">
           {d.onboarding.plansSubtitle}
+        </p>
+        <p className="mt-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs leading-relaxed text-[var(--color-muted)]">
+          {d.onboarding.plansExample}
         </p>
         {state.gymName ? (
           <p className="mt-2 text-xs text-[var(--color-muted)]">
@@ -337,16 +390,149 @@ function StepPlans({
           {plans.map((p) => (
             <li
               key={p.id}
-              className="flex justify-between rounded-lg border border-[var(--color-border)] px-3 py-2"
+              className="rounded-lg border border-[var(--color-border)] px-3 py-2"
             >
-              <span className="font-medium text-[var(--color-text)]">{p.name}</span>
-              <span className="text-[var(--color-muted)]">
-                ${p.price} · {p.duration_days}d
-              </span>
+              {editingPlan?.id === p.id ? (
+                <form action={editAction} className="flex flex-col gap-3" noValidate>
+                  <input type="hidden" name="locale" value={locale} />
+                  <input type="hidden" name="plan_id" value={p.id} />
+                  <FormField
+                    label={d.plans.planName}
+                    htmlFor={editNameId}
+                    variant="auth"
+                    error={editState?.fieldErrors?.name}
+                  >
+                    <Input
+                      id={editNameId}
+                      required
+                      name="name"
+                      variant="auth"
+                      defaultValue={p.name}
+                      maxLength={LIMITS.entityName}
+                    />
+                  </FormField>
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField
+                      label={d.plans.price}
+                      htmlFor={editPriceId}
+                      variant="auth"
+                      error={editState?.fieldErrors?.price}
+                    >
+                      <Input
+                        id={editPriceId}
+                        required
+                        name="price"
+                        type="number"
+                        min={0}
+                        max={1_000_000}
+                        step="0.01"
+                        inputMode="decimal"
+                        variant="auth"
+                        defaultValue={p.price}
+                      />
+                    </FormField>
+                    <FormField
+                      label={d.plans.durationDays}
+                      htmlFor={editDaysId}
+                      variant="auth"
+                      error={editState?.fieldErrors?.duration_days}
+                    >
+                      <Input
+                        id={editDaysId}
+                        required
+                        name="duration_days"
+                        type="number"
+                        min={1}
+                        max={3650}
+                        step={1}
+                        inputMode="numeric"
+                        variant="auth"
+                        defaultValue={p.duration_days}
+                      />
+                    </FormField>
+                  </div>
+                  {editState?.error ? (
+                    <p className="text-sm font-medium text-[var(--color-primary)]">
+                      {editState.error}
+                    </p>
+                  ) : null}
+                  <div className="flex gap-2">
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      className="flex-1"
+                      disabled={editPending}
+                    >
+                      {editPending ? d.onboarding.saving : d.plans.save}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="flex-1"
+                      onClick={() => setEditingId(null)}
+                    >
+                      {d.plans.cancel}
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-[var(--color-text)]">
+                      {p.name}
+                    </p>
+                    <p className="text-[var(--color-muted)]">
+                      ${p.price} · {p.duration_days}d
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setEditingId(p.id)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]"
+                      aria-label={d.plans.edit}
+                      title={d.plans.edit}
+                    >
+                      <Pencil className="h-3.5 w-3.5" aria-hidden />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleting(p)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-primary)]"
+                      aria-label={d.plans.delete}
+                      title={d.plans.delete}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                    </button>
+                  </div>
+                </div>
+              )}
             </li>
           ))}
         </ul>
       ) : null}
+
+      <ConfirmDialog
+        open={deleting != null}
+        onOpenChange={(open) => {
+          if (!open) setDeleting(null);
+        }}
+        title={d.plans.delete}
+        description={
+          deleting ? `${d.plans.delete}: ${deleting.name}` : undefined
+        }
+        closeLabel={d.plans.cancel}
+        cancelLabel={d.plans.cancel}
+        confirmLabel={d.plans.delete}
+        action={deleteOnboardingPlanAction}
+      >
+        {deleting ? (
+          <>
+            <input type="hidden" name="locale" value={locale} />
+            <input type="hidden" name="plan_id" value={deleting.id} />
+          </>
+        ) : null}
+      </ConfirmDialog>
 
       {!atLimit ? (
         <form action={formAction} className="flex flex-col gap-3" noValidate>
@@ -355,6 +541,7 @@ function StepPlans({
             label={d.plans.planName}
             htmlFor={nameId}
             variant="auth"
+            hint={d.onboarding.planNameHint}
             error={formState?.fieldErrors?.name}
           >
             <Input
@@ -362,6 +549,7 @@ function StepPlans({
               required
               name="name"
               variant="auth"
+              placeholder={d.onboarding.planNamePlaceholder}
               maxLength={LIMITS.entityName}
             />
           </FormField>
@@ -370,6 +558,7 @@ function StepPlans({
               label={d.plans.price}
               htmlFor={priceId}
               variant="auth"
+              hint={d.onboarding.planPriceHint}
               error={formState?.fieldErrors?.price}
             >
               <Input
@@ -382,12 +571,14 @@ function StepPlans({
                 step="0.01"
                 inputMode="decimal"
                 variant="auth"
+                placeholder="500"
               />
             </FormField>
             <FormField
               label={d.plans.durationDays}
               htmlFor={daysId}
               variant="auth"
+              hint={d.onboarding.planDurationHint}
               error={formState?.fieldErrors?.duration_days}
             >
               <Input

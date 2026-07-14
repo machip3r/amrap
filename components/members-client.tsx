@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { useMemo, useState } from "react";
-import { ArrowRight, Search } from "lucide-react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowRight, RefreshCw, Search } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import type { Member } from "@/types";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,8 @@ export type MembersPageLabels = {
   filterPlan: string;
   filterPlanAll: string;
   showing: string;
+  reload: string;
+  newBadge: string;
 };
 
 type PlanFilterOption = {
@@ -43,6 +45,7 @@ type Props = {
   members: Member[];
   plans: PlanFilterOption[];
   labels: MembersPageLabels;
+  highlightId?: string | null;
 };
 
 function initials(name: string) {
@@ -76,10 +79,28 @@ function showingLabel(
     .replace("{total}", String(total));
 }
 
-export function MembersClient({ locale, members, plans, labels }: Props) {
+export function MembersClient({
+  locale,
+  members,
+  plans,
+  labels,
+  highlightId = null,
+}: Props) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [planId, setPlanId] = useState("all");
+  const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (!highlightId) return;
+    const scrollTimer = window.setTimeout(() => {
+      document
+        .getElementById(`member-row-${highlightId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 80);
+    return () => window.clearTimeout(scrollTimer);
+  }, [highlightId]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -96,6 +117,12 @@ export function MembersClient({ locale, members, plans, labels }: Props) {
 
   const emptyMessage =
     members.length === 0 ? labels.noMembers : labels.noResults;
+
+  function reload() {
+    startTransition(() => {
+      router.refresh();
+    });
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -164,6 +191,20 @@ export function MembersClient({ locale, members, plans, labels }: Props) {
               </Select>
             </div>
           ) : null}
+
+          <button
+            type="button"
+            onClick={reload}
+            disabled={pending}
+            className="ml-auto inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)] disabled:opacity-60"
+            aria-label={labels.reload}
+            title={labels.reload}
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${pending ? "animate-spin" : ""}`}
+              aria-hidden
+            />
+          </button>
         </div>
       </div>
 
@@ -192,10 +233,24 @@ export function MembersClient({ locale, members, plans, labels }: Props) {
               ) : (
                 filtered.map((m) => {
                   const active = m.status === "active";
+                  const isNew = highlightId === m.id;
+                  const href = `/${locale}/members/${m.id}`;
                   return (
                     <tr
                       key={m.id}
-                      className="border-b border-[var(--color-border)]/70 transition-colors last:border-b-0 hover:bg-[var(--color-surface-hover)]/40"
+                      id={`member-row-${m.id}`}
+                      role="link"
+                      tabIndex={0}
+                      onClick={() => router.push(href)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          router.push(href);
+                        }
+                      }}
+                      className={`cursor-pointer border-b border-[var(--color-border)]/70 transition-colors last:border-b-0 hover:bg-[var(--color-surface-hover)]/40 ${
+                        isNew ? "amrap-row-shine" : ""
+                      }`}
                     >
                       <td className="px-4 py-3.5 sm:px-5">
                         <div className="flex items-center gap-3">
@@ -205,6 +260,11 @@ export function MembersClient({ locale, members, plans, labels }: Props) {
                           <div className="min-w-0">
                             <p className="truncate font-semibold text-[var(--color-text)]">
                               {m.name}
+                              {isNew ? (
+                                <span className="ml-2 text-[11px] font-medium text-[var(--color-primary)]">
+                                  {labels.newBadge}
+                                </span>
+                              ) : null}
                             </p>
                             <p className="truncate text-xs text-[var(--color-muted)]">
                               {m.email ?? m.phone ?? "—"}
@@ -244,13 +304,10 @@ export function MembersClient({ locale, members, plans, labels }: Props) {
                         {formatExpires(m.membership_expires_at, locale)}
                       </td>
                       <td className="px-4 py-3.5 pr-5 text-right">
-                        <Link
-                          href={`/${locale}/members/${m.id}`}
-                          className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-primary)] transition-opacity hover:opacity-80"
-                        >
+                        <span className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-primary)]">
                           {labels.view}
                           <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-                        </Link>
+                        </span>
                       </td>
                     </tr>
                   );

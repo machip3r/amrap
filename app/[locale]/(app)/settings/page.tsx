@@ -4,6 +4,7 @@ import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getWorkspace } from "@/lib/auth/session";
 import { canInWorkspace } from "@/lib/auth/permissions";
+import { canUseWhitelabel } from "@/lib/plans/limits";
 import { PersonalizationForm } from "./personalization-form";
 
 export default async function SettingsPage({
@@ -39,6 +40,7 @@ export default async function SettingsPage({
         logoUrlDark={workspace.logoUrlDark}
         themeLight={workspace.themeLight}
         themeDark={workspace.themeDark}
+        canCustomizeBrand={canUseWhitelabel(workspace.planTier)}
       />
     </div>
   );

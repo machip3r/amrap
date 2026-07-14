@@ -8,6 +8,7 @@ import {
   Lock,
   Pencil,
   Plus,
+  Ticket,
   Users,
 } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
@@ -17,10 +18,13 @@ import {
   createPlan,
   updatePlan,
   setPlanActive,
+  updateDayPassPrice,
   type PlanFormState,
+  type DayPassPriceState,
 } from "@/app/[locale]/(app)/plans/actions";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 
@@ -61,6 +65,12 @@ export type PlansPageLabels = {
   upgradePlans: string;
   quotaLabel: string;
   freemium: string;
+  dayPassTitle: string;
+  dayPassSubtitle: string;
+  dayPassPrice: string;
+  dayPassHint: string;
+  dayPassSave: string;
+  dayPassNotSet: string;
 };
 
 type Props = {
@@ -69,6 +79,7 @@ type Props = {
   canAdd: boolean;
   activeCount: number;
   maxPlans: number | null;
+  dayPassPrice: number | null;
   labels: PlansPageLabels;
 };
 
@@ -191,6 +202,7 @@ export function PlansClient({
   canAdd,
   activeCount,
   maxPlans,
+  dayPassPrice,
   labels,
 }: Props) {
   const [createOpen, setCreateOpen] = useState(false);
@@ -205,6 +217,11 @@ export function PlansClient({
     updatePlan,
     null as PlanFormState,
   );
+  const [dayPassState, dayPassAction, dayPassPending] = useActionState(
+    updateDayPassPrice,
+    null as DayPassPriceState,
+  );
+  const [togglingPlan, setTogglingPlan] = useState<PlansPagePlan | null>(null);
 
   const [prevCreateState, setPrevCreateState] = useState(createState);
   if (createState !== prevCreateState) {
@@ -256,120 +273,192 @@ export function PlansClient({
         </Button>
       </header>
 
-      {plans.length === 0 && !showLimitCard ? (
-        <section className="rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)]/60 px-6 py-14 text-center">
-          <p className="text-sm text-[var(--color-muted)]">{labels.noPlans}</p>
-          <Button
-            type="button"
-            variant="primary"
-            className="mt-4 inline-flex items-center gap-1.5 shadow-sm"
-            onClick={() => setCreateOpen(true)}
-          >
-            <Plus className="h-4 w-4" aria-hidden />
-            {labels.newPlan}
-          </Button>
-        </section>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {plans.map((plan) => (
-            <article
-              key={plan.id}
-              className={`flex flex-col rounded-2xl border bg-[var(--color-surface)] shadow-sm transition-colors ${
-                plan.is_active
-                  ? "border-[var(--color-border)] border-l-4 border-l-[var(--color-primary)]"
-                  : "border-dashed border-[var(--color-border)] opacity-80"
-              }`}
-            >
-              <div className="flex flex-1 flex-col gap-4 p-5 sm:p-6">
-                <div className="flex items-start justify-between gap-3">
-                  <h2 className="font-title text-lg font-bold tracking-tight text-[var(--color-text)]">
-                    {plan.name}
-                  </h2>
-                  <span
-                    className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-                      plan.is_active
-                        ? "bg-[var(--color-success)]/15 text-[var(--color-success)]"
-                        : "bg-[var(--color-muted)]/15 text-[var(--color-muted)]"
-                    }`}
-                  >
-                    {plan.is_active ? labels.active : labels.archived}
-                  </span>
-                </div>
-
-                <p className="flex flex-wrap items-baseline gap-x-1.5">
-                  <span className="font-title text-3xl font-bold tracking-tight text-[var(--color-text)]">
-                    {formatPrice(plan.price, locale)}
-                  </span>
-                  <span className="text-sm text-[var(--color-muted)]">
-                    {formatDuration(plan.duration_days, labels)}
-                  </span>
-                </p>
-
-                <p className="inline-flex items-center gap-2 text-sm text-[var(--color-muted)]">
-                  <Users className="h-4 w-4 shrink-0" aria-hidden />
-                  {membersLabel(labels.membersEnrolled, plan.member_count)}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-1 border-t border-[var(--color-border)] px-3 py-2">
-                <button
-                  type="button"
-                  onClick={() => setEditing(plan)}
-                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)]"
-                >
-                  <Pencil className="h-3.5 w-3.5" aria-hidden />
-                  {labels.edit}
-                </button>
-                <form action={setPlanActive} className="flex-1">
-                  <input type="hidden" name="locale" value={locale} />
-                  <input type="hidden" name="plan_id" value={plan.id} />
-                  <input
-                    type="hidden"
-                    name="is_active"
-                    value={plan.is_active ? "false" : "true"}
-                  />
-                  <button
-                    type="submit"
-                    className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]"
-                  >
-                    {plan.is_active ? (
-                      <>
-                        <Archive className="h-3.5 w-3.5" aria-hidden />
-                        {labels.archive}
-                      </>
-                    ) : (
-                      <>
-                        <ArchiveRestore className="h-3.5 w-3.5" aria-hidden />
-                        {labels.restore}
-                      </>
-                    )}
-                  </button>
-                </form>
-              </div>
-            </article>
-          ))}
-
-          {showLimitCard ? (
-            <article className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)]/50 px-6 py-10 text-center shadow-sm">
-              <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-[var(--color-muted)]/15 text-[var(--color-muted)]">
-                <Lock className="h-5 w-5" aria-hidden />
-              </div>
-              <h2 className="font-title text-lg font-bold text-[var(--color-text)]">
-                {labels.limitReached}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <article className="flex flex-col rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
+          <div className="flex flex-1 flex-col gap-4 p-5 sm:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="font-title text-lg font-bold tracking-tight text-[var(--color-text)]">
+                {labels.dayPassTitle}
               </h2>
-              <p className="mt-2 max-w-xs text-sm text-[var(--color-muted)]">
-                {labels.limitReachedHint}
-              </p>
-              <Link
-                href={`/${locale}/organization#subscription`}
-                className="mt-5 inline-flex items-center justify-center rounded-lg bg-[var(--color-primary)] px-3.5 py-2 text-sm font-semibold text-[var(--color-primary-on)] shadow-sm transition-[filter] hover:brightness-[0.92]"
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary)]/15 text-[var(--color-primary)]">
+                <Ticket className="h-4 w-4" aria-hidden />
+              </span>
+            </div>
+
+            <p className="flex flex-wrap items-baseline gap-x-1.5">
+              <span className="font-title text-3xl font-bold tracking-tight text-[var(--color-text)]">
+                {dayPassPrice != null
+                  ? formatPrice(dayPassPrice, locale)
+                  : labels.dayPassNotSet}
+              </span>
+              <span className="text-sm text-[var(--color-muted)]">
+                {labels.dayPassSubtitle}
+              </span>
+            </p>
+
+            <p className="text-sm text-[var(--color-muted)]">{labels.dayPassHint}</p>
+          </div>
+
+          <form
+            action={dayPassAction}
+            className="flex flex-col gap-2 border-t border-[var(--color-border)] px-3 py-3"
+            noValidate
+          >
+            <input type="hidden" name="locale" value={locale} />
+            <div className="flex items-end gap-2">
+              <FormField
+                label={labels.dayPassPrice}
+                htmlFor="day-pass-price"
+                variant="auth"
+                className="min-w-0 flex-1"
+                error={dayPassState?.fieldErrors?.day_pass_price}
               >
-                {labels.upgradePlans}
-              </Link>
-            </article>
-          ) : null}
-        </div>
-      )}
+                <Input
+                  id="day-pass-price"
+                  name="day_pass_price"
+                  type="number"
+                  min={0}
+                  max={1_000_000}
+                  step="0.01"
+                  inputMode="decimal"
+                  variant="auth"
+                  required
+                  defaultValue={dayPassPrice ?? ""}
+                  placeholder="0.00"
+                />
+              </FormField>
+              <Button
+                type="submit"
+                variant="primary"
+                className="mb-0.5 shrink-0 px-4 py-2.5 shadow-sm"
+                disabled={dayPassPending}
+              >
+                {dayPassPending
+                  ? getDictionary(locale).plans.saving
+                  : labels.dayPassSave}
+              </Button>
+            </div>
+            {dayPassState?.error ? (
+              <p
+                className="text-sm font-medium text-[var(--color-primary)]"
+                role="alert"
+              >
+                {dayPassState.error}
+              </p>
+            ) : null}
+            {dayPassState?.success ? (
+              <p className="text-sm text-[var(--color-success)]" role="status">
+                {getDictionary(locale).settings.saved}
+              </p>
+            ) : null}
+          </form>
+        </article>
+
+        {plans.length === 0 && !showLimitCard ? (
+          <article className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)]/60 px-6 py-10 text-center shadow-sm">
+            <p className="text-sm text-[var(--color-muted)]">{labels.noPlans}</p>
+            <Button
+              type="button"
+              variant="primary"
+              className="mt-4 inline-flex items-center gap-1.5 shadow-sm"
+              onClick={() => setCreateOpen(true)}
+            >
+              <Plus className="h-4 w-4" aria-hidden />
+              {labels.newPlan}
+            </Button>
+          </article>
+        ) : null}
+
+        {plans.map((plan) => (
+          <article
+            key={plan.id}
+            className={`flex flex-col rounded-2xl border bg-[var(--color-surface)] shadow-sm transition-colors ${
+              plan.is_active
+                ? "border-[var(--color-border)]"
+                : "border-dashed border-[var(--color-border)] opacity-80"
+            }`}
+          >
+            <div className="flex flex-1 flex-col gap-4 p-5 sm:p-6">
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="font-title text-lg font-bold tracking-tight text-[var(--color-text)]">
+                  {plan.name}
+                </h2>
+                <span
+                  className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                    plan.is_active
+                      ? "bg-[var(--color-success)]/15 text-[var(--color-success)]"
+                      : "bg-[var(--color-muted)]/15 text-[var(--color-muted)]"
+                  }`}
+                >
+                  {plan.is_active ? labels.active : labels.archived}
+                </span>
+              </div>
+
+              <p className="flex flex-wrap items-baseline gap-x-1.5">
+                <span className="font-title text-3xl font-bold tracking-tight text-[var(--color-text)]">
+                  {formatPrice(plan.price, locale)}
+                </span>
+                <span className="text-sm text-[var(--color-muted)]">
+                  {formatDuration(plan.duration_days, labels)}
+                </span>
+              </p>
+
+              <p className="inline-flex items-center gap-2 text-sm text-[var(--color-muted)]">
+                <Users className="h-4 w-4 shrink-0" aria-hidden />
+                {membersLabel(labels.membersEnrolled, plan.member_count)}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-1 border-t border-[var(--color-border)] px-3 py-2">
+              <button
+                type="button"
+                onClick={() => setEditing(plan)}
+                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)]"
+              >
+                <Pencil className="h-3.5 w-3.5" aria-hidden />
+                {labels.edit}
+              </button>
+              <button
+                type="button"
+                onClick={() => setTogglingPlan(plan)}
+                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]"
+              >
+                {plan.is_active ? (
+                  <>
+                    <Archive className="h-3.5 w-3.5" aria-hidden />
+                    {labels.archive}
+                  </>
+                ) : (
+                  <>
+                    <ArchiveRestore className="h-3.5 w-3.5" aria-hidden />
+                    {labels.restore}
+                  </>
+                )}
+              </button>
+            </div>
+          </article>
+        ))}
+
+        {showLimitCard ? (
+          <article className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)]/50 px-6 py-10 text-center shadow-sm">
+            <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-[var(--color-muted)]/15 text-[var(--color-muted)]">
+              <Lock className="h-5 w-5" aria-hidden />
+            </div>
+            <h2 className="font-title text-lg font-bold text-[var(--color-text)]">
+              {labels.limitReached}
+            </h2>
+            <p className="mt-2 max-w-xs text-sm text-[var(--color-muted)]">
+              {labels.limitReachedHint}
+            </p>
+            <Link
+              href={`/${locale}/organization#subscription`}
+              className="mt-5 inline-flex items-center justify-center rounded-lg bg-[var(--color-primary)] px-3.5 py-2 text-sm font-semibold text-[var(--color-primary-on)] shadow-sm transition-[filter] hover:brightness-[0.92]"
+            >
+              {labels.upgradePlans}
+            </Link>
+          </article>
+        ) : null}
+      </div>
 
       <Dialog
         open={createOpen}
@@ -420,6 +509,40 @@ export function PlansClient({
           </form>
         ) : null}
       </Dialog>
+
+      <ConfirmDialog
+        open={togglingPlan != null}
+        onOpenChange={(open) => {
+          if (!open) setTogglingPlan(null);
+        }}
+        title={
+          togglingPlan?.is_active ? labels.archive : labels.restore
+        }
+        description={
+          togglingPlan
+            ? `${togglingPlan.is_active ? labels.archive : labels.restore}: ${togglingPlan.name}`
+            : undefined
+        }
+        closeLabel={labels.close}
+        cancelLabel={labels.cancel}
+        confirmLabel={
+          togglingPlan?.is_active ? labels.archive : labels.restore
+        }
+        action={setPlanActive}
+        danger={Boolean(togglingPlan?.is_active)}
+      >
+        {togglingPlan ? (
+          <>
+            <input type="hidden" name="locale" value={locale} />
+            <input type="hidden" name="plan_id" value={togglingPlan.id} />
+            <input
+              type="hidden"
+              name="is_active"
+              value={togglingPlan.is_active ? "false" : "true"}
+            />
+          </>
+        ) : null}
+      </ConfirmDialog>
     </>
   );
 }

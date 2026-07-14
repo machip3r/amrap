@@ -12,6 +12,7 @@ export const LIMITS = {
   message: 2000,
   search: 100,
   checkInCode: 200,
+  address: 240,
 } as const;
 
 /** Lowercase email local+domain shape (after trim + lowercasing). */
@@ -90,6 +91,16 @@ export const optionalEntityNameSchema = z
   .max(LIMITS.entityName)
   .refine((v) => v.length === 0 || ENTITY_NAME_PATTERN.test(v), {
     message: "entity_name",
+  })
+  .transform((v) => (v.length === 0 ? null : v));
+
+/** Street / venue address — optional, no control chars or angle brackets. */
+export const optionalAddressSchema = z
+  .string()
+  .trim()
+  .max(LIMITS.address)
+  .refine((v) => v.length === 0 || /^[^\x00-\x1F\x7F<>]+$/.test(v), {
+    message: "invalid",
   })
   .transform((v) => (v.length === 0 ? null : v));
 

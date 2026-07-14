@@ -3,15 +3,14 @@
 import { useActionState, useState } from "react";
 import {
   Building2,
-  CreditCard,
   Plus,
   Trash2,
   AlertTriangle,
-  Check,
   RotateCcw,
 } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import type { OrgPlanTier } from "@/types";
+import { formatMoney } from "@/lib/i18n/money";
 import {
   AMRAP_PLANS,
   ORG_DELETION_RETENTION_DAYS,
@@ -110,16 +109,22 @@ function planLabel(tier: OrgPlanTier, labels: OrganizationLabels) {
 
 function priceLine(
   tier: OrgPlanTier,
+  locale: Locale,
   labels: OrganizationLabels,
 ): { amount: string; note: string } {
   const plan = AMRAP_PLANS.find((p) => p.tier === tier)!;
   if (plan.priceNote === "free") {
-    return { amount: labels.priceFree, note: labels.perMonth };
+    return {
+      amount: formatMoney(0, locale),
+      note: labels.perMonth,
+    };
   }
   if (plan.priceNote === "contact") {
     return { amount: labels.priceContact, note: labels.contactSales };
   }
-  const amount = `$${plan.priceMxnMonthly}`;
+  const amountMxn = plan.priceMxnMonthly ?? 0;
+  const amountUsd = plan.priceUsdMonthly ?? 0;
+  const amount = formatMoney(locale === "en" ? amountUsd : amountMxn, locale);
   const note =
     plan.priceNote === "per_org"
       ? `${labels.perMonth} · ${labels.pricePerOrg}`
@@ -166,6 +171,8 @@ export function OrganizationClient({
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteGym, setDeleteGym] = useState<OrgGymRow | null>(null);
   const [deleteOrgOpen, setDeleteOrgOpen] = useState(false);
+  const [orgConfirmName, setOrgConfirmName] = useState("");
+  const [gymConfirmName, setGymConfirmName] = useState("");
 
   const [checkoutState, checkoutAction, checkoutPending] = useActionState(
     requestSubscriptionCheckout,
@@ -214,10 +221,13 @@ export function OrganizationClient({
         <p className="mt-1 text-sm text-[var(--color-muted)]">
           {labels.subtitle}
         </p>
-        <p className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-semibold text-[var(--color-text)] shadow-sm">
-          <Building2 className="h-4 w-4 text-[var(--color-primary)]" aria-hidden />
-          {organizationName}
-          <span className="rounded-md bg-[var(--color-primary)]/15 px-2 py-0.5 text-xs font-bold text-[var(--color-primary)]">
+        <p className="mt-3 flex w-full items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-sm font-semibold text-[var(--color-text)] shadow-sm">
+          <Building2
+            className="h-4 w-4 shrink-0 text-[var(--color-primary)]"
+            aria-hidden
+          />
+          <span className="min-w-0 flex-1 truncate">{organizationName}</span>
+          <span className="shrink-0 rounded-md bg-[var(--color-primary)]/15 px-2 py-0.5 text-xs font-bold text-[var(--color-primary)]">
             {planLabel(planTier, labels)}
           </span>
         </p>
@@ -231,72 +241,71 @@ export function OrganizationClient({
 
       <section
         id="subscription"
-        className="scroll-mt-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-6"
+        className="scroll-mt-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]/80 px-4 py-4 sm:px-5"
       >
-        <div className="mb-5 flex items-start gap-3">
-          <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary)]/15 text-[var(--color-primary)]">
-            <CreditCard className="h-5 w-5" aria-hidden />
-          </div>
-          <div>
-            <h2 className="font-title text-xl font-bold text-[var(--color-text)]">
-              {labels.subscriptionTitle}
-            </h2>
-            <p className="mt-2 text-sm text-[var(--color-text)]">
-              {labels.currentPlan}:{" "}
-              <span className="font-semibold">{planLabel(planTier, labels)}</span>
-            </p>
-          </div>
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-sm font-semibold text-[var(--color-text)]">
+            {labels.subscriptionTitle}
+          </h2>
+          <p className="text-xs text-[var(--color-muted)]">
+            {labels.currentPlan}:{" "}
+            <span className="font-semibold text-[var(--color-text)]">
+              {planLabel(planTier, labels)}
+            </span>
+          </p>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           {AMRAP_PLANS.map((plan) => {
             const isCurrent = plan.tier === planTier;
-            const pricing = priceLine(plan.tier, labels);
+            const pricing = priceLine(plan.tier, locale, labels);
             return (
               <article
                 key={plan.tier}
-                className={`flex flex-col rounded-xl border p-4 ${isCurrent
-                  ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5"
-                  : "border-[var(--color-border)]"
-                  }`}
+                className={`flex flex-col rounded-lg border px-3 py-3 ${
+                  isCurrent
+                    ? "border-[var(--color-primary)]/50 bg-[var(--color-primary)]/5"
+                    : "border-[var(--color-border)]/80"
+                }`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="font-title text-base font-bold text-[var(--color-text)]">
+                  <h3 className="text-sm font-semibold text-[var(--color-text)]">
                     {planLabel(plan.tier, labels)}
                   </h3>
                   {isCurrent ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-success)]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--color-success)]">
-                      <Check className="h-3 w-3" aria-hidden />
+                    <span className="rounded-full bg-[var(--color-success)]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--color-success)]">
                       {labels.current}
                     </span>
                   ) : null}
                 </div>
-                <p className="mt-3 font-title text-2xl font-bold text-[var(--color-text)]">
+                <p className="mt-2 text-lg font-bold tabular-nums text-[var(--color-text)]">
                   {pricing.amount}
                 </p>
-                <p className="text-xs text-[var(--color-muted)]">{pricing.note}</p>
+                <p className="text-[11px] leading-snug text-[var(--color-muted)]">
+                  {pricing.note}
+                </p>
                 {plan.tier !== "FREEMIUM" && !isCurrent ? (
                   plan.priceNote === "contact" ? (
                     <a
                       href="mailto:hello@amrap.space?subject=AMRAP%20Pro"
-                      className="mt-auto pt-4"
+                      className="mt-auto pt-3"
                     >
                       <Button
                         type="button"
-                        variant="primary"
-                        className="mt-0 w-full shadow-sm"
+                        variant="ghost"
+                        className="mt-0 h-8 w-full px-2 text-xs font-semibold"
                       >
                         {labels.contactSales}
                       </Button>
                     </a>
                   ) : (
-                    <form action={checkoutAction} className="mt-auto pt-4">
+                    <form action={checkoutAction} className="mt-auto pt-3">
                       <input type="hidden" name="locale" value={locale} />
                       <input type="hidden" name="tier" value={plan.tier} />
                       <Button
                         type="submit"
-                        variant="primary"
-                        className="mt-0 w-full shadow-sm"
+                        variant="ghost"
+                        className="mt-0 h-8 w-full px-2 text-xs font-semibold"
                         disabled={checkoutPending}
                       >
                         {labels.upgrade}
@@ -304,7 +313,7 @@ export function OrganizationClient({
                     </form>
                   )
                 ) : (
-                  <div className="mt-auto pt-4" />
+                  <div className="mt-auto pt-3" />
                 )}
               </article>
             );
@@ -357,24 +366,26 @@ export function OrganizationClient({
               className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="min-w-0">
-                <p className="truncate font-semibold text-[var(--color-text)]">
-                  {gym.name}
-                </p>
-                <div className="mt-1 flex flex-wrap gap-2 text-xs">
+                <p className="flex min-w-0 flex-wrap items-center gap-2">
+                  <span className="truncate font-semibold text-[var(--color-text)]">
+                    {gym.name}
+                  </span>
                   {gym.isCurrent ? (
-                    <span className="rounded-md bg-[var(--color-primary)]/15 px-2 py-0.5 font-medium text-[var(--color-primary)]">
+                    <span className="shrink-0 rounded-md bg-[var(--color-primary)]/15 px-2 py-0.5 text-xs font-medium text-[var(--color-primary)]">
                       {labels.currentGym}
                     </span>
                   ) : null}
-                  {gym.deleted_at ? (
+                </p>
+                {gym.deleted_at ? (
+                  <p className="mt-1 text-xs">
                     <span className="rounded-md bg-[var(--color-danger)]/10 px-2 py-0.5 font-medium text-[var(--color-danger)]">
                       {labels.scheduledDeletion.replace(
                         "{date}",
                         retentionDate(gym.deleted_at, locale),
                       )}
                     </span>
-                  ) : null}
-                </div>
+                  </p>
+                ) : null}
               </div>
               <div className="flex flex-wrap gap-2">
                 {gym.deleted_at ? (
@@ -412,33 +423,36 @@ export function OrganizationClient({
         id="danger"
         className="scroll-mt-6 rounded-2xl border border-[var(--color-danger)]/30 bg-[var(--color-surface)] p-5 shadow-sm sm:p-6"
       >
-        <div className="mb-4 flex items-start gap-3">
-          <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-danger)]/10 text-[var(--color-danger)]">
-            <AlertTriangle className="h-5 w-5" aria-hidden />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
+            <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-danger)]/10 text-[var(--color-danger)]">
+              <AlertTriangle className="h-5 w-5" aria-hidden />
+            </div>
+            <div className="min-w-0">
+              <h2 className="font-title text-xl font-bold text-[var(--color-text)]">
+                {labels.dangerTitle}
+              </h2>
+              <p className="mt-1 text-sm text-[var(--color-muted)]">
+                {labels.dangerHint}
+              </p>
+              <p className="mt-2 text-xs text-[var(--color-muted)]">
+                {labels.retentionNote.replace(
+                  "{days}",
+                  String(ORG_DELETION_RETENTION_DAYS),
+                )}
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="font-title text-xl font-bold text-[var(--color-text)]">
-              {labels.dangerTitle}
-            </h2>
-            <p className="mt-1 text-sm text-[var(--color-muted)]">
-              {labels.dangerHint}
-            </p>
-            <p className="mt-2 text-xs text-[var(--color-muted)]">
-              {labels.retentionNote.replace(
-                "{days}",
-                String(ORG_DELETION_RETENTION_DAYS),
-              )}
-            </p>
-          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            className="inline-flex shrink-0 self-start items-center gap-1.5 rounded-lg border border-[var(--color-danger)]/40 px-4 py-2.5 text-sm font-semibold text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 hover:text-[var(--color-danger)] sm:self-center"
+            onClick={() => setDeleteOrgOpen(true)}
+          >
+            <Trash2 className="h-4 w-4" aria-hidden />
+            {labels.deleteOrg}
+          </Button>
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          className="rounded-lg border border-[var(--color-danger)]/40 px-4 py-2.5 text-sm font-semibold text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 hover:text-[var(--color-danger)]"
-          onClick={() => setDeleteOrgOpen(true)}
-        >
-          {labels.deleteOrg}
-        </Button>
       </section>
 
       <Dialog
@@ -481,7 +495,10 @@ export function OrganizationClient({
       <Dialog
         open={deleteGym != null}
         onOpenChange={(open) => {
-          if (!open) setDeleteGym(null);
+          if (!open) {
+            setDeleteGym(null);
+            setGymConfirmName("");
+          }
         }}
         title={labels.deleteGymTitle}
         description={labels.deleteGymHint}
@@ -502,6 +519,8 @@ export function OrganizationClient({
                   deleteGym.name,
                 )}
                 autoComplete="off"
+                value={gymConfirmName}
+                onChange={(e) => setGymConfirmName(e.target.value)}
               />
             </FormField>
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -509,7 +528,10 @@ export function OrganizationClient({
                 type="button"
                 variant="ghost"
                 className="rounded-lg px-4 py-2.5 text-sm font-semibold"
-                onClick={() => setDeleteGym(null)}
+                onClick={() => {
+                  setDeleteGym(null);
+                  setGymConfirmName("");
+                }}
               >
                 {labels.cancel}
               </Button>
@@ -517,7 +539,11 @@ export function OrganizationClient({
                 type="submit"
                 variant="primary"
                 className="mt-0 bg-[var(--color-danger)] hover:bg-[var(--color-danger)]"
-                disabled={gymDeletePending}
+                disabled={
+                  gymDeletePending ||
+                  gymConfirmName.trim().toLowerCase() !==
+                    deleteGym.name.trim().toLowerCase()
+                }
               >
                 {labels.confirmDelete}
               </Button>
@@ -528,7 +554,10 @@ export function OrganizationClient({
 
       <Dialog
         open={deleteOrgOpen}
-        onOpenChange={setDeleteOrgOpen}
+        onOpenChange={(open) => {
+          setDeleteOrgOpen(open);
+          if (!open) setOrgConfirmName("");
+        }}
         title={labels.deleteOrgTitle}
         description={labels.deleteOrgHint}
         closeLabel={labels.close}
@@ -546,6 +575,8 @@ export function OrganizationClient({
                 organizationName,
               )}
               autoComplete="off"
+              value={orgConfirmName}
+              onChange={(e) => setOrgConfirmName(e.target.value)}
             />
           </FormField>
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -553,7 +584,10 @@ export function OrganizationClient({
               type="button"
               variant="ghost"
               className="rounded-lg px-4 py-2.5 text-sm font-semibold"
-              onClick={() => setDeleteOrgOpen(false)}
+              onClick={() => {
+                setDeleteOrgOpen(false);
+                setOrgConfirmName("");
+              }}
             >
               {labels.cancel}
             </Button>
@@ -561,7 +595,11 @@ export function OrganizationClient({
               type="submit"
               variant="primary"
               className="mt-0 bg-[var(--color-danger)] hover:bg-[var(--color-danger)]"
-              disabled={orgDeletePending}
+              disabled={
+                orgDeletePending ||
+                orgConfirmName.trim().toLowerCase() !==
+                  organizationName.trim().toLowerCase()
+              }
             >
               {labels.confirmDelete}
             </Button>

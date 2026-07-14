@@ -131,11 +131,25 @@ export type Plan = {
   created_at?: string;
 };
 
+export type PaymentKind = "plan" | "day_pass";
+
 export type Payment = {
   id: string;
   gym_id: string;
   membership_id: string;
   amount: number;
   method: PaymentMethod;
+  kind: PaymentKind;
+  plan_id: string | null;
+  created_at: string;
+};
+
+export type GymClass = {
+  id: string;
+  gym_id: string;
+  name: string;
+  description: string | null;
+  capacity: number | null;
+  is_active: boolean;
   created_at: string;
 };

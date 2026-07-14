@@ -5,12 +5,8 @@ import {
   AlertTriangle,
   ArrowRight,
   LogIn,
-  QrCode,
   UserCheck,
-  UserPlus,
   Users,
-  Dumbbell,
-  Briefcase,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getWorkspace } from "@/lib/auth/session";
@@ -19,6 +15,7 @@ import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { memberStatusFromExpires } from "@/lib/members/dates";
+import { DashboardQuickActions } from "@/components/dashboard-quick-actions";
 
 const EXPIRING_WINDOW_DAYS = 7;
 const CRITICAL_EXPIRING_DAYS = 3;
@@ -192,6 +189,7 @@ export default async function DashboardPage({
     recentRes,
     expiredAlertsRes,
     soonAlertsRes,
+    planRowsRes,
   ] = await Promise.all([
     supabase
       .from("memberships")
@@ -259,7 +257,20 @@ export default async function DashboardPage({
       .lte("expires_at", criticalEnd.toISOString())
       .order("expires_at", { ascending: true })
       .limit(4),
+    supabase
+      .from("plans")
+      .select("id, name, price, duration_days")
+      .eq("gym_id", gymId)
+      .eq("is_active", true)
+      .order("created_at", { ascending: false }),
   ]);
+
+  const registerPlans = (planRowsRes.data ?? []).map((p) => ({
+    id: p.id as string,
+    name: p.name as string,
+    price: Number(p.price),
+    duration_days: p.duration_days as number,
+  }));
 
   const activeCount = activeRes.count ?? 0;
   const checkInsToday = checkInsTodayRes.count ?? 0;
@@ -380,56 +391,20 @@ export default async function DashboardPage({
         />
       </div>
 
-      <section
-        aria-label={d.dashboard.quickActions}
-        className="grid w-full grid-cols-2 gap-2 lg:grid-cols-4"
-      >
-        {canInWorkspace(workspace, "checkin") ? (
-          <Link
-            href={`/${locale}/checkin`}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-semibold text-[var(--color-text)] shadow-sm transition-colors hover:border-[var(--color-primary)]/40 hover:bg-[var(--color-surface-hover)]"
-          >
-            <QrCode className="h-4 w-4 text-[var(--color-primary)]" aria-hidden />
-            {d.dashboard.quickCheckIn}
-          </Link>
-        ) : null}
-        {canInWorkspace(workspace, "manage_members") ? (
-          <Link
-            href={`/${locale}/members`}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-semibold text-[var(--color-text)] shadow-sm transition-colors hover:border-[var(--color-primary)]/40 hover:bg-[var(--color-surface-hover)]"
-          >
-            <UserPlus
-              className="h-4 w-4 text-[var(--color-primary)]"
-              aria-hidden
-            />
-            {d.dashboard.quickNewMember}
-          </Link>
-        ) : null}
-        {canInWorkspace(workspace, "manage_staff") ? (
-          <>
-            <Link
-              href={`/${locale}/trainers`}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-semibold text-[var(--color-text)] shadow-sm transition-colors hover:border-[var(--color-primary)]/40 hover:bg-[var(--color-surface-hover)]"
-            >
-              <Dumbbell
-                className="h-4 w-4 text-[var(--color-primary)]"
-                aria-hidden
-              />
-              {d.dashboard.quickNewTrainer}
-            </Link>
-            <Link
-              href={`/${locale}/staff`}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-semibold text-[var(--color-text)] shadow-sm transition-colors hover:border-[var(--color-primary)]/40 hover:bg-[var(--color-surface-hover)]"
-            >
-              <Briefcase
-                className="h-4 w-4 text-[var(--color-primary)]"
-                aria-hidden
-              />
-              {d.dashboard.quickNewStaff}
-            </Link>
-          </>
-        ) : null}
-      </section>
+      <DashboardQuickActions
+        locale={locale}
+        canCheckIn={canInWorkspace(workspace, "checkin")}
+        canManageMembers={canInWorkspace(workspace, "manage_members")}
+        canManageStaff={canInWorkspace(workspace, "manage_staff")}
+        plans={registerPlans}
+        labels={{
+          quickActions: d.dashboard.quickActions,
+          quickCheckIn: d.dashboard.quickCheckIn,
+          quickNewMember: d.dashboard.quickNewMember,
+          quickNewTrainer: d.dashboard.quickNewTrainer,
+          quickNewStaff: d.dashboard.quickNewStaff,
+        }}
+      />
 
       <div className="grid gap-4 lg:grid-cols-3">
         <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm lg:col-span-2">

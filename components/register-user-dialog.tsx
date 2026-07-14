@@ -12,13 +12,17 @@ import {
   useEffect,
   useId,
   useState,
-  type FormEvent,
+  type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
 import {
   createMember,
   type CreateMemberState,
 } from "@/app/[locale]/(app)/members/actions";
+import {
+  createStaffOrTrainer,
+  type CreateTeamMemberState,
+} from "@/app/[locale]/(app)/team/actions";
 import { Dialog } from "@/components/ui/dialog";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
@@ -38,6 +42,12 @@ export type RegisterPlanOption = {
   duration_days: number;
 };
 
+export type RegisterSuccessPayload = {
+  memberId?: string;
+  teamMemberId?: string;
+  role: RegisterRole;
+};
+
 type RegisterUserDialogProps = {
   locale: Locale;
   open: boolean;
@@ -47,7 +57,7 @@ type RegisterUserDialogProps = {
   canManageMembers: boolean;
   canManageStaff: boolean;
   plans?: RegisterPlanOption[];
-  onSuccess?: () => void;
+  onSuccess?: (payload: RegisterSuccessPayload) => void;
 };
 
 const ROLE_ICONS: Record<RegisterRole, LucideIcon> = {
@@ -99,7 +109,7 @@ type FormBodyProps = {
   initialRole: RegisterRole;
   plans?: RegisterPlanOption[];
   onOpenChange: (open: boolean) => void;
-  onSuccess?: () => void;
+  onSuccess?: (payload: RegisterSuccessPayload) => void;
 };
 
 function RegisterUserFormBody({
@@ -124,34 +134,51 @@ function RegisterUserFormBody({
   const [email, setEmail] = useState("");
   const [selectedPlan, setSelectedPlan] = useState(plans[0]?.id ?? "");
   const [method, setMethod] = useState<"cash" | "transfer">("cash");
-  const [staffMessage, setStaffMessage] = useState(false);
 
-  const [state, formAction, pending] = useActionState(
+  const [memberState, memberAction, memberPending] = useActionState(
     createMember,
     null as CreateMemberState,
   );
+  const [teamState, teamAction, teamPending] = useActionState(
+    createStaffOrTrainer,
+    null as CreateTeamMemberState,
+  );
+
+  const isMember = role === "member";
+  const state = isMember ? memberState : teamState;
+  const pending = isMember ? memberPending : teamPending;
   const fe = state?.fieldErrors;
 
   useEffect(() => {
-    if (!state?.success) return;
-    onOpenChange(false);
+    if (!memberState?.success) return;
     router.refresh();
-    onSuccess?.();
-  }, [state, onOpenChange, router, onSuccess]);
+    onSuccess?.({
+      role: "member",
+      memberId: memberState.memberId,
+    });
+    if (!memberState.emailWarning) {
+      onOpenChange(false);
+    }
+  }, [memberState, onOpenChange, router, onSuccess]);
 
-  const isMember = role === "member";
+  useEffect(() => {
+    if (!teamState?.success) return;
+    router.refresh();
+    onSuccess?.({
+      role: teamState.role ?? "staff",
+      teamMemberId: teamState.teamMemberId,
+    });
+    if (!teamState.emailWarning) {
+      onOpenChange(false);
+    }
+  }, [teamState, onOpenChange, router, onSuccess]);
+
   const nameOk = name.trim().length > 0;
   const emailOk = email.trim().length > 0;
   const planOk = selectedPlan.length > 0;
   const canSubmit = isMember
     ? nameOk && emailOk && planOk && plans.length > 0 && !pending
     : nameOk && emailOk && !pending;
-
-  function onStaffSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!canSubmit) return;
-    setStaffMessage(true);
-  }
 
   const actions = (
     <div className="flex flex-row-reverse flex-wrap items-center gap-3 pt-1">
@@ -173,6 +200,26 @@ function RegisterUserFormBody({
       </Button>
     </div>
   );
+
+  const errorBanner =
+    state?.error && !state.success ? (
+      <p
+        className="rounded-lg border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 p-3 text-sm font-medium text-[var(--color-primary)]"
+        role="alert"
+      >
+        {state.error}
+      </p>
+    ) : null;
+
+  const emailWarning =
+    state && "emailWarning" in state && state.emailWarning ? (
+      <p
+        className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] p-3 text-sm text-[var(--color-muted)]"
+        role="status"
+      >
+        {state.emailWarning}
+      </p>
+    ) : null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -208,10 +255,7 @@ function RegisterUserFormBody({
                   name="register-role"
                   value={r}
                   checked={selected}
-                  onChange={() => {
-                    setRole(r);
-                    setStaffMessage(false);
-                  }}
+                  onChange={() => setRole(r)}
                   className="sr-only"
                 />
                 <Icon
@@ -247,7 +291,7 @@ function RegisterUserFormBody({
             </button>
           </div>
         ) : (
-          <form action={formAction} className="flex flex-col gap-4" noValidate>
+          <form action={memberAction} className="flex flex-col gap-4" noValidate>
             <input type="hidden" name="locale" value={locale} />
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
@@ -351,25 +395,22 @@ function RegisterUserFormBody({
                 </Select>
               </FormField>
             </div>
-            {state?.error && !state.success ? (
-              <p
-                className="rounded-lg border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 p-3 text-sm font-medium text-[var(--color-primary)]"
-                role="alert"
-              >
-                {state.error}
-              </p>
-            ) : null}
+            {errorBanner}
+            {emailWarning}
             {actions}
           </form>
         )
       ) : (
-        <form
-          onSubmit={onStaffSubmit}
-          className="flex flex-col gap-4"
-          noValidate
-        >
+        <form action={teamAction} className="flex flex-col gap-4" noValidate>
+          <input type="hidden" name="locale" value={locale} />
+          <input type="hidden" name="role" value={role} />
           <div className="grid gap-4 sm:grid-cols-2">
-            <FormField label={d.members.name} htmlFor={nameId} variant="auth">
+            <FormField
+              label={d.members.name}
+              htmlFor={nameId}
+              variant="auth"
+              error={fe?.name}
+            >
               <Input
                 id={nameId}
                 required
@@ -386,6 +427,7 @@ function RegisterUserFormBody({
               label={d.registerUser.email}
               htmlFor={emailId}
               variant="auth"
+              error={fe?.email}
             >
               <Input
                 id={emailId}
@@ -405,19 +447,25 @@ function RegisterUserFormBody({
               />
             </FormField>
           </div>
-          {staffMessage ? (
-            <div
-              className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] p-3"
-              role="status"
-            >
-              <p className="text-sm font-medium text-[var(--color-text)]">
-                {d.registerUser.staffComingSoon}
-              </p>
-              <p className="mt-1 text-sm text-[var(--color-muted)]">
-                {d.registerUser.staffComingSoonHint}
-              </p>
-            </div>
-          ) : null}
+          <FormField
+            label={d.members.phone}
+            htmlFor={phoneId}
+            variant="auth"
+            error={fe?.phone}
+          >
+            <PhoneInput
+              id={phoneId}
+              name="phone"
+              locale={locale}
+              variant="auth"
+              countryLabel={d.registerUser.countryCode}
+              placeholder={d.registerUser.phonePlaceholder}
+              value={phone}
+              onChange={setPhone}
+            />
+          </FormField>
+          {errorBanner}
+          {emailWarning}
           {actions}
         </form>
       )}
@@ -486,7 +534,10 @@ type RegisterUserButtonProps = {
   allowedRoles?: RegisterRole[];
   label?: string;
   className?: string;
-  onSuccess?: () => void;
+  /** Default is primary filled; quickAction matches dashboard chips */
+  appearance?: "primary" | "quickAction";
+  icon?: ReactNode;
+  onSuccess?: (payload: RegisterSuccessPayload) => void;
 };
 
 export function RegisterUserButton({
@@ -498,6 +549,8 @@ export function RegisterUserButton({
   allowedRoles,
   label,
   className = "",
+  appearance = "primary",
+  icon,
   onSuccess,
 }: RegisterUserButtonProps) {
   const d = getDictionary(locale);
@@ -509,17 +562,29 @@ export function RegisterUserButton({
   );
   if (roles.length === 0) return null;
 
+  const triggerClass =
+    appearance === "quickAction"
+      ? `inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-semibold text-[var(--color-text)] shadow-sm transition-colors hover:border-[var(--color-primary)]/40 hover:bg-[var(--color-surface-hover)] ${className}`.trim()
+      : `inline-flex shrink-0 items-center gap-1.5 px-3.5 py-2 shadow-sm transition-[background-color,box-shadow,transform,filter] duration-200 hover:brightness-[0.92] hover:shadow-md active:translate-y-px active:brightness-[0.88] active:shadow-sm ${className}`.trim();
+
   return (
     <>
-      <Button
-        type="button"
-        variant="primary"
-        className={`inline-flex shrink-0 items-center gap-1.5 px-3.5 py-2 shadow-sm transition-[background-color,box-shadow,transform,filter] duration-200 hover:brightness-[0.92] hover:shadow-md active:translate-y-px active:brightness-[0.88] active:shadow-sm ${className}`.trim()}
-        onClick={() => setOpen(true)}
-      >
-        <Plus className="h-4 w-4" aria-hidden />
-        {label ?? d.registerUser.open}
-      </Button>
+      {appearance === "quickAction" ? (
+        <button type="button" className={triggerClass} onClick={() => setOpen(true)}>
+          {icon ?? <Plus className="h-4 w-4" aria-hidden />}
+          {label ?? d.registerUser.open}
+        </button>
+      ) : (
+        <Button
+          type="button"
+          variant="primary"
+          className={triggerClass}
+          onClick={() => setOpen(true)}
+        >
+          {icon ?? <Plus className="h-4 w-4" aria-hidden />}
+          {label ?? d.registerUser.open}
+        </Button>
+      )}
       <RegisterUserDialog
         locale={locale}
         open={open}

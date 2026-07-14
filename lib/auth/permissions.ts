@@ -3,6 +3,7 @@ import type { Role, Workspace } from "@/types";
 export type AppAction =
   | "manage_members"
   | "manage_plans"
+  | "manage_classes"
   | "record_payment"
   | "checkin"
   | "view_dashboard"
@@ -13,6 +14,7 @@ const roleMatrix: Record<Role, AppAction[]> = {
   OWNER: [
     "manage_members",
     "manage_plans",
+    "manage_classes",
     "record_payment",
     "checkin",
     "view_dashboard",
@@ -23,6 +25,7 @@ const roleMatrix: Record<Role, AppAction[]> = {
   STAFF: [
     "manage_members",
     "manage_plans",
+    "manage_classes",
     "record_payment",
     "checkin",
     "view_dashboard",

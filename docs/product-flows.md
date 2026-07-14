@@ -113,13 +113,15 @@ Clear session + cookies pending. Redirect marketing o login.
 
 ### Paso 2 — Primer gym
 
-- Nombre del gym · (opcional) primera sucursal.
+- Nombre de la marca · dirección opcional del gym.
+- Nombre corto de la ubicación (sucursal; default “Principal”) · dirección física opcional.
 - Freemium: 1 gym / 1 branch — UI no ofrece más aquí.
 
-### Paso 3 — Planes (opcional)
+### Paso 3 — Paquetes / membresías (opcional)
 
-- Hasta **2** planes en Freemium · o **Omitir**.
-- Campos: nombre, precio, duración / reglas simples.
+- Qué le cobras a los socios (ej. Mensual $500 / 30 días) · o **Omitir**.
+- Hasta **2** paquetes en Freemium.
+- Campos: nombre del paquete, precio, duración en días.
 
 ### Paso 4 — Listo
 

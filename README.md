@@ -280,6 +280,19 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000). Locale follows the browser (`Accept-Language`); marketing landing at `/es` or `/en`.
 
+### Environment
+
+Copy your local secrets (never commit them). Required for invites:
+
+| Variable | Purpose |
+| -------- | ------- |
+| `RESEND_API_KEY` | Resend API key for invitation emails |
+| `EMAIL_FROM` | Verified from address, e.g. `AMRAP <hello@yourdomain.com>` (falls back to Resend’s onboarding address in dev) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only; used to generate invite links |
+| `NEXT_PUBLIC_APP_URL` | Public app origin used in invite links when request headers are missing |
+
+Without `RESEND_API_KEY`, trainers/staff/members still save but invitation emails are skipped (logged server-side).
+
 ### Scripts
 
 | Command | Description |

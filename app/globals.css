@@ -136,6 +136,40 @@ textarea:focus {
   animation: fade-in-up 0.5s ease-out forwards;
 }
 
+@keyframes amrap-row-enter {
+  0% {
+    background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.amrap-row-shine {
+  position: relative;
+  animation: amrap-row-enter 2.8s ease-out forwards;
+}
+
+.amrap-row-shine::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--color-primary) 70%, transparent);
+  animation: amrap-row-accent 2.8s ease-out forwards;
+}
+
+@keyframes amrap-row-accent {
+  0%,
+  55% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 /* html5-qrcode: size preview to the camera stream (no forced square letterbox) */
 .checkin-qr-reader {
   width: 100%;
@@ -624,13 +658,27 @@ textarea:focus {
 }
 
 .landing-hero-brand {
-  color: #fff;
-  font-size: clamp(3.25rem, 10vw, 6rem);
-  font-weight: 700;
-  line-height: 0.92;
-  letter-spacing: -0.045em;
   margin: 0 0 0.85rem;
   animation: landing-hero-in 0.55s ease-out both;
+}
+
+.landing-hero-brand-logo {
+  display: block;
+  width: min(100%, 22rem);
+  height: auto;
+  max-width: 100%;
+}
+
+@media (min-width: 640px) {
+  .landing-hero-brand-logo {
+    width: min(100%, 28rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .landing-hero-brand-logo {
+    width: min(100%, 34rem);
+  }
 }
 
 .landing-hero-title {

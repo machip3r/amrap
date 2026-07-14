@@ -30,19 +30,25 @@ export default async function PlansPage({
 
   const d = getDictionary(locale);
   const supabase = await createClient();
-  const [{ data: planRows }, { data: membershipRows }] = await Promise.all([
-    supabase
-      .from("plans")
-      .select("id, name, price, duration_days, is_active, created_at")
-      .eq("gym_id", workspace.gymId)
-      .order("is_active", { ascending: false })
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("memberships")
-      .select("plan_id")
-      .eq("gym_id", workspace.gymId)
-      .not("plan_id", "is", null),
-  ]);
+  const [{ data: planRows }, { data: membershipRows }, { data: gymRow }] =
+    await Promise.all([
+      supabase
+        .from("plans")
+        .select("id, name, price, duration_days, is_active, created_at")
+        .eq("gym_id", workspace.gymId)
+        .order("is_active", { ascending: false })
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("memberships")
+        .select("plan_id")
+        .eq("gym_id", workspace.gymId)
+        .not("plan_id", "is", null),
+      supabase
+        .from("gyms")
+        .select("day_pass_price")
+        .eq("id", workspace.gymId)
+        .maybeSingle(),
+    ]);
 
   const memberCounts = new Map<string, number>();
   for (const row of membershipRows ?? []) {
@@ -87,6 +93,9 @@ export default async function PlansPage({
         canAdd={canAdd}
         activeCount={activeCount}
         maxPlans={maxPlans}
+        dayPassPrice={
+          gymRow?.day_pass_price != null ? Number(gymRow.day_pass_price) : null
+        }
         labels={{
           subtitle: d.plans.subtitle,
           newPlan: d.plans.newPlan,
@@ -115,6 +124,12 @@ export default async function PlansPage({
           upgradePlans: d.plans.upgradePlans,
           quotaLabel: d.plans.quotaLabel,
           freemium: d.plans.freemium,
+          dayPassTitle: d.plans.dayPassTitle,
+          dayPassSubtitle: d.plans.dayPassSubtitle,
+          dayPassPrice: d.plans.dayPassPrice,
+          dayPassHint: d.plans.dayPassHint,
+          dayPassSave: d.plans.dayPassSave,
+          dayPassNotSet: d.plans.dayPassNotSet,
         }}
       />
     </div>

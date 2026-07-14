@@ -78,6 +78,7 @@ export default async function OnboardingPage({
       .from("plans")
       .select("id, name, price, duration_days")
       .eq("gym_id", state.gymId)
+      .eq("is_active", true)
       .order("created_at", { ascending: true })
       .limit(2);
     plans = (data ?? []).map((p) => ({

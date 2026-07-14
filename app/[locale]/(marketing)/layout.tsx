@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: {
-    default: "AMRAP",
-    template: "%s | AMRAP",
+    absolute: "AMRAP",
   },
   description: "AMRAP",
   icons: {

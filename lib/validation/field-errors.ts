@@ -27,6 +27,8 @@ const FIELD_KIND: Record<string, keyof ValidationMessages> = {
   fullName: "personName",
   gymName: "entityName",
   branchName: "entityName",
+  gymAddress: "invalid",
+  branchAddress: "invalid",
   name: "personName",
   phone: "phone",
   otp: "otp",

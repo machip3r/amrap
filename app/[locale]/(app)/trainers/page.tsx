@@ -1,10 +1,12 @@
 import { redirect, notFound } from "next/navigation";
-import { Dumbbell } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
 import { getWorkspace } from "@/lib/auth/session";
 import { canInWorkspace } from "@/lib/auth/permissions";
 import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
+import { loadTeamMembers } from "@/lib/team/queries";
+import { TeamPageClient } from "@/components/team-page-client";
 
 export default async function TrainersPage({
   params,
@@ -19,34 +21,40 @@ export default async function TrainersPage({
   if (!workspace) redirect(`/${locale}/login`);
   if (!canInWorkspace(workspace, "manage_staff")) {
     return (
-      <p className="text-[var(--color-muted)]">{getDictionary(locale).common.forbidden}</p>
+      <p className="text-[var(--color-muted)]">
+        {getDictionary(locale).common.forbidden}
+      </p>
     );
   }
 
   const d = getDictionary(locale);
+  const supabase = await createClient();
+  const members = await loadTeamMembers(supabase, workspace.gymId, "TRAINER");
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
-      <header>
-        <h1 className="font-title text-3xl font-bold tracking-tight text-[var(--color-text)]">
-          {d.trainers.title}
-        </h1>
-        <p className="mt-1 text-sm text-[var(--color-muted)]">
-          {d.trainers.subtitle}
-        </p>
-      </header>
-
-      <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-6">
-        <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-[var(--color-primary)]/15 text-[var(--color-primary)]">
-          <Dumbbell className="h-5 w-5" aria-hidden />
-        </div>
-        <h2 className="font-title text-xl font-bold text-[var(--color-text)]">
-          {d.trainers.comingSoon}
-        </h2>
-        <p className="mt-2 max-w-xl text-sm text-[var(--color-muted)]">
-          {d.trainers.comingSoonHint}
-        </p>
-      </section>
-    </div>
+    <TeamPageClient
+      locale={locale}
+      title={d.trainers.title}
+      subtitle={d.trainers.subtitle}
+      newLabel={d.trainers.newTrainer}
+      listRole="trainer"
+      members={members}
+      currentUserId={workspace.userId}
+      labels={{
+        name: d.members.name,
+        email: d.members.email,
+        joined: d.trainers.joined,
+        actions: d.trainers.actions,
+        remove: d.trainers.remove,
+        confirmRemove: d.trainers.confirmRemove,
+        noRows: d.trainers.noTrainers,
+        noResults: d.trainers.noResults,
+        searchPlaceholder: d.trainers.searchPlaceholder,
+        showing: d.trainers.showing,
+        reload: d.trainers.reload,
+        newBadge: d.trainers.newBadge,
+        view: d.trainers.view,
+      }}
+    />
   );
 }

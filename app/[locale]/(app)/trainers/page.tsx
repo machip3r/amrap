@@ -71,6 +71,9 @@ export default async function TrainersPage({
         view: d.trainers.view,
         previous: d.common.previous,
         next: d.common.next,
+        invitePending: d.inviteStatus.pending,
+        inviteAccepted: d.inviteStatus.accepted,
+        inviteCancelled: d.inviteStatus.cancelled,
       }}
     />
   );

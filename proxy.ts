@@ -67,13 +67,8 @@ export async function proxy(request: NextRequest) {
     return redirect;
   }
 
-  if (user && firstSegment === "login") {
-    const url = request.nextUrl.clone();
-    url.pathname = `/${locale}/dashboard`;
-    const redirect = NextResponse.redirect(url);
-    applyCookies(supabaseResponse, redirect);
-    return redirect;
-  }
+  // Logged-in users on login/register: let the page RSC resolve dashboard / me /
+  // onboarding (do not hardcode /dashboard here — members and invites differ).
 
   return res;
 }

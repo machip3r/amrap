@@ -24,6 +24,7 @@ export type OpsMobileNavProps = {
   role: Role;
   canManageSettings?: boolean;
   canManageStaff?: boolean;
+  hiddenNavIds?: readonly string[];
   gymName?: string;
   organizationName?: string;
   isProvisionalOwner?: boolean;
@@ -79,6 +80,7 @@ export function OpsMobileNav({
   role,
   canManageSettings = false,
   canManageStaff = false,
+  hiddenNavIds = [],
   gymName,
   organizationName,
   isProvisionalOwner = false,
@@ -91,7 +93,12 @@ export function OpsMobileNav({
   const [moreOpen, setMoreOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
 
-  const ctx: OpsNavContext = { role, canManageSettings, canManageStaff };
+  const ctx: OpsNavContext = {
+    role,
+    canManageSettings,
+    canManageStaff,
+    hiddenNavIds,
+  };
   const { primary, more } = splitMobileOpsNav(getVisibleOpsNavItems(ctx));
   const leftTabs = primary.slice(0, Math.ceil(primary.length / 2));
   const rightTabs = primary.slice(leftTabs.length);
@@ -232,18 +239,22 @@ export function OpsMobileNav({
           title={d.nav.myQr}
           description={d.shell.myQrHint}
           closeLabel={d.a11y.closeMyQr}
-          containerClassName="items-end justify-center p-0 sm:items-center sm:p-6"
-          className="max-w-none rounded-none rounded-t-2xl border-x-0 border-b-0 sm:max-w-md sm:rounded-2xl sm:border"
-          bodyClassName="flex flex-col items-center gap-4 px-6 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center"
+          fullScreen
+          bodyClassName="flex flex-col items-center justify-center gap-6 px-6 py-8 pb-[max(2rem,env(safe-area-inset-bottom))] text-center"
           autoFocus={false}
         >
           {fullName ? (
-            <p className="text-lg font-semibold text-[var(--color-text)]">
+            <p className="text-xl font-semibold text-[var(--color-text)] sm:text-2xl">
               {fullName}
             </p>
           ) : null}
-          <QrCodeImage value={qrCode} size={240} alt={d.nav.myQr} />
-          <p className="break-all font-mono text-sm text-[var(--color-muted)]">
+          <QrCodeImage
+            value={qrCode}
+            size={512}
+            alt={d.nav.myQr}
+            className="h-auto w-[min(88vw,28rem)] max-w-full"
+          />
+          <p className="max-w-sm break-all font-mono text-base text-[var(--color-muted)] sm:text-lg">
             {qrCode}
           </p>
         </Dialog>

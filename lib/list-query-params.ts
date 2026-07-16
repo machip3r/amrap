@@ -43,10 +43,15 @@ export function useListQueryParams(debounceMs = 300) {
 
     const qs = params.toString();
     const href = qs ? `${pathname}?${qs}` : pathname;
+    const currentHref =
+      typeof window !== "undefined"
+        ? `${window.location.pathname}${window.location.search}`
+        : null;
+    if (currentHref === href) return;
 
     const go = () => {
       startTransition(() => {
-        router.push(href);
+        router.push(href, { scroll: false });
       });
     };
 

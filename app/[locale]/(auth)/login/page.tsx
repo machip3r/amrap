@@ -6,12 +6,8 @@ import { notFound, redirect } from "next/navigation";
 import { AmrapLogo } from "@/components/landing/amrap-logo";
 import { ConfirmEmailForm } from "@/components/auth/confirm-email-form";
 import { getPendingConfirmEmail } from "@/lib/auth/pending-confirm";
-import {
-  getOnboardingState,
-  getSessionUser,
-  getWorkspace,
-} from "@/lib/auth/session";
-import { getMemberContext } from "@/lib/auth/member-session";
+import { getSessionUser } from "@/lib/auth/session";
+import { resolvePostAuthPath } from "@/lib/auth/post-auth-redirect";
 import { LoginForm } from "./login-form";
 
 export default async function LoginPage({
@@ -26,17 +22,7 @@ export default async function LoginPage({
 
   const sessionUser = await getSessionUser();
   if (sessionUser) {
-    const workspace = await getWorkspace();
-    if (workspace) {
-      const onboarding = await getOnboardingState();
-      if (!onboarding?.completed) {
-        redirect(`/${locale}/onboarding`);
-      }
-      redirect(`/${locale}/dashboard`);
-    }
-    const member = await getMemberContext();
-    if (member) redirect(`/${locale}/me`);
-    redirect(`/${locale}/onboarding`);
+    redirect(await resolvePostAuthPath(locale));
   }
 
   const pendingEmail = await getPendingConfirmEmail();

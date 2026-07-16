@@ -13,7 +13,7 @@ import {
   TablePagination,
   type TablePaginationLabels,
 } from "@/components/ui/table-pagination";
-import { LIMITS } from "@/lib/validation/schemas";
+import { LIMITS, sanitizeSearchInput } from "@/lib/validation/schemas";
 
 export type MembersPageLabels = {
   name: string;
@@ -39,6 +39,9 @@ export type MembersPageLabels = {
   newBadge: string;
   previous: string;
   next: string;
+  invitePending: string;
+  inviteAccepted: string;
+  inviteCancelled: string;
 };
 
 type PlanFilterOption = {
@@ -79,6 +82,25 @@ function formatExpires(iso: string, locale: Locale) {
   } catch {
     return iso;
   }
+}
+
+function inviteBadgeClass(status: Member["invite_status"]) {
+  if (status === "pending") {
+    return "bg-[var(--color-primary)]/15 text-[var(--color-primary)]";
+  }
+  if (status === "cancelled") {
+    return "bg-[var(--color-muted)]/20 text-[var(--color-muted)]";
+  }
+  return "bg-[var(--color-success)]/15 text-[var(--color-success)]";
+}
+
+function inviteBadgeLabel(
+  status: Member["invite_status"],
+  labels: MembersPageLabels,
+) {
+  if (status === "pending") return labels.invitePending;
+  if (status === "cancelled") return labels.inviteCancelled;
+  return labels.inviteAccepted;
 }
 
 export function MembersClient({
@@ -142,7 +164,7 @@ export function MembersClient({
               placeholder={labels.searchPlaceholder}
               value={query}
               onChange={(e) => {
-                const value = e.target.value;
+                const value = sanitizeSearchInput(e.target.value);
                 setQuery(value);
                 pushParams(
                   searchParams,
@@ -283,9 +305,16 @@ export function MembersClient({
                                 </span>
                               ) : null}
                             </p>
-                            <p className="truncate text-xs text-[var(--color-muted)]">
-                              {m.email ?? m.phone ?? "—"}
-                            </p>
+                            <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                              <span
+                                className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${inviteBadgeClass(m.invite_status)}`}
+                              >
+                                {inviteBadgeLabel(m.invite_status, labels)}
+                              </span>
+                              <p className="truncate text-xs text-[var(--color-muted)]">
+                                {m.email ?? m.phone ?? "—"}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </td>

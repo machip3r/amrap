@@ -60,6 +60,10 @@ Platform-wide person profile. May exist **without** `user_id` (staff-created mem
 | `user_id` | Unique FK → `auth.users`, nullable, `on delete set null` |
 | `full_name` | Required |
 | `email`, `phone` | Optional; partial indexes when present |
+| `date_of_birth` | Optional; invite profile onboarding (staff/trainer/member) |
+| `sex` | Optional; `male` \| `female` \| `other` \| `prefer_not` (member profile) |
+| `height_cm` / `weight_kg` | Optional numerics with DB range checks (member profile) |
+| `profile_completed_at` | Set when invite `/welcome` finishes; also stamped by `onboarding_complete()` for owners |
 | `qr_code` | **Unique** credential; default random UUID text |
 | `created_at`, `updated_at` | |
 
@@ -116,6 +120,9 @@ Staff / owner / trainer at a gym. **One row per `(gym_id, user_id)`.**
 | `role` | `OWNER` \| `STAFF` \| `TRAINER` |
 | `is_provisional_owner` | Full owner powers until real owner accepts |
 | `permissions` | `jsonb` for granular grants (default `{}`) |
+| `nav_visibility` | Per-user ops chrome prefs: `{ "hidden": ["timers", "plans", …] }` — empty `{}` = show all role-allowed items. Settings always available; Organization only for owners. |
+| `invite_status` | `pending` \| `accepted` \| `cancelled` (team invites; owners are `accepted`) |
+| `invite_responded_at` | When invitee accepted or declined |
 
 Constraints:
 
@@ -155,6 +162,8 @@ Person trains at a gym. **Unique `(gym_id, person_id)`.**
 | `plan_id` | Set null if plan deleted |
 | `status` | `ACTIVE` \| `INACTIVE` \| `EXPIRED` \| `CANCELLED` |
 | `expires_at` | Required |
+| `invite_status` | `pending` \| `accepted` \| `cancelled` (account claim invite) |
+| `invite_responded_at` | When member accepted or declined |
 
 ---
 
@@ -232,12 +241,12 @@ RLS / storage helpers live in schema **`private`** (not exposed via the Data API
 | Function | Returns | Use |
 | -------- | ------- | --- |
 | `private.is_platform_admin()` | boolean | Current user in `platform_admins` |
-| `private.user_gym_ids()` | set of uuid | Gyms where user has any `gym_roles` row |
-| `private.has_gym_role(gym_id, roles[])` | boolean | Role match; provisional counts as allowed |
+| `private.user_gym_ids()` | set of uuid | Gyms where user has OWNER or `invite_status=accepted` role |
+| `private.has_gym_role(gym_id, roles[])` | boolean | Role match (OWNER or accepted invite); provisional counts as allowed |
 | `private.can_manage_gym(gym_id)` | boolean | OWNER or STAFF (or provisional via `has_gym_role`) |
 | `private.is_provisional_owner_of_gym(gym_id)` | boolean | Provisional owner flag |
 | `private.user_in_organization(org_id)` / `user_can_manage_organization(org_id)` | boolean | Org membership / manage |
-| `private.person_owned_by_me` / `staff_can_view_person` / `staff_can_manage_person` | boolean | Person access helpers |
+| `private.person_owned_by_me` / `staff_can_view_person` / `staff_can_manage_person` | boolean | Person access helpers (`staff_can_view_person` includes members at caller’s gyms **and** teammates linked via `gym_roles`) |
 | `private.can_manage_gym_branding_storage(object_name)` | boolean | Storage write checks for `gym-logos` |
 
 Bucket `gym-logos` is **public** for object URL reads; there is **no** broad `SELECT` policy on `storage.objects` (avoids listing all files).
@@ -250,7 +259,7 @@ Bucket `gym-logos` is **public** for object URL reads; there is **no** broad `SE
 | `onboarding_save_profile(full_name, as_provisional?)` | Updates person name; sets org `pending_as_provisional` |
 | `onboarding_create_gym(name, branch_name?, gym_address?, branch_address?)` | First gym + branch + optional addresses + `gym_roles` OWNER (or provisional) |
 | `onboarding_mark_plans_done()` | Sets `onboarding_plans_done` |
-| `onboarding_complete()` | Sets `onboarding_completed_at` |
+| `onboarding_complete()` | Sets org `onboarding_completed_at` + stamps caller’s `persons.profile_completed_at` |
 
 Legacy wrappers may exist (`register_organization`, `register_tenant`) for older call sites; prefer the onboarding path above.
 
@@ -261,6 +270,7 @@ Legacy wrappers may exist (`register_organization`, `register_tenant`) for older
 | `record_check_in(gym_id, qr?, membership_id?, branch_id?, source?)` | Validates membership ACTIVE + not expired; blocks cross-gym active session; inserts check-in with 4h `session_expires_at` |
 | `create_gym_membership(gym_id, full_name, expires_at, …)` | Creates **new** `persons` row + membership (staff); does not yet merge/claim existing persons by email |
 | `update_gym_branding(gym_id, theme_light?, theme_dark?, logo_url_light?, logo_url_dark?, clear_logo_light?, clear_logo_dark?)` | Owner/provisional: set gym logos and/or light/dark theme jsonb |
+| `update_my_nav_visibility(gym_id, nav_visibility)` | Authenticated user: update **their own** `gym_roles.nav_visibility` for that gym (`{ "hidden": string[] }`) |
 
 ### Triggers
 
@@ -276,7 +286,7 @@ All listed `public` tables have RLS enabled. Pattern summary:
 
 | Table | Typical access |
 | ----- | -------------- |
-| `persons` | Self (`user_id`); staff at gyms where person has membership; platform admin |
+| `persons` | Self (`user_id`); staff at gyms where person has a **membership**; staff who share a gym via **`gym_roles`** (teammates); platform admin |
 | `organizations` | Creator / members of org’s gyms / platform admin |
 | `gyms` / `branches` / `plans` / `payments` | Users with roles on that gym; platform admin |
 | `gym_roles` | Select peers at same gyms; manage if can manage gym / owner |
@@ -321,9 +331,13 @@ Expect future migrations for:
 | `class_schedules` | Recurrence (`none` \| `weekly`), local time, timezone, validity window |
 | `class_sessions` | Materialised occurrences (`starts_at`/`ends_at`, capacity, status) |
 | `class_bookings` | Reservations (`confirmed` \| `waitlisted` \| `cancelled` \| `attended` \| `no_show`) + waitlist position |
+| `person_gym_care` | Coach-facing care note per person at a gym (`medical_note`, PK `gym_id`+`person_id`) |
+| `class_session_results` | Express scores per athlete on a session (`amrap` \| `strength` \| `for_time` \| `other`; unique `session_id`+`person_id`) |
 | `inbox_messages` | Internal alerts (e.g. waitlist auto-promote) |
 
 **RPCs:** `generate_class_sessions`, `book_class_session`, `cancel_class_booking` (auto-promote + inbox), `set_class_booking_status`, `walk_in_enroll_class_session`, `list_open_class_sessions_for_check_in`, `duplicate_class_to_gym`. Check-in (`record_check_in`) marks matching class attendance.
+
+**Care / scores RLS (MVP):** `person_gym_care` — select for gym roles; manage for gym managers (staff/owner). `class_session_results` — select for gym roles or the athlete’s own person; manage for OWNER/STAFF/TRAINER at the gym.
 
 ---
 

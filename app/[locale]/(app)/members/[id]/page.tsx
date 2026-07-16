@@ -15,7 +15,7 @@ import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { MemberQrImage } from "@/components/member-qr";
 import { MemberDeleteSection } from "@/components/member-delete-section";
-import { renewMember } from "../actions";
+import { renewMember, savePersonCareNote } from "../actions";
 import { FormField } from "@/components/ui/form-field";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -73,6 +73,13 @@ export default async function MemberDetailPage({
 
   const active = member.status === "active";
 
+  const { data: care } = await supabase
+    .from("person_gym_care")
+    .select("medical_note")
+    .eq("gym_id", workspace.gymId)
+    .eq("person_id", member.person_id)
+    .maybeSingle();
+
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
       <div>
@@ -103,6 +110,21 @@ export default async function MemberDetailPage({
                 }`}
               >
                 {active ? d.members.active : d.members.expired}
+              </span>
+              <span
+                className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                  member.invite_status === "pending"
+                    ? "bg-[var(--color-primary)]/15 text-[var(--color-primary)]"
+                    : member.invite_status === "cancelled"
+                      ? "bg-[var(--color-muted)]/20 text-[var(--color-muted)]"
+                      : "bg-[var(--color-success)]/15 text-[var(--color-success)]"
+                }`}
+              >
+                {member.invite_status === "pending"
+                  ? d.inviteStatus.pending
+                  : member.invite_status === "cancelled"
+                    ? d.inviteStatus.cancelled
+                    : d.inviteStatus.accepted}
               </span>
               <span
                 className={`inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ${
@@ -189,6 +211,32 @@ export default async function MemberDetailPage({
           </p>
         </section>
       </div>
+
+      <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-6">
+        <h2 className="font-title text-lg font-bold text-[var(--color-text)]">
+          {d.roster.careNote}
+        </h2>
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
+          {d.roster.careNoteHint}
+        </p>
+        <form action={savePersonCareNote} className="mt-4 flex max-w-xl flex-col gap-3">
+          <input type="hidden" name="locale" value={locale} />
+          <input type="hidden" name="person_id" value={member.person_id} />
+          <input type="hidden" name="member_id" value={member.id} />
+          <textarea
+            name="medical_note"
+            rows={3}
+            maxLength={500}
+            defaultValue={care?.medical_note ?? ""}
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] px-4 py-2.5 text-sm text-[var(--color-text)] placeholder-[var(--color-muted)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)]"
+          />
+          <div>
+            <Button type="submit" variant="primary" className="shadow-sm">
+              {d.roster.careSave}
+            </Button>
+          </div>
+        </form>
+      </section>
 
       <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-6">
         <div className="flex items-start gap-3">

@@ -10,7 +10,7 @@ import {
   setPendingConfirmEmail,
 } from "@/lib/auth/pending-confirm";
 import { ensureOrganizationAfterConfirm } from "@/lib/auth/ensure-organization";
-import { getOnboardingState, getWorkspace } from "@/lib/auth/session";
+import { resolvePostAuthPath } from "@/lib/auth/post-auth-redirect";
 import {
   emailSchema,
   formString,
@@ -19,6 +19,7 @@ import {
 } from "@/lib/validation/schemas";
 import { zodFieldErrors } from "@/lib/validation/field-errors";
 import { z } from "zod";
+import type { Locale } from "@/lib/i18n/config";
 
 export type ConfirmEmailState = {
   error?: string;
@@ -54,16 +55,8 @@ function isRateLimited(message: string): boolean {
   );
 }
 
-async function redirectAfterAuth(locale: string) {
-  const onboarding = await getOnboardingState();
-  if (!onboarding?.organizationId || !onboarding.completed) {
-    redirect(`/${locale}/onboarding`);
-  }
-  const workspace = await getWorkspace();
-  if (!workspace) {
-    redirect(`/${locale}/onboarding`);
-  }
-  redirect(`/${locale}/dashboard`);
+async function redirectAfterAuth(locale: Locale) {
+  redirect(await resolvePostAuthPath(locale));
 }
 
 export async function verifySignupOtpAction(

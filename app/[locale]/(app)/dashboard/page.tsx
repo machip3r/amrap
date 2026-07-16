@@ -16,6 +16,7 @@ import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { memberStatusFromExpires } from "@/lib/members/dates";
 import { DashboardQuickActions } from "@/components/dashboard-quick-actions";
+import { TrainerDashboard } from "@/components/trainer-dashboard";
 
 const EXPIRING_WINDOW_DAYS = 7;
 const CRITICAL_EXPIRING_DAYS = 3;
@@ -171,6 +172,19 @@ export default async function DashboardPage({
   if (!workspace) redirect(`/${locale}/login`);
 
   const d = getDictionary(locale);
+
+  if (workspace.role === "TRAINER" && !workspace.canActAsOwner) {
+    return (
+      <TrainerDashboard
+        locale={locale}
+        gymId={workspace.gymId}
+        userId={workspace.userId}
+        fullName={workspace.fullName}
+        labels={d.dashboard}
+      />
+    );
+  }
+
   const supabase = await createClient();
   const gymId = workspace.gymId;
 

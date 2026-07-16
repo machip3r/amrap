@@ -1,7 +1,15 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
-import { Home, CalendarDays, Inbox, QrCode, LogOut } from "lucide-react";
+import { Home, CalendarDays, Inbox, QrCode, LogOut, Timer } from "lucide-react";
 import { getMemberContext } from "@/lib/auth/member-session";
+import {
+  getPendingInvite,
+  invitePath,
+} from "@/lib/auth/invite-decision";
+import {
+  needsProfileWelcome,
+  welcomePath,
+} from "@/lib/auth/profile-onboarding";
 import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -26,6 +34,14 @@ export default async function MemberShellLayout({
     redirect(`/${locale}/login`);
   }
 
+  if (await getPendingInvite()) {
+    redirect(invitePath(locale));
+  }
+
+  if (await needsProfileWelcome()) {
+    redirect(welcomePath(locale));
+  }
+
   const d = getDictionary(locale);
   const prefix = `/${locale}/me`;
   const initial =
@@ -35,6 +51,7 @@ export default async function MemberShellLayout({
   const links = [
     { href: prefix, label: d.member.home, icon: Home },
     { href: `${prefix}/classes`, label: d.member.classes, icon: CalendarDays },
+    { href: `${prefix}/timers`, label: d.member.timers, icon: Timer },
     { href: `${prefix}/inbox`, label: d.member.inbox, icon: Inbox },
     { href: `${prefix}/qr`, label: d.member.qr, icon: QrCode },
   ];

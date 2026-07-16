@@ -1,5 +1,14 @@
 import { getOnboardingState, getWorkspace } from "@/lib/auth/session";
 import { getMemberContext } from "@/lib/auth/member-session";
+import { needsOwnerOnboarding } from "@/lib/auth/post-auth-redirect";
+import {
+  getPendingInvite,
+  invitePath,
+} from "@/lib/auth/invite-decision";
+import {
+  needsProfileWelcome,
+  welcomePath,
+} from "@/lib/auth/profile-onboarding";
 import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -78,16 +87,23 @@ export default async function AppShellLayout({
   const onboarding = await getOnboardingState();
   const workspace = await getWorkspace();
 
-  if (!workspace) {
-    const member = await getMemberContext();
-    if (member) redirect(`/${locale}/me`);
+  if (await getPendingInvite()) {
+    redirect(invitePath(locale));
   }
 
-  if (!onboarding?.completed) {
+  // Invited staff/trainers have a gym workspace but no org they created —
+  // only org creators mid-setup are forced through owner onboarding.
+  if (await needsOwnerOnboarding(onboarding)) {
     redirect(`/${locale}/onboarding`);
   }
 
+  if (await needsProfileWelcome()) {
+    redirect(welcomePath(locale));
+  }
+
   if (!workspace) {
+    const member = await getMemberContext();
+    if (member) redirect(`/${locale}/me`);
     redirect(`/${locale}/onboarding`);
   }
 
@@ -135,6 +151,7 @@ export default async function AppShellLayout({
             role={workspace.role}
             canManageSettings={canManageSettings}
             canManageStaff={canManageStaff}
+            hiddenNavIds={workspace.hiddenNavIds}
             logoUrlLight={logoUrlLight}
             logoUrlDark={logoUrlDark}
             gymName={workspace.gymName}
@@ -160,16 +177,14 @@ export default async function AppShellLayout({
                   label={d.a11y.toggleTheme}
                   className="h-11 w-11"
                 />
-                {canManageSettings ? (
-                  <Link
-                    href={`/${locale}/settings`}
-                    className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)] md:inline-flex"
-                    aria-label={d.nav.settings}
-                    title={d.nav.settings}
-                  >
-                    <Settings className="h-5 w-5" aria-hidden />
-                  </Link>
-                ) : null}
+                <Link
+                  href={`/${locale}/settings`}
+                  className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)] md:inline-flex"
+                  aria-label={d.nav.settings}
+                  title={d.nav.settings}
+                >
+                  <Settings className="h-5 w-5" aria-hidden />
+                </Link>
                 <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[var(--color-primary)]/20 text-sm font-bold text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30">
                   {initial}
                 </div>
@@ -186,6 +201,7 @@ export default async function AppShellLayout({
           role={workspace.role}
           canManageSettings={canManageSettings}
           canManageStaff={canManageStaff}
+          hiddenNavIds={workspace.hiddenNavIds}
           gymName={workspace.gymName}
           organizationName={workspace.organizationName}
           isProvisionalOwner={workspace.isProvisionalOwner}

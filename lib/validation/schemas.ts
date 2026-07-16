@@ -1,13 +1,22 @@
 import { z } from "zod";
 import { isLocale, type Locale } from "@/lib/i18n/config";
+import {
+  DEFAULT_PHONE_COUNTRY,
+  countryByIso2,
+  formatInternationalPhone,
+  nationalDigits,
+  parseInternationalPhone,
+} from "@/lib/phone/countries";
 
-/** Shared limits — keep form `maxLength` in sync with these. */
+/** National mobile length shown in the phone field (digits only). */
 export const LIMITS = {
   email: 254,
   password: { min: 8, max: 128 },
   personName: 120,
   entityName: 120,
-  phone: 40,
+  phone: 10,
+  /** E.164 with +: max country code + national (ITU ≤15 digits after +). */
+  phoneE164: 16,
   otp: { min: 6, max: 6 },
   message: 2000,
   search: 100,
@@ -26,8 +35,73 @@ export const PERSON_NAME_PATTERN = /^[\p{L}\p{M}](?:[\p{L}\p{M}\s'.-]*[\p{L}\p{M
 export const ENTITY_NAME_PATTERN =
   /^(?!.*[<>])[\p{L}\p{M}\p{N}](?:[\p{L}\p{M}\p{N}\s.&'+_/\-()]*[\p{L}\p{M}\p{N}.])?$/u;
 
-/** Optional leading +, digits, spaces, dashes, dots, parentheses. */
-export const PHONE_PATTERN = /^\+?[\d\s().-]{7,40}$/;
+/** Exactly 10 digits (national number in the UI field). No spaces, +, or punctuation. */
+export const PHONE_PATTERN = /^\d{10}$/;
+
+/** Stored phone: `+` plus 7–15 digits (E.164). National part is validated separately. */
+export const E164_PHONE_PATTERN = /^\+[1-9]\d{6,14}$/;
+
+/** Strip non-digits for the national input; normalize pasted +52 / +1 to 10 digits. */
+export function sanitizePhoneInput(raw: string): string {
+  let digits = raw.replace(/\D/g, "");
+  if (digits.length === 12 && digits.startsWith("52")) {
+    digits = digits.slice(2);
+  } else if (digits.length === 11 && digits.startsWith("1")) {
+    digits = digits.slice(1);
+  }
+  return digits.slice(0, LIMITS.phone);
+}
+
+/**
+ * Normalize a form/DB phone to `+{dial}{10 national}` or null if empty.
+ * Bare 10-digit values default to MX (+52).
+ */
+export function normalizeStoredPhone(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+
+  const digitsOnly = trimmed.replace(/\D/g, "");
+  if (digitsOnly.length === LIMITS.phone && !trimmed.includes("+")) {
+    const dial =
+      countryByIso2(DEFAULT_PHONE_COUNTRY)?.dial ?? "52";
+    return formatInternationalPhone(dial, digitsOnly);
+  }
+
+  const parsed = parseInternationalPhone(trimmed);
+  const national = nationalDigits(parsed.national).slice(0, LIMITS.phone);
+  if (national.length !== LIMITS.phone) return null;
+  return formatInternationalPhone(parsed.dial, national);
+}
+
+export function isValidStoredPhone(raw: string): boolean {
+  const normalized = normalizeStoredPhone(raw);
+  return Boolean(normalized && E164_PHONE_PATTERN.test(normalized));
+}
+
+/** Lowercase + printable ASCII only, capped — client `onChange` for email. */
+export function sanitizeEmailInput(raw: string): string {
+  return raw
+    .toLowerCase()
+    .replace(/[^\x20-\x7E]/g, "")
+    .slice(0, LIMITS.email);
+}
+
+/** Letters / accents / safe punctuation only — client `onChange` for person names. */
+export function sanitizePersonNameInput(raw: string): string {
+  return raw.replace(/[^\p{L}\p{M}\s'.-]/gu, "").slice(0, LIMITS.personName);
+}
+
+/** Entity labels — no angle brackets or controls. */
+export function sanitizeEntityNameInput(raw: string): string {
+  return raw
+    .replace(/[<>\x00-\x1F\x7F]/g, "")
+    .slice(0, LIMITS.entityName);
+}
+
+/** Printable ASCII only — strips control characters from password fields. */
+export function sanitizePasswordInput(raw: string): string {
+  return raw.replace(/[^\x20-\x7E]/g, "").slice(0, LIMITS.password.max);
+}
 
 /** Printable password chars only (no control characters). */
 export const PASSWORD_PATTERN = /^[\x20-\x7E]+$/;
@@ -52,47 +126,66 @@ export const localeSchema = z
 
 export const emailSchema = z
   .string()
-  .trim()
-  .toLowerCase()
-  .min(3)
-  .max(LIMITS.email)
-  .regex(EMAIL_PATTERN);
+  .transform((v) => sanitizeEmailInput(v.trim()))
+  .pipe(z.string().min(3).max(LIMITS.email).regex(EMAIL_PATTERN));
 
 export const passwordSchema = z
   .string()
-  .min(LIMITS.password.min)
-  .max(LIMITS.password.max)
-  .regex(PASSWORD_PATTERN);
+  .transform((v) => sanitizePasswordInput(v))
+  .pipe(
+    z
+      .string()
+      .min(LIMITS.password.min)
+      .max(LIMITS.password.max)
+      .regex(PASSWORD_PATTERN),
+  );
 
 /** Login only: length-bounded, no control chars (do not enforce min strength on login). */
 export const loginPasswordSchema = z
   .string()
-  .min(1)
-  .max(LIMITS.password.max)
-  .regex(PASSWORD_PATTERN);
+  .transform((v) => sanitizePasswordInput(v))
+  .pipe(
+    z
+      .string()
+      .min(1)
+      .max(LIMITS.password.max)
+      .regex(PASSWORD_PATTERN),
+  );
 
 export const personNameSchema = z
   .string()
-  .trim()
-  .min(1)
-  .max(LIMITS.personName)
-  .regex(PERSON_NAME_PATTERN);
+  .transform((v) => sanitizePersonNameInput(v).trim())
+  .pipe(
+    z
+      .string()
+      .min(1)
+      .max(LIMITS.personName)
+      .regex(PERSON_NAME_PATTERN),
+  );
 
 export const entityNameSchema = z
   .string()
-  .trim()
-  .min(1)
-  .max(LIMITS.entityName)
-  .regex(ENTITY_NAME_PATTERN);
+  .transform((v) => sanitizeEntityNameInput(v).trim())
+  .pipe(
+    z
+      .string()
+      .min(1)
+      .max(LIMITS.entityName)
+      .regex(ENTITY_NAME_PATTERN),
+  );
 
 export const optionalEntityNameSchema = z
   .string()
-  .trim()
-  .max(LIMITS.entityName)
-  .refine((v) => v.length === 0 || ENTITY_NAME_PATTERN.test(v), {
-    message: "entity_name",
-  })
-  .transform((v) => (v.length === 0 ? null : v));
+  .transform((v) => sanitizeEntityNameInput(v).trim())
+  .pipe(
+    z
+      .string()
+      .max(LIMITS.entityName)
+      .refine((v) => v.length === 0 || ENTITY_NAME_PATTERN.test(v), {
+        message: "entity_name",
+      })
+      .transform((v) => (v.length === 0 ? null : v)),
+  );
 
 /** Street / venue address — optional, no control chars or angle brackets. */
 export const optionalAddressSchema = z
@@ -107,18 +200,27 @@ export const optionalAddressSchema = z
 export const phoneSchema = z
   .string()
   .trim()
-  .min(7)
-  .max(LIMITS.phone)
-  .regex(PHONE_PATTERN);
+  .transform((v, ctx) => {
+    const normalized = normalizeStoredPhone(v);
+    if (!normalized) {
+      ctx.addIssue({ code: "custom", message: "phone" });
+      return z.NEVER;
+    }
+    return normalized;
+  });
 
 export const optionalPhoneSchema = z
   .string()
   .trim()
-  .max(LIMITS.phone)
-  .refine((v) => v.length === 0 || PHONE_PATTERN.test(v), {
-    message: "phone",
-  })
-  .transform((v) => (v.length === 0 ? null : v));
+  .transform((v, ctx) => {
+    if (!v) return null;
+    const normalized = normalizeStoredPhone(v);
+    if (!normalized) {
+      ctx.addIssue({ code: "custom", message: "phone" });
+      return z.NEVER;
+    }
+    return normalized;
+  });
 
 export const otpSchema = z
   .string()
@@ -134,6 +236,65 @@ export const isoDateSchema = z
     const d = new Date(`${v}T00:00:00.000Z`);
     return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v;
   }, { message: "invalid_date" });
+
+/** Date of birth — valid calendar day, age 18–120 (legal majority). */
+export const MIN_PROFILE_AGE_YEARS = 18;
+export const MAX_PROFILE_AGE_YEARS = 120;
+
+/** Latest ISO date (YYYY-MM-DD) that still satisfies `minAge` years old today. */
+export function maxDateOfBirthIso(
+  minAge: number = MIN_PROFILE_AGE_YEARS,
+  now: Date = new Date(),
+): string {
+  const d = new Date(
+    Date.UTC(
+      now.getUTCFullYear() - minAge,
+      now.getUTCMonth(),
+      now.getUTCDate(),
+    ),
+  );
+  return d.toISOString().slice(0, 10);
+}
+
+/** Earliest ISO date for `maxAge` years old. */
+export function minDateOfBirthIso(
+  maxAge: number = MAX_PROFILE_AGE_YEARS,
+  now: Date = new Date(),
+): string {
+  const d = new Date(
+    Date.UTC(
+      now.getUTCFullYear() - maxAge,
+      now.getUTCMonth(),
+      now.getUTCDate(),
+    ),
+  );
+  return d.toISOString().slice(0, 10);
+}
+
+export const dateOfBirthSchema = isoDateSchema
+  .refine((v) => v <= maxDateOfBirthIso(MIN_PROFILE_AGE_YEARS), {
+    message: "date_min_age",
+  })
+  .refine((v) => v >= minDateOfBirthIso(MAX_PROFILE_AGE_YEARS), {
+    message: "date",
+  });
+
+export const SEX_VALUES = ["male", "female", "other", "prefer_not"] as const;
+export type SexValue = (typeof SEX_VALUES)[number];
+
+export const sexSchema = z.enum(SEX_VALUES);
+
+export const heightCmSchema = z.coerce
+  .number()
+  .finite()
+  .min(50)
+  .max(250);
+
+export const weightKgSchema = z.coerce
+  .number()
+  .finite()
+  .min(20)
+  .max(400);
 
 export const membershipExpiresSchema = z
   .string()
@@ -157,6 +318,11 @@ export const searchQuerySchema = z
   .trim()
   .max(LIMITS.search)
   .regex(/^[\p{L}\p{M}\p{N}\s.@+\-_]*$/u);
+
+/** Search box — strip disallowed chars and cap length. */
+export function sanitizeSearchInput(raw: string): string {
+  return raw.replace(/[^\p{L}\p{M}\p{N}\s.@+\-_]/gu, "").slice(0, LIMITS.search);
+}
 
 /** QR payload or membership UUID typed at the desk. */
 export const checkInCodeSchema = z

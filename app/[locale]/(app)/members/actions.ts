@@ -141,7 +141,7 @@ export async function createMember(
         locale,
         gymName: workspace.gymName,
         kind: "member",
-        nextPath: `/${locale}/me`,
+        nextPath: `/${locale}/invite`,
       });
 
       if (invite.ok) {
@@ -149,6 +149,17 @@ export async function createMember(
           personId: membership.person_id,
           userId: invite.userId,
         });
+        const { error: inviteStatusErr } = await supabase
+          .from("memberships")
+          .update({ invite_status: "pending" })
+          .eq("id", membershipId)
+          .eq("gym_id", workspace.gymId);
+        if (inviteStatusErr) {
+          console.error(
+            "createMember invite_status",
+            inviteStatusErr.message,
+          );
+        }
         if (!invite.emailSent && !invite.emailSkipped) {
           emailWarning = d.teamInvites.emailFailed;
         }
@@ -293,4 +304,42 @@ export async function renewMember(formData: FormData): Promise<void> {
   revalidatePath(`/${locale}/payments`, "page");
   revalidatePath(`/${locale}/dashboard`, "page");
   redirect(`/${locale}/members/${membership.id}`);
+}
+
+export async function savePersonCareNote(
+  formData: FormData,
+): Promise<void> {
+  const locale = localeFromForm(formData);
+  const workspace = await getWorkspace();
+  if (!workspace || !canInWorkspace(workspace, "manage_members")) {
+    return;
+  }
+
+  const personId = uuidSchema.safeParse(formString(formData, "person_id"));
+  const membershipId = formString(formData, "member_id");
+  if (!personId.success) return;
+
+  const noteRaw = formString(formData, "medical_note").trim();
+  const medicalNote = noteRaw.length === 0 ? null : noteRaw.slice(0, 500);
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("person_gym_care").upsert(
+    {
+      gym_id: workspace.gymId,
+      person_id: personId.data,
+      medical_note: medicalNote,
+      updated_by: workspace.userId,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "gym_id,person_id" },
+  );
+
+  if (error) {
+    console.error("savePersonCareNote", error.message);
+  }
+
+  if (membershipId) {
+    revalidatePath(`/${locale}/members/${membershipId}`, "page");
+  }
+  revalidatePath(`/${locale}/members`, "page");
 }

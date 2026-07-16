@@ -9,22 +9,23 @@ import {
   countryByIso2,
   flagEmoji,
   formatInternationalPhone,
+  nationalDigits,
   parseInternationalPhone,
 } from "@/lib/phone/countries";
 import type { InputVariant } from "@/components/ui/input";
-import { LIMITS } from "@/lib/validation/schemas";
+import { LIMITS, sanitizePhoneInput } from "@/lib/validation/schemas";
 import type { Locale } from "@/lib/i18n/config";
 
 type Props = {
-  /** Form field name for the combined international phone value. */
+  /** Form field name — submitted value is E.164 (`+{dial}{10 digits}`) or empty. */
   name?: string;
   id?: string;
   locale: Locale;
   variant?: InputVariant;
-  /** Controlled full international value (`+521…` or ""). */
+  /** Controlled national value (digits only, max 10). */
   value?: string;
   defaultValue?: string;
-  onChange?: (international: string) => void;
+  onChange?: (digits: string) => void;
   defaultCountry?: string;
   placeholder?: string;
   disabled?: boolean;
@@ -34,6 +35,13 @@ type Props = {
   countryLabel: string;
   className?: string;
 };
+
+function toNationalDigits(raw: string): string {
+  const parsed = parseInternationalPhone(raw || "");
+  const fromParse = nationalDigits(parsed.national);
+  if (fromParse.length > 0) return sanitizePhoneInput(fromParse);
+  return sanitizePhoneInput(raw);
+}
 
 export function PhoneInput({
   name = "phone",
@@ -58,16 +66,15 @@ export function PhoneInput({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const controlled = valueProp !== undefined;
 
-  const seed = parseInternationalPhone(
-    (controlled ? valueProp : defaultValue) || "",
-  );
+  const seedRaw = (controlled ? valueProp : defaultValue) || "";
+  const seedParsed = parseInternationalPhone(seedRaw);
   const seedIso =
-    countryByIso2(seed.iso2)?.iso2 ??
+    countryByIso2(seedParsed.iso2)?.iso2 ??
     countryByIso2(defaultCountry)?.iso2 ??
     DEFAULT_PHONE_COUNTRY;
 
   const [iso2, setIso2] = useState(seedIso);
-  const [national, setNational] = useState(seed.national);
+  const [national, setNational] = useState(() => toNationalDigits(seedRaw));
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPos, setMenuPos] = useState<{
     top: number;
@@ -76,7 +83,10 @@ export function PhoneInput({
   } | null>(null);
 
   const dial = countryByIso2(iso2)?.dial ?? "52";
-  const international = formatInternationalPhone(dial, national);
+  const submitted =
+    national.length === LIMITS.phone
+      ? formatInternationalPhone(dial, national)
+      : "";
 
   const displayNames = useMemo(() => {
     try {
@@ -95,7 +105,7 @@ export function PhoneInput({
         ? countryByIso2(defaultCountry)?.iso2 ?? DEFAULT_PHONE_COUNTRY
         : countryByIso2(parsed.iso2)?.iso2 ?? iso2;
     setIso2(nextIso);
-    setNational(parsed.national);
+    setNational(toNationalDigits(valueProp || ""));
   }
 
   useLayoutEffect(() => {
@@ -153,10 +163,10 @@ export function PhoneInput({
   }, [menuOpen, listId]);
 
   function commit(nextIso: string, nextNational: string) {
+    const digits = sanitizePhoneInput(nextNational);
     setIso2(nextIso);
-    setNational(nextNational);
-    const nextDial = countryByIso2(nextIso)?.dial ?? "52";
-    onChange?.(formatInternationalPhone(nextDial, nextNational));
+    setNational(digits);
+    onChange?.(digits);
   }
 
   const isAuth = variant === "auth";
@@ -215,7 +225,7 @@ export function PhoneInput({
 
   return (
     <div ref={rootRef} className={`relative ${className}`.trim()}>
-      <input type="hidden" name={name} value={international} readOnly />
+      <input type="hidden" name={name} value={submitted} readOnly />
       <div className={`flex items-stretch ${isAuth ? "gap-2" : "gap-1.5"}`}>
         <div className="relative shrink-0">
           <button
@@ -252,15 +262,21 @@ export function PhoneInput({
         <input
           id={inputId}
           type="tel"
-          inputMode="tel"
+          inputMode="numeric"
           autoComplete={autoComplete}
           disabled={disabled}
           required={required}
           maxLength={LIMITS.phone}
+          pattern="\d{10}"
           placeholder={placeholder}
           value={national}
           onChange={(e) => commit(iso2, e.target.value)}
-          className={`min-w-0 flex-1 leading-none placeholder-[var(--color-muted)] ${isAuth ? "px-4" : "px-3"} ${controlSurface}`}
+          onPaste={(e) => {
+            e.preventDefault();
+            const text = e.clipboardData.getData("text");
+            commit(iso2, text);
+          }}
+          className={`min-w-0 flex-1 leading-none tabular-nums placeholder-[var(--color-muted)] ${isAuth ? "px-4" : "px-3"} ${controlSurface}`}
         />
       </div>
     </div>

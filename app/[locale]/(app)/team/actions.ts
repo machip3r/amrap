@@ -89,7 +89,7 @@ export async function createStaffOrTrainer(
     gymName: workspace.gymName,
     kind: "team",
     roleLabel,
-    nextPath: `/${locale}/dashboard`,
+    nextPath: `/${locale}/invite`,
   });
 
   if (!invite.ok) {
@@ -128,6 +128,7 @@ export async function createStaffOrTrainer(
       user_id: invite.userId,
       role: dbRole,
       is_provisional_owner: false,
+      invite_status: "pending",
     })
     .select("id")
     .single();

@@ -23,10 +23,13 @@ Locales: `es` (default) · `en`.
 | Marketing | Public | `/[locale]` | Shipped | Landing, pricing, contact |
 | Auth | Public / pending | `/login`, `/register` | Shipped | OTP on same routes; no public “confirm email” nav link |
 | Onboarding | Owner / provisional | `/onboarding` | Shipped | After register or login without completed setup |
-| Ops app | Owner, staff, trainer | `/dashboard`, members, plans, … | Shipped | Scoped to active gym (`amrap_gym_id` cookie) |
-| Member app | Member | `/me`, `/me/qr`, `/me/classes`, `/me/inbox` | Shipped | Requires active non-expired membership |
+| Profile welcome | Invited staff / trainer / member | `/welcome` | Shipped | After accept + password; blocking until `persons.profile_completed_at` |
+| Invite decision | Invited staff / trainer / member | `/invite` | Shipped | Accept or decline; decline → `cancelled` + sign out |
+| Invite password | After accept | `/invite/password` | Shipped | Required password before `/welcome` |
+| Ops app | Owner, staff, trainer | `/dashboard`, `/timers`, members, plans, … | Shipped | Scoped to active gym (`amrap_gym_id` cookie) |
+| Member app | Member | `/me`, `/me/qr`, `/me/classes`, `/me/timers`, `/me/inbox` | Shipped | Requires active non-expired membership |
 | Organization / billing | Owner / provisional | `/organization` | Partial | Plan UI + deletion; checkout & add gym coming soon |
-| Gym settings | Owner / provisional | `/settings` | Partial | Branding only |
+| Gym settings | All ops roles | `/settings` | Partial | Everyone: personal nav menu. Owner/provisional: + gym branding |
 | Team | — | `/team` | Planned | Stub “coming soon”; real UI is `/staff` + `/trainers` |
 | Ops inbox | Staff / owner | — | Planned | Only member inbox exists today |
 | Ownership transfer | Provisional → owner | — | Planned | Provisional flag + powers exist; invite/accept UI does not |
@@ -48,7 +51,7 @@ AMRAP (platform)
 
 - **Roles are contextual:** same person can be owner at A, staff at B, member at C.
 - **Active gym:** cookie `amrap_gym_id` (set at onboarding / member gym switch). **Planned:** ops gym + branch switchers in chrome.
-- After login: resolve workspace → onboarding if incomplete → ops dashboard if gym role → else `/me` if active member → else onboarding.
+- After login / invite confirm: `resolvePostAuthPath` → `/invite` if pending invite → owner `/onboarding` if org creator mid-setup → else `/welcome` if `profile_completed_at` null → else ops `/dashboard` if accepted gym role → else `/me` if accepted active membership → else onboarding.
 
 ---
 
@@ -59,10 +62,11 @@ Code: `lib/auth/permissions.ts`. Provisional owners use `canActAsOwner` → full
 | Action | OWNER / provisional | STAFF | TRAINER |
 | ------ | ------------------- | ----- | ------- |
 | `view_dashboard` | ✓ | ✓ | ✓ |
-| `checkin` | ✓ | ✓ | ✓ |
+| `checkin` | ✓ | ✓ | — |
+| `use_timers` | ✓ | ✓ | ✓ |
 | `manage_members` | ✓ | ✓ | — |
 | `manage_plans` | ✓ | ✓ | — |
-| `manage_classes` | ✓ | ✓ | — (view via check-in on sessions) |
+| `manage_classes` | ✓ | ✓ | ✓ (own classes; self as coach) |
 | `record_payment` | ✓ | ✓ | — |
 | `manage_staff` | ✓ | — | — |
 | `manage_billing` | ✓ | — | — |
@@ -113,17 +117,19 @@ Granular `gym_roles.permissions` JSON: **Planned** (unused in UI today).
 
 **Screen:** Email · password (show/hide) · gated submit · link to register.
 
-**Post-login destinations** (login actions / page)
+**Post-login destinations** (shared `resolvePostAuthPath`)
 
 | State | Destination |
 | ----- | ----------- |
 | Email unconfirmed | OTP UI (pending cookie) |
-| Gym workspace, onboarding incomplete | `/onboarding` |
-| Gym workspace, onboarding complete | `/dashboard` |
-| No gym role, active membership | `/me` |
+| Pending invite (`invite_status = pending`) | `/invite` |
+| Gym workspace + org creator with incomplete onboarding | `/onboarding` |
+| Gym / membership, profile incomplete (`profile_completed_at` null) | `/welcome` |
+| Gym workspace (owner finished, or invited staff/trainer with profile done) | `/dashboard` |
+| No gym role, active membership + profile done | `/me` |
 | Otherwise | `/onboarding` |
 
-**Note:** `proxy.ts` currently sends logged-in users hitting `/login` to `/dashboard` (not fully member-aware). Page/actions handle the richer matrix above.
+**Guards:** Logged-in users hitting `/login` or `/register` are redirected via the same resolver (proxy no longer hardcodes `/dashboard`).
 
 **Cases:** Invalid credentials · locked account · auth rate limit.
 
@@ -137,7 +143,7 @@ Clear session + pending cookies. Redirect marketing (or login).
 
 ## 2. Onboarding (post-register) — Shipped
 
-**Guard:** No `onboarding_completed_at` → force `/onboarding` (ops layout). Legacy `/complete-setup` → `/onboarding`.
+**Guard:** Only **org creators** mid-setup (`organizationId` + no `onboarding_completed_at`) are forced to `/onboarding`. Invited staff/trainers/members must finish `/invite` (accept/decline) then password before `/welcome`. Completed owner onboarding stamps `persons.profile_completed_at` so owners skip `/welcome`.
 
 ### Step 1 — You
 
@@ -160,9 +166,43 @@ Clear session + pending cookies. Redirect marketing (or login).
 ### Step 4 — Done
 
 - Short summary · CTA to dashboard.
-- Marks onboarding complete → `/dashboard`.
+- Marks onboarding complete → stamps `persons.profile_completed_at` → `/dashboard`.
 
 **Cases:** Mid-flow abandon (resume saved step) · RPC fail (safe message) · Freemium plan limits.
+
+---
+
+## 2a. Invite accept / decline / password — Shipped
+
+**Who:** Staff, trainer, or member after Auth invite or magic-link confirm.
+
+| Route | Purpose |
+| ----- | ------- |
+| `/[locale]/invite` | “{Gym} invited you as {role}” · Accept · Decline |
+| `/[locale]/invite/password` | Set password (min 8, confirm) then continue |
+
+**Happy path:** Email → `/auth/confirm` (invite/magiclink) → `/invite` → Accept → `invite_status=accepted` → `/invite/password` → `/welcome` → `/dashboard` or `/me`.
+
+**Decline:** `invite_status=cancelled` + `invite_responded_at` · sign out · marketing `/[locale]`. Row stays visible in admin lists (Pending / Cancelled / Active badges). Seat limits ignore `cancelled`. Ops / member shells only after `accepted`.
+
+**Guards:** Pending invite blocks ops, member shell, and `/welcome`. Password page requires signed-in + no longer pending.
+
+---
+
+## 2b. Profile welcome (invited users) — Shipped
+
+**Who:** Staff, trainer, or member after accept + password (or any linked person with **accepted** gym role / membership and null `profile_completed_at`), once owner org onboarding is not required.
+
+**Route:** `/[locale]/welcome` (blocking until saved).
+
+| Role | Fields |
+| ---- | ------ |
+| Staff / Trainer | Date of birth (required) |
+| Member | Date of birth · sex · height (cm) · weight (kg) |
+
+**Happy path:** Save → `profile_completed_at` → `resolvePostAuthPath` → `/dashboard` or `/me`.
+
+**Cases:** Validation errors · no person row → fall through resolver · logout from welcome.
 
 ---
 
@@ -173,12 +213,13 @@ Visible for owner / staff / trainer (after completed onboarding + gym workspace)
 | Element | Behavior | Status |
 | ------- | -------- | ------ |
 | Logo / home | Active gym dashboard (mobile top bar · desktop sidebar) | Shipped |
-| Collapsible sidebar (`md+`) | Dashboard · Check-in · Members · Classes · Trainers · Staff · Plans · Payments | Shipped |
+| Collapsible sidebar (`md+`) | Dashboard · Check-in · Members · Classes · Timers · Trainers · Staff · Plans · Payments | Shipped |
 | Mobile bottom tabs (`< md`) | Up to 3 primary destinations (role-filtered) · center **My QR** FAB · **More** | Shipped |
 | My QR (mobile FAB) | Shows current user's person QR for self check-in at the desk | Shipped |
 | More sheet (mobile) | Full-width bottom sheet: remaining links · Organization · Settings · logout · gym/org label | Shipped |
 | Organization (sidebar footer / More) | Owners / provisional only | Shipped |
-| Settings (header gear on `md+` · More on mobile) | Owners / provisional — branding | Shipped |
+| Settings (header gear on `md+` · More on mobile) | All ops roles — sections inside are role-gated | Shipped |
+| Nav visibility (per user) | If a role has **more than 5** main sections, that user can hide/show optional pages in Settings → My menu (`gym_roles.nav_visibility`). ≤5 sections → all shown, no picker. **Dashboard always visible.** Settings stays for everyone; Organization stays owner-only. | Shipped |
 | Theme toggle · logout | Header / sidebar footer / More sheet | Shipped |
 | Watermark (“powered by”) | Desktop only (`md+`); hidden on phones to save space | Shipped |
 | Gym selector | List gyms where user has ops role | **Planned** (cookie only) |
@@ -222,7 +263,7 @@ Member-only users without gym role are redirected to `/me` by `(app)/layout`.
 | ---- | -- |
 | Freemium 30 active members | Soft block + upgrade messaging (limits) |
 | Member without account | Profile-only; optional invite |
-| Claim profile later | **Partial** — invite exists; dedicated claim UI **Planned** |
+| Claim profile later | **Shipped** — invite → accept/decline → password → welcome |
 | Day-pass / temporary | Same membership flow; short dates / day-pass price on plans |
 | Suspend / penalties | **Planned** (phase 2) |
 
@@ -252,7 +293,7 @@ See §7. Owner has full staff check-in powers.
 
 **Catalog:** Create/edit/duplicate classes · assign trainers · schedules.
 
-**Sessions:** Week calendar · session detail · bookings / roster · session check-in.
+**Sessions:** Week calendar · session detail · bookings / roster (care badges + express scores) · session check-in.
 
 **Who:** Owner and staff manage; trainers can participate via check-in / session views per permissions.
 
@@ -267,15 +308,32 @@ See §7. Owner has full staff check-in powers.
 | `/staff`, `/staff/[id]` | Owner / provisional | List · invite · remove staff · seat limits |
 | `/trainers`, `/trainers/[id]` | Owner / provisional | List · invite · remove trainers |
 
+**Invite email (trainer / staff)** — Shipped
+
+1. Owner submits register dialog → Auth invite (or magic link if account exists) via Resend + `persons` upsert + `gym_roles` with `invite_status=pending`.
+2. Email (“review invitation”) → `/auth/confirm?token_hash=…&type=invite|magiclink&next=/[locale]/invite`.
+3. **Already signed in:** confirm skips OTP and uses `resolvePostAuthPath` (lands on `/invite` while pending).
+4. **New / signed out:** verify OTP → `/invite` → Accept → password → `/welcome` (DOB) → `/dashboard` (ops chrome; **not** owner onboarding). Decline → cancelled in list · marketing home.
+
+**Cases:** Seat limit · email send failure (role still created; warning) · already on team · expired / used token → `/login`.
+
 **Planned:** Unified `/team` (currently stub), granular permissions UI, branch assignment UI.
 
 ---
 
 ### 4.8 Settings (`/settings`) — Partial
 
-Gym branding (logos light/dark, theme). Whitelabel gated by plan.
+**Who:** Every ops role with a gym workspace (owner, provisional, staff, trainer).
 
-**Planned:** Gym/branch CRUD, device pairing, richer org settings beyond `/organization`.
+**Where:** Header gear (`md+`) · More sheet (mobile) · `/settings`. Always in nav (cannot be hidden).
+
+**What (by role):**
+1. **Everyone (shipped)** — **My menu** (only when the role has **more than 5** main sections): personal hide/show for optional pages they can access. Roles with ≤5 sections see all of them (no picker). **Dashboard is always visible** and cannot be hidden. Saved on `gym_roles.nav_visibility`. Organization cannot be hidden (when role allows); Settings stays for everyone.
+2. **Owner / provisional (`manage_billing`) only** — **Personalization**: logos light/dark + theme palettes (whitelabel gated by plan).
+
+Hiding a nav item is chrome-only for that user; direct URLs still respect page permission guards.
+
+**Planned:** More personal preferences · gym/branch CRUD · device pairing · richer org settings beyond `/organization`.
 
 ---
 
@@ -321,9 +379,9 @@ Data model and cookie support multi-gym roles. **UI:** create gym / switcher / a
 
 ## 6. Staff / manager — Shipped
 
-**UI:** Same ops chrome; **no** Organization / Settings / Staff·Trainers management (`manage_staff` / `manage_billing` denied).
+**UI:** Same ops chrome; Settings available (personal menu; no gym branding). **No** Organization / Staff·Trainers management (`manage_staff` / `manage_billing` denied for those).
 
-**Day-to-day:** Dashboard · check-in · members · plans · classes · payments.
+**Day-to-day:** Dashboard · check-in · members · plans · classes · payments · Settings (my menu).
 
 **Cases:** Forbidden page/message · branch-only scope (**Planned**) · gym read-only for unpaid (**Planned** banner; limits exist server-side).
 
@@ -359,13 +417,15 @@ Data model and cookie support multi-gym roles. **UI:** create gym / switcher / a
 **Shipped**
 
 - Invited via `/trainers`.
-- Ops access: dashboard + check-in (and class session participation tied to check-in / assignments).
-- Can be assigned to classes by owner/staff.
+- Ops access: **Mi Día / week home** (next/live class hero · week strip · upcoming) + **Classes** (create/edit with self as coach) + **Timers** (`/timers`, client-local clocks + Web Audio bells) + **Settings** (personal menu; no gym branding).
+- Session roster: care badges (medical note · first day · birthday) + express score capture (AMRAP / strength / for time).
+- **No** reception check-in page.
+- **No** remote wall-screen timer control.
+- Create class → always assigned to the signed-in trainer.
 
 **Planned (rich coach product)**
 
-- Own home: my classes/events · rosters · timers.
-- Exercise library · routines · templates (fork owner templates).
+- Exercise library · routines · templates · “open today’s WOD”.
 - Announcements to audience.
 - Member detail only if member allows or is in their class.
 - **Not by default:** org billing · delete gym · general ops inbox.
@@ -376,7 +436,13 @@ Data model and cookie support multi-gym roles. **UI:** create gym / switcher / a
 
 ### 9.1 Without account (staff-created profile) — Partial
 
-No app login. Manual check-in at reception. Optional invite to register / claim profile (**claim UI Planned**).
+No app login. Manual check-in at reception. Optional invite to register / claim profile.
+
+**Invite email (member)** — Shipped
+
+1. Staff creates membership → Auth invite; membership `invite_status=pending`; `next=/[locale]/invite`.
+2. Link → `/auth/confirm` → `/invite` → Accept → password → `/welcome` (DOB, sex, height, weight) → `/me` when membership is active and invite accepted.
+3. Decline → `cancelled` (still listed in members) · sign out · marketing home.
 
 ### 9.2 With account — Shipped
 
@@ -387,9 +453,10 @@ No app login. Manual check-in at reception. Optional invite to register / claim 
 | `/me` | Memberships list · switch active gym (cookie) |
 | `/me/qr` | Full-screen platform QR |
 | `/me/classes` | Upcoming · book / waitlist / cancel · attendance history |
+| `/me/timers` | Client-local workout timers (AMRAP / EMOM / Tabata / countdown) |
 | `/me/inbox` | Read `inbox_messages` (auto-mark read); e.g. waitlist promotion alerts |
 
-**Header:** Home · Classes · Inbox · QR · theme · logout.
+**Header:** Home · Classes · Timers · Inbox · QR · theme · logout.
 
 ### 9.3 Planned member features
 
@@ -479,9 +546,11 @@ Owner publishes gym page (hours, plans, CTA) — not the AMRAP marketing landing
 | Plans | ✓ | ✓ | ✓ | — | see own | — |
 | Payments (manual) | ✓ | ✓ | ✓ | — | pay* | — |
 | Classes | ✓ | ✓ | ✓ | partial | book | — |
-| Check-in | ✓ | ✓ | ✓ | ✓ | show QR | — |
+| Timers | ✓ | ✓ | ✓ | ✓ | ✓ | — |
+| Check-in | ✓ | ✓ | ✓ | — | show QR | — |
 | Staff / trainers | ✓ | ✓ | — | — | — | — |
 | Organization / billing | ✓ | ✓ | — | — | — | ✓* |
+| Settings | ✓ full | ✓ full | limited | limited | — | — |
 | Member `/me` | — | — | — | — | ✓ | — |
 | Ops inbox | * | * | * | — | send* | — |
 | Ownership transfer | * | * | — | — | — | — |

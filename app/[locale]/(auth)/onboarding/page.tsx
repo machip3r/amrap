@@ -8,6 +8,16 @@ import {
   getSessionUser,
   getWorkspace,
 } from "@/lib/auth/session";
+import { getMemberContext } from "@/lib/auth/member-session";
+import {
+  needsOwnerOnboarding,
+  resolvePostAuthPath,
+  isInvitedOpsUser,
+} from "@/lib/auth/post-auth-redirect";
+import {
+  getPendingInvite,
+  invitePath,
+} from "@/lib/auth/invite-decision";
 import { createClient } from "@/lib/supabase/server";
 import { AmrapLogo } from "@/components/landing/amrap-logo";
 import { LogoutButton } from "@/components/logout-button";
@@ -29,8 +39,30 @@ export default async function OnboardingPage({
   const user = await getSessionUser();
   if (!user) redirect(`/${locale}/login`);
 
+  if (await getPendingInvite()) {
+    redirect(invitePath(locale));
+  }
+
+  // Invited staff/trainers use /invite → password → /welcome, never this flow.
+  if (await isInvitedOpsUser()) {
+    redirect(await resolvePostAuthPath(locale));
+  }
+
   const state = await getOnboardingState();
   if (!state) redirect(`/${locale}/login`);
+
+  const workspace = await getWorkspace();
+
+  // Finished owner setup (or no longer mid owner onboarding).
+  if (workspace && !(await needsOwnerOnboarding(state))) {
+    redirect(`/${locale}/dashboard`);
+  }
+
+  // Member-only account should never sit in owner onboarding.
+  if (!state.organizationId) {
+    const member = await getMemberContext();
+    if (member) redirect(`/${locale}/me`);
+  }
 
   // Authenticated but org missing (e.g. confirm before RPC finished).
   // Org create + cookie clear must run in a Route Handler, not RSC render.
@@ -65,7 +97,6 @@ export default async function OnboardingPage({
     redirect(`/auth/ensure-organization?locale=${locale}`);
   }
 
-  const workspace = await getWorkspace();
   if (state.completed && workspace) {
     redirect(`/${locale}/dashboard`);
   }

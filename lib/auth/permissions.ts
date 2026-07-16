@@ -8,7 +8,8 @@ export type AppAction =
   | "checkin"
   | "view_dashboard"
   | "manage_staff"
-  | "manage_billing";
+  | "manage_billing"
+  | "use_timers";
 
 const roleMatrix: Record<Role, AppAction[]> = {
   OWNER: [
@@ -20,8 +21,9 @@ const roleMatrix: Record<Role, AppAction[]> = {
     "view_dashboard",
     "manage_staff",
     "manage_billing",
+    "use_timers",
   ],
-  TRAINER: ["checkin", "view_dashboard"],
+  TRAINER: ["view_dashboard", "manage_classes", "use_timers"],
   STAFF: [
     "manage_members",
     "manage_plans",
@@ -29,6 +31,7 @@ const roleMatrix: Record<Role, AppAction[]> = {
     "record_payment",
     "checkin",
     "view_dashboard",
+    "use_timers",
   ],
 };
 

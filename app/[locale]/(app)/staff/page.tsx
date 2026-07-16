@@ -71,6 +71,9 @@ export default async function StaffPage({
         view: d.staffPage.view,
         previous: d.common.previous,
         next: d.common.next,
+        invitePending: d.inviteStatus.pending,
+        inviteAccepted: d.inviteStatus.accepted,
+        inviteCancelled: d.inviteStatus.cancelled,
       }}
     />
   );

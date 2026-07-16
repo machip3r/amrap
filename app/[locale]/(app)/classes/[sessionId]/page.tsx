@@ -17,6 +17,10 @@ import {
 } from "@/app/[locale]/(app)/classes/actions";
 import { Button } from "@/components/ui/button";
 import { ClassSessionBookForm } from "@/components/class-session-book-form";
+import {
+  RosterCareBadges,
+  RosterResultButton,
+} from "@/components/roster/roster-care-actions";
 
 export default async function ClassSessionPage({
   params,
@@ -49,7 +53,10 @@ export default async function ClassSessionPage({
   );
   const waitlisted = bookings.filter((b) => b.status === "waitlisted");
   const canManage = canInWorkspace(workspace, "manage_classes");
-  const canCheckin = canInWorkspace(workspace, "checkin");
+  const canCheckin =
+    canInWorkspace(workspace, "checkin") || canManage;
+
+  const rosterLabels = { ...d.roster, close: d.registerUser.close };
 
   const { data: members } = await supabase
     .from("memberships")
@@ -136,13 +143,31 @@ export default async function ClassSessionPage({
                 key={b.id}
                 className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3"
               >
-                <div>
-                  <p className="font-medium text-[var(--color-text)]">
-                    {b.person_name}
-                  </p>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <p className="font-medium text-[var(--color-text)]">
+                      {b.person_name}
+                    </p>
+                    <RosterCareBadges
+                      medicalNote={b.medical_note}
+                      isFirstDay={b.isFirstDay}
+                      isBirthday={b.isBirthday}
+                      labels={rosterLabels}
+                    />
+                  </div>
                   <p className="text-xs text-[var(--color-muted)]">{b.status}</p>
                 </div>
                 <div className="flex flex-wrap gap-1">
+                  {canManage ? (
+                    <RosterResultButton
+                      locale={locale}
+                      sessionId={session.id}
+                      personId={b.person_id}
+                      personName={b.person_name}
+                      existing={b.result}
+                      labels={rosterLabels}
+                    />
+                  ) : null}
                   {canCheckin && b.status === "confirmed" ? (
                     <>
                       <form action={setBookingStatusStaff}>
@@ -206,10 +231,16 @@ export default async function ClassSessionPage({
                 key={b.id}
                 className="flex items-center justify-between rounded-xl border border-[var(--color-border)] px-4 py-3"
               >
-                <div>
+                <div className="flex flex-wrap items-center gap-1.5">
                   <p className="font-medium">
                     #{b.waitlist_position ?? "—"} {b.person_name}
                   </p>
+                  <RosterCareBadges
+                    medicalNote={b.medical_note}
+                    isFirstDay={b.isFirstDay}
+                    isBirthday={b.isBirthday}
+                    labels={rosterLabels}
+                  />
                 </div>
                 <form action={cancelBookingStaff}>
                   <input type="hidden" name="locale" value={locale} />

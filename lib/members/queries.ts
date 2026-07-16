@@ -22,6 +22,7 @@ type MembershipPersonRow = {
   person_id: string;
   plan_id: string | null;
   status: string;
+  invite_status: string | null;
   expires_at: string;
   created_at: string;
   plans: PlanEmbed;
@@ -40,6 +41,13 @@ type MembershipPersonRow = {
       }[]
     | null;
 };
+
+function normalizeInviteStatus(
+  raw: string | null | undefined,
+): "pending" | "accepted" | "cancelled" {
+  if (raw === "pending" || raw === "cancelled" || raw === "accepted") return raw;
+  return "accepted";
+}
 
 function firstEmbed<T>(value: T | T[] | null | undefined): T | null {
   if (!value) return null;
@@ -63,6 +71,7 @@ export function mapMembershipRow(row: MembershipPersonRow): Member | null {
     phone: person.phone,
     email: person.email,
     status: memberStatusFromExpires(row.expires_at),
+    invite_status: normalizeInviteStatus(row.invite_status),
     membership_expires_at: row.expires_at,
     qr_code: person.qr_code,
     created_at: row.created_at,
@@ -78,6 +87,7 @@ export const MEMBERSHIP_LIST_SELECT = `
   person_id,
   plan_id,
   status,
+  invite_status,
   expires_at,
   created_at,
   plans ( name ),
@@ -96,6 +106,7 @@ const MEMBERSHIP_LIST_SELECT_INNER = `
   person_id,
   plan_id,
   status,
+  invite_status,
   expires_at,
   created_at,
   plans ( name ),

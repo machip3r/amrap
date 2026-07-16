@@ -9,7 +9,11 @@ import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
-import { LIMITS } from "@/lib/validation/schemas";
+import {
+  LIMITS,
+  sanitizeEmailInput,
+  sanitizePasswordInput,
+} from "@/lib/validation/schemas";
 
 export function LoginForm({ locale }: { locale: Locale }) {
   const d = getDictionary(locale);
@@ -48,7 +52,7 @@ export function LoginForm({ locale }: { locale: Locale }) {
             variant="auth"
             placeholder={d.login.emailPlaceholder}
             value={email}
-            onChange={(e) => setEmail(e.target.value.toLowerCase())}
+            onChange={(e) => setEmail(sanitizeEmailInput(e.target.value))}
           />
         </FormField>
         <FormField
@@ -68,7 +72,7 @@ export function LoginForm({ locale }: { locale: Locale }) {
             showLabel={d.login.showPassword}
             hideLabel={d.login.hidePassword}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => setPassword(sanitizePasswordInput(e.target.value))}
           />
         </FormField>
         {state?.error ? (

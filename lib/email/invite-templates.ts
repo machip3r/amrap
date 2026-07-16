@@ -24,17 +24,17 @@ function teamCopy(
   if (locale === "en") {
     return {
       subject: `You're invited to join ${gymName} on AMRAP`,
-      headline: `Join ${gymName}`,
-      body: `You've been invited as ${roleLabel}. Open the link below to accept and access the gym panel.`,
-      cta: "Accept invitation",
+      headline: `Invitation to ${gymName}`,
+      body: `You've been invited as ${roleLabel}. Open the link below to review the invitation — you can accept or decline.`,
+      cta: "Review invitation",
       footer: "If you didn't expect this email, you can ignore it.",
     };
   }
   return {
     subject: `Te invitaron a unirte a ${gymName} en AMRAP`,
-    headline: `Únete a ${gymName}`,
-    body: `Te invitaron como ${roleLabel}. Abre el enlace para aceptar y entrar al panel del gimnasio.`,
-    cta: "Aceptar invitación",
+    headline: `Invitación a ${gymName}`,
+    body: `Te invitaron como ${roleLabel}. Abre el enlace para revisar la invitación — puedes aceptar o rechazar.`,
+    cta: "Revisar invitación",
     footer: "Si no esperabas este correo, puedes ignorarlo.",
   };
 }
@@ -42,18 +42,18 @@ function teamCopy(
 function memberCopy(locale: Locale, gymName: string): MemberInviteCopy {
   if (locale === "en") {
     return {
-      subject: `Welcome to ${gymName} — set up your AMRAP account`,
-      headline: `Welcome to ${gymName}`,
-      body: "Your membership is ready. Open the link below to set up your account and get your QR check-in.",
-      cta: "Set up my account",
+      subject: `You're invited to ${gymName} on AMRAP`,
+      headline: `Invitation to ${gymName}`,
+      body: "Your membership is ready. Open the link below to review the invitation — you can accept or decline, then set up your account.",
+      cta: "Review invitation",
       footer: "If you didn't expect this email, you can ignore it.",
     };
   }
   return {
-    subject: `Bienvenido a ${gymName} — activa tu cuenta AMRAP`,
-    headline: `Bienvenido a ${gymName}`,
-    body: "Tu membresía ya está lista. Abre el enlace para activar tu cuenta y obtener tu QR de acceso.",
-    cta: "Activar mi cuenta",
+    subject: `Te invitaron a ${gymName} en AMRAP`,
+    headline: `Invitación a ${gymName}`,
+    body: "Tu membresía ya está lista. Abre el enlace para revisar la invitación — puedes aceptar o rechazar y luego activar tu cuenta.",
+    cta: "Revisar invitación",
     footer: "Si no esperabas este correo, puedes ignorarlo.",
   };
 }
@@ -164,9 +164,9 @@ export function buildExistingUserTeamEmail(opts: {
     return {
       subject: `You've been added to ${opts.gymName} on AMRAP`,
       html: wrapEmail({
-        headline: `You're on the ${opts.gymName} team`,
-        body: `You've been added as ${opts.roleLabel}. Sign in to open the gym panel.`,
-        cta: "Sign in",
+        headline: `Invitation to ${opts.gymName}`,
+        body: `You've been invited as ${opts.roleLabel}. Open the link to review the invitation — you can accept or decline.`,
+        cta: "Review invitation",
         href: opts.loginUrl,
         footer: "If you didn't expect this email, you can ignore it.",
       }),
@@ -175,9 +175,9 @@ export function buildExistingUserTeamEmail(opts: {
   return {
     subject: `Te agregaron a ${opts.gymName} en AMRAP`,
     html: wrapEmail({
-      headline: `Ya formas parte del equipo de ${opts.gymName}`,
-      body: `Te agregaron como ${opts.roleLabel}. Inicia sesión para abrir el panel.`,
-      cta: "Iniciar sesión",
+      headline: `Invitación a ${opts.gymName}`,
+      body: `Te invitaron como ${opts.roleLabel}. Abre el enlace para revisar la invitación — puedes aceptar o rechazar.`,
+      cta: "Revisar invitación",
       href: opts.loginUrl,
       footer: "Si no esperabas este correo, puedes ignorarlo.",
     }),
@@ -194,9 +194,9 @@ export function buildExistingUserMemberEmail(opts: {
     return {
       subject: `Your membership at ${opts.gymName} is ready`,
       html: wrapEmail({
-        headline: `Membership ready at ${opts.gymName}`,
-        body: "Sign in to see your membership and QR check-in.",
-        cta: "Sign in",
+        headline: `Invitation to ${opts.gymName}`,
+        body: "Open the link to review the invitation — you can accept or decline, then see your membership and QR.",
+        cta: "Review invitation",
         href: opts.loginUrl,
         footer: "If you didn't expect this email, you can ignore it.",
       }),
@@ -205,9 +205,9 @@ export function buildExistingUserMemberEmail(opts: {
   return {
     subject: `Tu membresía en ${opts.gymName} está lista`,
     html: wrapEmail({
-      headline: `Membresía lista en ${opts.gymName}`,
-      body: "Inicia sesión para ver tu membresía y tu QR de acceso.",
-      cta: "Iniciar sesión",
+      headline: `Invitación a ${opts.gymName}`,
+      body: "Abre el enlace para revisar la invitación — puedes aceptar o rechazar y luego ver tu membresía y QR.",
+      cta: "Revisar invitación",
       href: opts.loginUrl,
       footer: "Si no esperabas este correo, puedes ignorarlo.",
     }),

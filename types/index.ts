@@ -35,6 +35,11 @@ export type BrandThemeTokens = {
   surface?: string;
 };
 
+/** Per-user ops chrome prefs: which nav destinations this user hides. */
+export type NavVisibility = {
+  hidden: string[];
+};
+
 export type Gym = {
   id: string;
   organization_id: string;
@@ -60,6 +65,7 @@ export type GymRole = {
   role: Role;
   is_provisional_owner: boolean;
   permissions: Record<string, boolean>;
+  nav_visibility: NavVisibility;
 };
 
 /**
@@ -79,6 +85,8 @@ export type Workspace = {
   logoUrlDark: string | null;
   themeLight: BrandThemeTokens;
   themeDark: BrandThemeTokens;
+  /** Ops nav item ids this user hid for the active gym (after role checks). */
+  hiddenNavIds: string[];
   role: Role;
   isProvisionalOwner: boolean;
   /** Effective owner powers (real owner or provisional). */
@@ -103,6 +111,8 @@ export type Membership = {
   created_at: string;
 };
 
+export type InviteStatus = "pending" | "accepted" | "cancelled";
+
 /** Membership joined with person fields for UI lists. */
 export type Member = {
   id: string;
@@ -113,6 +123,7 @@ export type Member = {
   phone: string | null;
   email: string | null;
   status: MemberStatus;
+  invite_status: InviteStatus;
   membership_expires_at: string;
   qr_code: string;
   created_at: string;

@@ -1,7 +1,6 @@
 "use server";
 
-import { getOnboardingState, getWorkspace } from "@/lib/auth/session";
-import { getMemberContext } from "@/lib/auth/member-session";
+import { resolvePostAuthPath } from "@/lib/auth/post-auth-redirect";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { z } from "zod";
 import {
@@ -69,20 +68,5 @@ export async function loginAction(
   }
 
   revalidatePath("/", "layout");
-
-  const workspace = await getWorkspace();
-  if (workspace) {
-    const onboarding = await getOnboardingState();
-    if (!onboarding?.completed) {
-      redirect(`/${locale}/onboarding`);
-    }
-    redirect(`/${locale}/dashboard`);
-  }
-
-  const member = await getMemberContext();
-  if (member) {
-    redirect(`/${locale}/me`);
-  }
-
-  redirect(`/${locale}/onboarding`);
+  redirect(await resolvePostAuthPath(locale));
 }

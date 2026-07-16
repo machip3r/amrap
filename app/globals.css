@@ -185,7 +185,7 @@ textarea:focus {
 
 @keyframes amrap-row-enter {
   0% {
-    background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
+    background-color: color-mix(in srgb, var(--color-primary) 14%, transparent);
   }
   100% {
     background-color: transparent;
@@ -193,28 +193,7 @@ textarea:focus {
 }
 
 .amrap-row-shine {
-  position: relative;
-  animation: amrap-row-enter 2.8s ease-out forwards;
-}
-
-.amrap-row-shine::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 2px;
-  border-radius: 1px;
-  background: color-mix(in srgb, var(--color-primary) 70%, transparent);
-  animation: amrap-row-accent 2.8s ease-out forwards;
-}
-
-@keyframes amrap-row-accent {
-  0%,
-  55% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
+  animation: amrap-row-enter 2.4s ease-out forwards;
 }
 
 /* html5-qrcode: size preview to the camera stream (no forced square letterbox) */

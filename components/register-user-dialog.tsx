@@ -10,11 +10,11 @@ import {
 import {
   useActionState,
   useEffect,
+  useEffectEvent,
   useId,
   useState,
   type ReactNode,
 } from "react";
-import { useRouter } from "next/navigation";
 import {
   createMember,
   type CreateMemberState,
@@ -31,7 +31,7 @@ import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { LIMITS } from "@/lib/validation/schemas";
+import { LIMITS, sanitizeEmailInput, sanitizePersonNameInput } from "@/lib/validation/schemas";
 
 export type RegisterRole = "member" | "trainer" | "staff";
 
@@ -122,7 +122,6 @@ function RegisterUserFormBody({
 }: FormBodyProps) {
   const plans = plansProp ?? [];
   const d = getDictionary(locale);
-  const router = useRouter();
   const nameId = useId();
   const phoneId = useId();
   const emailId = useId();
@@ -149,9 +148,8 @@ function RegisterUserFormBody({
   const pending = isMember ? memberPending : teamPending;
   const fe = state?.fieldErrors;
 
-  useEffect(() => {
+  const onMemberSuccess = useEffectEvent(() => {
     if (!memberState?.success) return;
-    router.refresh();
     onSuccess?.({
       role: "member",
       memberId: memberState.memberId,
@@ -159,11 +157,10 @@ function RegisterUserFormBody({
     if (!memberState.emailWarning) {
       onOpenChange(false);
     }
-  }, [memberState, onOpenChange, router, onSuccess]);
+  });
 
-  useEffect(() => {
+  const onTeamSuccess = useEffectEvent(() => {
     if (!teamState?.success) return;
-    router.refresh();
     onSuccess?.({
       role: teamState.role ?? "staff",
       teamMemberId: teamState.teamMemberId,
@@ -171,7 +168,17 @@ function RegisterUserFormBody({
     if (!teamState.emailWarning) {
       onOpenChange(false);
     }
-  }, [teamState, onOpenChange, router, onSuccess]);
+  });
+
+  useEffect(() => {
+    if (!memberState?.success) return;
+    onMemberSuccess();
+  }, [memberState]);
+
+  useEffect(() => {
+    if (!teamState?.success) return;
+    onTeamSuccess();
+  }, [teamState]);
 
   const nameOk = name.trim().length > 0;
   const emailOk = email.trim().length > 0;
@@ -309,7 +316,7 @@ function RegisterUserFormBody({
                   autoComplete="name"
                   placeholder={d.registerUser.namePlaceholder}
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => setName(sanitizePersonNameInput(e.target.value))}
                 />
               </FormField>
               <FormField
@@ -332,7 +339,7 @@ function RegisterUserFormBody({
                   inputMode="email"
                   placeholder={d.registerUser.emailPlaceholder}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value.toLowerCase())}
+                  onChange={(e) => setEmail(sanitizeEmailInput(e.target.value))}
                 />
               </FormField>
             </div>
@@ -420,7 +427,7 @@ function RegisterUserFormBody({
                 autoComplete="name"
                 placeholder={d.registerUser.namePlaceholder}
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => setName(sanitizePersonNameInput(e.target.value))}
               />
             </FormField>
             <FormField
@@ -443,7 +450,7 @@ function RegisterUserFormBody({
                 inputMode="email"
                 placeholder={d.registerUser.emailPlaceholder}
                 value={email}
-                onChange={(e) => setEmail(e.target.value.toLowerCase())}
+                onChange={(e) => setEmail(sanitizeEmailInput(e.target.value))}
               />
             </FormField>
           </div>

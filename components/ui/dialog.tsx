@@ -17,7 +17,7 @@ type Props = {
   /** Optional id for aria-labelledby; auto-generated if omitted */
   titleId?: string;
   closeLabel: string;
-  /** Extra classes on the panel (e.g. max-w-xl). Default max-w-md. */
+  /** Extra classes on the panel (e.g. max-w-xl). Default max-w-md unless fullScreen. */
   className?: string;
   /** Extra classes on the outer overlay flex container (e.g. full-bleed sheets). */
   containerClassName?: string;
@@ -25,6 +25,8 @@ type Props = {
   bodyClassName?: string;
   /** Focus first field when opened. Default true. */
   autoFocus?: boolean;
+  /** Edge-to-edge panel filling the viewport (e.g. My QR). */
+  fullScreen?: boolean;
 };
 
 export function Dialog({
@@ -35,15 +37,17 @@ export function Dialog({
   children,
   titleId: titleIdProp,
   closeLabel,
-  className = "max-w-md",
+  className,
   containerClassName = "items-end justify-center p-3 sm:items-center sm:p-6",
   bodyClassName = "px-6 py-5",
   autoFocus = true,
+  fullScreen = false,
 }: Props) {
   const autoId = useId();
   const titleId = titleIdProp ?? `${autoId}-title`;
   const descId = `${autoId}-desc`;
   const panelRef = useRef<HTMLDivElement>(null);
+  const panelClassName = className ?? (fullScreen ? "" : "max-w-md");
 
   useEffect(() => {
     if (!open) return;
@@ -76,33 +80,52 @@ export function Dialog({
 
   if (!open) return null;
 
+  const panelSize = fullScreen
+    ? "h-dvh max-h-dvh w-full rounded-none border-0 shadow-none"
+    : "max-h-[min(94vh,56rem)] w-full rounded-2xl border border-[var(--color-border)] shadow-2xl";
+
   return (
     <div
-      className={`fixed inset-0 z-50 flex ${containerClassName}`.trim()}
+      className={`fixed inset-0 z-50 flex ${
+        fullScreen
+          ? "items-stretch justify-stretch p-0"
+          : containerClassName
+      }`.trim()}
     >
-      <button
-        type="button"
-        className="absolute inset-0 bg-[var(--color-text)]/40 backdrop-blur-[2px] transition-opacity"
-        aria-label={closeLabel}
-        onClick={() => onOpenChange(false)}
-      />
+      {!fullScreen ? (
+        <button
+          type="button"
+          className="absolute inset-0 bg-[var(--color-text)]/40 backdrop-blur-[2px] transition-opacity"
+          aria-label={closeLabel}
+          onClick={() => onOpenChange(false)}
+        />
+      ) : null}
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
-        className={`animate-fade-in-up relative z-10 flex max-h-[min(94vh,56rem)] w-full flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl ${className}`.trim()}
+        className={`animate-fade-in-up relative z-10 flex flex-col overflow-hidden bg-[var(--color-surface)] ${panelSize} ${panelClassName}`.trim()}
       >
-        <div className="relative shrink-0 border-b border-[var(--color-border)] px-6 pb-4 pt-6 pr-14">
+        <div
+          className={`relative shrink-0 border-b border-[var(--color-border)] px-6 pb-4 pr-14 ${
+            fullScreen
+              ? "pt-[max(1.25rem,env(safe-area-inset-top))]"
+              : "pt-6"
+          }`}
+        >
           <h2
             id={titleId}
-            className="font-title text-xl font-bold tracking-tight text-[var(--color-text)]"
+            className="font-title text-xl font-bold tracking-tight text-[var(--color-text)] sm:text-2xl"
           >
             {title}
           </h2>
           {description ? (
-            <p id={descId} className="mt-1.5 text-sm leading-relaxed text-[var(--color-muted)]">
+            <p
+              id={descId}
+              className="mt-1.5 text-sm leading-relaxed text-[var(--color-muted)] sm:text-base"
+            >
               {description}
             </p>
           ) : null}
@@ -110,10 +133,10 @@ export function Dialog({
             type="button"
             data-dialog-close
             onClick={() => onOpenChange(false)}
-            className="absolute right-4 top-4 rounded-lg p-2 text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]"
+            className="absolute right-4 top-[max(0.75rem,env(safe-area-inset-top))] rounded-lg p-2.5 text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]"
             aria-label={closeLabel}
           >
-            <X className="h-4 w-4" aria-hidden />
+            <X className="h-5 w-5" aria-hidden />
           </button>
         </div>
         <div

@@ -3,11 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import {
-  getOnboardingState,
-  getSessionUser,
-  getWorkspace,
-} from "@/lib/auth/session";
+import { getSessionUser } from "@/lib/auth/session";
+import { resolvePostAuthPath } from "@/lib/auth/post-auth-redirect";
 import { getPendingConfirmEmail } from "@/lib/auth/pending-confirm";
 import { AmrapLogo } from "@/components/landing/amrap-logo";
 import { ConfirmEmailForm } from "@/components/auth/confirm-email-form";
@@ -23,20 +20,9 @@ export default async function RegisterPage({
   const locale = raw as Locale;
   const d = getDictionary(locale);
 
-  const workspace = await getWorkspace();
-  if (workspace) {
-    const onboarding = await getOnboardingState();
-    if (onboarding && !onboarding.completed) {
-      redirect(`/${locale}/onboarding`);
-    }
-    redirect(`/${locale}/dashboard`);
-  }
-
   const user = await getSessionUser();
   if (user) {
-    // Logged in without a gym workspace → finish onboarding (creates org if needed).
-    // Do not keep them on /register once they have a session.
-    redirect(`/${locale}/onboarding`);
+    redirect(await resolvePostAuthPath(locale));
   }
 
   const pendingEmail = await getPendingConfirmEmail();

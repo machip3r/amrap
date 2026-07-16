@@ -60,6 +60,7 @@ export type AppNavProps = {
   role: Role;
   canManageSettings?: boolean;
   canManageStaff?: boolean;
+  hiddenNavIds?: readonly string[];
   logoUrlLight?: string | null;
   logoUrlDark?: string | null;
   gymName?: string;
@@ -82,6 +83,7 @@ export function AppNav({
   role,
   canManageSettings = false,
   canManageStaff = false,
+  hiddenNavIds = [],
   logoUrlLight = null,
   logoUrlDark = null,
   gymName,
@@ -91,7 +93,12 @@ export function AppNav({
   const d = getDictionary(locale);
   const prefix = `/${locale}`;
   const pathname = usePathname();
-  const ctx: OpsNavContext = { role, canManageSettings, canManageStaff };
+  const ctx: OpsNavContext = {
+    role,
+    canManageSettings,
+    canManageStaff,
+    hiddenNavIds,
+  };
   const items = getSidebarOpsNavItems(ctx);
   const collapsed = useSyncExternalStore(
     subscribeNavCollapsed,

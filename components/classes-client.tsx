@@ -76,6 +76,11 @@ type Props = {
   orgGyms: OrgGymOption[];
   currentGymId: string;
   canManage: boolean;
+  /** When set, create form pre-selects these trainers. */
+  defaultTrainerIds?: string[];
+  /** Trainers creating classes: lock assignment to themselves. */
+  lockTrainersToSelf?: boolean;
+  currentUserId?: string;
   initialView: ClassesView;
   labels: ClassesLabels;
 };
@@ -119,6 +124,8 @@ function ClassFormFields({
   labels,
   mode,
   defaults,
+  lockTrainersToSelf = false,
+  lockedTrainerId,
 }: {
   locale: Locale;
   state: ClassFormState;
@@ -137,6 +144,8 @@ function ClassFormFields({
     tags: string[];
     trainerIds: string[];
   };
+  lockTrainersToSelf?: boolean;
+  lockedTrainerId?: string;
 }) {
   const d = getDictionary(locale);
   const fe = state?.fieldErrors;
@@ -146,6 +155,9 @@ function ClassFormFields({
     "weekly",
   );
   const todayStr = new Date().toISOString().slice(0, 10);
+  const selfTrainer = lockedTrainerId
+    ? trainers.find((t) => t.userId === lockedTrainerId)
+    : null;
 
   return (
     <div className="flex flex-col gap-4">
@@ -196,9 +208,18 @@ function ClassFormFields({
           {labels.trainers}
         </p>
         <p className="mb-2 text-xs text-[var(--color-muted)]">
-          {labels.trainersHint}
+          {lockTrainersToSelf
+            ? labels.trainersSelfHint
+            : labels.trainersHint}
         </p>
-        {trainers.length === 0 ? (
+        {lockTrainersToSelf && lockedTrainerId ? (
+          <>
+            <input type="hidden" name="trainer_ids" value={lockedTrainerId} />
+            <p className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] px-3 py-2.5 text-sm font-medium text-[var(--color-text)]">
+              {selfTrainer?.name ?? labels.youAreTrainer}
+            </p>
+          </>
+        ) : trainers.length === 0 ? (
           <p className="text-sm text-[var(--color-muted)]">{labels.noTrainers}</p>
         ) : (
           <ul className="max-h-40 space-y-1 overflow-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] p-2">
@@ -407,6 +428,9 @@ export function ClassesClient({
   orgGyms,
   currentGymId,
   canManage,
+  defaultTrainerIds,
+  lockTrainersToSelf = false,
+  currentUserId,
   initialView,
   labels,
 }: Props) {
@@ -898,6 +922,22 @@ export function ClassesClient({
               trainers={trainers}
               labels={labels}
               mode="create"
+              lockTrainersToSelf={lockTrainersToSelf}
+              lockedTrainerId={
+                lockTrainersToSelf ? currentUserId : undefined
+              }
+              defaults={
+                defaultTrainerIds?.length
+                  ? {
+                      name: "",
+                      description: null,
+                      capacity: null,
+                      duration_minutes: 60,
+                      tags: [],
+                      trainerIds: defaultTrainerIds,
+                    }
+                  : undefined
+              }
             />
           </form>
         ) : null}
@@ -926,6 +966,10 @@ export function ClassesClient({
               trainers={trainers}
               labels={labels}
               mode="edit"
+              lockTrainersToSelf={lockTrainersToSelf}
+              lockedTrainerId={
+                lockTrainersToSelf ? currentUserId : undefined
+              }
               defaults={{
                 name: editing.name,
                 description: editing.description,

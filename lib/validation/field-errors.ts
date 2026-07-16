@@ -15,6 +15,7 @@ export type ValidationMessages = {
   amount: string;
   duration: string;
   date: string;
+  dateMinAge: string;
   invalid: string;
   hexColor: string;
 };
@@ -37,6 +38,10 @@ const FIELD_KIND: Record<string, keyof ValidationMessages> = {
   price: "amount",
   duration_days: "duration",
   membership_expires_at: "date",
+  date_of_birth: "date",
+  sex: "required",
+  height_cm: "amount",
+  weight_kg: "amount",
   plan_id: "required",
   member_id: "invalid",
   method: "required",
@@ -71,6 +76,7 @@ function messageForIssue(
   overrides?: Partial<Record<string, keyof ValidationMessages>>,
 ): string {
   if (issue.message === "mismatch") return messages.passwordMismatch;
+  if (issue.message === "date_min_age") return messages.dateMinAge;
 
   if (issue.code === "too_small" && issue.origin === "string") {
     if (issue.minimum === 1) return messages.required;

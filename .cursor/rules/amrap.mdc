@@ -23,3 +23,4 @@ Follow the full project standards in **`AGENTS.md`** (repo root) for every chang
 - **Backend on the server** — Server Actions / server components + `lib/supabase/server.ts`; REST route handlers when needed; no GraphQL unless asked; safe, dictionary-based errors
 - **Design system + responsive + a11y** — CSS variables, labels, focus, icon `aria-label`s; follow **Responsive UI / UX** in `AGENTS.md` and `.cursor/rules/responsive-ux.mdc` (mobile-first, shared shell chrome, touch targets, no desktop-only layouts)
 - **Tenant/RLS/secrets** — session-scoped data; service role server-only; never expose service keys
+- **E2E (Playwright)** — every new/changed user-facing feature, flow, or permission ships with coverage under `e2e/<role>/` (or an explicit PR note why deferred). Keep `docs/product-flows.md` in sync. Do not use Vitest for flow coverage. See `AGENTS.md` → *Testing / E2E* and `e2e/README.md`.

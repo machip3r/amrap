@@ -12,6 +12,28 @@ Use **pnpm** only (`pnpm install`, `pnpm add`, `pnpm run dev`, etc.). Do not use
 
 Do **not** run `pnpm run build` (or `next build`) on every change unless the user asks for a production build check, or the task is specifically about build/deploy/CI failures. Prefer `pnpm run lint` when you need a quick check, or rely on the dev server and TypeScript feedback.
 
+## Testing / E2E
+
+Playwright under `e2e/` is the source of truth for **user-flow** coverage (not Vitest). Vitest may be added later for pure `lib/` unit tests only.
+
+**Update E2E in the same change** whenever you:
+
+- Add, change, or remove a **user-facing feature**, **screen**, **nav item**, or **flow**
+- Change **who can do what** (roles, permissions, guards, post-auth redirects)
+- Ship something that was previously planned (or defer something that was shipped)
+
+Rules:
+
+1. Cover every **affected role** (owner / provisional, staff, trainer, member, …) under `e2e/<role>/`.
+2. Keep [`docs/product-flows.md`](docs/product-flows.md) and the matching `e2e/**/*.spec.ts` in sync with the code.
+3. Prefer role-based folders (`e2e/owner/`, later `e2e/staff/`, `e2e/member/`).
+4. Use locale routes (`/es/…` by default) and dictionary-backed copy for assertions — no English-only assumptions beyond what the `es` dictionary provides.
+5. Seed / confirm auth via Admin API helpers in `e2e/helpers/` — do not depend on real inbox OTP for CI.
+6. Never commit `SUPABASE_SERVICE_ROLE_KEY` or `e2e/.auth/` storage state.
+7. If E2E is deferred (e.g. Planned-only UI), say so explicitly in the PR.
+
+Run: `pnpm test:e2e` · `pnpm test:e2e:owner` · see [`e2e/README.md`](e2e/README.md).
+
 ## Project
 
 Multi-tenant gym membership admin (Next.js App Router, Supabase, Tailwind). Marketing at `/[locale]`; app under `/[locale]/dashboard`, etc. Locales: **`es`** (default) and **`en`**.
@@ -102,9 +124,9 @@ supabase/migrations/ # SQL only — schema changes go here
 - Prefer **Zod schemas** in `lib/validation/` (or explicit typed parsers shared with `types/`) — do not trust raw `FormData` / JSON shapes.
 - Treat domain shapes in `types/` as the contract; keep action payloads aligned with those DTOs.
 - **Every user-editable field** must have a **Zod rule** with **length limits** and an **allowed-character pattern (regex)** — reject unexpected / control characters early so they never reach Auth, DB, cookies, or mailto/URLs.
-  - Examples: email → lowercase + email regex + max 254; phone → digits and phone punctuation + max length; names → letters/spaces/safe punctuation + max length; passwords → min/max + no control characters; OTP → alphanumeric (or digits) with fixed length bounds.
-  - Prefer reusing helpers from `lib/validation/schemas.ts` (`emailSchema`, `personNameSchema`, `entityNameSchema`, `phoneSchema`, etc.) instead of ad-hoc `z.string()`.
-  - Mirror limits on the client with `maxLength` / `pattern` / `inputMode` / `autoCapitalize` where it improves UX — server schema remains authoritative.
+  - Examples: email → lowercase + email regex + max 254; phone → national 10 digits in UI, store E.164 with country code (`+52…`); names → letters/spaces/safe punctuation + max length; passwords → min/max + no control characters; OTP → alphanumeric (or digits) with fixed length bounds.
+  - Prefer reusing helpers from `lib/validation/schemas.ts` (`emailSchema`, `personNameSchema`, `entityNameSchema`, `phoneSchema`, `sanitizePhoneInput`, etc.) instead of ad-hoc `z.string()`.
+  - Mirror limits on the client with `maxLength` / `pattern` / `inputMode` / client sanitizers (`sanitizePhoneInput`, `sanitizeEmailInput`, …) — server schema remains authoritative.
 - **Show validation errors to the user** — never fail silently or with only a generic banner when a specific field is wrong.
   - Map Zod issues to per-field messages via `lib/validation/field-errors.ts` (`zodFieldErrors`) and dictionary copy (`validation.*` in `lib/i18n/dictionaries.ts`, plus landing contact errors when needed).
   - Return `{ fieldErrors?: Record<string, string>; error?: string }` from actions; render each message under the matching control with `FormField`’s `error` prop (`aria-invalid` / `role="alert"`).
@@ -122,6 +144,34 @@ supabase/migrations/ # SQL only — schema changes go here
 - **Service role** (`lib/supabase/admin.ts`): only on the server, only when RLS/session cannot do the job; never expose `SUPABASE_SERVICE_ROLE_KEY` to the client.
 - **Errors**: handle consistently — map failures to dictionary messages; return `{ error: string }` (or a shared result type) from actions; do not leak raw DB/Auth stack traces to the UI. Log server-side detail when useful; show safe copy to users.
 - After successful mutations: `revalidatePath` / `redirect` as appropriate; keep success and failure paths explicit and clean (no silent `catch`).
+
+---
+
+## Performance: requests, RSC, Supabase
+
+Treat every network round-trip (browser → Next.js RSC/actions, Next.js → Supabase) as expensive. Prefer **fewer, intentional** fetches over chatty UI.
+
+### Do not spam RSC / soft navigations
+
+- **Never** put `router.refresh()`, `router.push`, or `router.replace` in a `useEffect` whose deps include unstable identities (inline `onSuccess={() => …}`, new object/array literals, etc.). That pattern re-fires after every refresh and floods DevTools with `?_rsc=` requests.
+- After a Server Action that already calls `revalidatePath` / `revalidateTag`, **do not** also call `router.refresh()` unless you have a concrete reason the auto update did not cover the UI. Duplicate refresh = duplicate RSC + duplicate Supabase work.
+- Prefer `useEffectEvent` (or a ref) for success callbacks so effects depend only on **action result** (`state?.success`), not on parent-rendered closures.
+- Skip no-op navigations: if the target href equals the current path+query, do not `router.push` again.
+- Opening a dialog / toggling local UI state must **not** trigger page data reloads. Mount forms lazily when open; do not refresh the route on open/close.
+- Avoid broad `revalidatePath("/", "layout")` when a page-scoped path is enough — layout revalidation multiplies work for every open view.
+
+### Supabase / Postgres cost
+
+- **Prefer work in Postgres** (filters, joins, aggregates, `.range` pagination + `count`) — already required above. Do not load large sets into the app to filter in JS.
+- Select **only needed columns**; avoid `select('*')` and deep embeds you do not render.
+- One user gesture → ideally **one** mutation round-trip (or a single RPC). Do not N+1 query in loops from Server Components or actions.
+- Do not create `createClient()` / service-role clients inside hot loops; reuse the request-scoped client.
+- Cache thoughtfully: do not disable caching or force dynamic rendering without need. Do not poll Supabase from the client on an interval unless the product explicitly needs live updates (prefer Realtime sparingly, or refresh after mutations).
+
+### Verify before shipping chatty UI
+
+- After mutations and dialog flows, check the Network tab: you should **not** see a burst of identical `?_rsc=` requests for the same page from a single click.
+- If you see a storm, look first for `router.refresh` / `push` in effects and for duplicate `revalidatePath` + `refresh`.
 
 ---
 

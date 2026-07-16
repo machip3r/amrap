@@ -62,6 +62,7 @@ export async function getMemberContext(): Promise<MemberContext | null> {
     .select("id, gym_id, expires_at, gyms ( id, name )")
     .eq("person_id", person.id)
     .eq("status", "ACTIVE")
+    .eq("invite_status", "accepted")
     .gte("expires_at", nowIso)
     .order("expires_at", { ascending: false });
 

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { LIMITS } from "@/lib/validation/schemas";
+import { LIMITS, sanitizeEmailInput, sanitizePersonNameInput } from "@/lib/validation/schemas";
 import type { RegisterPlanOption } from "@/components/register-user-dialog";
 
 type Props = {
@@ -82,7 +82,7 @@ function CreateMemberFields({
           autoComplete="name"
           placeholder={d.registerUser.namePlaceholder}
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => setName(sanitizePersonNameInput(e.target.value))}
         />
       </FormField>
       <FormField
@@ -105,7 +105,7 @@ function CreateMemberFields({
           inputMode="email"
           placeholder={d.registerUser.emailPlaceholder}
           value={email}
-          onChange={(e) => setEmail(e.target.value.toLowerCase())}
+          onChange={(e) => setEmail(sanitizeEmailInput(e.target.value))}
         />
       </FormField>
       <FormField

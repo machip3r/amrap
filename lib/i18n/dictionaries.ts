@@ -11,6 +11,7 @@ export type Dictionary = {
     checkin: string;
     plans: string;
     classes: string;
+    timers: string;
     logout: string;
     settings: string;
     more: string;
@@ -144,6 +145,50 @@ export type Dictionary = {
     errorAuth: string;
     errorSave: string;
   };
+  welcome: {
+    titleStaff: string;
+    titleTrainer: string;
+    titleMember: string;
+    subtitleStaff: string;
+    subtitleTrainer: string;
+    subtitleMember: string;
+    dateOfBirth: string;
+    sex: string;
+    sexMale: string;
+    sexFemale: string;
+    sexOther: string;
+    sexPreferNot: string;
+    heightCm: string;
+    weightKg: string;
+    submit: string;
+    submitting: string;
+    errorSave: string;
+  };
+  invite: {
+    title: string;
+    subtitle: string;
+    roleStaff: string;
+    roleTrainer: string;
+    roleMember: string;
+    accept: string;
+    accepting: string;
+    decline: string;
+    declining: string;
+    error: string;
+    passwordTitle: string;
+    passwordSubtitle: string;
+    password: string;
+    confirmPassword: string;
+    passwordSubmit: string;
+    passwordSubmitting: string;
+    passwordMismatch: string;
+    passwordError: string;
+  };
+  inviteStatus: {
+    pending: string;
+    accepted: string;
+    cancelled: string;
+  };
   completeSetup: {
     title: string;
     description: string;
@@ -185,6 +230,70 @@ export type Dictionary = {
     quickNewMember: string;
     quickNewTrainer: string;
     quickNewStaff: string;
+    titleTrainer: string;
+    subtitleTrainer: string;
+    myClasses: string;
+    myClassesHint: string;
+    sessionsThisWeek: string;
+    sessionsThisWeekHint: string;
+    bookedThisWeek: string;
+    bookedThisWeekHint: string;
+    upcomingSessions: string;
+    noUpcomingSessions: string;
+    quickNewClass: string;
+    viewClasses: string;
+    openRoster: string;
+    openTimers: string;
+    heroLive: string;
+    heroNext: string;
+    heroEmpty: string;
+    weekStrip: string;
+  };
+  timers: {
+    title: string;
+    subtitle: string;
+    modeCountdown: string;
+    modeAmrap: string;
+    modeEmom: string;
+    modeTabata: string;
+    minutes: string;
+    intervalSec: string;
+    workSec: string;
+    restSec: string;
+    rounds: string;
+    start: string;
+    pause: string;
+    resume: string;
+    reset: string;
+    mute: string;
+    unmute: string;
+    phaseReady: string;
+    phaseWork: string;
+    phaseRest: string;
+    phaseDone: string;
+    roundOf: string;
+  };
+  roster: {
+    medical: string;
+    firstDay: string;
+    birthday: string;
+    recordResult: string;
+    resultTitle: string;
+    kindAmrap: string;
+    kindStrength: string;
+    kindForTime: string;
+    rounds: string;
+    reps: string;
+    weightKg: string;
+    minutes: string;
+    seconds: string;
+    saveResult: string;
+    resultSaved: string;
+    noMedicalNote: string;
+    careNote: string;
+    careNoteHint: string;
+    careSave: string;
+    careSaved: string;
   };
   team: {
     title: string;
@@ -459,6 +568,8 @@ export type Dictionary = {
     tagsHint: string;
     trainers: string;
     trainersHint: string;
+    trainersSelfHint: string;
+    youAreTrainer: string;
     noTrainers: string;
     save: string;
     saving: string;
@@ -536,6 +647,7 @@ export type Dictionary = {
     classes: string;
     inbox: string;
     qr: string;
+    timers: string;
     logout: string;
     gyms: string;
     activeUntil: string;
@@ -657,14 +769,24 @@ export type Dictionary = {
     amount: string;
     duration: string;
     date: string;
+    dateMinAge: string;
     invalid: string;
     hexColor: string;
   };
   settings: {
     title: string;
     subtitle: string;
+    limitedSubtitle: string;
+    limitedTitle: string;
+    limitedHint: string;
     personalization: string;
     personalizationHint: string;
+    customization: string;
+    customizationHint: string;
+    navVisible: string;
+    navHidden: string;
+    navAlwaysOn: string;
+    saveNav: string;
     logo: string;
     logoHint: string;
     logoLight: string;
@@ -710,6 +832,7 @@ const es: Dictionary = {
     checkin: "Entrada",
     plans: "Planes",
     classes: "Clases",
+    timers: "Temporizadores",
     logout: "Salir",
     settings: "Configuración",
     more: "Más",
@@ -854,6 +977,53 @@ const es: Dictionary = {
     errorAuth: "Debes iniciar sesión",
     errorSave: "No se pudo guardar. Intenta de nuevo.",
   },
+  welcome: {
+    titleStaff: "Completa tu perfil",
+    titleTrainer: "Completa tu perfil de entrenador",
+    titleMember: "Bienvenido a tu membresía",
+    subtitleStaff: "Solo necesitamos tu fecha de nacimiento para continuar.",
+    subtitleTrainer: "Solo necesitamos tu fecha de nacimiento para continuar.",
+    subtitleMember:
+      "Cuéntanos un poco sobre ti para personalizar tu experiencia.",
+    dateOfBirth: "Fecha de nacimiento",
+    sex: "Sexo",
+    sexMale: "Masculino",
+    sexFemale: "Femenino",
+    sexOther: "Otro",
+    sexPreferNot: "Prefiero no decir",
+    heightCm: "Estatura (cm)",
+    weightKg: "Peso (kg)",
+    submit: "Continuar",
+    submitting: "Guardando…",
+    errorSave: "No se pudo guardar. Intenta de nuevo.",
+  },
+  invite: {
+    title: "{gym} te invitó como {role}",
+    subtitle:
+      "Revisa la invitación. Si aceptas, crearás tu contraseña y completarás tu perfil.",
+    roleStaff: "staff",
+    roleTrainer: "entrenador",
+    roleMember: "miembro",
+    accept: "Aceptar",
+    accepting: "Aceptando…",
+    decline: "Rechazar",
+    declining: "Rechazando…",
+    error: "No se pudo actualizar la invitación. Intenta de nuevo.",
+    passwordTitle: "Crea tu contraseña",
+    passwordSubtitle:
+      "Úsala para iniciar sesión la próxima vez. Mínimo 8 caracteres.",
+    password: "Contraseña",
+    confirmPassword: "Confirmar contraseña",
+    passwordSubmit: "Continuar",
+    passwordSubmitting: "Guardando…",
+    passwordMismatch: "Las contraseñas no coinciden",
+    passwordError: "No se pudo guardar la contraseña. Intenta de nuevo.",
+  },
+  inviteStatus: {
+    pending: "Pendiente",
+    accepted: "Activo",
+    cancelled: "Cancelado",
+  },
   completeSetup: {
     title: "Terminar registro",
     description: "Completa la configuración de tu organización",
@@ -895,6 +1065,70 @@ const es: Dictionary = {
     quickNewMember: "Nuevo miembro",
     quickNewTrainer: "Nuevo entrenador",
     quickNewStaff: "Nuevo personal",
+    titleTrainer: "Tu semana",
+    subtitleTrainer: "Clases y sesiones donde eres el entrenador.",
+    myClasses: "Mis clases",
+    myClassesHint: "Clases activas asignadas a ti",
+    sessionsThisWeek: "Sesiones esta semana",
+    sessionsThisWeekHint: "En el calendario de esta semana",
+    bookedThisWeek: "Reservas esta semana",
+    bookedThisWeekHint: "Miembros confirmados en tus sesiones",
+    upcomingSessions: "Próximas sesiones",
+    noUpcomingSessions: "No tienes sesiones próximas esta semana.",
+    quickNewClass: "Ir a clases",
+    viewClasses: "Ver calendario",
+    openRoster: "Abrir lista",
+    openTimers: "Timers",
+    heroLive: "En curso",
+    heroNext: "Próxima clase",
+    heroEmpty: "No tienes clases programadas esta semana.",
+    weekStrip: "Esta semana",
+  },
+  timers: {
+    title: "Timers",
+    subtitle: "Cronómetros para WOD: AMRAP, EMOM, Tabata y cuenta atrás.",
+    modeCountdown: "Cuenta atrás",
+    modeAmrap: "AMRAP",
+    modeEmom: "EMOM",
+    modeTabata: "Tabata",
+    minutes: "Minutos",
+    intervalSec: "Intervalo (seg)",
+    workSec: "Trabajo (seg)",
+    restSec: "Descanso (seg)",
+    rounds: "Rondas",
+    start: "Iniciar",
+    pause: "Pausa",
+    resume: "Continuar",
+    reset: "Reiniciar",
+    mute: "Silenciar",
+    unmute: "Sonido",
+    phaseReady: "Listo",
+    phaseWork: "Trabajo",
+    phaseRest: "Descanso",
+    phaseDone: "Listo",
+    roundOf: "Ronda {current}/{total}",
+  },
+  roster: {
+    medical: "Alerta médica",
+    firstDay: "Primer día",
+    birthday: "Cumpleaños",
+    recordResult: "Registrar resultado",
+    resultTitle: "Resultado",
+    kindAmrap: "AMRAP",
+    kindStrength: "Fuerza",
+    kindForTime: "Por tiempo",
+    rounds: "Rondas",
+    reps: "Reps",
+    weightKg: "Peso (kg)",
+    minutes: "Min",
+    seconds: "Seg",
+    saveResult: "Guardar",
+    resultSaved: "Resultado guardado",
+    noMedicalNote: "Sin nota médica",
+    careNote: "Nota de cuidado",
+    careNoteHint: "Visible para coaches en la lista de clase (lesiones, adaptaciones).",
+    careSave: "Guardar nota",
+    careSaved: "Nota guardada",
   },
   team: {
     title: "Equipo",
@@ -1173,6 +1407,8 @@ const es: Dictionary = {
     tagsHint: "Separadas por comas (yoga, hiit, etc.).",
     trainers: "Entrenadores",
     trainersHint: "Puedes asignar uno o varios.",
+    trainersSelfHint: "Esta clase se asigna a ti como entrenador.",
+    youAreTrainer: "Tú (entrenador)",
     noTrainers: "Aún no hay entrenadores. Regístralos en Entrenadores.",
     save: "Guardar",
     saving: "Guardando…",
@@ -1252,6 +1488,7 @@ const es: Dictionary = {
     classes: "Clases",
     inbox: "Buzón",
     qr: "Mi QR",
+    timers: "Timers",
     logout: "Salir",
     gyms: "Mis gimnasios",
     activeUntil: "Activo hasta",
@@ -1338,9 +1575,20 @@ const es: Dictionary = {
   settings: {
     title: "Configuración",
     subtitle: "Ajusta la apariencia de tu panel",
+    limitedSubtitle: "Ajusta tu menú y preferencias",
+    limitedTitle: "Configuración limitada",
+    limitedHint:
+      "La marca del gimnasio solo la gestiona el dueño. Pronto podrás ajustar más preferencias personales aquí.",
     personalization: "Personalización",
     personalizationHint:
       "Colores y logos de este gimnasio en el panel (claro y oscuro).",
+    customization: "Mi menú",
+    customizationHint:
+      "Si tienes más de 5 secciones, elige cuáles quieres ver. El panel principal siempre está visible. Solo afecta a tu cuenta.",
+    navVisible: "Visible",
+    navHidden: "Oculta",
+    navAlwaysOn: "Siempre visible",
+    saveNav: "Guardar menú",
     logo: "Logos",
     logoHint: "PNG, JPG o WebP. Máx. 2 MB. Usa un logo por modo.",
     logoLight: "Logo (modo claro)",
@@ -1416,6 +1664,7 @@ const es: Dictionary = {
     amount: "Introduce un monto válido",
     duration: "Introduce una duración en días válida",
     date: "Introduce una fecha válida",
+    dateMinAge: "Debes tener al menos 18 años",
     invalid: "Valor no válido",
     hexColor: "Usa un color hexadecimal (#RRGGBB)",
   },
@@ -1435,6 +1684,7 @@ const en: Dictionary = {
     checkin: "Check-in",
     plans: "Plans",
     classes: "Classes",
+    timers: "Timers",
     logout: "Log out",
     settings: "Settings",
     more: "More",
@@ -1579,6 +1829,52 @@ const en: Dictionary = {
     errorAuth: "You need to log in",
     errorSave: "Could not save. Please try again.",
   },
+  welcome: {
+    titleStaff: "Complete your profile",
+    titleTrainer: "Complete your coach profile",
+    titleMember: "Welcome to your membership",
+    subtitleStaff: "We only need your date of birth to continue.",
+    subtitleTrainer: "We only need your date of birth to continue.",
+    subtitleMember:
+      "Tell us a bit about you so we can personalize your experience.",
+    dateOfBirth: "Date of birth",
+    sex: "Sex",
+    sexMale: "Male",
+    sexFemale: "Female",
+    sexOther: "Other",
+    sexPreferNot: "Prefer not to say",
+    heightCm: "Height (cm)",
+    weightKg: "Weight (kg)",
+    submit: "Continue",
+    submitting: "Saving…",
+    errorSave: "Could not save. Please try again.",
+  },
+  invite: {
+    title: "{gym} invited you as {role}",
+    subtitle:
+      "Review the invitation. If you accept, you’ll set a password and finish your profile.",
+    roleStaff: "staff",
+    roleTrainer: "trainer",
+    roleMember: "member",
+    accept: "Accept",
+    accepting: "Accepting…",
+    decline: "Decline",
+    declining: "Declining…",
+    error: "Could not update the invitation. Please try again.",
+    passwordTitle: "Create your password",
+    passwordSubtitle: "You’ll use it to sign in next time. At least 8 characters.",
+    password: "Password",
+    confirmPassword: "Confirm password",
+    passwordSubmit: "Continue",
+    passwordSubmitting: "Saving…",
+    passwordMismatch: "Passwords do not match",
+    passwordError: "Could not save the password. Please try again.",
+  },
+  inviteStatus: {
+    pending: "Pending",
+    accepted: "Active",
+    cancelled: "Cancelled",
+  },
   completeSetup: {
     title: "Finish registration",
     description: "Complete your organization setup",
@@ -1620,6 +1916,70 @@ const en: Dictionary = {
     quickNewMember: "New member",
     quickNewTrainer: "New trainer",
     quickNewStaff: "New staff",
+    titleTrainer: "Your week",
+    subtitleTrainer: "Classes and sessions where you are the coach.",
+    myClasses: "My classes",
+    myClassesHint: "Active classes assigned to you",
+    sessionsThisWeek: "Sessions this week",
+    sessionsThisWeekHint: "On this week’s calendar",
+    bookedThisWeek: "Bookings this week",
+    bookedThisWeekHint: "Confirmed members across your sessions",
+    upcomingSessions: "Upcoming sessions",
+    noUpcomingSessions: "No upcoming sessions this week.",
+    quickNewClass: "Go to classes",
+    viewClasses: "View calendar",
+    openRoster: "Open roster",
+    openTimers: "Timers",
+    heroLive: "Live now",
+    heroNext: "Up next",
+    heroEmpty: "No classes scheduled for you this week.",
+    weekStrip: "This week",
+  },
+  timers: {
+    title: "Timers",
+    subtitle: "Workout clocks: AMRAP, EMOM, Tabata, and countdown.",
+    modeCountdown: "Countdown",
+    modeAmrap: "AMRAP",
+    modeEmom: "EMOM",
+    modeTabata: "Tabata",
+    minutes: "Minutes",
+    intervalSec: "Interval (sec)",
+    workSec: "Work (sec)",
+    restSec: "Rest (sec)",
+    rounds: "Rounds",
+    start: "Start",
+    pause: "Pause",
+    resume: "Resume",
+    reset: "Reset",
+    mute: "Mute",
+    unmute: "Sound on",
+    phaseReady: "Ready",
+    phaseWork: "Work",
+    phaseRest: "Rest",
+    phaseDone: "Done",
+    roundOf: "Round {current}/{total}",
+  },
+  roster: {
+    medical: "Medical alert",
+    firstDay: "First day",
+    birthday: "Birthday",
+    recordResult: "Log result",
+    resultTitle: "Result",
+    kindAmrap: "AMRAP",
+    kindStrength: "Strength",
+    kindForTime: "For time",
+    rounds: "Rounds",
+    reps: "Reps",
+    weightKg: "Weight (kg)",
+    minutes: "Min",
+    seconds: "Sec",
+    saveResult: "Save",
+    resultSaved: "Result saved",
+    noMedicalNote: "No medical note",
+    careNote: "Care note",
+    careNoteHint: "Visible to coaches on the class roster (injuries, adaptations).",
+    careSave: "Save note",
+    careSaved: "Note saved",
   },
   team: {
     title: "Team",
@@ -1896,6 +2256,8 @@ const en: Dictionary = {
     tagsHint: "Comma-separated (yoga, hiit, etc.).",
     trainers: "Trainers",
     trainersHint: "You can assign one or more.",
+    trainersSelfHint: "This class is assigned to you as the coach.",
+    youAreTrainer: "You (coach)",
     noTrainers: "No trainers yet. Add them under Trainers.",
     save: "Save",
     saving: "Saving…",
@@ -1975,6 +2337,7 @@ const en: Dictionary = {
     classes: "Classes",
     inbox: "Inbox",
     qr: "My QR",
+    timers: "Timers",
     logout: "Log out",
     gyms: "My gyms",
     activeUntil: "Active until",
@@ -2061,9 +2424,20 @@ const en: Dictionary = {
   settings: {
     title: "Settings",
     subtitle: "Customize how your dashboard looks",
+    limitedSubtitle: "Adjust your menu and preferences",
+    limitedTitle: "Limited settings",
+    limitedHint:
+      "Gym branding is managed by the owner. More personal preferences will appear here soon.",
     personalization: "Personalization",
     personalizationHint:
       "Logos and colors for this gym in the admin dashboard (light and dark).",
+    customization: "My menu",
+    customizationHint:
+      "If you have more than 5 sections, choose which ones to show. Dashboard is always visible. This only affects your account.",
+    navVisible: "Visible",
+    navHidden: "Hidden",
+    navAlwaysOn: "Always visible",
+    saveNav: "Save menu",
     logo: "Logos",
     logoHint: "PNG, JPG, or WebP. Max 2 MB. One logo per mode.",
     logoLight: "Logo (light mode)",
@@ -2139,6 +2513,7 @@ const en: Dictionary = {
     amount: "Enter a valid amount",
     duration: "Enter a valid duration in days",
     date: "Enter a valid date",
+    dateMinAge: "You must be at least 18 years old",
     invalid: "Invalid value",
     hexColor: "Use a hex color (#RRGGBB)",
   },

@@ -3,13 +3,13 @@
 import {
   useActionState,
   useEffect,
+  useEffectEvent,
   useId,
   useMemo,
   useRef,
   useState,
   type KeyboardEvent,
 } from "react";
-import { useRouter } from "next/navigation";
 import { Plus, Search, X } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -339,7 +339,6 @@ function PaymentFormBody({
   onSuccess?: (paymentId: string) => void;
 }) {
   const d = getDictionary(locale);
-  const router = useRouter();
   const amountId = useId();
   const methodId = useId();
   const planIdField = useId();
@@ -366,12 +365,16 @@ function PaymentFormBody({
       ? dayPassPrice != null
       : Boolean(planId) && plans.length > 0);
 
-  useEffect(() => {
+  const handlePaymentSuccess = useEffectEvent(() => {
     if (!state?.success || !state.paymentId) return;
     onOpenChange(false);
-    router.refresh();
     onSuccess?.(state.paymentId);
-  }, [state, onOpenChange, router, onSuccess]);
+  });
+
+  useEffect(() => {
+    if (!state?.success || !state.paymentId) return;
+    handlePaymentSuccess();
+  }, [state]);
 
   function applyKind(next: PaymentKind) {
     setKind(next);

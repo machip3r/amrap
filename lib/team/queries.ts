@@ -9,6 +9,8 @@ import {
   type PageMeta,
 } from "@/lib/pagination";
 
+export type InviteStatus = "pending" | "accepted" | "cancelled";
+
 export type TeamMember = {
   id: string;
   userId: string;
@@ -16,24 +18,37 @@ export type TeamMember = {
   email: string | null;
   phone: string | null;
   role: Extract<Role, "STAFF" | "TRAINER">;
+  inviteStatus: InviteStatus;
   createdAt: string;
 };
 
 type RoleFilter = "STAFF" | "TRAINER";
 
+type GymRoleListRow = {
+  id: string;
+  user_id: string;
+  role: string;
+  created_at: string;
+  invite_status: string | null;
+};
+
 /**
  * Loads STAFF or TRAINER rows for a gym and enriches with persons profile.
+ * Defaults to accepted seats only (class assignment, pickers).
  */
 export async function loadTeamMembers(
   supabase: SupabaseClient,
   gymId: string,
   role: RoleFilter,
+  opts: { inviteStatuses?: InviteStatus[] } = {},
 ): Promise<TeamMember[]> {
+  const statuses = opts.inviteStatuses ?? ["accepted"];
   const { data: rows, error } = await supabase
     .from("gym_roles")
-    .select("id, user_id, role, created_at")
+    .select("id, user_id, role, created_at, invite_status")
     .eq("gym_id", gymId)
     .eq("role", role)
+    .in("invite_status", statuses)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -83,7 +98,7 @@ export async function loadTeamMembersPage(
 
   let query = supabase
     .from("gym_roles")
-    .select("id, user_id, role, created_at", { count: "exact" })
+    .select("id, user_id, role, created_at, invite_status", { count: "exact" })
     .eq("gym_id", gymId)
     .eq("role", role)
     .order("created_at", { ascending: false })
@@ -112,7 +127,7 @@ export async function loadTeamMemberById(
 ): Promise<TeamMember | null> {
   const { data: row, error } = await supabase
     .from("gym_roles")
-    .select("id, user_id, role, created_at")
+    .select("id, user_id, role, created_at, invite_status")
     .eq("id", roleId)
     .eq("gym_id", gymId)
     .eq("role", role)
@@ -127,9 +142,14 @@ export async function loadTeamMemberById(
   return list[0] ?? null;
 }
 
+function normalizeInviteStatus(raw: string | null | undefined): InviteStatus {
+  if (raw === "pending" || raw === "cancelled" || raw === "accepted") return raw;
+  return "accepted";
+}
+
 async function enrichTeamRows(
   supabase: SupabaseClient,
-  list: { id: string; user_id: string; role: string; created_at: string }[],
+  list: GymRoleListRow[],
 ): Promise<TeamMember[]> {
   if (list.length === 0) return [];
 
@@ -156,10 +176,11 @@ async function enrichTeamRows(
       return {
         id: r.id,
         userId: r.user_id,
-        name: person?.full_name?.trim() || r.user_id.slice(0, 8),
+        name: person?.full_name?.trim() || "—",
         email: person?.email ?? null,
         phone: person?.phone ?? null,
         role: r.role as RoleFilter,
+        inviteStatus: normalizeInviteStatus(r.invite_status),
         createdAt: r.created_at,
       };
     });
@@ -173,7 +194,8 @@ export async function countStaffAndTrainers(
     .from("gym_roles")
     .select("id", { count: "exact", head: true })
     .eq("gym_id", gymId)
-    .in("role", ["STAFF", "TRAINER"]);
+    .in("role", ["STAFF", "TRAINER"])
+    .in("invite_status", ["pending", "accepted"]);
 
   if (error) {
     console.error("countStaffAndTrainers", error.message);

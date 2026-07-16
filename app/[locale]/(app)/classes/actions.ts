@@ -209,9 +209,15 @@ export async function createClass(
     };
   }
 
+  // Trainers always coach their own classes (cannot assign others).
+  const trainerIds =
+    workspace.role === "TRAINER" && !workspace.canActAsOwner
+      ? [workspace.userId]
+      : parsed.data.trainer_ids;
+
   const okTrainers = await assertTrainersInGym(
     workspace.gymId,
-    parsed.data.trainer_ids,
+    trainerIds,
   );
   if (!okTrainers) {
     return { fieldErrors: { trainer_ids: d.validation.invalid } };
@@ -237,10 +243,7 @@ export async function createClass(
     return { error: d.classes.error };
   }
 
-  const assigned = await replaceClassTrainers(
-    inserted.id,
-    parsed.data.trainer_ids,
-  );
+  const assigned = await replaceClassTrainers(inserted.id, trainerIds);
   if (!assigned) {
     return { error: d.classes.error };
   }
@@ -342,9 +345,16 @@ export async function updateClass(
     };
   }
 
+  const trainerIds =
+    workspace.role === "TRAINER" && !workspace.canActAsOwner
+      ? Array.from(
+          new Set([workspace.userId, ...parsed.data.trainer_ids]),
+        )
+      : parsed.data.trainer_ids;
+
   const okTrainers = await assertTrainersInGym(
     workspace.gymId,
-    parsed.data.trainer_ids,
+    trainerIds,
   );
   if (!okTrainers) {
     return { fieldErrors: { trainer_ids: d.validation.invalid } };
@@ -371,7 +381,7 @@ export async function updateClass(
 
   const assigned = await replaceClassTrainers(
     parsed.data.class_id,
-    parsed.data.trainer_ids,
+    trainerIds,
   );
   if (!assigned) {
     return { error: d.classes.error };
@@ -568,7 +578,13 @@ export async function cancelBookingStaff(formData: FormData): Promise<void> {
 export async function setBookingStatusStaff(formData: FormData): Promise<void> {
   const locale = localeFromForm(formData);
   const workspace = await getWorkspace();
-  if (!workspace || !canInWorkspace(workspace, "checkin")) return;
+  if (
+    !workspace ||
+    (!canInWorkspace(workspace, "checkin") &&
+      !canInWorkspace(workspace, "manage_classes"))
+  ) {
+    return;
+  }
 
   const bookingId = uuidSchema.safeParse(formString(formData, "booking_id"));
   const status = formString(formData, "status");
@@ -615,5 +631,106 @@ export async function duplicateClassToGym(
   }
 
   revalidatePath(`/${locale}/classes`, "page");
+  return { success: true };
+}
+
+export async function upsertSessionResult(
+  formData: FormData,
+): Promise<{ error?: string; success?: boolean }> {
+  const locale = localeFromForm(formData);
+  const d = getDictionary(locale);
+  const workspace = await getWorkspace();
+  if (!workspace || !canInWorkspace(workspace, "manage_classes")) {
+    return { error: d.common.forbidden };
+  }
+
+  const sessionId = uuidSchema.safeParse(formString(formData, "session_id"));
+  const personId = uuidSchema.safeParse(formString(formData, "person_id"));
+  const kindRaw = formString(formData, "kind");
+  if (!sessionId.success || !personId.success) {
+    return { error: d.validation.invalid };
+  }
+  if (!["amrap", "strength", "for_time", "other"].includes(kindRaw)) {
+    return { error: d.validation.invalid };
+  }
+
+  const roundsRaw = formString(formData, "rounds");
+  const repsRaw = formString(formData, "reps");
+  const weightRaw = formString(formData, "weight_kg");
+  const minsRaw = formString(formData, "time_minutes");
+  const secsPartRaw = formString(formData, "time_seconds_part");
+
+  const parseOptionalInt = (v: string) => {
+    if (!v.trim()) return null;
+    const n = Number(v);
+    if (!Number.isInteger(n) || n < 0) return undefined;
+    return n;
+  };
+  const parseOptionalNum = (v: string) => {
+    if (!v.trim()) return null;
+    const n = Number(v);
+    if (!Number.isFinite(n) || n < 0) return undefined;
+    return n;
+  };
+
+  let rounds: number | null = null;
+  let reps: number | null = null;
+  let weightKg: number | null = null;
+  let timeSeconds: number | null = null;
+
+  if (kindRaw === "amrap") {
+    const r = parseOptionalInt(roundsRaw);
+    const rp = parseOptionalInt(repsRaw);
+    if (r === undefined || rp === undefined) {
+      return { error: d.validation.invalid };
+    }
+    rounds = r;
+    reps = rp;
+  } else if (kindRaw === "strength") {
+    const w = parseOptionalNum(weightRaw);
+    if (w === undefined) return { error: d.validation.invalid };
+    weightKg = w;
+  } else if (kindRaw === "for_time") {
+    const mins = parseOptionalInt(minsRaw);
+    const secs = parseOptionalInt(secsPartRaw);
+    if (mins === undefined || secs === undefined) {
+      return { error: d.validation.invalid };
+    }
+    timeSeconds = (mins ?? 0) * 60 + (secs ?? 0);
+  }
+
+  const supabase = await createClient();
+  const { data: session } = await supabase
+    .from("class_sessions")
+    .select("id, gym_id")
+    .eq("id", sessionId.data)
+    .maybeSingle();
+
+  if (!session || session.gym_id !== workspace.gymId) {
+    return { error: d.common.forbidden };
+  }
+
+  const { error } = await supabase.from("class_session_results").upsert(
+    {
+      session_id: sessionId.data,
+      person_id: personId.data,
+      gym_id: workspace.gymId,
+      kind: kindRaw,
+      rounds,
+      reps,
+      weight_kg: weightKg,
+      time_seconds: timeSeconds,
+      recorded_by: workspace.userId,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "session_id,person_id" },
+  );
+
+  if (error) {
+    console.error("upsertSessionResult", error.message);
+    return { error: d.validation.invalid };
+  }
+
+  revalidatePath(`/${locale}/classes/${sessionId.data}`, "page");
   return { success: true };
 }

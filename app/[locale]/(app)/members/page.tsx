@@ -126,6 +126,9 @@ export default async function MembersPage({
           newBadge: d.members.newBadge,
           previous: d.common.previous,
           next: d.common.next,
+          invitePending: d.inviteStatus.pending,
+          inviteAccepted: d.inviteStatus.accepted,
+          inviteCancelled: d.inviteStatus.cancelled,
         }}
       />
     </>

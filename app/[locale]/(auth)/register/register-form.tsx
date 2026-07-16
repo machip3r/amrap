@@ -9,7 +9,12 @@ import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
-import { LIMITS } from "@/lib/validation/schemas";
+import {
+  LIMITS,
+  sanitizeEmailInput,
+  sanitizeEntityNameInput,
+  sanitizePasswordInput,
+} from "@/lib/validation/schemas";
 
 export function RegisterForm({ locale }: { locale: Locale }) {
   const d = getDictionary(locale);
@@ -52,7 +57,9 @@ export function RegisterForm({ locale }: { locale: Locale }) {
             autoComplete="organization"
             maxLength={LIMITS.entityName}
             value={organizationName}
-            onChange={(e) => setOrganizationName(e.target.value)}
+            onChange={(e) =>
+              setOrganizationName(sanitizeEntityNameInput(e.target.value))
+            }
           />
         </FormField>
 
@@ -76,7 +83,7 @@ export function RegisterForm({ locale }: { locale: Locale }) {
             variant="auth"
             placeholder={d.register.emailPlaceholder}
             value={email}
-            onChange={(e) => setEmail(e.target.value.toLowerCase())}
+            onChange={(e) => setEmail(sanitizeEmailInput(e.target.value))}
           />
         </FormField>
 
@@ -98,7 +105,7 @@ export function RegisterForm({ locale }: { locale: Locale }) {
             showLabel={d.register.showPassword}
             hideLabel={d.register.hidePassword}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => setPassword(sanitizePasswordInput(e.target.value))}
           />
         </FormField>
 
@@ -120,7 +127,9 @@ export function RegisterForm({ locale }: { locale: Locale }) {
             showLabel={d.register.showPassword}
             hideLabel={d.register.hidePassword}
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={(e) =>
+              setConfirmPassword(sanitizePasswordInput(e.target.value))
+            }
           />
         </FormField>
 

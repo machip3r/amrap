@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { parseBrandThemeTokens } from "@/lib/branding/theme";
 import { gymLogoPublicUrl } from "@/lib/branding/logo";
+import { parseHiddenNavIds } from "@/lib/nav/ops-nav";
 import type { BrandThemeTokens, OrgPlanTier, Profile, Role, Workspace } from "@/types";
 
 export const ACTIVE_GYM_COOKIE = "amrap_gym_id";
@@ -38,6 +39,7 @@ type GymRoleRow = {
   gym_id: string;
   role: Role;
   is_provisional_owner: boolean;
+  nav_visibility: unknown;
   gyms:
     | {
         id: string;
@@ -105,6 +107,7 @@ function toWorkspace(
     logoUrlDark: gymLogoPublicUrl(darkPath, cacheKey),
     themeLight,
     themeDark,
+    hiddenNavIds: parseHiddenNavIds(row.nav_visibility),
     role,
     isProvisionalOwner,
     canActAsOwner: role === "OWNER" || isProvisionalOwner,
@@ -142,6 +145,8 @@ export async function getWorkspace(): Promise<Workspace | null> {
       gym_id,
       role,
       is_provisional_owner,
+      invite_status,
+      nav_visibility,
       gyms (
         id,
         name,
@@ -159,7 +164,8 @@ export async function getWorkspace(): Promise<Workspace | null> {
       )
     `,
     )
-    .eq("user_id", user.id);
+    .eq("user_id", user.id)
+    .or("invite_status.eq.accepted,role.eq.OWNER");
 
   if (error || !roles?.length) return null;
 
@@ -234,6 +240,7 @@ export async function getOnboardingState(): Promise<OnboardingState | null> {
     .from("gym_roles")
     .select("gym_id, gyms ( id, name )")
     .eq("user_id", user.id)
+    .or("role.eq.OWNER,is_provisional_owner.eq.true")
     .limit(1);
   if (roleError) {
     console.error("getOnboardingState gym_roles", roleError.message);

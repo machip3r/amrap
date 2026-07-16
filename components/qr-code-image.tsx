@@ -5,6 +5,7 @@ import QRCode from "qrcode";
 
 type Props = {
   value: string;
+  /** Pixel size used when generating the QR (higher = sharper when scaled). */
   size?: number;
   alt?: string;
   className?: string;
@@ -23,7 +24,7 @@ export function QrCodeImage({
     let cancelled = false;
     void QRCode.toDataURL(value, {
       width: size,
-      margin: 2,
+      margin: 1,
       color: { dark: "#1A1A1A", light: "#FFFFFF" },
     }).then((url) => {
       if (!cancelled) setSrc(url);
@@ -36,8 +37,8 @@ export function QrCodeImage({
   if (!src) {
     return (
       <div
-        className={`animate-pulse rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-hover)] ${className}`.trim()}
-        style={{ width: size, height: size }}
+        className={`aspect-square animate-pulse rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-hover)] ${className}`.trim()}
+        style={className.includes("w-") ? undefined : { width: size, height: size }}
         aria-hidden
       />
     );
@@ -50,7 +51,7 @@ export function QrCodeImage({
       alt={alt}
       width={size}
       height={size}
-      className={`rounded-xl border border-[var(--color-border)] bg-white p-3 shadow-sm ${className}`.trim()}
+      className={`rounded-2xl border border-[var(--color-border)] bg-white p-4 shadow-sm ${className}`.trim()}
     />
   );
 }

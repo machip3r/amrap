@@ -34,6 +34,9 @@ export default async function ClassesPage({
     );
   }
 
+  const lockTrainersToSelf =
+    workspace.role === "TRAINER" && !workspace.canActAsOwner;
+
   const initialView =
     sp.tab === "calendar" || sp.tab === "catalog"
       ? sp.tab
@@ -49,7 +52,7 @@ export default async function ClassesPage({
 
   // Catalog does not need week sessions or sibling gyms — skip those queries.
   const loadCalendar = initialView === "calendar";
-  const loadSiblingGyms = canManage;
+  const loadSiblingGyms = canManage && !lockTrainersToSelf;
 
   const [classResult, trainers, sessions, orgGymRows] = await Promise.all([
     supabase
@@ -124,6 +127,11 @@ export default async function ClassesPage({
         }))}
         currentGymId={workspace.gymId}
         canManage={canManage}
+        currentUserId={workspace.userId}
+        lockTrainersToSelf={lockTrainersToSelf}
+        defaultTrainerIds={
+          lockTrainersToSelf ? [workspace.userId] : undefined
+        }
         initialView={initialView}
         labels={d.classes}
       />

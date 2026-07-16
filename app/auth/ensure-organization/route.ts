@@ -3,6 +3,10 @@ import { redirect } from "next/navigation";
 import { defaultLocale, isLocale } from "@/lib/i18n/config";
 import { ensureOrganizationAfterConfirm } from "@/lib/auth/ensure-organization";
 import { getOnboardingState, getSessionUser } from "@/lib/auth/session";
+import {
+  isInvitedOpsUser,
+  resolvePostAuthPath,
+} from "@/lib/auth/post-auth-redirect";
 
 /**
  * Creates the org after email confirm when it is still missing.
@@ -15,6 +19,11 @@ export async function GET(request: NextRequest) {
 
   const user = await getSessionUser();
   if (!user) redirect(`/${locale}/login`);
+
+  // Invited staff/trainers already belong to a gym — never bootstrap an org.
+  if (await isInvitedOpsUser()) {
+    redirect(await resolvePostAuthPath(locale));
+  }
 
   const before = await getOnboardingState();
   if (before?.organizationId) {

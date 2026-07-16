@@ -9,7 +9,7 @@ import type { TeamMember } from "@/lib/team/queries";
 import type { PageMeta } from "@/lib/pagination";
 import { useListQueryParams } from "@/lib/list-query-params";
 import { Input } from "@/components/ui/input";
-import { LIMITS } from "@/lib/validation/schemas";
+import { LIMITS, sanitizeSearchInput } from "@/lib/validation/schemas";
 import { removeTeamMemberAction } from "@/app/[locale]/(app)/team/actions";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import {
@@ -33,6 +33,9 @@ export type TeamListLabels = {
   view: string;
   previous: string;
   next: string;
+  invitePending: string;
+  inviteAccepted: string;
+  inviteCancelled: string;
 };
 
 type Props = {
@@ -52,6 +55,25 @@ function initials(name: string) {
   if (parts.length === 0) return "?";
   if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
   return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
+}
+
+function inviteBadgeClass(status: TeamMember["inviteStatus"]) {
+  if (status === "pending") {
+    return "bg-[var(--color-warning,var(--color-primary))]/15 text-[var(--color-warning,var(--color-primary))]";
+  }
+  if (status === "cancelled") {
+    return "bg-[var(--color-muted)]/20 text-[var(--color-muted)]";
+  }
+  return "bg-[var(--color-success)]/15 text-[var(--color-success)]";
+}
+
+function inviteBadgeLabel(
+  status: TeamMember["inviteStatus"],
+  labels: TeamListLabels,
+) {
+  if (status === "pending") return labels.invitePending;
+  if (status === "cancelled") return labels.inviteCancelled;
+  return labels.inviteAccepted;
 }
 
 function formatJoined(iso: string, locale: Locale) {
@@ -126,7 +148,7 @@ export function TeamListClient({
               placeholder={labels.searchPlaceholder}
               value={query}
               onChange={(e) => {
-                const value = e.target.value;
+                const value = sanitizeSearchInput(e.target.value);
                 setQuery(value);
                 pushParams(
                   searchParams,
@@ -209,11 +231,18 @@ export function TeamListClient({
                                 </span>
                               ) : null}
                             </p>
-                            {m.phone ? (
-                              <p className="truncate text-xs text-[var(--color-muted)]">
-                                {m.phone}
-                              </p>
-                            ) : null}
+                            <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                              <span
+                                className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${inviteBadgeClass(m.inviteStatus)}`}
+                              >
+                                {inviteBadgeLabel(m.inviteStatus, labels)}
+                              </span>
+                              {m.phone ? (
+                                <p className="truncate text-xs text-[var(--color-muted)]">
+                                  {m.phone}
+                                </p>
+                              ) : null}
+                            </div>
                           </div>
                         </div>
                       </td>

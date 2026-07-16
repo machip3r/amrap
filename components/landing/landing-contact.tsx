@@ -10,6 +10,8 @@ import {
   emailSchema,
   messageSchema,
   personNameSchema,
+  sanitizeEmailInput,
+  sanitizePersonNameInput,
 } from "@/lib/validation/schemas";
 
 type Props = {
@@ -143,7 +145,7 @@ export function LandingContact({ d }: Props) {
                 variant="auth"
                 value={name}
                 onChange={(e) => {
-                  setName(e.target.value);
+                  setName(sanitizePersonNameInput(e.target.value));
                   setFieldErrors((prev) => {
                     const next = { ...prev };
                     delete next.name;
@@ -173,7 +175,7 @@ export function LandingContact({ d }: Props) {
                 variant="auth"
                 value={email}
                 onChange={(e) => {
-                  setEmail(e.target.value.toLowerCase());
+                  setEmail(sanitizeEmailInput(e.target.value));
                   setFieldErrors((prev) => {
                     const next = { ...prev };
                     delete next.email;

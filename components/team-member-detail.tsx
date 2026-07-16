@@ -91,6 +91,21 @@ export async function TeamMemberDetailPage({
                 <RoleIcon className="h-3.5 w-3.5" aria-hidden />
                 {listRole === "trainer" ? d.nav.trainers : d.nav.staff}
               </span>
+              <span
+                className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                  member.inviteStatus === "pending"
+                    ? "bg-[var(--color-primary)]/15 text-[var(--color-primary)]"
+                    : member.inviteStatus === "cancelled"
+                      ? "bg-[var(--color-muted)]/20 text-[var(--color-muted)]"
+                      : "bg-[var(--color-success)]/15 text-[var(--color-success)]"
+                }`}
+              >
+                {member.inviteStatus === "pending"
+                  ? d.inviteStatus.pending
+                  : member.inviteStatus === "cancelled"
+                    ? d.inviteStatus.cancelled
+                    : d.inviteStatus.accepted}
+              </span>
             </div>
           </div>
         </div>

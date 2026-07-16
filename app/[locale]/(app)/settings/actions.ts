@@ -15,6 +15,11 @@ import { getPaletteTemplate } from "@/lib/branding/palettes";
 import { gymLogoPublicUrl } from "@/lib/branding/logo";
 import { canUseWhitelabel } from "@/lib/plans/limits";
 import type { BrandThemeTokens } from "@/types";
+import {
+  getCustomizableOpsNavItems,
+  isCustomizableOpsNavId,
+  roleAllowsNavCustomization,
+} from "@/lib/nav/ops-nav";
 import { z } from "zod";
 
 const LOGO_MAX_BYTES = 2 * 1024 * 1024;
@@ -299,4 +304,77 @@ export async function removeGymLogoAction(
     logoMode: mode,
     logoUrl: null,
   };
+}
+
+const navVisibilitySchema = z.object({
+  locale: localeSchema,
+  hidden: z.array(z.string().max(40)).max(32),
+});
+
+export async function saveNavVisibilityAction(
+  _prev: SettingsActionState,
+  formData: FormData,
+): Promise<SettingsActionState> {
+  const locale = localeFromForm(formData);
+  const d = getDictionary(locale);
+
+  const workspace = await getWorkspace();
+  if (!workspace) {
+    return { error: d.common.forbidden };
+  }
+
+  const hiddenRaw = formData
+    .getAll("hidden")
+    .filter((v): v is string => typeof v === "string");
+
+  const parsed = navVisibilitySchema.safeParse({
+    locale: formString(formData, "locale") || "es",
+    hidden: hiddenRaw,
+  });
+  if (!parsed.success) {
+    return { fieldErrors: zodFieldErrors(parsed.error, d.validation) };
+  }
+
+  const hidden = parsed.data.hidden.filter(isCustomizableOpsNavId);
+  const uniqueFromForm = [...new Set(hidden)];
+
+  const navRole = workspace.canActAsOwner ? "OWNER" : workspace.role;
+  const navCtx = {
+    role: navRole,
+    canManageSettings: canInWorkspace(workspace, "manage_billing"),
+    canManageStaff: canInWorkspace(workspace, "manage_staff"),
+  };
+
+  if (!roleAllowsNavCustomization(navCtx)) {
+    return { error: d.common.forbidden };
+  }
+
+  const allowedIds = new Set(
+    getCustomizableOpsNavItems(navCtx).map((item) => item.id),
+  );
+
+  // Only accept hides for pages this role can use; keep prefs for other ids.
+  // Dashboard is never hidden.
+  const fromForm = uniqueFromForm.filter(
+    (id) => allowedIds.has(id) && id !== "dashboard",
+  );
+  const preserved = workspace.hiddenNavIds.filter(
+    (id) => !allowedIds.has(id) && id !== "dashboard",
+  );
+  const unique = [...new Set([...preserved, ...fromForm])];
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_my_nav_visibility", {
+    p_gym_id: workspace.gymId,
+    p_nav_visibility: { hidden: unique },
+  });
+
+  if (error) {
+    console.error("saveNavVisibilityAction", error.message);
+    return { error: d.settings.error };
+  }
+
+  revalidatePath("/", "layout");
+  revalidatePath(`/${locale}/settings`, "page");
+  return { success: d.settings.saved };
 }

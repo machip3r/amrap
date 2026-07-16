@@ -11,7 +11,7 @@ import {
   TablePagination,
   type TablePaginationLabels,
 } from "@/components/ui/table-pagination";
-import { LIMITS } from "@/lib/validation/schemas";
+import { LIMITS, sanitizeSearchInput } from "@/lib/validation/schemas";
 
 export type PaymentListItem = {
   id: string;
@@ -130,7 +130,7 @@ export function PaymentsListClient({
               placeholder={labels.searchPlaceholder}
               value={query}
               onChange={(e) => {
-                const value = e.target.value;
+                const value = sanitizeSearchInput(e.target.value);
                 setQuery(value);
                 pushParams(
                   searchParams,

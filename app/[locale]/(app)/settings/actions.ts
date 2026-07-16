@@ -349,7 +349,7 @@ export async function saveNavVisibilityAction(
     return { error: d.common.forbidden };
   }
 
-  const allowedIds = new Set(
+  const allowedIds = new Set<string>(
     getCustomizableOpsNavItems(navCtx).map((item) => item.id),
   );
 

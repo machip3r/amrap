@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { History } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import type { Member } from "@/types";
 import {
@@ -11,16 +13,25 @@ import {
   MembersClient,
   type MembersPageLabels,
 } from "@/components/members-client";
+import type { PageMeta } from "@/lib/pagination";
 
 type Props = {
   locale: Locale;
   title: string;
   subtitle: string;
   newMemberLabel: string;
+  checkInHistoryLabel: string;
+  showCheckInHistory?: boolean;
   members: Member[];
   plans: { id: string; name: string }[];
   activePlans: RegisterPlanOption[];
   labels: MembersPageLabels;
+  meta: PageMeta;
+  filters: {
+    q: string;
+    status: "all" | "active" | "expired";
+    planId: string;
+  };
 };
 
 export function MembersPageClient({
@@ -28,10 +39,14 @@ export function MembersPageClient({
   title,
   subtitle,
   newMemberLabel,
+  checkInHistoryLabel,
+  showCheckInHistory = false,
   members,
   plans,
   activePlans,
   labels,
+  meta,
+  filters,
 }: Props) {
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const clearTimer = useRef<number | null>(null);
@@ -60,18 +75,29 @@ export function MembersPageClient({
           </h1>
           <p className="mt-1 text-sm text-[var(--color-muted)]">{subtitle}</p>
         </div>
-        <RegisterUserButton
-          locale={locale}
-          canManageMembers
-          canManageStaff={false}
-          plans={activePlans}
-          defaultRole="member"
-          allowedRoles={["member"]}
-          label={newMemberLabel}
-          onSuccess={(payload) => {
-            if (payload.memberId) flashRow(payload.memberId);
-          }}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          {showCheckInHistory ? (
+            <Link
+              href={`/${locale}/checkin/history`}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 text-sm font-semibold text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)]"
+            >
+              <History className="h-4 w-4" aria-hidden />
+              {checkInHistoryLabel}
+            </Link>
+          ) : null}
+          <RegisterUserButton
+            locale={locale}
+            canManageMembers
+            canManageStaff={false}
+            plans={activePlans}
+            defaultRole="member"
+            allowedRoles={["member"]}
+            label={newMemberLabel}
+            onSuccess={(payload) => {
+              if (payload.memberId) flashRow(payload.memberId);
+            }}
+          />
+        </div>
       </header>
 
       <MembersClient
@@ -79,6 +105,8 @@ export function MembersPageClient({
         members={members}
         plans={plans}
         labels={labels}
+        meta={meta}
+        filters={filters}
         highlightId={highlightId}
       />
     </div>

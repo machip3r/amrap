@@ -6,17 +6,26 @@ import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { MembersPageClient } from "@/components/members-page-client";
-import {
-  MEMBERSHIP_LIST_SELECT,
-  mapMembershipRow,
-} from "@/lib/members/queries";
+import { listMembershipsPage } from "@/lib/members/queries";
+import { parsePage, sanitizeSearchTerm } from "@/lib/pagination";
+
+function parseStatus(raw: string | undefined): "all" | "active" | "expired" {
+  if (raw === "active" || raw === "expired") return raw;
+  return "all";
+}
 
 export default async function MembersPage({
   params,
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{
+    error?: string;
+    page?: string;
+    q?: string;
+    status?: string;
+    plan?: string;
+  }>;
 }) {
   const { locale: raw } = await params;
   if (!isLocale(raw)) notFound();
@@ -27,28 +36,32 @@ export default async function MembersPage({
   if (!workspace) redirect(`/${locale}/login`);
   if (!canInWorkspace(workspace, "manage_members")) {
     return (
-      <p className="text-[var(--color-muted)]">{getDictionary(locale).common.forbidden}</p>
+      <p className="text-[var(--color-muted)]">
+        {getDictionary(locale).common.forbidden}
+      </p>
     );
   }
 
   const d = getDictionary(locale);
   const supabase = await createClient();
-  const [{ data: rows }, { data: planRows }] = await Promise.all([
-    supabase
-      .from("memberships")
-      .select(MEMBERSHIP_LIST_SELECT)
-      .eq("gym_id", workspace.gymId)
-      .order("created_at", { ascending: false }),
+  const page = parsePage(sp.page);
+  const q = sanitizeSearchTerm(sp.q ?? "");
+  const status = parseStatus(sp.status);
+  const planId = sp.plan?.trim() || "all";
+
+  const [{ members, meta }, { data: planRows }] = await Promise.all([
+    listMembershipsPage(supabase, workspace.gymId, {
+      page,
+      q,
+      status,
+      planId,
+    }),
     supabase
       .from("plans")
       .select("id, name, price, duration_days, is_active")
       .eq("gym_id", workspace.gymId)
       .order("created_at", { ascending: false }),
   ]);
-
-  const members = (rows ?? [])
-    .map((r) => mapMembershipRow(r as Parameters<typeof mapMembershipRow>[0]))
-    .filter((m): m is NonNullable<typeof m> => m != null);
 
   const plans = (planRows ?? []).map((p) => ({
     id: p.id,
@@ -82,9 +95,13 @@ export default async function MembersPage({
         title={d.members.title}
         subtitle={d.members.subtitle}
         newMemberLabel={d.members.newMember}
+        checkInHistoryLabel={d.checkin.viewAllCheckIns}
+        showCheckInHistory={canInWorkspace(workspace, "checkin")}
         members={members}
         plans={plans.map((p) => ({ id: p.id, name: p.name }))}
         activePlans={activePlans}
+        meta={meta}
+        filters={{ q, status, planId }}
         labels={{
           name: d.members.name,
           email: d.members.email,
@@ -107,6 +124,8 @@ export default async function MembersPage({
           showing: d.members.showing,
           reload: d.members.reload,
           newBadge: d.members.newBadge,
+          previous: d.common.previous,
+          next: d.common.next,
         }}
       />
     </>

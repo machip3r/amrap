@@ -1,10 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { setPendingConfirmEmail } from "@/lib/auth/pending-confirm";
 import { getOnboardingState, getWorkspace } from "@/lib/auth/session";
+import { getMemberContext } from "@/lib/auth/member-session";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { z } from "zod";
 import {
@@ -14,6 +11,10 @@ import {
   loginPasswordSchema,
 } from "@/lib/validation/schemas";
 import { zodFieldErrors } from "@/lib/validation/field-errors";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { setPendingConfirmEmail } from "@/lib/auth/pending-confirm";
 
 export type LoginState = {
   error?: string;
@@ -69,15 +70,19 @@ export async function loginAction(
 
   revalidatePath("/", "layout");
 
-  const onboarding = await getOnboardingState();
-  if (!onboarding?.organizationId || !onboarding.completed) {
-    redirect(`/${locale}/onboarding`);
-  }
-
   const workspace = await getWorkspace();
-  if (!workspace) {
-    redirect(`/${locale}/onboarding`);
+  if (workspace) {
+    const onboarding = await getOnboardingState();
+    if (!onboarding?.completed) {
+      redirect(`/${locale}/onboarding`);
+    }
+    redirect(`/${locale}/dashboard`);
   }
 
-  redirect(`/${locale}/dashboard`);
+  const member = await getMemberContext();
+  if (member) {
+    redirect(`/${locale}/me`);
+  }
+
+  redirect(`/${locale}/onboarding`);
 }

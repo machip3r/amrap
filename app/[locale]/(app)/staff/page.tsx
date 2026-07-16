@@ -5,17 +5,21 @@ import { canInWorkspace } from "@/lib/auth/permissions";
 import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { loadTeamMembers } from "@/lib/team/queries";
+import { loadTeamMembersPage } from "@/lib/team/queries";
 import { TeamPageClient } from "@/components/team-page-client";
+import { parsePage, sanitizeSearchTerm } from "@/lib/pagination";
 
 export default async function StaffPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ page?: string; q?: string }>;
 }) {
   const { locale: raw } = await params;
   if (!isLocale(raw)) notFound();
   const locale = raw as Locale;
+  const sp = await searchParams;
 
   const workspace = await getWorkspace();
   if (!workspace) redirect(`/${locale}/login`);
@@ -29,7 +33,14 @@ export default async function StaffPage({
 
   const d = getDictionary(locale);
   const supabase = await createClient();
-  const members = await loadTeamMembers(supabase, workspace.gymId, "STAFF");
+  const page = parsePage(sp.page);
+  const q = sanitizeSearchTerm(sp.q ?? "");
+  const { members, meta } = await loadTeamMembersPage(
+    supabase,
+    workspace.gymId,
+    "STAFF",
+    { page, q },
+  );
 
   return (
     <TeamPageClient
@@ -37,9 +48,13 @@ export default async function StaffPage({
       title={d.staffPage.title}
       subtitle={d.staffPage.subtitle}
       newLabel={d.staffPage.newStaff}
+      checkInHistoryLabel={d.checkin.viewAllCheckIns}
+      showCheckInHistory={canInWorkspace(workspace, "checkin")}
       listRole="staff"
       members={members}
       currentUserId={workspace.userId}
+      meta={meta}
+      q={q}
       labels={{
         name: d.members.name,
         email: d.members.email,
@@ -54,6 +69,8 @@ export default async function StaffPage({
         reload: d.staffPage.reload,
         newBadge: d.staffPage.newBadge,
         view: d.staffPage.view,
+        previous: d.common.previous,
+        next: d.common.next,
       }}
     />
   );

@@ -1,5 +1,14 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Member } from "@/types";
 import { memberStatusFromExpires } from "@/lib/members/dates";
+import {
+  buildPageMeta,
+  ilikeContains,
+  pageRange,
+  sanitizeSearchTerm,
+  TABLE_PAGE_SIZE,
+  type PageMeta,
+} from "@/lib/pagination";
 
 type PlanEmbed =
   | { name: string }
@@ -79,3 +88,82 @@ export const MEMBERSHIP_LIST_SELECT = `
     qr_code
   )
 `;
+
+const MEMBERSHIP_LIST_SELECT_INNER = `
+  id,
+  gym_id,
+  branch_id,
+  person_id,
+  plan_id,
+  status,
+  expires_at,
+  created_at,
+  plans ( name ),
+  persons!inner (
+    full_name,
+    phone,
+    email,
+    qr_code
+  )
+`;
+
+export type MembershipListFilters = {
+  page?: number;
+  pageSize?: number;
+  q?: string;
+  status?: "all" | "active" | "expired";
+  planId?: string;
+};
+
+export async function listMembershipsPage(
+  supabase: SupabaseClient,
+  gymId: string,
+  filters: MembershipListFilters = {},
+): Promise<{ members: Member[]; meta: PageMeta }> {
+  const pageSize = filters.pageSize ?? TABLE_PAGE_SIZE;
+  const page = filters.page ?? 1;
+  const { from, to } = pageRange(page, pageSize);
+  const q = sanitizeSearchTerm(filters.q ?? "");
+  const status = filters.status ?? "all";
+  const planId =
+    filters.planId && filters.planId !== "all" ? filters.planId : null;
+  const nowIso = new Date().toISOString();
+
+  let query = supabase
+    .from("memberships")
+    .select(q ? MEMBERSHIP_LIST_SELECT_INNER : MEMBERSHIP_LIST_SELECT, {
+      count: "exact",
+    })
+    .eq("gym_id", gymId)
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  if (status === "active") query = query.gt("expires_at", nowIso);
+  if (status === "expired") query = query.lte("expires_at", nowIso);
+  if (planId) query = query.eq("plan_id", planId);
+  if (q) {
+    const pattern = ilikeContains(q);
+    query = query.or(
+      `full_name.ilike.${pattern},email.ilike.${pattern},phone.ilike.${pattern}`,
+      { foreignTable: "persons" },
+    );
+  }
+
+  const { data, count, error } = await query;
+  if (error) {
+    console.error("listMembershipsPage", error.message);
+    return {
+      members: [],
+      meta: buildPageMeta(page, 0, pageSize),
+    };
+  }
+
+  const members = (data ?? [])
+    .map((r) => mapMembershipRow(r as MembershipPersonRow))
+    .filter((m): m is Member => m != null);
+
+  return {
+    members,
+    meta: buildPageMeta(page, count ?? 0, pageSize),
+  };
+}

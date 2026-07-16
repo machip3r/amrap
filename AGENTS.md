@@ -20,6 +20,29 @@ Multi-tenant gym membership admin (Next.js App Router, Supabase, Tailwind). Mark
 
 ---
 
+## Product flows (must keep in sync)
+
+[`docs/product-flows.md`](docs/product-flows.md) is the source of truth for **UI/UX flows per user type**: who enters, what they see, what they can do, happy paths, edge cases, and route map.
+
+**Update `docs/product-flows.md` in the same change** whenever you:
+
+- Add, change, or remove a **feature**, **screen**, **nav item**, or **user-facing flow**
+- Change **who can do what** (roles, permissions, guards, redirects after auth/onboarding)
+- Change **post-login / post-action destinations**, empty states, or paywall/limit UX
+- Ship something that was previously marked planned (or defer something that was shipped) — update status labels accordingly
+
+Cover **every user type** that the change touches (e.g. Owner, Provisional owner, Staff, Trainer/Coach, Member, Platform admin, Public/auth). Document:
+
+1. **Who** — which role(s) / context
+2. **Where** — route(s) and entry points (nav, CTA, deep link)
+3. **What** — steps of the happy path
+4. **Edge cases** — errors, limits, forbidden, empty states
+5. **Status** — shipped · partial · planned (keep planned flows documented; do not delete them when unimplemented)
+
+Do **not** leave `product-flows.md` stale relative to the code. Prefer updating the doc while implementing, not as a follow-up. Business rules still belong in `README.md`; schema in `docs/database.md` — this file is the **interface flow** companion.
+
+---
+
 ## Folder structure (must follow)
 
 ```
@@ -51,6 +74,7 @@ supabase/migrations/ # SQL only — schema changes go here
 - **Never** edit an already-created migration that may have been applied — append a new migration instead.
 - Keep migrations SQL-only; name them descriptively after the change.
 - **Keep [`docs/database.md`](docs/database.md) in sync** with every migration and any other database change (tables, columns, constraints, RPCs, triggers, RLS policies, enums). Update that English doc in the **same change** as the SQL — do not leave schema docs stale.
+- **Always verify the target Supabase project before pushing.** Before any remote DB command (`supabase db push`, `supabase db reset --linked`, `supabase link`, migration apply/repair against a remote, MCP SQL against a linked project, etc.), confirm which project/ref you are targeting (`supabase projects list`, `supabase link --project-ref …`, `.supabase` / linked project config, and/or the dashboard URL). Do **not** push migrations or run destructive SQL until the project name and ref match the intended environment (local vs staging vs production). If ambiguous, ask the user which project to use.
 
 ---
 
@@ -93,6 +117,7 @@ supabase/migrations/ # SQL only — schema changes go here
 ## Backend: Server Actions, APIs, errors
 
 - **Default**: mutations and privileged reads via **Next.js Server Actions** or server components using `lib/supabase/server.ts`. Do not call Supabase with elevated privileges from the client.
+- **Prefer work in Postgres / Supabase, not in the app.** If a query, filter, aggregate, sort, join, or **pagination** can run in SQL (PostgREST `.range` / `.limit` + `count`, RPC, view, or generated column), do it **server-side in the database** instead of loading large result sets into Next.js/React and slicing, filtering, or summarizing in memory. Examples: paginate list tables with `.range(from, to)` and `{ count: "exact" }`; compute monthly payment totals with a filtered select (or SQL aggregate), not by summing a huge client-fetched array; filter active/expired memberships with `expires_at` predicates rather than fetching everyone and filtering in JS.
 - **Route Handlers** (`app/**/route.ts`): use for webhooks, OAuth/confirm callbacks, or public HTTP APIs — follow **REST** conventions (correct methods, status codes, JSON error body). Do not add GraphQL unless explicitly requested.
 - **Service role** (`lib/supabase/admin.ts`): only on the server, only when RLS/session cannot do the job; never expose `SUPABASE_SERVICE_ROLE_KEY` to the client.
 - **Errors**: handle consistently — map failures to dictionary messages; return `{ error: string }` (or a shared result type) from actions; do not leak raw DB/Auth stack traces to the UI. Log server-side detail when useful; show safe copy to users.
@@ -107,6 +132,24 @@ supabase/migrations/ # SQL only — schema changes go here
 - **Accessibility basics**: label every input (`htmlFor` / wrapping label), meaningful button text, `aria-label` for icon-only controls, visible focus, sufficient contrast, do not rely on color alone for errors.
 - Prefer semantic HTML (`button`, `label`, `nav`, headings in order).
 - **Disable submit buttons** until required form fields are filled (client-side). Do not leave primary submit actions enabled on empty required forms (auth, onboarding, and app forms).
+
+---
+
+## Responsive UI / UX (must follow)
+
+Every UI change and new feature must be **responsive, clear, and useful** on phone and desktop — not desktop-only with a squeezed fallback.
+
+- **Mobile-first:** design for ~375px width first, then `sm` / `md` / `lg`. Spot-check both narrow and desktop before shipping.
+- **Use the shared ops shell:** desktop = collapsible sidebar (`md+`); mobile = bottom tabs + **More** sheet. Do **not** invent per-page nav, duplicate sidebars, or one-off menus.
+- **Thumb reach:** gym-floor actions (check-in, members, classes) stay in primary tabs when the role allows — do not bury them only in overflow.
+- **Touch targets:** interactive controls ≥ ~44×44px; fixed bars respect `safe-area-inset-*`.
+- **Layout:** stack columns on small screens; avoid locked multi-column grids or `min-w-[…rem]` tables without a mobile alternative (cards, stacked rows, or intentional horizontal scroll with a clear purpose).
+- **Density:** tighter padding on mobile (`p-4`); leave clearance for the bottom tab bar (`pb` / safe-area) so content is not covered.
+- **One job per section:** one primary action path; no competing chrome or decorative card clutter.
+- **Pretty via the system:** reuse `--color-*`, shared `Input` / `Button` / `Dialog` / form fields — no one-off “pretty” forks or hardcoded marketing gradients in the product app.
+- **i18n + a11y still required:** all copy in `es` + `en`; `aria-current` on nav; labels on icon-only controls.
+
+See also `.cursor/rules/responsive-ux.mdc`.
 
 ---
 

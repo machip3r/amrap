@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
 import {
   DEFAULT_PHONE_COUNTRY,
@@ -54,6 +55,7 @@ export function PhoneInput({
   const inputId = id ?? `${reactId}-phone`;
   const listId = `${reactId}-countries`;
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const controlled = valueProp !== undefined;
 
   const seed = parseInternationalPhone(
@@ -67,6 +69,11 @@ export function PhoneInput({
   const [iso2, setIso2] = useState(seedIso);
   const [national, setNational] = useState(seed.national);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
 
   const dial = countryByIso2(iso2)?.dial ?? "52";
   const international = formatInternationalPhone(dial, national);
@@ -91,12 +98,48 @@ export function PhoneInput({
     setNational(parsed.national);
   }
 
+  useLayoutEffect(() => {
+    if (!menuOpen || !triggerRef.current) {
+      setMenuPos(null);
+      return;
+    }
+    function place() {
+      const rect = triggerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const width = Math.min(18 * 16, window.innerWidth - 24);
+      let left = rect.left;
+      if (left + width > window.innerWidth - 12) {
+        left = Math.max(12, window.innerWidth - width - 12);
+      }
+      const spaceBelow = window.innerHeight - rect.bottom - 12;
+      const menuHeight = Math.min(14 * 16, spaceBelow > 160 ? spaceBelow : 224);
+      const openUp = spaceBelow < 160 && rect.top > spaceBelow;
+      setMenuPos({
+        top: openUp ? rect.top - menuHeight - 6 : rect.bottom + 6,
+        left,
+        width,
+      });
+    }
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [menuOpen]);
+
   useEffect(() => {
     if (!menuOpen) return;
     function onPointerDown(e: MouseEvent) {
-      if (!rootRef.current?.contains(e.target as Node)) {
-        setMenuOpen(false);
+      const target = e.target as Node;
+      if (
+        rootRef.current?.contains(target) ||
+        (target instanceof Element && target.closest(`#${CSS.escape(listId)}`))
+      ) {
+        return;
       }
+      setMenuOpen(false);
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setMenuOpen(false);
@@ -107,7 +150,7 @@ export function PhoneInput({
       document.removeEventListener("mousedown", onPointerDown);
       document.removeEventListener("keydown", onKey);
     };
-  }, [menuOpen]);
+  }, [menuOpen, listId]);
 
   function commit(nextIso: string, nextNational: string) {
     setIso2(nextIso);
@@ -118,15 +161,65 @@ export function PhoneInput({
 
   const isAuth = variant === "auth";
   const controlSurface = isAuth
-    ? "h-11 box-border rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] text-sm text-[var(--color-text)] transition-colors focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)] disabled:cursor-not-allowed disabled:opacity-70"
-    : "h-8 box-border rounded border border-[var(--color-muted)]/40 bg-[var(--color-bg)] text-sm text-[var(--color-text)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)] disabled:opacity-70";
+    ? "min-h-11 box-border rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] text-base text-[var(--color-text)] transition-colors focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)] disabled:cursor-not-allowed disabled:opacity-70"
+    : "min-h-11 box-border rounded-lg border border-[var(--color-muted)]/40 bg-[var(--color-bg)] text-base text-[var(--color-text)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)] disabled:opacity-70";
+
+  const menu =
+    menuOpen && menuPos
+      ? createPortal(
+          <ul
+            id={listId}
+            role="listbox"
+            aria-label={countryLabel}
+            style={{
+              position: "fixed",
+              top: menuPos.top,
+              left: menuPos.left,
+              width: menuPos.width,
+              maxHeight: "14rem",
+            }}
+            className="z-[60] overflow-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-1 shadow-xl"
+          >
+            {PHONE_COUNTRIES.map((c) => {
+              const label = displayNames?.of(c.iso2) ?? c.iso2;
+              const selected = c.iso2 === iso2;
+              return (
+                <li key={c.iso2} role="option" aria-selected={selected}>
+                  <button
+                    type="button"
+                    className={`flex min-h-11 w-full items-center gap-2.5 px-3 py-2.5 text-left text-base transition-colors hover:bg-[var(--color-surface-hover)] ${
+                      selected
+                        ? "bg-[var(--color-primary-soft)] font-medium text-[var(--color-text)]"
+                        : "text-[var(--color-text)]"
+                    }`}
+                    onClick={() => {
+                      commit(c.iso2, national);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    <span className="text-[1.1rem] leading-none" aria-hidden>
+                      {flagEmoji(c.iso2)}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">{label}</span>
+                    <span className="shrink-0 tabular-nums text-[var(--color-muted)]">
+                      +{c.dial}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>,
+          document.body,
+        )
+      : null;
 
   return (
     <div ref={rootRef} className={`relative ${className}`.trim()}>
       <input type="hidden" name={name} value={international} readOnly />
-      <div className={`flex items-center ${isAuth ? "gap-2" : "gap-1.5"}`}>
-        <div className="relative shrink-0 self-stretch">
+      <div className={`flex items-stretch ${isAuth ? "gap-2" : "gap-1.5"}`}>
+        <div className="relative shrink-0">
           <button
+            ref={triggerRef}
             type="button"
             disabled={disabled}
             aria-label={countryLabel}
@@ -134,63 +227,26 @@ export function PhoneInput({
             aria-expanded={menuOpen}
             aria-controls={listId}
             onClick={() => setMenuOpen((o) => !o)}
-            className={`inline-flex h-full items-center ${
+            className={`inline-flex h-full min-h-11 items-center ${
               isAuth
-                ? "gap-1.5 px-2.5 font-medium hover:border-[var(--color-ring)]"
-                : "gap-1 px-2"
+                ? "gap-1.5 px-3 font-medium hover:border-[var(--color-ring)]"
+                : "gap-1 px-2.5"
             } ${controlSurface}`}
           >
-            <span className="text-[1rem] leading-none" aria-hidden>
+            <span className="text-[1.1rem] leading-none" aria-hidden>
               {flagEmoji(iso2)}
             </span>
             <span className="leading-none tabular-nums text-[var(--color-muted)]">
               +{dial}
             </span>
             <ChevronDown
-              className={`h-3.5 w-3.5 shrink-0 text-[var(--color-muted)] transition-transform ${
+              className={`h-4 w-4 shrink-0 text-[var(--color-muted)] transition-transform ${
                 menuOpen ? "rotate-180" : ""
               }`}
               aria-hidden
             />
           </button>
-
-          {menuOpen ? (
-            <ul
-              id={listId}
-              role="listbox"
-              aria-label={countryLabel}
-              className="absolute left-0 top-[calc(100%+0.35rem)] z-30 max-h-56 w-[min(18rem,calc(100vw-3rem))] overflow-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-1 shadow-xl"
-            >
-              {PHONE_COUNTRIES.map((c) => {
-                const label = displayNames?.of(c.iso2) ?? c.iso2;
-                const selected = c.iso2 === iso2;
-                return (
-                  <li key={c.iso2} role="option" aria-selected={selected}>
-                    <button
-                      type="button"
-                      className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors hover:bg-[var(--color-surface-hover)] ${
-                        selected
-                          ? "bg-[var(--color-primary-soft)] font-medium text-[var(--color-text)]"
-                          : "text-[var(--color-text)]"
-                      }`}
-                      onClick={() => {
-                        commit(c.iso2, national);
-                        setMenuOpen(false);
-                      }}
-                    >
-                      <span className="text-[1rem] leading-none" aria-hidden>
-                        {flagEmoji(c.iso2)}
-                      </span>
-                      <span className="min-w-0 flex-1 truncate">{label}</span>
-                      <span className="shrink-0 tabular-nums text-[var(--color-muted)]">
-                        +{c.dial}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : null}
+          {menu}
         </div>
 
         <input
@@ -204,7 +260,7 @@ export function PhoneInput({
           placeholder={placeholder}
           value={national}
           onChange={(e) => commit(iso2, e.target.value)}
-          className={`min-w-0 flex-1 leading-none placeholder-[var(--color-muted)] ${isAuth ? "px-4" : "px-2"} ${controlSurface}`}
+          className={`min-w-0 flex-1 leading-none placeholder-[var(--color-muted)] ${isAuth ? "px-4" : "px-3"} ${controlSurface}`}
         />
       </div>
     </div>

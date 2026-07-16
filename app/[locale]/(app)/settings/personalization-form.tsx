@@ -165,7 +165,6 @@ function LogoModeBlock({
         cancelLabel={d.members.cancel}
         confirmLabel={d.settings.removeLogo}
         action={removeAction}
-        pending={removePending}
       >
         <input type="hidden" name="locale" value={locale} />
         <input type="hidden" name="mode" value={mode} />

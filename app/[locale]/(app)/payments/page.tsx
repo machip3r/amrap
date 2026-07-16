@@ -10,14 +10,46 @@ import {
   MEMBERSHIP_LIST_SELECT,
   mapMembershipRow,
 } from "@/lib/members/queries";
+import { listPaymentsPage } from "@/lib/payments/queries";
 import { PaymentsPageClient } from "@/components/payments-page-client";
+import { parsePage, sanitizeSearchTerm } from "@/lib/pagination";
+
+function startOfLocalDay(d: Date) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+function startOfLocalMonth(d: Date) {
+  const x = startOfLocalDay(d);
+  x.setDate(1);
+  return x;
+}
+
+function sumAmounts(
+  rows: { amount: number | string; kind?: string | null; created_at: string }[],
+  predicate?: (row: {
+    amount: number | string;
+    kind?: string | null;
+    created_at: string;
+  }) => boolean,
+) {
+  let total = 0;
+  let count = 0;
+  for (const row of rows) {
+    if (predicate && !predicate(row)) continue;
+    total += Number(row.amount);
+    count += 1;
+  }
+  return { total, count };
+}
 
 export default async function PaymentsPage({
   params,
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; page?: string; q?: string }>;
 }) {
   const { locale: raw } = await params;
   if (!isLocale(raw)) notFound();
@@ -37,11 +69,18 @@ export default async function PaymentsPage({
   const d = getDictionary(locale);
   const supabase = await createClient();
 
+  const now = new Date();
+  const monthStartIso = startOfLocalMonth(now).toISOString();
+  const todayStartIso = startOfLocalDay(now).toISOString();
+  const page = parsePage(sp.page);
+  const q = sanitizeSearchTerm(sp.q ?? "");
+
   const [
     { data: membershipRows },
     { data: planRows },
     { data: gymRow },
-    { data: payments },
+    { payments, meta },
+    { data: monthPaymentRows },
   ] = await Promise.all([
     supabase
       .from("memberships")
@@ -59,12 +98,13 @@ export default async function PaymentsPage({
       .select("day_pass_price")
       .eq("id", workspace.gymId)
       .maybeSingle(),
+    listPaymentsPage(supabase, workspace.gymId, { page, q }),
     supabase
       .from("payments")
-      .select("id, amount, method, created_at, membership_id, kind, plan_id, plans(name)")
+      .select("amount, kind, created_at")
       .eq("gym_id", workspace.gymId)
-      .order("created_at", { ascending: false })
-      .limit(100),
+      .gte("created_at", monthStartIso)
+      .order("created_at", { ascending: false }),
   ]);
 
   const members = (membershipRows ?? [])
@@ -82,8 +122,19 @@ export default async function PaymentsPage({
   const dayPassPrice =
     gymRow?.day_pass_price != null ? Number(gymRow.day_pass_price) : null;
 
-  const memberById = new Map(
-    members.map((m) => [m.id, { name: m.name, email: m.email }] as const),
+  const monthRows = monthPaymentRows ?? [];
+  const month = sumAmounts(monthRows);
+  const today = sumAmounts(
+    monthRows,
+    (row) => row.created_at >= todayStartIso,
+  );
+  const plansMonth = sumAmounts(
+    monthRows,
+    (row) => paymentKindFromDb(row.kind) === "plan",
+  );
+  const dayPassMonth = sumAmounts(
+    monthRows,
+    (row) => paymentKindFromDb(row.kind) === "day_pass",
   );
 
   function methodLabel(rawMethod: string) {
@@ -93,12 +144,8 @@ export default async function PaymentsPage({
     return rawMethod;
   }
 
-  function planNameFromJoin(
-    plansJoin: { name: string } | { name: string }[] | null | undefined,
-  ) {
-    if (!plansJoin) return null;
-    if (Array.isArray(plansJoin)) return plansJoin[0]?.name ?? null;
-    return plansJoin.name ?? null;
+  function withCount(template: string, count: number) {
+    return template.replace("{count}", String(count));
   }
 
   return (
@@ -124,21 +171,33 @@ export default async function PaymentsPage({
         }))}
         plans={plans}
         dayPassPrice={dayPassPrice}
-        payments={(payments ?? []).map((p) => {
-          const kind = paymentKindFromDb(p.kind);
-          const joinedName = planNameFromJoin(
-            p.plans as { name: string } | { name: string }[] | null,
-          );
+        meta={meta}
+        q={q}
+        stats={{
+          monthTotal: month.total,
+          monthHint: withCount(d.payments.statMonthHint, month.count),
+          todayTotal: today.total,
+          todayHint: withCount(d.payments.statTodayHint, today.count),
+          plansTotal: plansMonth.total,
+          plansHint: withCount(d.payments.statPlansHint, plansMonth.count),
+          dayPassTotal: dayPassMonth.total,
+          dayPassHint: withCount(
+            d.payments.statDayPassHint,
+            dayPassMonth.count,
+          ),
+        }}
+        payments={payments.map((p) => {
+          const kind = p.kind;
           return {
             id: p.id,
-            memberName: memberById.get(p.membership_id)?.name ?? p.membership_id,
-            amount: Number(p.amount),
+            memberName: p.member_name ?? p.membership_id,
+            amount: p.amount,
             methodLabel: methodLabel(p.method),
             createdAt: p.created_at,
             kind,
             kindLabel:
               kind === "day_pass" ? d.payments.kindDayPass : d.payments.kindPlan,
-            planName: kind === "plan" ? joinedName : null,
+            planName: kind === "plan" ? p.plan_name : null,
           };
         })}
         labels={{
@@ -153,6 +212,12 @@ export default async function PaymentsPage({
           reload: d.payments.reload,
           showing: d.payments.showing,
           newBadge: d.payments.newBadge,
+          previous: d.common.previous,
+          next: d.common.next,
+          statMonth: d.payments.statMonth,
+          statToday: d.payments.statToday,
+          statPlans: d.payments.statPlans,
+          statDayPass: d.payments.statDayPass,
         }}
       />
     </>

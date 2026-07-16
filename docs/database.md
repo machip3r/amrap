@@ -6,8 +6,9 @@ English reference for the Postgres schema (Supabase). Source of truth: migration
 | --------- | ------- |
 | `001_initial.sql` | Full MVP schema, RLS, RPCs |
 | `002_onboarding.sql` | Onboarding columns / RPC refresh + org select policy (upgrade path) |
+| `20260716003201_harden_security_definer_grants.sql` | Move RLS helpers to `private`; revoke anon EXECUTE on public RPCs; drop `gym-logos` listing policy |
 
-**Rule:** never edit an applied migration. Append `003_…`, `004_…`, etc.
+**Rule:** never edit an applied migration. Append a new timestamped migration instead.
 
 Auth lives in Supabase **`auth.users`**. App tables are in **`public`**.
 
@@ -222,16 +223,24 @@ AMRAP operator seats (not gym staff).
 
 ## RPC / functions (security definer)
 
-Granted to `authenticated` unless noted. Prefer these over raw inserts for signup, onboarding, check-in, and member create.
+Public RPCs are granted to `authenticated` only (not `anon` / `PUBLIC`). Prefer these over raw inserts for signup, onboarding, check-in, and member create.
 
-### Auth helpers (RLS)
+RLS / storage helpers live in schema **`private`** (not exposed via the Data API). Policies and public RPCs call `private.*`. Grant `USAGE` on `private` + `EXECUTE` on helpers to `authenticated` so RLS can evaluate them; they are not reachable at `/rest/v1/rpc/…`.
+
+### Auth helpers (RLS) — `private.*`
 
 | Function | Returns | Use |
 | -------- | ------- | --- |
-| `is_platform_admin()` | boolean | Current user in `platform_admins` |
-| `user_gym_ids()` | set of uuid | Gyms where user has any `gym_roles` row |
-| `has_gym_role(gym_id, roles[])` | boolean | Role match; provisional counts as allowed |
-| `can_manage_gym(gym_id)` | boolean | OWNER or STAFF (or provisional via `has_gym_role`) |
+| `private.is_platform_admin()` | boolean | Current user in `platform_admins` |
+| `private.user_gym_ids()` | set of uuid | Gyms where user has any `gym_roles` row |
+| `private.has_gym_role(gym_id, roles[])` | boolean | Role match; provisional counts as allowed |
+| `private.can_manage_gym(gym_id)` | boolean | OWNER or STAFF (or provisional via `has_gym_role`) |
+| `private.is_provisional_owner_of_gym(gym_id)` | boolean | Provisional owner flag |
+| `private.user_in_organization(org_id)` / `user_can_manage_organization(org_id)` | boolean | Org membership / manage |
+| `private.person_owned_by_me` / `staff_can_view_person` / `staff_can_manage_person` | boolean | Person access helpers |
+| `private.can_manage_gym_branding_storage(object_name)` | boolean | Storage write checks for `gym-logos` |
+
+Bucket `gym-logos` is **public** for object URL reads; there is **no** broad `SELECT` policy on `storage.objects` (avoids listing all files).
 
 ### Signup & onboarding
 
@@ -296,7 +305,8 @@ Expect future migrations for:
 - Granular permission templates beyond raw `permissions` jsonb
 - Person “claim” / merge when a profile gains `user_id`
 - Freemium numeric caps as DB constraints or trigger checks
-- Class sessions/schedules, announcements, penalties, routines, community
+- Class sessions/schedules → **shipped** (see Classes below)
+- Announcements, penalties, routines, community
 - Org billing (Stripe/MP subscriptions), member payment gateway accounts
 - Impersonation audit log
 - Member white-label / custom domain (gym branding columns exist for admin dashboard)
@@ -305,9 +315,15 @@ Expect future migrations for:
 ### Classes (shipped)
 
 | Table | Purpose |
-|-------|---------|
-| `classes` | Class catalog per gym (`name`, optional `description` / `capacity`, `is_active`) |
-| `class_trainers` | Many-to-many assignment of `auth.users` (trainers) to a class |
+|--------|---------|
+| `classes` | Catalog per gym (`name`, `description`, `capacity`, `duration_minutes`, `tags`, `is_active`) |
+| `class_trainers` | Trainers assigned to a class |
+| `class_schedules` | Recurrence (`none` \| `weekly`), local time, timezone, validity window |
+| `class_sessions` | Materialised occurrences (`starts_at`/`ends_at`, capacity, status) |
+| `class_bookings` | Reservations (`confirmed` \| `waitlisted` \| `cancelled` \| `attended` \| `no_show`) + waitlist position |
+| `inbox_messages` | Internal alerts (e.g. waitlist auto-promote) |
+
+**RPCs:** `generate_class_sessions`, `book_class_session`, `cancel_class_booking` (auto-promote + inbox), `set_class_booking_status`, `walk_in_enroll_class_session`, `list_open_class_sessions_for_check_in`, `duplicate_class_to_gym`. Check-in (`record_check_in`) marks matching class attendance.
 
 ---
 

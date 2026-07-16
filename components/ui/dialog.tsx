@@ -19,6 +19,8 @@ type Props = {
   closeLabel: string;
   /** Extra classes on the panel (e.g. max-w-xl). Default max-w-md. */
   className?: string;
+  /** Extra classes on the outer overlay flex container (e.g. full-bleed sheets). */
+  containerClassName?: string;
   /** Extra classes on the scrollable body. */
   bodyClassName?: string;
   /** Focus first field when opened. Default true. */
@@ -34,6 +36,7 @@ export function Dialog({
   titleId: titleIdProp,
   closeLabel,
   className = "max-w-md",
+  containerClassName = "items-end justify-center p-3 sm:items-center sm:p-6",
   bodyClassName = "px-6 py-5",
   autoFocus = true,
 }: Props) {
@@ -74,7 +77,9 @@ export function Dialog({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center sm:p-6">
+    <div
+      className={`fixed inset-0 z-50 flex ${containerClassName}`.trim()}
+    >
       <button
         type="button"
         className="absolute inset-0 bg-[var(--color-text)]/40 backdrop-blur-[2px] transition-opacity"

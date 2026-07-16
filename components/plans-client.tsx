@@ -5,6 +5,7 @@ import { useActionState, useState } from "react";
 import {
   Archive,
   ArchiveRestore,
+  Loader2,
   Lock,
   Pencil,
   Plus,
@@ -44,10 +45,14 @@ export type PlansPageLabels = {
   price: string;
   durationDays: string;
   save: string;
+  saving: string;
+  archiving: string;
+  restoring: string;
   cancel: string;
   close: string;
   edit: string;
   archive: string;
+  archiveConfirm: string;
   restore: string;
   active: string;
   archived: string;
@@ -186,9 +191,12 @@ function PlanFormFields({
         <Button
           type="submit"
           variant="primary"
-          className="mt-0 shadow-sm"
+          className="mt-0 inline-flex items-center justify-center gap-2 shadow-sm"
           disabled={pending}
         >
+          {pending ? (
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+          ) : null}
           {pending ? d.plans.saving : submitLabel}
         </Button>
       </div>
@@ -330,12 +338,13 @@ export function PlansClient({
               <Button
                 type="submit"
                 variant="primary"
-                className="mb-0.5 shrink-0 px-4 py-2.5 shadow-sm"
+                className="mb-0.5 inline-flex shrink-0 items-center gap-2 px-4 py-2.5 shadow-sm"
                 disabled={dayPassPending}
               >
-                {dayPassPending
-                  ? getDictionary(locale).plans.saving
-                  : labels.dayPassSave}
+                {dayPassPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                ) : null}
+                {dayPassPending ? labels.saving : labels.dayPassSave}
               </Button>
             </div>
             {dayPassState?.error ? (
@@ -520,13 +529,18 @@ export function PlansClient({
         }
         description={
           togglingPlan
-            ? `${togglingPlan.is_active ? labels.archive : labels.restore}: ${togglingPlan.name}`
+            ? togglingPlan.is_active
+              ? labels.archiveConfirm.replace("{name}", togglingPlan.name)
+              : `${labels.restore}: ${togglingPlan.name}`
             : undefined
         }
         closeLabel={labels.close}
         cancelLabel={labels.cancel}
         confirmLabel={
           togglingPlan?.is_active ? labels.archive : labels.restore
+        }
+        pendingLabel={
+          togglingPlan?.is_active ? labels.archiving : labels.restoring
         }
         action={setPlanActive}
         danger={Boolean(togglingPlan?.is_active)}

@@ -13,6 +13,8 @@ export type Dictionary = {
     classes: string;
     logout: string;
     settings: string;
+    more: string;
+    myQr: string;
     brandTitle: string;
     brandSubtitle: string;
   };
@@ -24,12 +26,17 @@ export type Dictionary = {
     notifications: string;
     help: string;
     poweredBy: string;
+    myQrHint: string;
   };
   a11y: {
     toggleTheme: string;
     moreActions: string;
     collapseNav: string;
     expandNav: string;
+    openMoreNav: string;
+    closeMoreNav: string;
+    showMyQr: string;
+    closeMyQr: string;
   };
   login: {
     title: string;
@@ -309,6 +316,14 @@ export type Dictionary = {
     noActivePlans: string;
     dayPassNotConfigured: string;
     amountHint: string;
+    statMonth: string;
+    statMonthHint: string;
+    statToday: string;
+    statTodayHint: string;
+    statPlans: string;
+    statPlansHint: string;
+    statDayPass: string;
+    statDayPassHint: string;
   };
   checkin: {
     title: string;
@@ -326,10 +341,18 @@ export type Dictionary = {
     resultOk: string;
     resultDenied: string;
     memberNotFound: string;
+    selectMember: string;
+    confirmCheckIn: string;
+    matchesHint: string;
+    lookingUp: string;
+    active: string;
+    expired: string;
     qrInUse: string;
     cameraError: string;
     accessGranted: string;
     accessDenied: string;
+    qrSuccessTitle: string;
+    qrSuccessHint: string;
     waitingResult: string;
     waitingResultHint: string;
     expiresIn: string;
@@ -337,6 +360,45 @@ export type Dictionary = {
     weekAttendance: string;
     noPlan: string;
     nextScan: string;
+    classReserved: string;
+    walkInTitle: string;
+    walkInEnroll: string;
+    walkInFull: string;
+    noOpenClasses: string;
+    todayTitle: string;
+    todayEmpty: string;
+    historyEmpty: string;
+    viewAllCheckIns: string;
+    historyTitle: string;
+    historySubtitle: string;
+    filterDate: string;
+    filterApply: string;
+    filterClear: string;
+    colMember: string;
+    colTime: string;
+    colPlan: string;
+    colSource: string;
+    sourceQr: string;
+    sourceManual: string;
+    sourceKiosk: string;
+    calendarTitle: string;
+    calendarSubtitle: string;
+    calendarPrev: string;
+    calendarNext: string;
+    calendarToday: string;
+    checkInsOnDay: string;
+    noCheckInsOnDay: string;
+    noCheckInsMonth: string;
+    backToHistory: string;
+    backToCheckIn: string;
+    visitsThisMonth: string;
+    visitsLabel: string;
+    daysPresent: string;
+    daysPresentHint: string;
+    bySource: string;
+    selectedDayTitle: string;
+    visitCount: string;
+    viewMemberProfile: string;
   };
   plans: {
     title: string;
@@ -348,10 +410,13 @@ export type Dictionary = {
     durationDays: string;
     save: string;
     saving: string;
+    archiving: string;
+    restoring: string;
     cancel: string;
     close: string;
     edit: string;
     archive: string;
+    archiveConfirm: string;
     restore: string;
     delete: string;
     active: string;
@@ -388,15 +453,22 @@ export type Dictionary = {
     descriptionHint: string;
     capacity: string;
     capacityHint: string;
+    duration: string;
+    durationHint: string;
+    tags: string;
+    tagsHint: string;
     trainers: string;
     trainersHint: string;
     noTrainers: string;
     save: string;
     saving: string;
+    archiving: string;
+    restoring: string;
     cancel: string;
     close: string;
     edit: string;
     archive: string;
+    archiveConfirm: string;
     restore: string;
     active: string;
     archived: string;
@@ -408,6 +480,85 @@ export type Dictionary = {
     unlimited: string;
     trainerCount: string;
     error: string;
+    bookError: string;
+    duplicateError: string;
+    scheduleCreatePartial: string;
+    advancedSettings: string;
+    advancedHint: string;
+    addScheduleNow: string;
+    tabCatalog: string;
+    tabCalendar: string;
+    schedule: string;
+    scheduleTitle: string;
+    scheduleHint: string;
+    recurrence: string;
+    recurrenceNone: string;
+    recurrenceWeekly: string;
+    days: string;
+    time: string;
+    validFrom: string;
+    validUntil: string;
+    timezone: string;
+    thisWeek: string;
+    prevWeek: string;
+    nextWeek: string;
+    seats: string;
+    waitlist: string;
+    cancelled: string;
+    noSessions: string;
+    duplicate: string;
+    duplicateTitle: string;
+    duplicateHint: string;
+    targetGym: string;
+    noOtherGyms: string;
+    dayMon: string;
+    dayTue: string;
+    dayWed: string;
+    dayThu: string;
+    dayFri: string;
+    daySat: string;
+    daySun: string;
+    roster: string;
+    rosterEmpty: string;
+    waitlistEmpty: string;
+    cancelSession: string;
+    cancelBooking: string;
+    bookMember: string;
+    selectMember: string;
+    book: string;
+    markAttended: string;
+    markNoShow: string;
+    loading: string;
+  };
+  member: {
+    title: string;
+    home: string;
+    classes: string;
+    inbox: string;
+    qr: string;
+    logout: string;
+    gyms: string;
+    activeUntil: string;
+    switchGym: string;
+    upcoming: string;
+    myBookings: string;
+    history: string;
+    book: string;
+    joinWaitlist: string;
+    cancel: string;
+    seats: string;
+    waitlist: string;
+    emptySessions: string;
+    emptyBookings: string;
+    emptyInbox: string;
+    statusConfirmed: string;
+    statusWaitlisted: string;
+    statusCancelled: string;
+    statusAttended: string;
+    statusNoShow: string;
+    qrHint: string;
+    bookError: string;
+    cancelError: string;
   };
   organization: {
     title: string;
@@ -468,6 +619,8 @@ export type Dictionary = {
     locale: string;
     saveFailed: string;
     invalidInput: string;
+    previous: string;
+    next: string;
   };
   registerUser: {
     open: string;
@@ -559,6 +712,8 @@ const es: Dictionary = {
     classes: "Clases",
     logout: "Salir",
     settings: "Configuración",
+    more: "Más",
+    myQr: "Mi QR",
     brandTitle: "Admin Central",
     brandSubtitle: "Recepción",
   },
@@ -570,12 +725,17 @@ const es: Dictionary = {
     notifications: "Notificaciones",
     help: "Ayuda",
     poweredBy: "Powered by",
+    myQrHint: "Muestra este código en recepción para registrar tu entrada.",
   },
   a11y: {
     toggleTheme: "Cambiar tema",
     moreActions: "Más acciones",
     collapseNav: "Ocultar menú",
     expandNav: "Mostrar menú",
+    openMoreNav: "Abrir más opciones de navegación",
+    closeMoreNav: "Cerrar más opciones de navegación",
+    showMyQr: "Mostrar mi código QR",
+    closeMyQr: "Cerrar mi código QR",
   },
   login: {
     title: "Iniciar sesión",
@@ -867,6 +1027,14 @@ const es: Dictionary = {
     noActivePlans: "No hay planes activos. Crea uno en Planes.",
     dayPassNotConfigured: "Configura el precio del pase del día en Planes.",
     amountHint: "Se rellena con el precio del plan o pase; puedes cambiarlo.",
+    statMonth: "Este mes",
+    statMonthHint: "{count} pagos registrados",
+    statToday: "Hoy",
+    statTodayHint: "{count} pagos hoy",
+    statPlans: "Membresías",
+    statPlansHint: "{count} renovaciones este mes",
+    statDayPass: "Pases del día",
+    statDayPassHint: "{count} visitas este mes",
   },
   checkin: {
     title: "Entrada",
@@ -875,8 +1043,8 @@ const es: Dictionary = {
     scanHint:
       "Acerca tu código QR a la cámara para registrar el acceso automáticamente.",
     manualTitle: "Búsqueda manual",
-    manualLabel: "Código o ID",
-    manualPlaceholder: "Código QR, token o ID de membresía…",
+    manualLabel: "Socio",
+    manualPlaceholder: "Nombre, correo, teléfono, QR o ID…",
     lookup: "Buscar",
     clear: "Limpiar",
     scanning: "Escaneando…",
@@ -885,10 +1053,18 @@ const es: Dictionary = {
     resultOk: "Órale, todo en orden",
     resultDenied: "No ha pagado. No puede pasar",
     memberNotFound: "Socio no encontrado",
+    selectMember: "Elige al socio",
+    confirmCheckIn: "Registrar entrada",
+    matchesHint: "{count} coincidencias — selecciona para confirmar",
+    lookingUp: "Buscando…",
+    active: "Activo",
+    expired: "Vencido",
     qrInUse: "Esta credencial ya está en uso en otro gimnasio",
     cameraError: "No se pudo usar la cámara",
     accessGranted: "Acceso permitido",
     accessDenied: "Acceso denegado",
+    qrSuccessTitle: "¡Asistencia registrada!",
+    qrSuccessHint: "Toca para continuar",
     waitingResult: "Listo para escanear",
     waitingResultHint: "El resultado del socio aparecerá aquí.",
     expiresIn: "Vencimiento en",
@@ -896,6 +1072,45 @@ const es: Dictionary = {
     weekAttendance: "Asistencias semanales",
     noPlan: "Sin plan",
     nextScan: "Siguiente entrada",
+    classReserved: "Reserva para {class} · {time}",
+    walkInTitle: "Clases abiertas ahora",
+    walkInEnroll: "Inscribir e ingresar",
+    walkInFull: "Llena",
+    noOpenClasses: "Sin clases en curso.",
+    todayTitle: "Entradas de hoy",
+    todayEmpty: "Aún no hay entradas hoy.",
+    historyEmpty: "No hay entradas registradas.",
+    viewAllCheckIns: "Ver todas las entradas",
+    historyTitle: "Historial de entradas",
+    historySubtitle: "Todas las entradas registradas en este gimnasio.",
+    filterDate: "Fecha",
+    filterApply: "Filtrar",
+    filterClear: "Quitar filtro",
+    colMember: "Socio",
+    colTime: "Hora",
+    colPlan: "Plan",
+    colSource: "Origen",
+    sourceQr: "QR",
+    sourceManual: "Manual",
+    sourceKiosk: "Kiosco",
+    calendarTitle: "Asistencia",
+    calendarSubtitle: "Entradas del mes para este socio.",
+    calendarPrev: "Mes anterior",
+    calendarNext: "Mes siguiente",
+    calendarToday: "Mes actual",
+    checkInsOnDay: "Entradas el {date}",
+    noCheckInsOnDay: "Sin entradas este día.",
+    noCheckInsMonth: "Sin entradas este mes.",
+    backToHistory: "Volver al historial",
+    backToCheckIn: "Volver a entrada",
+    visitsThisMonth: "{count} visitas",
+    visitsLabel: "Visitas del mes",
+    daysPresent: "{count} días",
+    daysPresentHint: "Días con al menos una entrada",
+    bySource: "Por origen",
+    selectedDayTitle: "Detalle del día",
+    visitCount: "{count} entradas",
+    viewMemberProfile: "Ver ficha del socio",
   },
   plans: {
     title: "Planes",
@@ -907,10 +1122,14 @@ const es: Dictionary = {
     durationDays: "Duración (días)",
     save: "Guardar",
     saving: "Guardando…",
+    archiving: "Archivando…",
+    restoring: "Restaurando…",
     cancel: "Cancelar",
     close: "Cerrar",
     edit: "Editar",
     archive: "Archivar",
+    archiveConfirm:
+      "“{name}” dejará de estar disponible para nuevas membresías. Puedes restaurarlo después.",
     restore: "Restaurar",
     delete: "Eliminar",
     active: "Activo",
@@ -941,22 +1160,30 @@ const es: Dictionary = {
   },
   classes: {
     title: "Clases",
-    subtitle: "Crea clases y asigna entrenadores.",
+    subtitle: "Catálogo, horarios, cupos y lista de espera.",
     newClass: "Nueva clase",
     className: "Nombre",
     description: "Descripción",
     descriptionHint: "Opcional. Breve detalle de la clase.",
     capacity: "Cupo",
     capacityHint: "Opcional. Déjalo vacío para sin límite.",
+    duration: "Duración (min)",
+    durationHint: "Duración por defecto de cada sesión.",
+    tags: "Etiquetas",
+    tagsHint: "Separadas por comas (yoga, hiit, etc.).",
     trainers: "Entrenadores",
     trainersHint: "Puedes asignar uno o varios.",
     noTrainers: "Aún no hay entrenadores. Regístralos en Entrenadores.",
     save: "Guardar",
     saving: "Guardando…",
+    archiving: "Archivando…",
+    restoring: "Restaurando…",
     cancel: "Cancelar",
     close: "Cerrar",
     edit: "Editar",
     archive: "Archivar",
+    archiveConfirm:
+      "“{name}” dejará de mostrarse en el catálogo activo. Puedes restaurarla después.",
     restore: "Restaurar",
     active: "Activa",
     archived: "Archivadas",
@@ -968,6 +1195,86 @@ const es: Dictionary = {
     unlimited: "Sin límite",
     trainerCount: "{count} entrenadores",
     error: "No se pudo guardar la clase",
+    bookError: "No se pudo reservar el cupo",
+    duplicateError: "No se pudo duplicar la clase",
+    scheduleCreatePartial:
+      "La clase se creó, pero el horario no. Ábrela y añade el horario.",
+    advancedSettings: "Ajustes avanzados",
+    advancedHint: "Duración, etiquetas y horario opcional.",
+    addScheduleNow: "Programar horario ahora",
+    tabCatalog: "Lista",
+    tabCalendar: "Calendario",
+    schedule: "Horario",
+    scheduleTitle: "Añadir horario",
+    scheduleHint: "Crea sesiones recurrentes o una fecha única.",
+    recurrence: "Repetición",
+    recurrenceNone: "Una sola vez",
+    recurrenceWeekly: "Semanal",
+    days: "Días",
+    time: "Hora",
+    validFrom: "Desde",
+    validUntil: "Hasta (opcional)",
+    timezone: "Zona horaria",
+    thisWeek: "Esta semana",
+    prevWeek: "Anterior",
+    nextWeek: "Siguiente",
+    seats: "Cupos",
+    waitlist: "Lista de espera",
+    cancelled: "Cancelada",
+    noSessions: "No hay sesiones esta semana. Añade un horario a una clase.",
+    duplicate: "Duplicar",
+    duplicateTitle: "Duplicar a otro gym",
+    duplicateHint: "Copia la clase y sus horarios. Sin socios ni trainers.",
+    targetGym: "Gimnasio destino",
+    noOtherGyms: "No hay otros gimnasios en la organización.",
+    dayMon: "Lun",
+    dayTue: "Mar",
+    dayWed: "Mié",
+    dayThu: "Jue",
+    dayFri: "Vie",
+    daySat: "Sáb",
+    daySun: "Dom",
+    roster: "Inscritos",
+    rosterEmpty: "Nadie inscrito aún.",
+    waitlistEmpty: "Lista de espera vacía.",
+    cancelSession: "Cancelar sesión",
+    cancelBooking: "Cancelar reserva",
+    bookMember: "Inscribir socio",
+    selectMember: "Elige un socio",
+    book: "Reservar",
+    markAttended: "Asistió",
+    markNoShow: "No show",
+    loading: "Cargando clases…",
+  },
+  member: {
+    title: "Mi espacio",
+    home: "Inicio",
+    classes: "Clases",
+    inbox: "Buzón",
+    qr: "Mi QR",
+    logout: "Salir",
+    gyms: "Mis gimnasios",
+    activeUntil: "Activo hasta",
+    switchGym: "Cambiar gym",
+    upcoming: "Próximas clases",
+    myBookings: "Mis reservas",
+    history: "Historial",
+    book: "Reservar",
+    joinWaitlist: "Lista de espera",
+    cancel: "Cancelar",
+    seats: "Cupos",
+    waitlist: "Espera",
+    emptySessions: "No hay clases próximas.",
+    emptyBookings: "Aún no tienes reservas.",
+    emptyInbox: "Sin mensajes.",
+    statusConfirmed: "Confirmada",
+    statusWaitlisted: "En espera",
+    statusCancelled: "Cancelada",
+    statusAttended: "Asistió",
+    statusNoShow: "No show",
+    qrHint: "Muestra este código en recepción.",
+    bookError: "No se pudo reservar",
+    cancelError: "No se pudo cancelar",
   },
   organization: {
     title: "Organización",
@@ -1071,6 +1378,8 @@ const es: Dictionary = {
     locale: "Idioma",
     saveFailed: "No se pudo guardar",
     invalidInput: "Revisa los datos e inténtalo de nuevo",
+    previous: "Anterior",
+    next: "Siguiente",
   },
   registerUser: {
     open: "Registrar",
@@ -1128,6 +1437,8 @@ const en: Dictionary = {
     classes: "Classes",
     logout: "Log out",
     settings: "Settings",
+    more: "More",
+    myQr: "My QR",
     brandTitle: "Admin Central",
     brandSubtitle: "Front desk",
   },
@@ -1139,12 +1450,17 @@ const en: Dictionary = {
     notifications: "Notifications",
     help: "Help",
     poweredBy: "Powered by",
+    myQrHint: "Show this code at the front desk to check in.",
   },
   a11y: {
     toggleTheme: "Toggle theme",
     moreActions: "More actions",
     collapseNav: "Collapse menu",
     expandNav: "Expand menu",
+    openMoreNav: "Open more navigation options",
+    closeMoreNav: "Close more navigation options",
+    showMyQr: "Show my QR code",
+    closeMyQr: "Close my QR code",
   },
   login: {
     title: "Log in",
@@ -1435,6 +1751,14 @@ const en: Dictionary = {
     noActivePlans: "No active plans. Create one under Plans.",
     dayPassNotConfigured: "Set the day-pass price on the Plans page.",
     amountHint: "Filled from the plan or pass price; you can change it.",
+    statMonth: "This month",
+    statMonthHint: "{count} payments recorded",
+    statToday: "Today",
+    statTodayHint: "{count} payments today",
+    statPlans: "Memberships",
+    statPlansHint: "{count} renewals this month",
+    statDayPass: "Day passes",
+    statDayPassHint: "{count} visits this month",
   },
   checkin: {
     title: "Check-in",
@@ -1442,8 +1766,8 @@ const en: Dictionary = {
     scanTitle: "Scan your QR",
     scanHint: "Hold your QR code to the camera to check in automatically.",
     manualTitle: "Manual lookup",
-    manualLabel: "Code or ID",
-    manualPlaceholder: "QR code, token, or membership ID…",
+    manualLabel: "Member",
+    manualPlaceholder: "Name, email, phone, QR, or ID…",
     lookup: "Search",
     clear: "Clear",
     scanning: "Scanning…",
@@ -1452,10 +1776,18 @@ const en: Dictionary = {
     resultOk: "You're good to go",
     resultDenied: "Membership expired. Entry denied",
     memberNotFound: "Member not found",
+    selectMember: "Choose the member",
+    confirmCheckIn: "Check in",
+    matchesHint: "{count} matches — select one to confirm",
+    lookingUp: "Looking up…",
+    active: "Active",
+    expired: "Expired",
     qrInUse: "This credential is already in use at another gym",
     cameraError: "Camera could not be started",
     accessGranted: "Access granted",
     accessDenied: "Access denied",
+    qrSuccessTitle: "Check-in recorded!",
+    qrSuccessHint: "Tap to continue",
     waitingResult: "Ready to scan",
     waitingResultHint: "Member results will show up here.",
     expiresIn: "Expires in",
@@ -1463,6 +1795,45 @@ const en: Dictionary = {
     weekAttendance: "Weekly check-ins",
     noPlan: "No plan",
     nextScan: "Next check-in",
+    classReserved: "Reserved for {class} · {time}",
+    walkInTitle: "Open classes now",
+    walkInEnroll: "Enroll & check in",
+    walkInFull: "Full",
+    noOpenClasses: "No classes in progress.",
+    todayTitle: "Today’s check-ins",
+    todayEmpty: "No check-ins yet today.",
+    historyEmpty: "No check-ins recorded.",
+    viewAllCheckIns: "View all check-ins",
+    historyTitle: "Check-in history",
+    historySubtitle: "All recorded check-ins at this gym.",
+    filterDate: "Date",
+    filterApply: "Filter",
+    filterClear: "Clear filter",
+    colMember: "Member",
+    colTime: "Time",
+    colPlan: "Plan",
+    colSource: "Source",
+    sourceQr: "QR",
+    sourceManual: "Manual",
+    sourceKiosk: "Kiosk",
+    calendarTitle: "Attendance",
+    calendarSubtitle: "This member’s check-ins for the month.",
+    calendarPrev: "Previous month",
+    calendarNext: "Next month",
+    calendarToday: "Current month",
+    checkInsOnDay: "Check-ins on {date}",
+    noCheckInsOnDay: "No check-ins on this day.",
+    noCheckInsMonth: "No check-ins this month.",
+    backToHistory: "Back to history",
+    backToCheckIn: "Back to check-in",
+    visitsThisMonth: "{count} visits",
+    visitsLabel: "Visits this month",
+    daysPresent: "{count} days",
+    daysPresentHint: "Days with at least one check-in",
+    bySource: "By source",
+    selectedDayTitle: "Day detail",
+    visitCount: "{count} check-ins",
+    viewMemberProfile: "View member profile",
   },
   plans: {
     title: "Plans",
@@ -1474,10 +1845,14 @@ const en: Dictionary = {
     durationDays: "Duration (days)",
     save: "Save",
     saving: "Saving…",
+    archiving: "Archiving…",
+    restoring: "Restoring…",
     cancel: "Cancel",
     close: "Close",
     edit: "Edit",
     archive: "Archive",
+    archiveConfirm:
+      "“{name}” will no longer be available for new memberships. You can restore it later.",
     restore: "Restore",
     delete: "Delete",
     active: "Active",
@@ -1508,22 +1883,30 @@ const en: Dictionary = {
   },
   classes: {
     title: "Classes",
-    subtitle: "Create classes and assign trainers.",
+    subtitle: "Catalog, schedules, capacity, and waitlist.",
     newClass: "New class",
     className: "Name",
     description: "Description",
     descriptionHint: "Optional. Short detail about the class.",
     capacity: "Capacity",
     capacityHint: "Optional. Leave empty for unlimited.",
+    duration: "Duration (min)",
+    durationHint: "Default length of each session.",
+    tags: "Tags",
+    tagsHint: "Comma-separated (yoga, hiit, etc.).",
     trainers: "Trainers",
     trainersHint: "You can assign one or more.",
     noTrainers: "No trainers yet. Add them under Trainers.",
     save: "Save",
     saving: "Saving…",
+    archiving: "Archiving…",
+    restoring: "Restoring…",
     cancel: "Cancel",
     close: "Close",
     edit: "Edit",
     archive: "Archive",
+    archiveConfirm:
+      "“{name}” will be hidden from the active catalog. You can restore it later.",
     restore: "Restore",
     active: "Active",
     archived: "Archived",
@@ -1535,6 +1918,86 @@ const en: Dictionary = {
     unlimited: "Unlimited",
     trainerCount: "{count} trainers",
     error: "Could not save the class",
+    bookError: "Could not book a spot",
+    duplicateError: "Could not duplicate the class",
+    scheduleCreatePartial:
+      "Class was created, but the schedule was not. Open it and add a schedule.",
+    advancedSettings: "Advanced settings",
+    advancedHint: "Duration, tags, and an optional schedule.",
+    addScheduleNow: "Add a schedule now",
+    tabCatalog: "List",
+    tabCalendar: "Calendar",
+    schedule: "Schedule",
+    scheduleTitle: "Add schedule",
+    scheduleHint: "Create recurring sessions or a one-off date.",
+    recurrence: "Repeat",
+    recurrenceNone: "One-time",
+    recurrenceWeekly: "Weekly",
+    days: "Days",
+    time: "Time",
+    validFrom: "From",
+    validUntil: "Until (optional)",
+    timezone: "Timezone",
+    thisWeek: "This week",
+    prevWeek: "Previous",
+    nextWeek: "Next",
+    seats: "Seats",
+    waitlist: "Waitlist",
+    cancelled: "Cancelled",
+    noSessions: "No sessions this week. Add a schedule to a class.",
+    duplicate: "Duplicate",
+    duplicateTitle: "Duplicate to another gym",
+    duplicateHint: "Copies the class and schedules. No members or trainers.",
+    targetGym: "Target gym",
+    noOtherGyms: "No other gyms in the organization.",
+    dayMon: "Mon",
+    dayTue: "Tue",
+    dayWed: "Wed",
+    dayThu: "Thu",
+    dayFri: "Fri",
+    daySat: "Sat",
+    daySun: "Sun",
+    roster: "Roster",
+    rosterEmpty: "No one booked yet.",
+    waitlistEmpty: "Waitlist is empty.",
+    cancelSession: "Cancel session",
+    cancelBooking: "Cancel booking",
+    bookMember: "Book a member",
+    selectMember: "Choose a member",
+    book: "Book",
+    markAttended: "Attended",
+    markNoShow: "No-show",
+    loading: "Loading classes…",
+  },
+  member: {
+    title: "My space",
+    home: "Home",
+    classes: "Classes",
+    inbox: "Inbox",
+    qr: "My QR",
+    logout: "Log out",
+    gyms: "My gyms",
+    activeUntil: "Active until",
+    switchGym: "Switch gym",
+    upcoming: "Upcoming classes",
+    myBookings: "My bookings",
+    history: "History",
+    book: "Book",
+    joinWaitlist: "Join waitlist",
+    cancel: "Cancel",
+    seats: "Seats",
+    waitlist: "Waitlist",
+    emptySessions: "No upcoming classes.",
+    emptyBookings: "You have no bookings yet.",
+    emptyInbox: "No messages.",
+    statusConfirmed: "Confirmed",
+    statusWaitlisted: "Waitlisted",
+    statusCancelled: "Cancelled",
+    statusAttended: "Attended",
+    statusNoShow: "No-show",
+    qrHint: "Show this code at the front desk.",
+    bookError: "Could not book",
+    cancelError: "Could not cancel",
   },
   organization: {
     title: "Organization",
@@ -1638,6 +2101,8 @@ const en: Dictionary = {
     locale: "Language",
     saveFailed: "Could not save",
     invalidInput: "Check the form and try again",
+    previous: "Previous",
+    next: "Next",
   },
   registerUser: {
     open: "Register",

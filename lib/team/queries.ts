@@ -1,5 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Role } from "@/types";
+import {
+  buildPageMeta,
+  ilikeContains,
+  pageRange,
+  sanitizeSearchTerm,
+  TABLE_PAGE_SIZE,
+  type PageMeta,
+} from "@/lib/pagination";
 
 export type TeamMember = {
   id: string;
@@ -34,6 +42,66 @@ export async function loadTeamMembers(
   }
 
   return enrichTeamRows(supabase, rows ?? []);
+}
+
+export async function loadTeamMembersPage(
+  supabase: SupabaseClient,
+  gymId: string,
+  role: RoleFilter,
+  opts: { page?: number; pageSize?: number; q?: string } = {},
+): Promise<{ members: TeamMember[]; meta: PageMeta }> {
+  const pageSize = opts.pageSize ?? TABLE_PAGE_SIZE;
+  const page = opts.page ?? 1;
+  const { from, to } = pageRange(page, pageSize);
+  const q = sanitizeSearchTerm(opts.q ?? "");
+
+  let userIdsFilter: string[] | null = null;
+  if (q) {
+    const pattern = ilikeContains(q);
+    const { data: people, error: peopleErr } = await supabase
+      .from("persons")
+      .select("user_id")
+      .not("user_id", "is", null)
+      .or(
+        `full_name.ilike.${pattern},email.ilike.${pattern},phone.ilike.${pattern}`,
+      )
+      .limit(500);
+
+    if (peopleErr) {
+      console.error("loadTeamMembersPage persons", peopleErr.message);
+      return { members: [], meta: buildPageMeta(page, 0, pageSize) };
+    }
+
+    userIdsFilter = (people ?? [])
+      .map((p) => p.user_id as string | null)
+      .filter((id): id is string => Boolean(id));
+
+    if (userIdsFilter.length === 0) {
+      return { members: [], meta: buildPageMeta(page, 0, pageSize) };
+    }
+  }
+
+  let query = supabase
+    .from("gym_roles")
+    .select("id, user_id, role, created_at", { count: "exact" })
+    .eq("gym_id", gymId)
+    .eq("role", role)
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  if (userIdsFilter) query = query.in("user_id", userIdsFilter);
+
+  const { data: rows, count, error } = await query;
+  if (error) {
+    console.error("loadTeamMembersPage", error.message);
+    return { members: [], meta: buildPageMeta(page, 0, pageSize) };
+  }
+
+  const members = await enrichTeamRows(supabase, rows ?? []);
+  return {
+    members,
+    meta: buildPageMeta(page, count ?? 0, pageSize),
+  };
 }
 
 export async function loadTeamMemberById(

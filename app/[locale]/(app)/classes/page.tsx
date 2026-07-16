@@ -6,44 +6,84 @@ import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { loadTeamMembers } from "@/lib/team/queries";
+import { loadSessionsForWeek } from "@/lib/classes/queries";
+import { startOfWeekMonday } from "@/lib/classes/types";
 import { ClassesClient } from "@/components/classes-client";
 
 export default async function ClassesPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ week?: string; tab?: string }>;
 }) {
   const { locale: raw } = await params;
   if (!isLocale(raw)) notFound();
   const locale = raw as Locale;
   const d = getDictionary(locale);
+  const sp = await searchParams;
 
   const workspace = await getWorkspace();
   if (!workspace) redirect(`/${locale}/login`);
-  if (!canInWorkspace(workspace, "manage_classes")) {
+  const canManage = canInWorkspace(workspace, "manage_classes");
+  const canView =
+    canManage || canInWorkspace(workspace, "checkin");
+  if (!canView) {
     return (
       <p className="text-[var(--color-muted)]">{d.common.forbidden}</p>
     );
   }
 
+  const initialView =
+    sp.tab === "calendar" || sp.tab === "catalog"
+      ? sp.tab
+      : canManage
+        ? "catalog"
+        : "calendar";
+
+  const weekStart = sp.week
+    ? startOfWeekMonday(new Date(`${sp.week}T12:00:00`))
+    : startOfWeekMonday(new Date());
+
   const supabase = await createClient();
-  const [{ data: classRows }, trainers] = await Promise.all([
+
+  // Catalog does not need week sessions or sibling gyms — skip those queries.
+  const loadCalendar = initialView === "calendar";
+  const loadSiblingGyms = canManage;
+
+  const [classResult, trainers, sessions, orgGymRows] = await Promise.all([
     supabase
       .from("classes")
       .select(
-        "id, name, description, capacity, is_active, created_at, class_trainers(user_id)",
+        "id, name, description, capacity, duration_minutes, tags, is_active, created_at, class_trainers(user_id)",
       )
       .eq("gym_id", workspace.gymId)
       .order("is_active", { ascending: false })
       .order("created_at", { ascending: false }),
     loadTeamMembers(supabase, workspace.gymId, "TRAINER"),
+    loadCalendar
+      ? loadSessionsForWeek(supabase, workspace.gymId, weekStart)
+      : Promise.resolve([]),
+    loadSiblingGyms
+      ? supabase
+          .from("gyms")
+          .select("id, name")
+          .eq("organization_id", workspace.organizationId)
+          .is("deleted_at", null)
+          .order("name")
+          .then((r) => r.data ?? [])
+      : Promise.resolve([] as { id: string; name: string }[]),
   ]);
+
+  if (classResult.error) {
+    console.error("classes page", classResult.error.message);
+  }
 
   const trainerNameByUserId = new Map(
     trainers.map((t) => [t.userId, t.name] as const),
   );
 
-  const classes = (classRows ?? []).map((row) => {
+  const classes = (classResult.data ?? []).map((row) => {
     const links = Array.isArray(row.class_trainers)
       ? row.class_trainers
       : row.class_trainers
@@ -57,6 +97,8 @@ export default async function ClassesPage({
       name: row.name,
       description: row.description,
       capacity: row.capacity,
+      duration_minutes: (row.duration_minutes as number) ?? 60,
+      tags: (row.tags as string[]) ?? [],
       is_active: row.is_active,
       trainerIds,
       trainerNames: trainerIds.map(
@@ -74,33 +116,16 @@ export default async function ClassesPage({
           userId: t.userId,
           name: t.name,
         }))}
-        labels={{
-          subtitle: d.classes.subtitle,
-          newClass: d.classes.newClass,
-          className: d.classes.className,
-          description: d.classes.description,
-          descriptionHint: d.classes.descriptionHint,
-          capacity: d.classes.capacity,
-          capacityHint: d.classes.capacityHint,
-          trainers: d.classes.trainers,
-          trainersHint: d.classes.trainersHint,
-          noTrainers: d.classes.noTrainers,
-          save: d.classes.save,
-          cancel: d.classes.cancel,
-          close: d.classes.close,
-          edit: d.classes.edit,
-          archive: d.classes.archive,
-          restore: d.classes.restore,
-          active: d.classes.active,
-          archived: d.classes.archived,
-          noClasses: d.classes.noClasses,
-          createTitle: d.classes.createTitle,
-          createDescription: d.classes.createDescription,
-          editTitle: d.classes.editTitle,
-          editDescription: d.classes.editDescription,
-          unlimited: d.classes.unlimited,
-          trainerCount: d.classes.trainerCount,
-        }}
+        sessions={sessions}
+        weekStartIso={weekStart.toISOString()}
+        orgGyms={orgGymRows.map((g) => ({
+          id: g.id,
+          name: g.name,
+        }))}
+        currentGymId={workspace.gymId}
+        canManage={canManage}
+        initialView={initialView}
+        labels={d.classes}
       />
     </div>
   );

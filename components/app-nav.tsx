@@ -6,24 +6,21 @@ import { usePathname } from "next/navigation";
 import type { Locale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Role } from "@/types";
-import { can } from "@/lib/auth/permissions";
 import {
-  LayoutDashboard,
-  QrCode,
-  Users,
-  CreditCard,
-  Layers,
+  getSidebarOpsNavItems,
+  isOpsNavActive,
+  opsNavHref,
+  type OpsNavContext,
+} from "@/lib/nav/ops-nav";
+import {
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
-  Dumbbell,
-  Briefcase,
   Building2,
-  CalendarDays,
   ChevronRight,
 } from "lucide-react";
 import { LogoutButton } from "./logout-button";
-import { AmrapLogo } from "./landing/amrap-logo";
+import { OpsNavLogo } from "./ops-nav-logo";
 
 const NAV_COLLAPSED_KEY = "amrap-nav-collapsed";
 const NAV_COLLAPSED_EVENT = "amrap-nav-collapsed";
@@ -58,7 +55,7 @@ function setNavCollapsed(next: boolean) {
   window.dispatchEvent(new Event(NAV_COLLAPSED_EVENT));
 }
 
-type NavProps = {
+export type AppNavProps = {
   locale: Locale;
   role: Role;
   canManageSettings?: boolean;
@@ -90,13 +87,12 @@ export function AppNav({
   gymName,
   organizationName,
   isProvisionalOwner = false,
-}: NavProps) {
+}: AppNavProps) {
   const d = getDictionary(locale);
   const prefix = `/${locale}`;
   const pathname = usePathname();
-  const lightLogo = logoUrlLight || logoUrlDark;
-  const darkLogo = logoUrlDark || logoUrlLight;
-  const hasCustomLogo = Boolean(lightLogo || darkLogo);
+  const ctx: OpsNavContext = { role, canManageSettings, canManageStaff };
+  const items = getSidebarOpsNavItems(ctx);
   const collapsed = useSyncExternalStore(
     subscribeNavCollapsed,
     getNavCollapsedSnapshot,
@@ -107,22 +103,21 @@ export function AppNav({
     setNavCollapsed(!getNavCollapsedSnapshot());
   }, []);
 
-  function isActive(href: string) {
-    return pathname === href || pathname.startsWith(`${href}/`);
-  }
-
   const labelClass = collapsed ? "sr-only" : undefined;
+  const orgHref = opsNavHref(prefix, "/organization");
 
   return (
     <aside
-      className={`flex shrink-0 flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] transition-[width] duration-200 ${collapsed ? "w-[4.5rem]" : "w-64"
-        }`}
+      className={`hidden shrink-0 flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] transition-[width] duration-200 md:flex ${
+        collapsed ? "w-[4.5rem]" : "w-64"
+      }`}
     >
       <div
-        className={`flex shrink-0 border-b border-[var(--color-border)] ${collapsed
-          ? "flex-col items-center gap-4 pt-5 pb-3 px-2"
-          : "h-16 items-center justify-between gap-2 px-4"
-          }`}
+        className={`flex shrink-0 border-b border-[var(--color-border)] ${
+          collapsed
+            ? "flex-col items-center gap-4 px-2 pb-3 pt-5"
+            : "h-16 items-center justify-between gap-2 px-4"
+        }`}
       >
         <div
           className={
@@ -131,32 +126,12 @@ export function AppNav({
               : "min-w-0 flex-1"
           }
         >
-          {hasCustomLogo ? (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={lightLogo ?? darkLogo ?? ""}
-                alt={gymName || "AMRAP"}
-                className={`w-auto object-contain object-left dark:hidden ${
-                  collapsed ? "h-6 max-w-[2.75rem]" : "h-9 max-w-full"
-                }`}
-              />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={darkLogo ?? lightLogo ?? ""}
-                alt={gymName || "AMRAP"}
-                className={`hidden w-auto object-contain object-left dark:block ${
-                  collapsed ? "h-6 max-w-[2.75rem]" : "h-9 max-w-full"
-                }`}
-              />
-            </>
-          ) : (
-            <AmrapLogo
-              className={
-                collapsed ? "h-6 w-auto max-w-[2.75rem]" : "h-9 w-auto max-w-full"
-              }
-            />
-          )}
+          <OpsNavLogo
+            logoUrlLight={logoUrlLight}
+            logoUrlDark={logoUrlDark}
+            gymName={gymName}
+            size={collapsed ? "sm" : "md"}
+          />
         </div>
         <button
           type="button"
@@ -174,112 +149,45 @@ export function AppNav({
       </div>
 
       <nav className={`flex-1 space-y-1 py-6 ${collapsed ? "px-2" : "px-3"}`}>
-        <Link
-          className={navLinkClass(isActive(`${prefix}/dashboard`), collapsed)}
-          href={`${prefix}/dashboard`}
-          aria-current={isActive(`${prefix}/dashboard`) ? "page" : undefined}
-          title={collapsed ? d.nav.dashboard : undefined}
-        >
-          <LayoutDashboard className="h-5 w-5 shrink-0" aria-hidden />
-          <span className={labelClass}>{d.nav.dashboard}</span>
-        </Link>
-        {can(role, "checkin") && (
-          <Link
-            className={navLinkClass(isActive(`${prefix}/checkin`), collapsed)}
-            href={`${prefix}/checkin`}
-            aria-current={isActive(`${prefix}/checkin`) ? "page" : undefined}
-            title={collapsed ? d.nav.checkin : undefined}
-          >
-            <QrCode className="h-5 w-5 shrink-0" aria-hidden />
-            <span className={labelClass}>{d.nav.checkin}</span>
-          </Link>
-        )}
-        {can(role, "manage_members") && (
-          <Link
-            className={navLinkClass(isActive(`${prefix}/members`), collapsed)}
-            href={`${prefix}/members`}
-            aria-current={isActive(`${prefix}/members`) ? "page" : undefined}
-            title={collapsed ? d.nav.members : undefined}
-          >
-            <Users className="h-5 w-5 shrink-0" aria-hidden />
-            <span className={labelClass}>{d.nav.members}</span>
-          </Link>
-        )}
-        {can(role, "manage_classes") && (
-          <Link
-            className={navLinkClass(isActive(`${prefix}/classes`), collapsed)}
-            href={`${prefix}/classes`}
-            aria-current={isActive(`${prefix}/classes`) ? "page" : undefined}
-            title={collapsed ? d.nav.classes : undefined}
-          >
-            <CalendarDays className="h-5 w-5 shrink-0" aria-hidden />
-            <span className={labelClass}>{d.nav.classes}</span>
-          </Link>
-        )}
-        {(canManageStaff || can(role, "manage_staff")) && (
-          <Link
-            className={navLinkClass(isActive(`${prefix}/trainers`), collapsed)}
-            href={`${prefix}/trainers`}
-            aria-current={isActive(`${prefix}/trainers`) ? "page" : undefined}
-            title={collapsed ? d.nav.trainers : undefined}
-          >
-            <Dumbbell className="h-5 w-5 shrink-0" aria-hidden />
-            <span className={labelClass}>{d.nav.trainers}</span>
-          </Link>
-        )}
-        {(canManageStaff || can(role, "manage_staff")) && (
-          <Link
-            className={navLinkClass(isActive(`${prefix}/staff`), collapsed)}
-            href={`${prefix}/staff`}
-            aria-current={isActive(`${prefix}/staff`) ? "page" : undefined}
-            title={collapsed ? d.nav.staff : undefined}
-          >
-            <Briefcase className="h-5 w-5 shrink-0" aria-hidden />
-            <span className={labelClass}>{d.nav.staff}</span>
-          </Link>
-        )}
-        {can(role, "manage_plans") && (
-          <Link
-            className={navLinkClass(isActive(`${prefix}/plans`), collapsed)}
-            href={`${prefix}/plans`}
-            aria-current={isActive(`${prefix}/plans`) ? "page" : undefined}
-            title={collapsed ? d.nav.plans : undefined}
-          >
-            <Layers className="h-5 w-5 shrink-0" aria-hidden />
-            <span className={labelClass}>{d.nav.plans}</span>
-          </Link>
-        )}
-        {can(role, "record_payment") && (
-          <Link
-            className={navLinkClass(isActive(`${prefix}/payments`), collapsed)}
-            href={`${prefix}/payments`}
-            aria-current={isActive(`${prefix}/payments`) ? "page" : undefined}
-            title={collapsed ? d.nav.payments : undefined}
-          >
-            <CreditCard className="h-5 w-5 shrink-0" aria-hidden />
-            <span className={labelClass}>{d.nav.payments}</span>
-          </Link>
-        )}
+        {items.map((item) => {
+          const href = opsNavHref(prefix, item.path);
+          const active = isOpsNavActive(pathname, href);
+          const Icon = item.icon;
+          const label = item.getLabel(d);
+          return (
+            <Link
+              key={item.id}
+              className={navLinkClass(active, collapsed)}
+              href={href}
+              aria-current={active ? "page" : undefined}
+              title={collapsed ? label : undefined}
+            >
+              <Icon className="h-5 w-5 shrink-0" aria-hidden />
+              <span className={labelClass}>{label}</span>
+            </Link>
+          );
+        })}
       </nav>
 
       <div
-        className={`space-y-2 border-t border-[var(--color-border)] py-4 ${collapsed ? "px-2" : "px-3"
-          }`}
+        className={`space-y-2 border-t border-[var(--color-border)] py-4 ${
+          collapsed ? "px-2" : "px-3"
+        }`}
       >
         {canManageSettings ? (
           <Link
-            href={`${prefix}/organization`}
+            href={orgHref}
             className={
               collapsed
-                ? navLinkClass(isActive(`${prefix}/organization`), collapsed)
+                ? navLinkClass(isOpsNavActive(pathname, orgHref), collapsed)
                 : `flex items-center gap-2 rounded-md px-3 py-2 transition-colors hover:bg-[var(--color-surface-hover)] ${
-                    isActive(`${prefix}/organization`)
+                    isOpsNavActive(pathname, orgHref)
                       ? "bg-[var(--color-primary-soft)]"
                       : ""
                   }`
             }
             aria-current={
-              isActive(`${prefix}/organization`) ? "page" : undefined
+              isOpsNavActive(pathname, orgHref) ? "page" : undefined
             }
             title={
               collapsed

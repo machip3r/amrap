@@ -10,7 +10,7 @@ type Props = {
 /** Subtle Amrap brand mark pinned to the bottom of the app shell. */
 export function AmrapWatermark({ locale, label }: Props) {
   return (
-    <div className="flex shrink-0 items-center justify-center border-t border-[var(--color-border)]/60 bg-[var(--color-bg)] py-2.5">
+    <div className="hidden shrink-0 items-center justify-center border-t border-[var(--color-border)]/60 bg-[var(--color-bg)] py-2.5 md:flex">
       <Link
         href={`/${locale}`}
         className="inline-flex items-center gap-2 text-[var(--color-muted)] transition-opacity hover:opacity-80"

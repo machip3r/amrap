@@ -1,0 +1,37 @@
+---
+description: Responsive, UX-friendly UI standards for every AMRAP UI change
+alwaysApply: true
+---
+
+# Responsive UI / UX
+
+Every UI change and feature must work well on phone (~375px) and desktop. Prefer useful clarity over decorative chrome.
+
+## Shell (ops app)
+
+- **`md+`:** collapsible sidebar (`AppNav`)
+- **`< md`:** bottom tabs (primary destinations) + **More** sheet — do not invent per-page nav
+- Keep gym-floor actions (check-in, members, classes) in primary tabs when the role allows
+- Respect bottom-bar clearance and `safe-area-inset-*` on fixed chrome
+
+## Layout
+
+```tsx
+// ❌ BAD — desktop-only density
+<div className="grid grid-cols-4 gap-6 p-8">
+
+// ✅ GOOD — stack first, expand later
+<div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6 lg:p-8">
+```
+
+- Touch targets ≥ ~44px
+- Avoid `min-w-[36rem]` tables without a mobile alternative (cards / stack / intentional scroll)
+- One job per section; no competing chrome
+
+## Design system
+
+- Reuse `--color-*`, shared `Input` / `Button` / `Dialog` / form fields
+- No one-off visual forks or hardcoded product copy — `es` + `en` dictionaries
+- Icon-only controls need `aria-label`; nav links use `aria-current` when active
+
+Full detail: `AGENTS.md` → **Responsive UI / UX**.

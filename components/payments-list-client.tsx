@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { RefreshCw, Search } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import type { PaymentKind } from "@/types";
+import type { PageMeta } from "@/lib/pagination";
+import { useListQueryParams } from "@/lib/list-query-params";
 import { Input } from "@/components/ui/input";
+import {
+  TablePagination,
+  type TablePaginationLabels,
+} from "@/components/ui/table-pagination";
 import { LIMITS } from "@/lib/validation/schemas";
 
 export type PaymentListItem = {
@@ -31,12 +36,16 @@ export type PaymentsListLabels = {
   reload: string;
   showing: string;
   newBadge: string;
+  previous: string;
+  next: string;
 };
 
 type Props = {
   locale: Locale;
   payments: PaymentListItem[];
   labels: PaymentsListLabels;
+  meta: PageMeta;
+  q: string;
   highlightId?: string | null;
 };
 
@@ -66,27 +75,20 @@ function formatDate(iso: string, locale: Locale) {
   }
 }
 
-function showingLabel(
-  template: string,
-  from: number,
-  to: number,
-  total: number,
-) {
-  return template
-    .replace("{from}", String(from))
-    .replace("{to}", String(to))
-    .replace("{total}", String(total));
-}
-
 export function PaymentsListClient({
   locale,
   payments,
   labels,
+  meta,
+  q: initialQ,
   highlightId = null,
 }: Props) {
-  const router = useRouter();
-  const [query, setQuery] = useState("");
-  const [pending, startTransition] = useTransition();
+  const { pending, pushParams, reload, pathname } = useListQueryParams();
+  const [query, setQuery] = useState(initialQ);
+
+  useEffect(() => {
+    setQuery(initialQ);
+  }, [initialQ]);
 
   useEffect(() => {
     if (!highlightId) return;
@@ -98,31 +100,18 @@ export function PaymentsListClient({
     return () => window.clearTimeout(scrollTimer);
   }, [highlightId]);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return payments;
-    return payments.filter((p) => {
-      const hay = [
-        p.memberName,
-        p.methodLabel,
-        p.kindLabel,
-        p.planName ?? "",
-        String(p.amount),
-      ]
-        .join(" ")
-        .toLowerCase();
-      return hay.includes(q);
-    });
-  }, [payments, query]);
-
   const emptyMessage =
-    payments.length === 0 ? labels.noPayments : labels.noResults;
+    meta.total === 0 && !initialQ ? labels.noPayments : labels.noResults;
 
-  function reload() {
-    startTransition(() => {
-      router.refresh();
-    });
-  }
+  const paginationLabels: TablePaginationLabels = {
+    showing: labels.showing,
+    previous: labels.previous,
+    next: labels.next,
+  };
+
+  const searchParams = {
+    q: initialQ || undefined,
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -140,7 +129,15 @@ export function PaymentsListClient({
               maxLength={LIMITS.search}
               placeholder={labels.searchPlaceholder}
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setQuery(value);
+                pushParams(
+                  searchParams,
+                  { q: value.trim() || null },
+                  { debounce: true },
+                );
+              }}
               aria-label={labels.searchPlaceholder}
             />
           </div>
@@ -173,7 +170,7 @@ export function PaymentsListClient({
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {payments.length === 0 ? (
                 <tr>
                   <td
                     colSpan={5}
@@ -183,7 +180,7 @@ export function PaymentsListClient({
                   </td>
                 </tr>
               ) : (
-                filtered.map((p) => {
+                payments.map((p) => {
                   const isNew = highlightId === p.id;
                   return (
                     <tr
@@ -236,11 +233,12 @@ export function PaymentsListClient({
           </table>
         </div>
 
-        {filtered.length > 0 ? (
-          <div className="border-t border-[var(--color-border)] px-5 py-3 text-sm text-[var(--color-muted)]">
-            {showingLabel(labels.showing, 1, filtered.length, filtered.length)}
-          </div>
-        ) : null}
+        <TablePagination
+          meta={meta}
+          href={pathname}
+          searchParams={searchParams}
+          labels={paginationLabels}
+        />
       </div>
     </div>
   );

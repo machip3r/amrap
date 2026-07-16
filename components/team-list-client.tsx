@@ -1,15 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, RefreshCw, Search, Trash2 } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { TeamMember } from "@/lib/team/queries";
+import type { PageMeta } from "@/lib/pagination";
+import { useListQueryParams } from "@/lib/list-query-params";
 import { Input } from "@/components/ui/input";
 import { LIMITS } from "@/lib/validation/schemas";
 import { removeTeamMemberAction } from "@/app/[locale]/(app)/team/actions";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import {
+  TablePagination,
+  type TablePaginationLabels,
+} from "@/components/ui/table-pagination";
 
 export type TeamListLabels = {
   name: string;
@@ -25,6 +31,8 @@ export type TeamListLabels = {
   reload: string;
   newBadge: string;
   view: string;
+  previous: string;
+  next: string;
 };
 
 type Props = {
@@ -32,6 +40,8 @@ type Props = {
   listRole: "trainer" | "staff";
   members: TeamMember[];
   labels: TeamListLabels;
+  meta: PageMeta;
+  q: string;
   highlightId?: string | null;
   /** Auth user id of the viewer — hide remove for yourself. */
   currentUserId: string;
@@ -56,31 +66,25 @@ function formatJoined(iso: string, locale: Locale) {
   }
 }
 
-function showingLabel(
-  template: string,
-  from: number,
-  to: number,
-  total: number,
-) {
-  return template
-    .replace("{from}", String(from))
-    .replace("{to}", String(to))
-    .replace("{total}", String(total));
-}
-
 export function TeamListClient({
   locale,
   listRole,
   members,
   labels,
+  meta,
+  q: initialQ,
   highlightId = null,
   currentUserId,
 }: Props) {
   const router = useRouter();
   const d = getDictionary(locale);
-  const [query, setQuery] = useState("");
-  const [pending, startTransition] = useTransition();
+  const { pending, pushParams, reload, pathname } = useListQueryParams();
+  const [query, setQuery] = useState(initialQ);
   const [removing, setRemoving] = useState<TeamMember | null>(null);
+
+  useEffect(() => {
+    setQuery(initialQ);
+  }, [initialQ]);
 
   useEffect(() => {
     if (!highlightId) return;
@@ -92,23 +96,18 @@ export function TeamListClient({
     return () => window.clearTimeout(scrollTimer);
   }, [highlightId]);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return members;
-    return members.filter((m) => {
-      const hay = [m.name, m.email ?? "", m.phone ?? ""].join(" ").toLowerCase();
-      return hay.includes(q);
-    });
-  }, [members, query]);
-
   const emptyMessage =
-    members.length === 0 ? labels.noRows : labels.noResults;
+    meta.total === 0 && !initialQ ? labels.noRows : labels.noResults;
 
-  function reload() {
-    startTransition(() => {
-      router.refresh();
-    });
-  }
+  const paginationLabels: TablePaginationLabels = {
+    showing: labels.showing,
+    previous: labels.previous,
+    next: labels.next,
+  };
+
+  const searchParams = {
+    q: initialQ || undefined,
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -126,7 +125,15 @@ export function TeamListClient({
               maxLength={LIMITS.search}
               placeholder={labels.searchPlaceholder}
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setQuery(value);
+                pushParams(
+                  searchParams,
+                  { q: value.trim() || null },
+                  { debounce: true },
+                );
+              }}
               aria-label={labels.searchPlaceholder}
             />
           </div>
@@ -158,7 +165,7 @@ export function TeamListClient({
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {members.length === 0 ? (
                 <tr>
                   <td
                     colSpan={4}
@@ -168,7 +175,7 @@ export function TeamListClient({
                   </td>
                 </tr>
               ) : (
-                filtered.map((m) => {
+                members.map((m) => {
                   const isNew = highlightId === m.id;
                   const href = `/${locale}/${listRole === "trainer" ? "trainers" : "staff"}/${m.id}`;
                   return (
@@ -246,11 +253,12 @@ export function TeamListClient({
           </table>
         </div>
 
-        {filtered.length > 0 ? (
-          <div className="border-t border-[var(--color-border)] px-5 py-3 text-sm text-[var(--color-muted)]">
-            {showingLabel(labels.showing, 1, filtered.length, filtered.length)}
-          </div>
-        ) : null}
+        <TablePagination
+          meta={meta}
+          href={pathname}
+          searchParams={searchParams}
+          labels={paginationLabels}
+        />
       </div>
 
       <ConfirmDialog

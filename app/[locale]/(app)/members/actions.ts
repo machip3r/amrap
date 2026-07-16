@@ -141,7 +141,7 @@ export async function createMember(
         locale,
         gymName: workspace.gymName,
         kind: "member",
-        nextPath: `/${locale}/dashboard`,
+        nextPath: `/${locale}/me`,
       });
 
       if (invite.ok) {

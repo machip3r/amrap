@@ -11,6 +11,7 @@ import {
   getSessionUser,
   getWorkspace,
 } from "@/lib/auth/session";
+import { getMemberContext } from "@/lib/auth/member-session";
 import { LoginForm } from "./login-form";
 
 export default async function LoginPage({
@@ -25,12 +26,16 @@ export default async function LoginPage({
 
   const sessionUser = await getSessionUser();
   if (sessionUser) {
-    const onboarding = await getOnboardingState();
-    if (!onboarding?.completed) {
-      redirect(`/${locale}/onboarding`);
-    }
     const workspace = await getWorkspace();
-    if (workspace) redirect(`/${locale}/dashboard`);
+    if (workspace) {
+      const onboarding = await getOnboardingState();
+      if (!onboarding?.completed) {
+        redirect(`/${locale}/onboarding`);
+      }
+      redirect(`/${locale}/dashboard`);
+    }
+    const member = await getMemberContext();
+    if (member) redirect(`/${locale}/me`);
     redirect(`/${locale}/onboarding`);
   }
 

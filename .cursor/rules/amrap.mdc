@@ -16,8 +16,10 @@ Follow the full project standards in **`AGENTS.md`** (repo root) for every chang
 - **i18n** — all user-facing strings in `es` + `en` dictionaries in the same change; no hardcoded UI copy
 - **Folder structure** — `app/[locale]/(marketing|auth|app)`, `components/`, `lib/`, `types/`, `supabase/migrations/`; colocate `actions.ts` with routes
 - **Product docs** — if business rules or general AMRAP behavior change, update `README.md` in the same change
+- **Product flows** — if a feature, screen, nav item, role/permission, or user flow changes (or a new one ships), update `docs/product-flows.md` in the same change for every affected user type (who / where / what / edge cases / shipped·partial·planned)
 - **Database migrations** — every DB change is a **new** file in `supabase/migrations/`; never edit an already-created migration; update `docs/database.md` in the same change
+- **Verify Supabase project before push** — before `db push` / link / remote migration apply, confirm project name + ref (not the wrong env); ask if ambiguous
 - **Validate inputs on the server** with Zod schemas that include **regex + length limits** (`lib/validation/schemas.ts`); map failures to **per-field UI errors** via `zodFieldErrors` + `FormField` `error` (dictionary copy); sanitize outputs (no unsafe HTML from user data)
 - **Backend on the server** — Server Actions / server components + `lib/supabase/server.ts`; REST route handlers when needed; no GraphQL unless asked; safe, dictionary-based errors
-- **Design system + responsive + a11y** — CSS variables, labels, focus, icon `aria-label`s
+- **Design system + responsive + a11y** — CSS variables, labels, focus, icon `aria-label`s; follow **Responsive UI / UX** in `AGENTS.md` and `.cursor/rules/responsive-ux.mdc` (mobile-first, shared shell chrome, touch targets, no desktop-only layouts)
 - **Tenant/RLS/secrets** — session-scoped data; service role server-only; never expose service keys

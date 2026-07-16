@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
+import { Loader2 } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { createPlan, type CreatePlanState } from "./actions";
@@ -62,7 +63,15 @@ export function CreatePlanForm({ locale }: { locale: Locale }) {
           {state.error}
         </p>
       ) : null}
-      <Button type="submit" variant="appPrimary" disabled={pending}>
+      <Button
+        type="submit"
+        variant="appPrimary"
+        disabled={pending}
+        className="inline-flex items-center justify-center gap-2"
+      >
+        {pending ? (
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+        ) : null}
         {pending ? d.plans.saving : d.plans.save}
       </Button>
     </form>

@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, RefreshCw, Search } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import type { Member } from "@/types";
+import type { PageMeta } from "@/lib/pagination";
+import { useListQueryParams } from "@/lib/list-query-params";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import {
+  TablePagination,
+  type TablePaginationLabels,
+} from "@/components/ui/table-pagination";
 import { LIMITS } from "@/lib/validation/schemas";
 
 export type MembersPageLabels = {
@@ -31,6 +37,8 @@ export type MembersPageLabels = {
   showing: string;
   reload: string;
   newBadge: string;
+  previous: string;
+  next: string;
 };
 
 type PlanFilterOption = {
@@ -45,6 +53,12 @@ type Props = {
   members: Member[];
   plans: PlanFilterOption[];
   labels: MembersPageLabels;
+  meta: PageMeta;
+  filters: {
+    q: string;
+    status: StatusFilter;
+    planId: string;
+  };
   highlightId?: string | null;
 };
 
@@ -67,30 +81,22 @@ function formatExpires(iso: string, locale: Locale) {
   }
 }
 
-function showingLabel(
-  template: string,
-  from: number,
-  to: number,
-  total: number,
-) {
-  return template
-    .replace("{from}", String(from))
-    .replace("{to}", String(to))
-    .replace("{total}", String(total));
-}
-
 export function MembersClient({
   locale,
   members,
   plans,
   labels,
+  meta,
+  filters,
   highlightId = null,
 }: Props) {
   const router = useRouter();
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<StatusFilter>("all");
-  const [planId, setPlanId] = useState("all");
-  const [pending, startTransition] = useTransition();
+  const { pending, pushParams, reload, pathname } = useListQueryParams();
+  const [query, setQuery] = useState(filters.q);
+
+  useEffect(() => {
+    setQuery(filters.q);
+  }, [filters.q]);
 
   useEffect(() => {
     if (!highlightId) return;
@@ -102,27 +108,22 @@ export function MembersClient({
     return () => window.clearTimeout(scrollTimer);
   }, [highlightId]);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return members.filter((m) => {
-      if (status !== "all" && m.status !== status) return false;
-      if (planId !== "all" && m.plan_id !== planId) return false;
-      if (!q) return true;
-      const hay = [m.name, m.email ?? "", m.phone ?? ""]
-        .join(" ")
-        .toLowerCase();
-      return hay.includes(q);
-    });
-  }, [members, query, status, planId]);
-
   const emptyMessage =
-    members.length === 0 ? labels.noMembers : labels.noResults;
+    meta.total === 0 && !filters.q && filters.status === "all" && filters.planId === "all"
+      ? labels.noMembers
+      : labels.noResults;
 
-  function reload() {
-    startTransition(() => {
-      router.refresh();
-    });
-  }
+  const paginationLabels: TablePaginationLabels = {
+    showing: labels.showing,
+    previous: labels.previous,
+    next: labels.next,
+  };
+
+  const searchParams = {
+    q: filters.q || undefined,
+    status: filters.status !== "all" ? filters.status : undefined,
+    plan: filters.planId !== "all" ? filters.planId : undefined,
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -140,7 +141,15 @@ export function MembersClient({
               maxLength={LIMITS.search}
               placeholder={labels.searchPlaceholder}
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setQuery(value);
+                pushParams(
+                  searchParams,
+                  { q: value.trim() || null },
+                  { debounce: true },
+                );
+              }}
               aria-label={labels.searchPlaceholder}
             />
           </div>
@@ -153,12 +162,16 @@ export function MembersClient({
                 ["expired", labels.filterExpired],
               ] as const
             ).map(([key, label]) => {
-              const selected = status === key;
+              const selected = filters.status === key;
               return (
                 <button
                   key={key}
                   type="button"
-                  onClick={() => setStatus(key)}
+                  onClick={() =>
+                    pushParams(searchParams, {
+                      status: key === "all" ? null : key,
+                    })
+                  }
                   className={`inline-flex items-center rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
                     selected
                       ? "bg-[var(--color-primary)] text-[var(--color-primary-on)]"
@@ -179,8 +192,12 @@ export function MembersClient({
               <Select
                 id="members-plan-filter"
                 variant="auth"
-                value={planId}
-                onChange={(e) => setPlanId(e.target.value)}
+                value={filters.planId}
+                onChange={(e) =>
+                  pushParams(searchParams, {
+                    plan: e.target.value === "all" ? null : e.target.value,
+                  })
+                }
               >
                 <option value="all">{labels.filterPlanAll}</option>
                 {plans.map((p) => (
@@ -221,7 +238,7 @@ export function MembersClient({
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {members.length === 0 ? (
                 <tr>
                   <td
                     colSpan={5}
@@ -231,7 +248,7 @@ export function MembersClient({
                   </td>
                 </tr>
               ) : (
-                filtered.map((m) => {
+                members.map((m) => {
                   const active = m.status === "active";
                   const isNew = highlightId === m.id;
                   const href = `/${locale}/members/${m.id}`;
@@ -317,11 +334,12 @@ export function MembersClient({
           </table>
         </div>
 
-        {filtered.length > 0 ? (
-          <div className="border-t border-[var(--color-border)] px-5 py-3 text-sm text-[var(--color-muted)]">
-            {showingLabel(labels.showing, 1, filtered.length, filtered.length)}
-          </div>
-        ) : null}
+        <TablePagination
+          meta={meta}
+          href={pathname}
+          searchParams={searchParams}
+          labels={paginationLabels}
+        />
       </div>
     </div>
   );

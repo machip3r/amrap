@@ -10,14 +10,23 @@ import {
   X,
 } from "lucide-react";
 import {
+  confirmCheckIn,
   runCheckIn,
+  searchCheckInCandidates,
+  walkInEnroll,
+  type CheckinCandidate,
   type CheckinMember,
   type CheckinResult,
 } from "@/app/[locale]/(app)/checkin/actions";
 import { RegisterUserButton, type RegisterPlanOption } from "@/components/register-user-dialog";
+import { CheckInList } from "@/components/checkin-list";
 import { Input } from "@/components/ui/input";
 import type { Locale } from "@/lib/i18n/config";
+import type { CheckInListItem } from "@/lib/checkin/queries";
 import { LIMITS } from "@/lib/validation/schemas";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 
 export type CheckinLabels = {
   title: string;
@@ -30,17 +39,25 @@ export type CheckinLabels = {
   lookup: string;
   clear: string;
   scanning: string;
+  lookingUp: string;
   stopCamera: string;
   startCamera: string;
   resultOk: string;
   resultDenied: string;
   memberNotFound: string;
+  selectMember: string;
+  confirmCheckIn: string;
+  matchesHint: string;
+  active: string;
+  expired: string;
   qrInUse: string;
   cameraError: string;
   forbidden: string;
   saveFailed: string;
   accessGranted: string;
   accessDenied: string;
+  qrSuccessTitle: string;
+  qrSuccessHint: string;
   waitingResult: string;
   waitingResultHint: string;
   expiresIn: string;
@@ -48,6 +65,21 @@ export type CheckinLabels = {
   weekAttendance: string;
   noPlan: string;
   nextScan: string;
+  classReserved: string;
+  walkInTitle: string;
+  walkInEnroll: string;
+  walkInFull: string;
+  noOpenClasses: string;
+  todayTitle: string;
+  todayEmpty: string;
+  viewAllCheckIns: string;
+  colMember: string;
+  colTime: string;
+  colPlan: string;
+  colSource: string;
+  sourceQr: string;
+  sourceManual: string;
+  sourceKiosk: string;
 };
 
 type Props = {
@@ -57,10 +89,12 @@ type Props = {
   canManageMembers: boolean;
   canManageStaff: boolean;
   plans?: RegisterPlanOption[];
+  todayCheckIns: CheckInListItem[];
 };
 
 type ResultView =
   | { kind: "idle" }
+  | { kind: "pick"; matches: CheckinCandidate[] }
   | { kind: "ok"; member: CheckinMember | null; message: string }
   | { kind: "error"; title: string; message: string };
 
@@ -83,18 +117,31 @@ export function CheckinClient({
   canManageMembers,
   canManageStaff,
   plans = [],
+  todayCheckIns,
 }: Props) {
+  const router = useRouter();
   const [manual, setManual] = useState("");
   const [cameraOn, setCameraOn] = useState(false);
   const [result, setResult] = useState<ResultView>({ kind: "idle" });
+  const [qrCelebration, setQrCelebration] = useState<{
+    name: string;
+  } | null>(null);
   const [pending, startTransition] = useTransition();
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const regionId = useId().replace(/:/g, "");
 
+  const dismissQrCelebration = useCallback(() => {
+    setQrCelebration(null);
+  }, []);
+
   const applyResult = useCallback(
-    (r: CheckinResult) => {
+    (r: CheckinResult, opts?: { celebrate?: boolean }) => {
       if (r.status === "ok") {
         setResult({ kind: "ok", member: r.member, message: labels.resultOk });
+        if (opts?.celebrate) {
+          setQrCelebration({ name: r.member?.name ?? "" });
+        }
+        router.refresh();
         return;
       }
       const message =
@@ -115,17 +162,57 @@ export function CheckinClient({
         message,
       });
     },
-    [labels],
+    [labels, router],
   );
 
-  const handleCode = useCallback(
+  const handleQrCode = useCallback(
     (code: string) => {
       startTransition(() => {
-        void runCheckIn(code).then(applyResult);
+        void runCheckIn(code).then((r) =>
+          applyResult(r, { celebrate: true }),
+        );
       });
     },
     [applyResult, runCheckIn],
   );
+
+  useEffect(() => {
+    if (!qrCelebration) return;
+    const t = window.setTimeout(() => setQrCelebration(null), 2800);
+    return () => window.clearTimeout(t);
+  }, [qrCelebration]);
+
+  function handleManualSearch() {
+    const q = manual.trim();
+    if (!q) return;
+    startTransition(() => {
+      void searchCheckInCandidates(q).then((r) => {
+        if (r.status === "matches") {
+          setResult({ kind: "pick", matches: r.matches });
+          return;
+        }
+        const message =
+          r.status === "not_found"
+            ? labels.memberNotFound
+            : r.status === "forbidden"
+              ? labels.forbidden
+              : r.status === "empty"
+                ? labels.manualPlaceholder
+                : labels.saveFailed;
+        setResult({
+          kind: "error",
+          title: labels.accessDenied,
+          message,
+        });
+      });
+    });
+  }
+
+  function handleSelectCandidate(membershipId: string) {
+    startTransition(() => {
+      void confirmCheckIn(membershipId).then(applyResult);
+    });
+  }
 
   useEffect(() => {
     return () => {
@@ -148,7 +235,7 @@ export function CheckinClient({
         { facingMode: "environment" },
         { fps: 8, qrbox: { width: 260, height: 260 } },
         (decoded) => {
-          handleCode(decoded);
+          handleQrCode(decoded);
           void scanner.stop().then(() => {
             try {
               scanner.clear();
@@ -195,6 +282,39 @@ export function CheckinClient({
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
+      {qrCelebration ? (
+        <button
+          type="button"
+          aria-label={labels.qrSuccessHint}
+          onClick={dismissQrCelebration}
+          className="amrap-checkin-success-overlay fixed inset-0 z-[80] flex cursor-pointer flex-col items-center justify-center gap-5 bg-black/75 px-6 text-center backdrop-blur-sm"
+        >
+          <span className="relative inline-flex h-40 w-40 items-center justify-center sm:h-48 sm:w-48">
+            <span
+              className="amrap-checkin-success-ring absolute inset-0 rounded-full border-[6px] border-[var(--color-success)]"
+              aria-hidden
+            />
+            <span
+              className="amrap-checkin-success-mark relative inline-flex h-full w-full items-center justify-center rounded-full bg-[var(--color-success)] text-white shadow-lg"
+              aria-hidden
+            >
+              <Check className="h-20 w-20 sm:h-24 sm:w-24" strokeWidth={3} />
+            </span>
+          </span>
+          <div className="amrap-checkin-success-mark flex flex-col gap-2">
+            <p className="font-title text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              {labels.qrSuccessTitle}
+            </p>
+            {qrCelebration.name ? (
+              <p className="text-lg font-semibold text-white/90 sm:text-xl">
+                {qrCelebration.name}
+              </p>
+            ) : null}
+            <p className="text-sm text-white/65">{labels.qrSuccessHint}</p>
+          </div>
+        </button>
+      ) : null}
+
       <header className="flex items-start justify-between gap-4">
         <div>
           <h1 className="font-title text-3xl font-bold tracking-tight text-[var(--color-text)]">
@@ -257,7 +377,7 @@ export function CheckinClient({
                   {labels.stopCamera}
                 </button>
               )}
-              {pending ? (
+              {cameraOn && pending ? (
                 <span className="text-sm text-[var(--color-muted)]">
                   {labels.scanning}
                 </span>
@@ -275,7 +395,7 @@ export function CheckinClient({
               className="mt-3 flex flex-col gap-3"
               onSubmit={(e) => {
                 e.preventDefault();
-                handleCode(manual);
+                handleManualSearch();
               }}
             >
               <label className="sr-only" htmlFor="checkin-manual">
@@ -313,14 +433,70 @@ export function CheckinClient({
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--color-primary)] px-3 py-2.5 text-sm font-semibold text-[var(--color-primary-on)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Search className="h-4 w-4" aria-hidden />
-                  {labels.lookup}
+                  {pending && !cameraOn ? labels.lookingUp : labels.lookup}
                 </button>
               </div>
             </form>
           </section>
 
           <section className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
-            {result.kind === "ok" ? (
+            {result.kind === "pick" ? (
+              <>
+                <div className="border-b border-[var(--color-border)] bg-[var(--color-surface-hover)]/50 px-5 py-3">
+                  <p className="text-sm font-bold uppercase tracking-wide text-[var(--color-text)]">
+                    {labels.selectMember}
+                  </p>
+                  <p className="mt-0.5 text-xs text-[var(--color-muted)]">
+                    {labels.matchesHint.replace(
+                      "{count}",
+                      String(result.matches.length),
+                    )}
+                  </p>
+                </div>
+                <ul className="flex max-h-[28rem] flex-1 flex-col gap-1 overflow-y-auto p-3">
+                  {result.matches.map((m) => (
+                    <li key={m.membershipId}>
+                      <button
+                        type="button"
+                        disabled={pending}
+                        onClick={() => handleSelectCandidate(m.membershipId)}
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-[var(--color-surface-hover)] disabled:opacity-60"
+                      >
+                        <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)]/15 text-xs font-bold text-[var(--color-primary)]">
+                          {initials(m.name)}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-center gap-2">
+                            <span className="truncate font-semibold text-[var(--color-text)]">
+                              {m.name}
+                            </span>
+                            <span
+                              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                                m.active
+                                  ? "bg-[var(--color-success)]/15 text-[var(--color-success)]"
+                                  : "bg-[var(--color-danger)]/15 text-[var(--color-danger)]"
+                              }`}
+                            >
+                              {m.active ? labels.active : labels.expired}
+                            </span>
+                          </span>
+                          <span className="mt-0.5 block truncate text-xs text-[var(--color-muted)]">
+                            {[m.email, m.phone].filter(Boolean).join(" · ") ||
+                              "—"}
+                          </span>
+                          <span className="mt-0.5 block truncate text-xs text-[var(--color-muted)]">
+                            {m.planName ?? labels.noPlan}
+                          </span>
+                        </span>
+                        <span className="shrink-0 text-xs font-semibold text-[var(--color-primary)]">
+                          {labels.confirmCheckIn}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : result.kind === "ok" ? (
               <>
                 <div className="flex items-center gap-2 bg-[var(--color-primary)] px-5 py-3 text-[var(--color-primary-on)]">
                   <Check className="h-5 w-5" aria-hidden strokeWidth={2.5} />
@@ -365,6 +541,107 @@ export function CheckinClient({
                       <p className="text-sm text-[var(--color-muted)]">
                         {result.message}
                       </p>
+                      {result.member.classBooking ? (
+                        <p className="rounded-xl bg-[var(--color-success)]/10 px-3 py-2 text-sm font-medium text-[var(--color-success)]">
+                          {labels.classReserved
+                            .replace(
+                              "{class}",
+                              result.member.classBooking.className,
+                            )
+                            .replace(
+                              "{time}",
+                              new Date(
+                                result.member.classBooking.startsAt,
+                              ).toLocaleTimeString(locale === "es" ? "es-MX" : "en-US", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }),
+                            )}
+                        </p>
+                      ) : null}
+                      {result.member.openSessions &&
+                      result.member.openSessions.length > 0 ? (
+                        <div className="rounded-xl border border-[var(--color-border)] p-3">
+                          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                            {labels.walkInTitle}
+                          </p>
+                          <ul className="flex flex-col gap-2">
+                            {result.member.openSessions.map((s) => {
+                              const full =
+                                s.capacity != null &&
+                                s.confirmedCount >= s.capacity &&
+                                !s.hasBooking;
+                              return (
+                                <li
+                                  key={s.sessionId}
+                                  className="flex items-center justify-between gap-2 text-sm"
+                                >
+                                  <span className="min-w-0 truncate text-[var(--color-text)]">
+                                    {s.className}
+                                    {s.hasBooking
+                                      ? ` · ${s.bookingStatus}`
+                                      : ""}
+                                  </span>
+                                  {!s.hasBooking ? (
+                                    full ? (
+                                      <span className="shrink-0 text-xs text-[var(--color-muted)]">
+                                        {labels.walkInFull}
+                                      </span>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        disabled={pending}
+                                        className="shrink-0 rounded-md border border-[var(--color-border)] px-2 py-1 text-xs font-semibold"
+                                        onClick={() => {
+                                          startTransition(async () => {
+                                            const res = await walkInEnroll(
+                                              s.sessionId,
+                                              result.member!.personId,
+                                            );
+                                            if (res.ok) {
+                                              setResult({
+                                                kind: "ok",
+                                                member: {
+                                                  ...result.member!,
+                                                  classBooking: {
+                                                    className: s.className,
+                                                    startsAt: s.startsAt,
+                                                    status: "attended",
+                                                  },
+                                                  openSessions:
+                                                    result.member!.openSessions?.map(
+                                                      (o) =>
+                                                        o.sessionId ===
+                                                        s.sessionId
+                                                          ? {
+                                                              ...o,
+                                                              hasBooking: true,
+                                                              bookingStatus:
+                                                                "attended",
+                                                            }
+                                                          : o,
+                                                    ),
+                                                },
+                                                message: labels.resultOk,
+                                              });
+                                            }
+                                          });
+                                        }}
+                                      >
+                                        {labels.walkInEnroll}
+                                      </button>
+                                    )
+                                  ) : null}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      ) : result.member && !result.member.classBooking ? (
+                        <p className="text-xs text-[var(--color-muted)]">
+                          {labels.noOpenClasses}
+                        </p>
+                      ) : null}
                     </>
                   ) : (
                     <p className="text-sm font-medium text-[var(--color-text)]">
@@ -417,6 +694,37 @@ export function CheckinClient({
           </section>
         </div>
       </div>
+
+      <section className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border)] px-5 py-4">
+          <h2 className="font-title text-lg font-bold text-[var(--color-text)]">
+            {labels.todayTitle}
+          </h2>
+          <Link
+            href={`/${locale}/checkin/history`}
+            className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-primary)] transition-opacity hover:opacity-80"
+          >
+            {labels.viewAllCheckIns}
+            <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+          </Link>
+        </div>
+        <CheckInList
+          locale={locale}
+          items={todayCheckIns}
+          detailBaseHref={`/${locale}/checkin/history`}
+          labels={{
+            colMember: labels.colMember,
+            colTime: labels.colTime,
+            colPlan: labels.colPlan,
+            colSource: labels.colSource,
+            noPlan: labels.noPlan,
+            sourceQr: labels.sourceQr,
+            sourceManual: labels.sourceManual,
+            sourceKiosk: labels.sourceKiosk,
+            empty: labels.todayEmpty,
+          }}
+        />
+      </section>
     </div>
   );
 }

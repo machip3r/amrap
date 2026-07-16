@@ -132,6 +132,53 @@ textarea:focus {
   }
 }
 
+@keyframes amrap-checkin-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes amrap-checkin-ring {
+  0% {
+    opacity: 0.7;
+    transform: scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.55);
+  }
+}
+
+@keyframes amrap-checkin-fade {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.amrap-checkin-success-overlay {
+  animation: amrap-checkin-fade 0.2s ease-out forwards;
+}
+
+.amrap-checkin-success-mark {
+  animation: amrap-checkin-pop 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.amrap-checkin-success-ring {
+  animation: amrap-checkin-ring 0.9s ease-out forwards;
+}
+
 .animate-fade-in-up {
   animation: fade-in-up 0.5s ease-out forwards;
 }

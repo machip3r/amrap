@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate } from '$app/navigation';
+	import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
 	import Check from '@lucide/svelte/icons/check';
 	import Lock from '@lucide/svelte/icons/lock';
 	import X from '@lucide/svelte/icons/x';
@@ -71,7 +72,8 @@
 				displayDark = data.logoUrl ?? null;
 				clearDarkSelection();
 			}
-			void invalidateAll();
+			void invalidate(OPS_LOAD_DEPS.branding);
+			void invalidate(OPS_LOAD_DEPS.workspace);
 		}
 		if (data.error) error = data.error;
 		if (data.fieldErrors?.logo) logoFieldError = data.fieldErrors.logo;

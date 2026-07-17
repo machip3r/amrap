@@ -76,6 +76,8 @@ export type Workspace = {
   userId: string;
   personId: string;
   fullName: string | null;
+  /** Person QR token for ops mobile nav; null when not linked. */
+  qrCode: string | null;
   organizationId: string;
   organizationName: string;
   planTier: OrgPlanTier;

@@ -1,5 +1,4 @@
 import { redirect } from '@sveltejs/kit';
-import { getWorkspace } from '$lib/auth/session';
 import { canInWorkspace } from '$lib/auth/permissions';
 import type { Locale } from '$lib/i18n/config';
 import { getDictionary } from '$lib/i18n/dictionaries';
@@ -13,8 +12,7 @@ function parseRole(raw: string | null): InviteRole | null {
 }
 
 export const load: PageServerLoad = async ({ parent, url }) => {
-	const { locale } = await parent();
-	const workspace = await getWorkspace();
+	const { locale, workspace } = await parent();
 	if (!workspace) throw redirect(303, `/${locale}/login`);
 	if (!canInWorkspace(workspace, 'manage_staff')) {
 		throw redirect(303, `/${locale}/dashboard`);

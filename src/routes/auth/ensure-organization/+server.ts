@@ -14,11 +14,12 @@ export const GET: RequestHandler = async ({ url }) => {
 	const user = await getSessionUser();
 	if (!user) throw redirect(302, `/${locale}/login`);
 
-	if (await isInvitedOpsUser()) {
+	const [invitedOps, before] = await Promise.all([isInvitedOpsUser(), getOnboardingState()]);
+
+	if (invitedOps) {
 		throw redirect(302, await resolvePostAuthPath(locale));
 	}
 
-	const before = await getOnboardingState();
 	if (before?.organizationId) {
 		throw redirect(302, `/${locale}/onboarding`);
 	}

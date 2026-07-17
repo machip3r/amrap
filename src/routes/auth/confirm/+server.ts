@@ -3,6 +3,7 @@ import type { EmailOtpType } from '@supabase/supabase-js';
 import { ensureOrganizationAfterConfirm } from '$lib/auth/ensure-organization';
 import { resolvePostAuthPath } from '$lib/auth/post-auth-redirect';
 import { invitePath } from '$lib/auth/invite-decision';
+import { setRequestUser } from '$lib/auth/session';
 import { defaultLocale, isLocale, type Locale } from '$lib/i18n/config';
 import { createClient } from '$lib/supabase/server';
 
@@ -48,9 +49,12 @@ export const GET: RequestHandler = async ({ url }) => {
 			token_hash
 		});
 		if (!error) {
+			if (data.user) setRequestUser(data.user);
+
 			const email = data.user?.email ?? '';
 			if (email && typeRaw === 'signup') {
 				await ensureOrganizationAfterConfirm(email);
+				throw redirect(302, `/${locale}/onboarding`);
 			}
 
 			if (typeRaw === 'recovery' || typeRaw === 'email_change') {

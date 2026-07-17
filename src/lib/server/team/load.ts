@@ -1,5 +1,4 @@
 import { redirect } from '@sveltejs/kit';
-import { getWorkspace } from '$lib/auth/session';
 import { canInWorkspace } from '$lib/auth/permissions';
 import type { Locale } from '$lib/i18n/config';
 import { getDictionary } from '$lib/i18n/dictionaries';
@@ -7,6 +6,7 @@ import { loadTeamMembersPage } from '$lib/team/queries';
 import { parsePage, sanitizeSearchTerm, type PageMeta } from '$lib/pagination';
 import { createClient } from '$lib/supabase/server';
 import type { TeamMember } from '$lib/team/queries';
+import type { Workspace } from '$lib/types';
 
 export type TeamListRole = 'trainer' | 'staff';
 
@@ -25,11 +25,10 @@ export type TeamListPageData = {
 export async function loadTeamListPage(
 	locale: Locale,
 	listRole: TeamListRole,
-	url: URL
+	url: URL,
+	workspace: Workspace
 ): Promise<TeamListPageData> {
 	const d = getDictionary(locale);
-	const workspace = await getWorkspace();
-	if (!workspace) throw redirect(303, `/${locale}/login`);
 
 	const emptyMeta: PageMeta = {
 		page: 1,

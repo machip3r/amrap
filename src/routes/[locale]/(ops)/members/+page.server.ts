@@ -1,9 +1,9 @@
 import { redirect } from '@sveltejs/kit';
-import { getWorkspace } from '$lib/auth/session';
 import { canInWorkspace } from '$lib/auth/permissions';
 import type { Locale } from '$lib/i18n/config';
 import { getDictionary } from '$lib/i18n/dictionaries';
 import { listMembershipsPage } from '$lib/members/queries';
+import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
 import { parsePage, sanitizeSearchTerm } from '$lib/pagination';
 import { createMember, type CreateMemberState } from '$lib/server/members/actions';
 import { createClient } from '$lib/supabase/server';
@@ -14,9 +14,10 @@ function parseStatus(raw: string | null): 'all' | 'active' | 'expired' {
 	return 'all';
 }
 
-export const load: PageServerLoad = async ({ parent, url }) => {
-	const { locale, d } = await parent();
-	const workspace = await getWorkspace();
+export const load: PageServerLoad = async ({ parent, url, depends }) => {
+	depends(OPS_LOAD_DEPS.members);
+	const { locale, workspace } = await parent();
+	const d = getDictionary(locale as Locale);
 	if (!workspace) throw redirect(303, `/${locale}/login`);
 
 	if (!canInWorkspace(workspace, 'manage_members')) {

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { invalidate } from '$app/navigation';
 	import Dialog from '$lib/components/ui/Dialog.svelte';
 	import FormField from '$lib/components/ui/FormField.svelte';
 	import Input from '$lib/components/ui/Input.svelte';
@@ -7,6 +8,7 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import type { Locale } from '$lib/i18n/config';
 	import type { Dictionary } from '$lib/i18n/dictionaries';
+	import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
 	import type { CreateMemberState } from '$lib/server/members/actions';
 	import {
 		LIMITS,
@@ -131,9 +133,12 @@
 							onSuccess?.(data.memberId);
 							onOpenChange(false);
 							resetForm();
+							await invalidate(OPS_LOAD_DEPS.members);
+							await invalidate(OPS_LOAD_DEPS.dashboard);
+							await invalidate(OPS_LOAD_DEPS.payments);
 						}
 					}
-					await update({ reset: false });
+					await update({ reset: false, invalidateAll: false });
 				};
 			}}
 		>

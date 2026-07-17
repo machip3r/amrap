@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { invalidate } from '$app/navigation';
+	import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
 	import Dialog from '$lib/components/ui/Dialog.svelte';
 	import FormField from '$lib/components/ui/FormField.svelte';
 	import Input from '$lib/components/ui/Input.svelte';
@@ -78,9 +80,10 @@
 						onSuccess?.(data.teamMemberId);
 						onOpenChange(false);
 						resetForm();
+						await invalidate(OPS_LOAD_DEPS.team);
 					}
 				}
-				await update({ reset: false });
+				await update({ reset: false, invalidateAll: false });
 			};
 		}}
 	>

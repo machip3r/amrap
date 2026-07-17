@@ -1,7 +1,8 @@
 import { redirect } from '@sveltejs/kit';
-import { getWorkspace } from '$lib/auth/session';
 import { canInWorkspace } from '$lib/auth/permissions';
 import type { Locale } from '$lib/i18n/config';
+import { getDictionary } from '$lib/i18n/dictionaries';
+import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
 import { canCreatePlan, maxActivePlans } from '$lib/plans/limits';
 import {
 	createPlan,
@@ -14,9 +15,10 @@ import {
 import { createClient } from '$lib/supabase/server';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ parent, url }) => {
-	const { locale, d } = await parent();
-	const workspace = await getWorkspace();
+export const load: PageServerLoad = async ({ parent, url, depends }) => {
+	depends(OPS_LOAD_DEPS.plans);
+	const { locale, workspace } = await parent();
+	const d = getDictionary(locale as Locale);
 	if (!workspace) throw redirect(303, `/${locale}/login`);
 
 	if (!canInWorkspace(workspace, 'manage_plans')) {
@@ -38,25 +40,34 @@ export const load: PageServerLoad = async ({ parent, url }) => {
 		errorParam === 'limit' ? ('limit' as const) : errorParam ? ('generic' as const) : null;
 
 	const supabase = createClient();
-	const [{ data: planRows }, { data: membershipRows }, { data: gymRow }] = await Promise.all([
+	const [{ data: planRows }, countsRes, { data: gymRow }] = await Promise.all([
 		supabase
 			.from('plans')
 			.select('id, name, price, duration_days, is_active, created_at')
 			.eq('gym_id', workspace.gymId)
 			.order('is_active', { ascending: false })
 			.order('created_at', { ascending: false }),
-		supabase
-			.from('memberships')
-			.select('plan_id')
-			.eq('gym_id', workspace.gymId)
-			.not('plan_id', 'is', null),
+		supabase.rpc('plan_member_counts', { p_gym_id: workspace.gymId }),
 		supabase.from('gyms').select('day_pass_price').eq('id', workspace.gymId).maybeSingle()
 	]);
 
 	const memberCounts = new Map<string, number>();
-	for (const row of membershipRows ?? []) {
-		if (!row.plan_id) continue;
-		memberCounts.set(row.plan_id, (memberCounts.get(row.plan_id) ?? 0) + 1);
+	if (countsRes.error) {
+		console.error('plan_member_counts', countsRes.error.message);
+		const { data: membershipRows } = await supabase
+			.from('memberships')
+			.select('plan_id')
+			.eq('gym_id', workspace.gymId)
+			.not('plan_id', 'is', null);
+		for (const row of membershipRows ?? []) {
+			if (!row.plan_id) continue;
+			memberCounts.set(row.plan_id, (memberCounts.get(row.plan_id) ?? 0) + 1);
+		}
+	} else {
+		for (const row of (countsRes.data ?? []) as { plan_id: string; member_count: number }[]) {
+			if (!row.plan_id) continue;
+			memberCounts.set(row.plan_id, Number(row.member_count) || 0);
+		}
 	}
 
 	const plans = (planRows ?? []).map((p) => ({

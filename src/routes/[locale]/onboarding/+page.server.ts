@@ -35,18 +35,23 @@ export const load: PageServerLoad = async ({ params, url }) => {
 	const user = await getSessionUser();
 	if (!user) throw redirect(303, `/${locale}/login`);
 
-	if (await getPendingInvite()) {
+	// Register / OTP land here — fetch gates in one round instead of a waterfall.
+	const [invite, invitedOps, state, workspace] = await Promise.all([
+		getPendingInvite(),
+		isInvitedOpsUser(),
+		getOnboardingState(),
+		getWorkspace()
+	]);
+
+	if (invite) {
 		throw redirect(303, invitePath(locale));
 	}
 
-	if (await isInvitedOpsUser()) {
+	if (invitedOps) {
 		throw redirect(303, await resolvePostAuthPath(locale));
 	}
 
-	const state = await getOnboardingState();
 	if (!state) throw redirect(303, `/${locale}/login`);
-
-	const workspace = await getWorkspace();
 
 	if (workspace && !(await needsOwnerOnboarding(state))) {
 		throw redirect(303, `/${locale}/dashboard`);

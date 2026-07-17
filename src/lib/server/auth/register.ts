@@ -1,8 +1,9 @@
 import { redirect } from '@sveltejs/kit';
-import { bootstrapOrganizationAccount } from '$lib/supabase/admin';
 import { setPendingConfirmSignup } from '$lib/auth/pending-confirm';
+import { setRequestUser } from '$lib/auth/session';
 import { getRequestOrigin } from '$lib/http/origin';
 import { getDictionary } from '$lib/i18n/dictionaries';
+import { bootstrapOrganizationAccount } from '$lib/supabase/admin';
 import { createClient } from '$lib/supabase/server';
 import { zodFieldErrors } from '$lib/validation/field-errors';
 import {
@@ -110,15 +111,22 @@ export async function registerAction(formData: FormData): Promise<RegisterState>
 		return { error: d.register.error };
 	}
 
+	// Email confirmation required — seed org via admin (best-effort) while setting
+	// the pending cookie so the OTP UI can render without waiting on a waterfall.
 	if (!data.session) {
-		const boot = await bootstrapOrganizationAccount(data.user.id, organizationName);
+		const [boot] = await Promise.all([
+			bootstrapOrganizationAccount(data.user.id, organizationName),
+			setPendingConfirmSignup({ email, organizationName })
+		]);
 		if (!boot.ok) {
 			console.warn('registerAction bootstrap deferred', boot.message);
 		}
-
-		await setPendingConfirmSignup({ email, organizationName });
 		throw redirect(303, `/${locale}/register`);
 	}
+
+	// Immediate session (confirm-email off) — bind locals so any same-request
+	// helpers see the new user, then bootstrap org and land on onboarding.
+	setRequestUser(data.user);
 
 	const { error: rpcError } = await supabase.rpc('register_organization_account', {
 		p_organization_name: organizationName

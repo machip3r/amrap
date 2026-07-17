@@ -4,7 +4,7 @@ import {
 	clearPendingConfirmEmail,
 	setPendingConfirmEmail
 } from '$lib/auth/pending-confirm';
-import { resolvePostAuthPath } from '$lib/auth/post-auth-redirect';
+import { setRequestUser } from '$lib/auth/session';
 import { getRequestOrigin } from '$lib/http/origin';
 import { getDictionary } from '$lib/i18n/dictionaries';
 import { createClient } from '$lib/supabase/server';
@@ -64,7 +64,7 @@ export async function verifySignupOtpAction(formData: FormData): Promise<Confirm
 	}
 
 	const supabase = createClient();
-	const { error } = await supabase.auth.verifyOtp({
+	const { data, error } = await supabase.auth.verifyOtp({
 		email: parsed.data.email,
 		token: parsed.data.otp,
 		type: 'signup'
@@ -78,8 +78,12 @@ export async function verifySignupOtpAction(formData: FormData): Promise<Confirm
 		};
 	}
 
+	if (data.user) setRequestUser(data.user);
+
 	await ensureOrganizationAfterConfirm(parsed.data.email);
-	throw redirect(303, await resolvePostAuthPath(locale));
+	// Fresh signup always continues owner setup — skip the full post-auth gate
+	// round (invite / workspace / member) that login needs.
+	throw redirect(303, `/${locale}/onboarding`);
 }
 
 export async function resendSignupOtpAction(formData: FormData): Promise<ConfirmEmailState> {

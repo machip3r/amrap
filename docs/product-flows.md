@@ -104,6 +104,8 @@ Granular `gym_roles.permissions` JSON: **Planned** (unused in UI today).
 2. If session exists → `/onboarding`.
 3. If email confirmation required → pending cookie + OTP UI on the same register route.
 
+**Perf:** Immediate-session register binds `locals.user`, runs org RPC, then redirects straight to `/onboarding` (no post-auth gate waterfall). OTP / email-confirm signup ensures the org then redirects to `/onboarding` the same way. Pending-confirm path runs admin bootstrap and the pending cookie in parallel. Onboarding load resolves invite / invited-ops / onboarding state / workspace in one parallel round.
+
 **Cases**
 
 | Case | UI |
@@ -133,6 +135,8 @@ Granular `gym_roles.permissions` JSON: **Planned** (unused in UI today).
 | Gym workspace (owner finished, or invited staff/trainer with profile done) | `/dashboard` |
 | No gym role, active membership + profile done | `/me` |
 | Otherwise | `/onboarding` |
+
+**Perf:** After password / OTP success, the session user is bound onto `locals` and `resolvePostAuthPath` resolves invite / onboarding / profile / workspace / member gates in one parallel round (not a sequential waterfall). Ops layout loads workspace with those gates on the follow-up GET.
 
 **Guards:** Logged-in users hitting `/login` or `/register` are redirected via the same resolver (proxy no longer hardcodes `/dashboard`).
 
@@ -284,7 +288,7 @@ CRUD membership plans at gym level. Price, duration, active/archived. Day-pass p
 
 ### 4.4 Payments (`/payments`) — Shipped (manual)
 
-Register manual payment (cash / transfer, amount, period). Recent list.
+Register manual payment (cash / transfer, amount, period). Recent list. Member picker seeds a recent subset and searches the server as you type (does not load every membership up front).
 
 **Planned:** Gateway (Mercado Pago / etc.), recurring, failure handling, member portal, CSV export (Starter+).
 

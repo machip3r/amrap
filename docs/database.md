@@ -271,6 +271,8 @@ Legacy wrappers may exist (`register_organization`, `register_tenant`) for older
 | `create_gym_membership(gym_id, full_name, expires_at, …)` | Creates **new** `persons` row + membership (staff); does not yet merge/claim existing persons by email |
 | `update_gym_branding(gym_id, theme_light?, theme_dark?, logo_url_light?, logo_url_dark?, clear_logo_light?, clear_logo_dark?)` | Owner/provisional: set gym logos and/or light/dark theme jsonb |
 | `update_my_nav_visibility(gym_id, nav_visibility)` | Authenticated user: update **their own** `gym_roles.nav_visibility` for that gym (`{ "hidden": string[] }`) |
+| `plan_member_counts(gym_id)` | Grouped membership counts per `plan_id` for Plans page |
+| `gym_payment_stats(gym_id, month_start, today_start)` | Aggregate payment totals/counts for Payments page stats cards |
 
 ### Triggers
 

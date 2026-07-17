@@ -158,11 +158,16 @@ export async function loadOpsDashboard(
 	const expiringEnd = addDays(now, EXPIRING_WINDOW_DAYS);
 	const criticalEnd = addDays(now, CRITICAL_EXPIRING_DAYS);
 
+	const weekDayRanges = Array.from({ length: 7 }, (_, i) => {
+		const day = addDays(weekStart, i);
+		return { day, next: addDays(day, 1) };
+	});
+
 	const [
 		activeRes,
 		checkInsTodayRes,
 		expiringRes,
-		weekCheckInsRes,
+		weekDayCountRes,
 		recentRes,
 		expiredAlertsRes,
 		soonAlertsRes,
@@ -184,12 +189,16 @@ export async function loadOpsDashboard(
 			.eq('gym_id', gymId)
 			.gte('expires_at', nowIso)
 			.lte('expires_at', expiringEnd.toISOString()),
-		supabase
-			.from('check_ins')
-			.select('checked_in_at')
-			.eq('gym_id', gymId)
-			.gte('checked_in_at', weekStart.toISOString())
-			.order('checked_in_at', { ascending: true }),
+		Promise.all(
+			weekDayRanges.map(({ day, next }) =>
+				supabase
+					.from('check_ins')
+					.select('id', { count: 'exact', head: true })
+					.eq('gym_id', gymId)
+					.gte('checked_in_at', day.toISOString())
+					.lt('checked_in_at', next.toISOString())
+			)
+		),
 		supabase
 			.from('check_ins')
 			.select(
@@ -249,22 +258,12 @@ export async function loadOpsDashboard(
 		duration_days: p.duration_days as number
 	}));
 
-	const countsByDay = new Map<string, number>();
-	for (const row of weekCheckInsRes.data ?? []) {
-		const at = new Date(row.checked_in_at as string);
-		const key = dayKey(at);
-		countsByDay.set(key, (countsByDay.get(key) ?? 0) + 1);
-	}
-
 	const weekdayFmt = new Intl.DateTimeFormat(locale, { weekday: 'short' });
-	const weeklyDays = Array.from({ length: 7 }, (_, i) => {
-		const day = addDays(weekStart, i);
-		return {
-			label: weekdayFmt.format(day),
-			count: countsByDay.get(dayKey(day)) ?? 0,
-			isToday: dayKey(day) === dayKey(todayStart)
-		};
-	});
+	const weeklyDays = weekDayRanges.map(({ day }, i) => ({
+		label: weekdayFmt.format(day),
+		count: weekDayCountRes[i]?.count ?? 0,
+		isToday: dayKey(day) === dayKey(todayStart)
+	}));
 
 	const recentCheckIns = (recentRes.data ?? []).map((row) => {
 		const person = firstEmbed(row.persons as PersonEmbed);

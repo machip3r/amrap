@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
+	import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
 	import { page } from '$app/state';
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
@@ -136,7 +137,7 @@
 	async function reload() {
 		pending = true;
 		try {
-			await invalidateAll();
+			await invalidate(OPS_LOAD_DEPS.team);
 		} finally {
 			pending = false;
 		}

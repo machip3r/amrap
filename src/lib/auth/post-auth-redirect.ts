@@ -1,43 +1,63 @@
-import type { Locale } from "$lib/i18n/config";
+import type { Locale } from '$lib/i18n/config';
 import {
-  getOnboardingState,
-  getSessionUser,
-  getWorkspace,
-  type OnboardingState,
-} from "$lib/auth/session";
-import { getMemberContext } from "$lib/auth/member-session";
+	getOnboardingState,
+	getSessionUser,
+	getWorkspace,
+	type OnboardingState
+} from '$lib/auth/session';
+import { getMemberContext } from '$lib/auth/member-session';
+import { getPendingInvite, invitePath } from '$lib/auth/invite-decision';
 import {
-  getPendingInvite,
-  invitePath,
-} from "$lib/auth/invite-decision";
-import {
-  needsProfileWelcome,
-  welcomePath,
-} from "$lib/auth/profile-onboarding";
-import { createClient } from "$lib/supabase/server";
+	getPersonProfileStatus,
+	welcomePath
+} from '$lib/auth/profile-onboarding';
+import { createClient } from '$lib/supabase/server';
+import { getRequestEvent } from '$app/server';
 
 /**
  * Staff/trainer invitee (pending or accepted). These users must never enter
  * gym-owner onboarding or get an organization bootstrapped.
+ * Memoized on `event.locals` for the duration of one request.
  */
 export async function isInvitedOpsUser(): Promise<boolean> {
-  const user = await getSessionUser();
-  if (!user) return false;
+	let locals: App.Locals | null = null;
+	try {
+		locals = getRequestEvent().locals;
+	} catch {
+		locals = null;
+	}
+	if (locals?.invitedOpsResolved) {
+		return Boolean(locals.invitedOps);
+	}
 
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("gym_roles")
-    .select("id")
-    .eq("user_id", user.id)
-    .in("role", ["STAFF", "TRAINER"])
-    .in("invite_status", ["pending", "accepted"])
-    // Provisional org creators are STAFF + is_provisional_owner; they must
-    // finish owner onboarding, not the invitee /welcome path.
-    .eq("is_provisional_owner", false)
-    .limit(1)
-    .maybeSingle();
+	const user = await getSessionUser();
+	if (!user) {
+		if (locals) {
+			locals.invitedOpsResolved = true;
+			locals.invitedOps = false;
+		}
+		return false;
+	}
 
-  return Boolean(data);
+	const supabase = createClient();
+	const { data } = await supabase
+		.from('gym_roles')
+		.select('id')
+		.eq('user_id', user.id)
+		.in('role', ['STAFF', 'TRAINER'])
+		.in('invite_status', ['pending', 'accepted'])
+		// Provisional org creators are STAFF + is_provisional_owner; they must
+		// finish owner onboarding, not the invitee /welcome path.
+		.eq('is_provisional_owner', false)
+		.limit(1)
+		.maybeSingle();
+
+	const invited = Boolean(data);
+	if (locals) {
+		locals.invitedOpsResolved = true;
+		locals.invitedOps = invited;
+	}
+	return invited;
 }
 
 /**
@@ -47,39 +67,47 @@ export async function isInvitedOpsUser(): Promise<boolean> {
  * and dump them on the plans step.
  */
 export async function needsOwnerOnboarding(
-  onboarding?: OnboardingState | null,
+	onboarding?: OnboardingState | null
 ): Promise<boolean> {
-  const state = onboarding ?? (await getOnboardingState());
-  if (!state?.organizationId || state.completed) return false;
-  if (await isInvitedOpsUser()) return false;
-  return true;
+	const state = onboarding ?? (await getOnboardingState());
+	if (!state?.organizationId || state.completed) return false;
+	if (await isInvitedOpsUser()) return false;
+	return true;
 }
 
 /**
  * Where to send a signed-in user after login, register, invite confirm, etc.
+ * One parallel Auth/DB round — avoids sequential gate waterfall before redirect.
  */
 export async function resolvePostAuthPath(locale: Locale): Promise<string> {
-  if (await getPendingInvite()) {
-    return invitePath(locale);
-  }
+	const [invite, onboarding, profile, workspace, invitedOps, member] = await Promise.all([
+		getPendingInvite(),
+		getOnboardingState(),
+		getPersonProfileStatus(),
+		getWorkspace(),
+		isInvitedOpsUser(),
+		getMemberContext()
+	]);
 
-  if (await needsOwnerOnboarding()) {
-    return `/${locale}/onboarding`;
-  }
+	if (invite) {
+		return invitePath(locale);
+	}
 
-  if (await needsProfileWelcome()) {
-    return welcomePath(locale);
-  }
+	if (onboarding?.organizationId && !onboarding.completed && !invitedOps) {
+		return `/${locale}/onboarding`;
+	}
 
-  const workspace = await getWorkspace();
-  if (workspace) {
-    return `/${locale}/dashboard`;
-  }
+	if (profile && !profile.profileCompleted && (workspace || member)) {
+		return welcomePath(locale);
+	}
 
-  const member = await getMemberContext();
-  if (member) {
-    return `/${locale}/me`;
-  }
+	if (workspace) {
+		return `/${locale}/dashboard`;
+	}
 
-  return `/${locale}/onboarding`;
+	if (member) {
+		return `/${locale}/me`;
+	}
+
+	return `/${locale}/onboarding`;
 }

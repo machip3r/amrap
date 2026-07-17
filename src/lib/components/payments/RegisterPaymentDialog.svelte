@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { deserialize, enhance } from '$app/forms';
+	import { invalidate } from '$app/navigation';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Search from '@lucide/svelte/icons/search';
 	import X from '@lucide/svelte/icons/x';
@@ -10,6 +11,7 @@
 	import Select from '$lib/components/ui/Select.svelte';
 	import type { Locale } from '$lib/i18n/config';
 	import type { Dictionary } from '$lib/i18n/dictionaries';
+	import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
 	import type { CreatePaymentState } from '$lib/server/payments/actions';
 
 	export type PaymentMemberOption = {
@@ -55,18 +57,30 @@
 	let activeIndex = $state(0);
 	let rootEl: HTMLDivElement | undefined = $state();
 	let inputEl: HTMLInputElement | undefined = $state();
+	let memberOptions = $state<PaymentMemberOption[]>([]);
+	let searchTimer: ReturnType<typeof setTimeout> | null = null;
+	let searchAbort: AbortController | null = null;
 
-	const selectedMember = $derived(members.find((m) => m.id === memberId) ?? null);
+	$effect(() => {
+		memberOptions = members;
+	});
+
+	$effect(() => {
+		return () => {
+			cancelMemberSearch();
+		};
+	});
+
+	const selectedMember = $derived(
+		memberOptions.find((m) => m.id === memberId) ??
+			members.find((m) => m.id === memberId) ??
+			null
+	);
 	const fe = $derived(localFieldErrors);
 
 	const filteredMembers = $derived.by(() => {
 		const q = memberQuery.trim().toLowerCase();
-		const list = !q
-			? members
-			: members.filter((m) => {
-					const hay = [m.name, m.email ?? ''].join(' ').toLowerCase();
-					return hay.includes(q);
-				});
+		const list = memberOptions;
 		return [...list]
 			.sort((a, b) => {
 				if (!q) return a.name.localeCompare(b.name);
@@ -77,6 +91,56 @@
 			})
 			.slice(0, 8);
 	});
+
+	function cancelMemberSearch() {
+		if (searchTimer) {
+			clearTimeout(searchTimer);
+			searchTimer = null;
+		}
+		searchAbort?.abort();
+		searchAbort = null;
+	}
+
+	async function searchMembersRemote(q: string) {
+		searchAbort?.abort();
+		const controller = new AbortController();
+		searchAbort = controller;
+		try {
+			const body = new FormData();
+			body.set('q', q);
+			const response = await fetch('?/searchMembers', {
+				method: 'POST',
+				body,
+				headers: { 'x-sveltekit-action': 'true' },
+				signal: controller.signal
+			});
+			const actionResult = deserialize(await response.text());
+			if (actionResult.type === 'success' || actionResult.type === 'failure') {
+				const data = actionResult.data as { members?: PaymentMemberOption[] } | undefined;
+				if (data?.members) memberOptions = data.members;
+			}
+		} catch (err) {
+			// Navigating away / closing the dialog aborts in-flight search — not an error.
+			if (err instanceof DOMException && err.name === 'AbortError') return;
+			if (err instanceof Error && err.name === 'AbortError') return;
+			console.error('searchMembersRemote', err);
+		} finally {
+			if (searchAbort === controller) searchAbort = null;
+		}
+	}
+
+	function onMemberQueryInput() {
+		activeIndex = 0;
+		memberListOpen = true;
+		if (selectedMember && memberQuery !== selectedMember.name) {
+			memberId = '';
+		}
+		if (searchTimer) clearTimeout(searchTimer);
+		const q = memberQuery.trim();
+		searchTimer = setTimeout(() => {
+			void searchMembersRemote(q);
+		}, 250);
+	}
 
 	const safeActiveIndex = $derived(
 		filteredMembers.length === 0
@@ -108,6 +172,7 @@
 	}
 
 	function resetForm() {
+		cancelMemberSearch();
 		const nextKind: PaymentKind =
 			plans.length > 0 ? 'plan' : dayPassPrice != null ? 'day_pass' : 'plan';
 		memberId = '';
@@ -134,6 +199,7 @@
 	}
 
 	function pickMember(member: PaymentMemberOption) {
+		cancelMemberSearch();
 		memberId = member.id;
 		memberQuery = member.name;
 		memberListOpen = false;
@@ -141,6 +207,7 @@
 	}
 
 	function clearMember() {
+		cancelMemberSearch();
 		memberId = '';
 		memberQuery = '';
 		activeIndex = 0;
@@ -274,9 +341,11 @@
 								onSuccess?.(data.paymentId);
 								open = false;
 								resetForm();
+								await invalidate(OPS_LOAD_DEPS.payments);
+								await invalidate(OPS_LOAD_DEPS.dashboard);
 							}
 						}
-						await update({ reset: false });
+						await update({ reset: false, invalidateAll: false });
 					};
 				}}
 			>
@@ -305,13 +374,7 @@
 										spellcheck="false"
 										placeholder={d.payments.searchMember}
 										bind:value={memberQuery}
-										oninput={() => {
-											activeIndex = 0;
-											memberListOpen = true;
-											if (selectedMember && memberQuery !== selectedMember.name) {
-												memberId = '';
-											}
-										}}
+										oninput={onMemberQueryInput}
 										onfocus={() => (memberListOpen = true)}
 										onkeydown={onMemberKeyDown}
 										class="h-11 w-full border bg-[var(--color-surface-hover)] py-2.5 pl-10 pr-10 text-sm text-[var(--color-text)] placeholder-[var(--color-muted)] transition-[border-radius,border-color] duration-200 focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)] {fe?.member_id

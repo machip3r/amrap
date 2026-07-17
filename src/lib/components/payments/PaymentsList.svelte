@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
+	import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
 	import RefreshCw from '@lucide/svelte/icons/refresh-cw';
 	import Search from '@lucide/svelte/icons/search';
 	import Input from '$lib/components/ui/Input.svelte';
@@ -97,15 +98,16 @@
 			await goto(hrefFor({ q: nextQ.trim() || null }, 1), {
 				keepFocus: true,
 				noScroll: true,
-				invalidateAll: true
+				invalidateAll: false
 			});
+			await invalidate(OPS_LOAD_DEPS.payments);
 			pending = false;
 		}, 300);
 	}
 
 	async function reload() {
 		pending = true;
-		await invalidateAll();
+		await invalidate(OPS_LOAD_DEPS.payments);
 		pending = false;
 	}
 

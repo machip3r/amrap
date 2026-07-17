@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { invalidate } from '$app/navigation';
 	import Check from '@lucide/svelte/icons/check';
 	import Button from '$lib/components/ui/Button.svelte';
 	import type { Locale } from '$lib/i18n/config';
 	import type { Dictionary } from '$lib/i18n/dictionaries';
+	import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
 	import { OPS_NAV_ICONS } from '$lib/nav/ops-nav-icons';
 	import {
 		getCustomizableOpsNavItems,
@@ -95,10 +97,13 @@
 					error = undefined;
 					return async ({ result, update }) => {
 						pending = false;
-						await update();
+						await update({ invalidateAll: false });
 						if (result.type === 'success') {
 							const data = result.data as SettingsActionState;
-							if (data?.success) flash = data.success;
+							if (data?.success) {
+								flash = data.success;
+								await invalidate(OPS_LOAD_DEPS.workspace);
+							}
 							if (data?.error) error = data.error;
 						}
 					};

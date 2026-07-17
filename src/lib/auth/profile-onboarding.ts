@@ -1,3 +1,4 @@
+import { getRequestEvent } from "$app/server";
 import { createClient } from "$lib/supabase/server";
 import { getSessionUser } from "$lib/auth/session";
 import { getMemberContext } from "$lib/auth/member-session";
@@ -16,14 +17,36 @@ export type PersonProfileStatus = {
   weightKg: number | null;
 };
 
+function tryLocals() {
+  try {
+    return getRequestEvent().locals;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Linked person row for the signed-in user (invite / self profile).
+ * Memoized on `event.locals` for the duration of one request.
  */
 export async function getPersonProfileStatus(): Promise<PersonProfileStatus | null> {
-  const user = await getSessionUser();
-  if (!user) return null;
+  const locals = tryLocals();
+  if (locals?.personProfileResolved) {
+    return locals.personProfile ?? null;
+  }
 
-  const supabase = await createClient();
+  const finish = (status: PersonProfileStatus | null) => {
+    if (locals) {
+      locals.personProfileResolved = true;
+      locals.personProfile = status;
+    }
+    return status;
+  };
+
+  const user = await getSessionUser();
+  if (!user) return finish(null);
+
+  const supabase = createClient();
   const { data, error } = await supabase
     .from("persons")
     .select(
@@ -34,11 +57,11 @@ export async function getPersonProfileStatus(): Promise<PersonProfileStatus | nu
 
   if (error) {
     console.error("getPersonProfileStatus", error.message);
-    return null;
+    return finish(null);
   }
-  if (!data) return null;
+  if (!data) return finish(null);
 
-  return {
+  return finish({
     personId: data.id as string,
     fullName: (data.full_name as string | null)?.trim() || null,
     profileCompleted: Boolean(data.profile_completed_at),
@@ -48,7 +71,7 @@ export async function getPersonProfileStatus(): Promise<PersonProfileStatus | nu
       data.height_cm != null ? Number(data.height_cm) : null,
     weightKg:
       data.weight_kg != null ? Number(data.weight_kg) : null,
-  };
+  });
 }
 
 /**

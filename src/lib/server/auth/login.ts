@@ -1,6 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import { resolvePostAuthPath } from '$lib/auth/post-auth-redirect';
 import { setPendingConfirmEmail } from '$lib/auth/pending-confirm';
+import { setRequestUser } from '$lib/auth/session';
 import { getDictionary } from '$lib/i18n/dictionaries';
 import { createClient } from '$lib/supabase/server';
 import { zodFieldErrors } from '$lib/validation/field-errors';
@@ -50,7 +51,7 @@ export async function loginAction(formData: FormData): Promise<LoginState> {
 	}
 
 	const supabase = createClient();
-	const { error } = await supabase.auth.signInWithPassword({
+	const { data, error } = await supabase.auth.signInWithPassword({
 		email: parsed.data.email,
 		password: parsed.data.password
 	});
@@ -61,6 +62,10 @@ export async function loginAction(formData: FormData): Promise<LoginState> {
 		}
 		return { error: d.login.error };
 	}
+
+	// Hooks ran before sign-in with locals.user=null; bind the new session so
+	// resolvePostAuthPath does not re-hit Auth or treat the user as logged out.
+	if (data.user) setRequestUser(data.user);
 
 	throw redirect(303, await resolvePostAuthPath(locale));
 }

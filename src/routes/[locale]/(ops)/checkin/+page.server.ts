@@ -1,6 +1,9 @@
 import { error, fail } from '@sveltejs/kit';
 import { canInWorkspace } from '$lib/auth/permissions';
 import { listTodayCheckIns } from '$lib/checkin/queries';
+import type { Locale } from '$lib/i18n/config';
+import { getDictionary } from '$lib/i18n/dictionaries';
+import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
 import {
 	confirmCheckIn,
 	runCheckIn,
@@ -11,10 +14,12 @@ import { createClient } from '$lib/supabase/server';
 import { formString } from '$lib/validation/schemas';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ parent }) => {
-	const { locale, d, workspace } = await parent();
+export const load: PageServerLoad = async ({ parent, depends }) => {
+	depends(OPS_LOAD_DEPS.checkin);
+	const { locale, workspace } = await parent();
+	const d = getDictionary(locale as Locale);
 
-	if (!canInWorkspace(workspace, 'checkin')) {
+	if (!workspace || !canInWorkspace(workspace, 'checkin')) {
 		error(403, d.common.forbidden);
 	}
 

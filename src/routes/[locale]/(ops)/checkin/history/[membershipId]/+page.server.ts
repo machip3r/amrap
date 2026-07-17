@@ -1,6 +1,9 @@
 import { error } from '@sveltejs/kit';
 import { canInWorkspace } from '$lib/auth/permissions';
 import { loadMemberCheckInsMonth } from '$lib/checkin/queries';
+import type { Locale } from '$lib/i18n/config';
+import { getDictionary } from '$lib/i18n/dictionaries';
+import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
 import { createClient } from '$lib/supabase/server';
 import { uuidSchema } from '$lib/validation/schemas';
 import type { PageServerLoad } from './$types';
@@ -17,10 +20,12 @@ function parseMonthParam(raw: string | null): { year: number; month: number } {
 	return { year: y, month: m };
 }
 
-export const load: PageServerLoad = async ({ parent, params, url }) => {
-	const { locale, d, workspace } = await parent();
+export const load: PageServerLoad = async ({ parent, params, url, depends }) => {
+	depends(OPS_LOAD_DEPS.checkin);
+	const { locale, workspace } = await parent();
+	const d = getDictionary(locale as Locale);
 
-	if (!canInWorkspace(workspace, 'checkin')) {
+	if (!workspace || !canInWorkspace(workspace, 'checkin')) {
 		error(403, d.common.forbidden);
 	}
 

@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import { deserialize } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate } from '$app/navigation';
+	import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
 	import {
 		ArrowRight,
 		Check,
@@ -139,7 +140,8 @@
 			if (opts?.celebrate) {
 				showQrCelebration(r.member?.name ?? '');
 			}
-			void invalidateAll();
+			void invalidate(OPS_LOAD_DEPS.checkin);
+			void invalidate(OPS_LOAD_DEPS.dashboard);
 			return;
 		}
 		const message =
@@ -310,7 +312,8 @@
 					},
 					message: labels.resultOk
 				};
-				void invalidateAll();
+				void invalidate(OPS_LOAD_DEPS.checkin);
+				void invalidate(OPS_LOAD_DEPS.dashboard);
 			}
 		} finally {
 			pending = false;

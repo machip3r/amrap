@@ -1,3 +1,4 @@
+import { getRequestEvent } from "$app/server";
 import { createClient } from "$lib/supabase/server";
 import { createServiceRoleClient } from "$lib/supabase/admin";
 import { getSessionUser } from "$lib/auth/session";
@@ -29,13 +30,32 @@ function db() {
 /**
  * Pending invite awaiting accept/decline for the signed-in user.
  * Uses service role so pending invitees can still read gym name before accept.
+ * Memoized on `event.locals` for the duration of one request.
  */
 export async function getPendingInvite(): Promise<PendingInvite | null> {
+  let locals: App.Locals | null = null;
+  try {
+    locals = getRequestEvent().locals;
+  } catch {
+    locals = null;
+  }
+  if (locals?.pendingInviteResolved) {
+    return locals.pendingInvite ?? null;
+  }
+
+  const finish = (invite: PendingInvite | null) => {
+    if (locals) {
+      locals.pendingInviteResolved = true;
+      locals.pendingInvite = invite;
+    }
+    return invite;
+  };
+
   const user = await getSessionUser();
-  if (!user) return null;
+  if (!user) return finish(null);
 
   const admin = db();
-  const supabase = admin ?? (await createClient());
+  const supabase = admin ?? createClient();
 
   const { data: roleRow, error: roleErr } = await supabase
     .from("gym_roles")
@@ -53,13 +73,13 @@ export async function getPendingInvite(): Promise<PendingInvite | null> {
 
   if (roleRow) {
     const gym = firstEmbed(roleRow.gyms as GymEmbed | GymEmbed[] | null);
-    return {
+    return finish({
       kind: "team",
       rowId: roleRow.id as string,
       gymId: (roleRow.gym_id as string) ?? gym?.id ?? "",
       gymName: gym?.name?.trim() || "—",
       role: roleRow.role as "STAFF" | "TRAINER",
-    };
+    });
   }
 
   const { data: person } = await supabase
@@ -68,7 +88,7 @@ export async function getPendingInvite(): Promise<PendingInvite | null> {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (!person) return null;
+  if (!person) return finish(null);
 
   const { data: membership, error: memErr } = await supabase
     .from("memberships")
@@ -83,16 +103,16 @@ export async function getPendingInvite(): Promise<PendingInvite | null> {
     console.error("getPendingInvite memberships", memErr.message);
   }
 
-  if (!membership) return null;
+  if (!membership) return finish(null);
 
   const gym = firstEmbed(membership.gyms as GymEmbed | GymEmbed[] | null);
-  return {
+  return finish({
     kind: "member",
     rowId: membership.id as string,
     gymId: (membership.gym_id as string) ?? gym?.id ?? "",
     gymName: gym?.name?.trim() || "—",
     role: "MEMBER",
-  };
+  });
 }
 
 export function invitePath(locale: Locale): string {

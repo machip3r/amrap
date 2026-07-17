@@ -5,12 +5,13 @@
 	import AppNav from '$lib/components/ops/AppNav.svelte';
 	import OpsMobileNav from '$lib/components/ops/OpsMobileNav.svelte';
 	import OpsNavLogo from '$lib/components/ops/OpsNavLogo.svelte';
+	import OpsNavProgress from '$lib/components/ops/OpsNavProgress.svelte';
+	import { getDictionary } from '$lib/i18n/dictionaries';
 	import type { Snippet } from 'svelte';
 
 	type Props = {
 		data: {
 			locale: import('$lib/i18n/config').Locale;
-			d: import('$lib/i18n/dictionaries').Dictionary;
 			workspace: import('$lib/types').Workspace;
 			initial: string;
 			canManageSettings: boolean;
@@ -24,11 +25,14 @@
 	};
 
 	let { data, children }: Props = $props();
+	const d = $derived(getDictionary(data.locale));
 </script>
 
 <svelte:head>
 	{@html `<style>${data.brandStyle}</style>`}
 </svelte:head>
+
+<OpsNavProgress />
 
 <div class="amrap-branded flex h-screen flex-col overflow-hidden bg-[var(--color-bg)]">
 	<div class="flex min-h-0 flex-1 overflow-hidden">
@@ -51,7 +55,7 @@
 				<a
 					href="/{data.locale}/dashboard"
 					class="min-w-0 flex-1 md:hidden"
-					aria-label={data.workspace.gymName || data.d.nav.dashboard}
+					aria-label={data.workspace.gymName || d.nav.dashboard}
 				>
 					<OpsNavLogo
 						logoUrlLight={data.logoUrlLight}
@@ -61,12 +65,12 @@
 					/>
 				</a>
 				<div class="ml-auto flex items-center gap-2 sm:gap-3">
-					<ThemeToggle label={data.d.a11y.toggleTheme} class="h-12 w-12 sm:h-11 sm:w-11" />
+					<ThemeToggle label={d.a11y.toggleTheme} class="h-12 w-12 sm:h-11 sm:w-11" />
 					<a
 						href="/{data.locale}/settings"
 						class="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)] md:inline-flex"
-						aria-label={data.d.nav.settings}
-						title={data.d.nav.settings}
+						aria-label={d.nav.settings}
+						title={d.nav.settings}
 					>
 						<Settings class="h-5 w-5" aria-hidden="true" />
 					</a>
@@ -84,7 +88,7 @@
 			</main>
 		</div>
 	</div>
-	<AmrapWatermark locale={data.locale} label={data.d.shell.poweredBy} class="hidden md:flex" />
+	<AmrapWatermark locale={data.locale} label={d.shell.poweredBy} class="hidden md:flex" />
 	<OpsMobileNav
 		locale={data.locale}
 		role={data.workspace.role}

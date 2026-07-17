@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import {
   bootstrapOrganizationAccount,
   createConfirmedAuthUser,
@@ -18,6 +19,7 @@ export type OwnerFixtureCreds = {
   provisional: boolean;
 };
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const AUTH_DIR = path.join(__dirname, "../.auth");
 
 export function ownerStoragePath(): string {

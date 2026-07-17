@@ -4,6 +4,8 @@
 
 Markets: **Mexico first**, with **United States** supported from the product definition (locales `es` / `en`, dual pricing).
 
+**App:** SvelteKit at the **repo root** (`pnpm dev` → `http://localhost:5173`). Agent rules: [`AGENTS.md`](AGENTS.md). Legacy Next.js archive: [`amrap-next/`](amrap-next/).
+
 ---
 
 ## What AMRAP is

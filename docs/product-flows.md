@@ -1,22 +1,24 @@
 # AMRAP — Product flows by user type
 
-Reference for design and implementation: **who enters**, **what they see**, **what they do**, and **edge cases**. Complements `README.md` (business rules). This file is the **UI/UX flow** source of truth.
+> **Canonical for the default SvelteKit app (repo root).** Status labels describe SvelteKit. Layout notes: [`../MIGRATION.md`](../MIGRATION.md). Agent standards: [`../AGENTS.md`](../AGENTS.md). Legacy Next.js lives in [`../amrap-next/`](../amrap-next/).
+
+Reference for design and implementation: **who enters**, **what they see**, **what they do**, and **edge cases**. Complements `README.md` (business rules). This file is the **UI/UX flow** source of truth for SvelteKit.
 
 Locales: `es` (default) · `en`.
 
-**Maintenance:** When code adds/changes/removes a feature, screen, nav item, permission, or redirect, update this file in the **same change** for every affected user type. See `AGENTS.md` → *Product flows*.
+**Maintenance:** When code adds/changes/removes a feature, screen, nav item, permission, or redirect, update this file in the **same change** for every affected user type. See `AGENTS.md` → *Product flows*. Keep Playwright under `e2e/` in sync.
 
-**Status labels**
+**Status labels (SvelteKit)**
 
 | Label | Meaning |
 | ----- | ------- |
-| **Shipped** | Live in the app as described |
-| **Partial** | UI or backend exists but incomplete vs the intended flow |
-| **Planned** | Documented product intent; not built (or stub only) |
+| **Shipped** | Live in SvelteKit as described |
+| **Partial** | UI or backend exists in SvelteKit but incomplete vs the intended flow |
+| **Planned** | Documented product intent; not built in SvelteKit (or stub only) |
 
 ---
 
-## Surface map
+## Surface map (SvelteKit)
 
 | Surface | Who | Typical route | Status | Notes |
 | ------- | --- | ------------- | ------ | ----- |
@@ -26,7 +28,7 @@ Locales: `es` (default) · `en`.
 | Profile welcome | Invited staff / trainer / member | `/welcome` | Shipped | After accept + password; blocking until `persons.profile_completed_at` |
 | Invite decision | Invited staff / trainer / member | `/invite` | Shipped | Accept or decline; decline → `cancelled` + sign out |
 | Invite password | After accept | `/invite/password` | Shipped | Required password before `/welcome` |
-| Ops app | Owner, staff, trainer | `/dashboard`, `/timers`, members, plans, … | Shipped | Scoped to active gym (`amrap_gym_id` cookie) |
+| Ops app | Owner, staff, trainer | `/dashboard`, `/timers`, members, plans, … | Shipped | Scoped to active gym (`amrap_gym_id` cookie); dashboard quick actions open unified register dialog |
 | Member app | Member | `/me`, `/me/qr`, `/me/classes`, `/me/timers`, `/me/inbox` | Shipped | Requires active non-expired membership |
 | Organization / billing | Owner / provisional | `/organization` | Partial | Plan UI + deletion; checkout & add gym coming soon |
 | Gym settings | All ops roles | `/settings` | Partial | Everyone: personal nav menu. Owner/provisional: + gym branding |
@@ -37,6 +39,7 @@ Locales: `es` (default) · `en`.
 | Gym / branch switcher | Ops | — | Partial | Cookie + multi-role data exist; no switcher UI |
 | Platform admin | AMRAP operator | `/platform/…` | Planned | No routes yet |
 | White-label member domain | Member | Gym domain | Planned | Ops branding shipped; member shell still AMRAP |
+| E2E (Playwright) | CI / local | `e2e/` | Shipped | Owner + provisional + public suite; port 5173 |
 
 ---
 
@@ -241,7 +244,9 @@ Member-only users without gym role are redirected to `/me` by `(app)/layout`.
 
 ### 4.1 Dashboard (`/dashboard`) — Shipped
 
-**UI:** Active members · check-ins today · expiring soon · operational alerts · recent access · quick actions (new member, check-in, plans, staff).
+**UI:** Active members · check-ins today · expiring soon · operational alerts · recent access · quick actions (check-in link · **register dialog** for new member / trainer / staff).
+
+**Register dialog (quick actions):** Shared `RegisterUserDialog` — role-scoped buttons open the same dialog with member (plan + payment) or trainer/staff (invite) forms. Does not navigate to list pages to start create.
 
 **Planned:** Multi-gym rollup · billing health · richer trends (Growth+).
 

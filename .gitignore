@@ -1,50 +1,41 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+node_modules
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# Output
+.output
+.vercel
+.netlify
+.wrangler
+/.svelte-kit
+/build
 
-# testing
-/coverage
-/e2e/.auth/
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.*
+!.env.example
+!.env.test
+
+# Playwright
 /test-results/
 /playwright-report/
 /blob-report/
-/playwright/.cache/
+/e2e/.auth/
 
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
 
 /.pnpm-store/
 
 /supabase/.temp/
+
+# Legacy Next build artifacts if left at root
+/.next/
+/out/
+
+# Nested app node_modules
+amrap-next/node_modules/
+amrap-next/.next/

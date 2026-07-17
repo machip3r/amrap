@@ -1,5 +1,5 @@
 ---
-description: Responsive, UX-friendly UI standards for every AMRAP UI change
+description: Responsive, UX-friendly UI standards for every AMRAP UI change (SvelteKit)
 alwaysApply: true
 ---
 
@@ -16,12 +16,12 @@ Every UI change and feature must work well on phone (~375px) and desktop. Prefer
 
 ## Layout
 
-```tsx
-// ❌ BAD — desktop-only density
-<div className="grid grid-cols-4 gap-6 p-8">
+```svelte
+<!-- ❌ BAD — desktop-only density -->
+<div class="grid grid-cols-4 gap-6 p-8">
 
-// ✅ GOOD — stack first, expand later
-<div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6 lg:p-8">
+<!-- ✅ GOOD — stack first, expand later -->
+<div class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6 lg:p-8">
 ```
 
 - Touch targets ≥ ~44px
@@ -30,7 +30,7 @@ Every UI change and feature must work well on phone (~375px) and desktop. Prefer
 
 ## Design system
 
-- Reuse `--color-*`, shared `Input` / `Button` / `Dialog` / form fields
+- Reuse `--color-*`, shared `Input` / `Button` / `FormField` / form fields under `src/lib/components/ui/`
 - No one-off visual forks or hardcoded product copy — `es` + `en` dictionaries
 - Icon-only controls need `aria-label`; nav links use `aria-current` when active
 

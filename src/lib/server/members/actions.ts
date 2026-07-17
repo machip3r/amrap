@@ -1,0 +1,311 @@
+import { redirect } from '@sveltejs/kit';
+import { getWorkspace } from '$lib/auth/session';
+import { canInWorkspace } from '$lib/auth/permissions';
+import {
+	memberStatusFromExpires,
+	computeRenewedExpiry,
+	computeNewMembershipExpiry
+} from '$lib/members/dates';
+import {
+	emailSchema,
+	formString,
+	localeSchema,
+	optionalPhoneSchema,
+	paymentMethodSchema,
+	personNameSchema,
+	uuidSchema
+} from '$lib/validation/schemas';
+import { zodFieldErrors } from '$lib/validation/field-errors';
+import { toDbMemberStatus, toDbPaymentMethod } from '$lib/validation/db-enums';
+import { getDictionary } from '$lib/i18n/dictionaries';
+import { createClient } from '$lib/supabase/server';
+import { inviteAuthUserByEmail, linkPersonToUser } from '$lib/team/invite';
+import { z } from 'zod';
+
+function localeFromForm(formData: FormData) {
+	const localeRaw = formString(formData, 'locale') || 'es';
+	const localeParsed = localeSchema.safeParse(localeRaw);
+	return localeParsed.success ? localeParsed.data : ('es' as const);
+}
+
+function fail(path: string): never {
+	throw redirect(303, `${path}?error=1`);
+}
+
+const createMemberSchema = z.object({
+	locale: localeSchema,
+	name: personNameSchema,
+	email: emailSchema,
+	phone: optionalPhoneSchema,
+	plan_id: uuidSchema,
+	method: paymentMethodSchema
+});
+
+export type CreateMemberState = {
+	error?: string;
+	fieldErrors?: Record<string, string>;
+	success?: boolean;
+	memberId?: string;
+	emailWarning?: string;
+} | null;
+
+export async function createMember(formData: FormData): Promise<CreateMemberState> {
+	const locale = localeFromForm(formData);
+	const d = getDictionary(locale);
+	const workspace = await getWorkspace();
+	if (!workspace || !canInWorkspace(workspace, 'manage_members')) {
+		return { error: d.common.forbidden };
+	}
+
+	const parsed = createMemberSchema.safeParse({
+		locale: formString(formData, 'locale') || 'es',
+		name: formString(formData, 'name'),
+		email: formString(formData, 'email'),
+		phone: formString(formData, 'phone'),
+		plan_id: formString(formData, 'plan_id'),
+		method: formString(formData, 'method') || 'cash'
+	});
+	if (!parsed.success) {
+		return { fieldErrors: zodFieldErrors(parsed.error, d.validation) };
+	}
+
+	const supabase = createClient();
+
+	const { data: plan, error: planErr } = await supabase
+		.from('plans')
+		.select('id, price, duration_days, gym_id, is_active')
+		.eq('id', parsed.data.plan_id)
+		.eq('gym_id', workspace.gymId)
+		.eq('is_active', true)
+		.maybeSingle();
+
+	if (planErr || !plan) {
+		return { fieldErrors: { plan_id: d.validation.invalid } };
+	}
+
+	const expires = computeNewMembershipExpiry(plan.duration_days);
+
+	const { data: membershipId, error } = await supabase.rpc('create_gym_membership', {
+		p_gym_id: workspace.gymId,
+		p_full_name: parsed.data.name,
+		p_expires_at: expires.toISOString(),
+		p_phone: parsed.data.phone,
+		p_email: parsed.data.email,
+		p_branch_id: null,
+		p_plan_id: plan.id
+	});
+
+	if (error || !membershipId) {
+		console.error('createMember', error?.message);
+		return { error: d.members.error };
+	}
+
+	const { error: payErr } = await supabase.from('payments').insert({
+		gym_id: workspace.gymId,
+		membership_id: membershipId,
+		amount: plan.price,
+		method: toDbPaymentMethod(parsed.data.method),
+		recorded_by: workspace.userId
+	});
+	if (payErr) {
+		console.error('createMember payment', payErr.message);
+		return { error: d.members.error };
+	}
+
+	let emailWarning: string | undefined;
+	try {
+		const { data: membership } = await supabase
+			.from('memberships')
+			.select('person_id')
+			.eq('id', membershipId)
+			.maybeSingle();
+
+		if (membership?.person_id) {
+			const invite = await inviteAuthUserByEmail({
+				email: parsed.data.email,
+				fullName: parsed.data.name,
+				locale,
+				gymName: workspace.gymName,
+				kind: 'member',
+				nextPath: `/${locale}/invite`
+			});
+
+			if (invite.ok) {
+				await linkPersonToUser({
+					personId: membership.person_id,
+					userId: invite.userId
+				});
+				const { error: inviteStatusErr } = await supabase
+					.from('memberships')
+					.update({ invite_status: 'pending' })
+					.eq('id', membershipId)
+					.eq('gym_id', workspace.gymId);
+				if (inviteStatusErr) {
+					console.error('createMember invite_status', inviteStatusErr.message);
+				}
+				if (!invite.emailSent && !invite.emailSkipped) {
+					emailWarning = d.teamInvites.emailFailed;
+				}
+			} else {
+				console.error('createMember invite', invite.message);
+				emailWarning = d.teamInvites.emailFailed;
+			}
+		}
+	} catch (e) {
+		console.error('createMember invite unexpected', e);
+		emailWarning = d.teamInvites.emailFailed;
+	}
+
+	return {
+		success: true,
+		memberId: String(membershipId),
+		emailWarning
+	};
+}
+
+export async function deleteMemberAction(formData: FormData): Promise<void> {
+	const locale = localeFromForm(formData);
+	const workspace = await getWorkspace();
+	if (!workspace || !canInWorkspace(workspace, 'manage_members')) {
+		fail(`/${locale}/members`);
+	}
+
+	const idParsed = uuidSchema.safeParse(formString(formData, 'member_id'));
+	if (!idParsed.success) fail(`/${locale}/members`);
+
+	const supabase = createClient();
+
+	const { data: membership } = await supabase
+		.from('memberships')
+		.select('id, person_id')
+		.eq('id', idParsed.data)
+		.eq('gym_id', workspace.gymId)
+		.maybeSingle();
+
+	if (!membership) fail(`/${locale}/members`);
+
+	const { error } = await supabase
+		.from('memberships')
+		.delete()
+		.eq('id', membership.id)
+		.eq('gym_id', workspace.gymId);
+
+	if (error) {
+		console.error('deleteMember', error.message);
+		fail(`/${locale}/members/${idParsed.data}`);
+	}
+
+	throw redirect(303, `/${locale}/members`);
+}
+
+const renewSchema = z.object({
+	locale: localeSchema,
+	member_id: uuidSchema,
+	plan_id: uuidSchema,
+	method: paymentMethodSchema
+});
+
+export async function renewMember(formData: FormData): Promise<void> {
+	const locale = localeFromForm(formData);
+	const workspace = await getWorkspace();
+	const memberId = formString(formData, 'member_id');
+	const back = `/${locale}/members/${memberId || ''}`;
+
+	if (!workspace || !canInWorkspace(workspace, 'manage_members')) {
+		fail(back);
+	}
+
+	const parsed = renewSchema.safeParse({
+		locale: formString(formData, 'locale') || 'es',
+		member_id: memberId,
+		plan_id: formString(formData, 'plan_id'),
+		method: formString(formData, 'method') || 'cash'
+	});
+	if (!parsed.success) fail(back);
+
+	const supabase = createClient();
+
+	const { data: plan, error: planErr } = await supabase
+		.from('plans')
+		.select('id, price, duration_days, gym_id, is_active')
+		.eq('id', parsed.data.plan_id)
+		.eq('gym_id', workspace.gymId)
+		.eq('is_active', true)
+		.maybeSingle();
+
+	if (planErr || !plan) fail(back);
+
+	const { data: membership, error: memErr } = await supabase
+		.from('memberships')
+		.select('id, expires_at, gym_id')
+		.eq('id', parsed.data.member_id)
+		.eq('gym_id', workspace.gymId)
+		.maybeSingle();
+
+	if (memErr || !membership) fail(back);
+
+	const newExpires = computeRenewedExpiry(new Date(membership.expires_at), plan.duration_days);
+
+	const { error: payErr } = await supabase.from('payments').insert({
+		gym_id: workspace.gymId,
+		membership_id: membership.id,
+		amount: plan.price,
+		method: toDbPaymentMethod(parsed.data.method),
+		recorded_by: workspace.userId
+	});
+	if (payErr) {
+		console.error('renewMember payment', payErr.message);
+		fail(back);
+	}
+
+	const { error: upErr } = await supabase
+		.from('memberships')
+		.update({
+			expires_at: newExpires.toISOString(),
+			status: toDbMemberStatus(memberStatusFromExpires(newExpires)),
+			plan_id: plan.id,
+			updated_at: new Date().toISOString()
+		})
+		.eq('id', membership.id)
+		.eq('gym_id', workspace.gymId);
+
+	if (upErr) {
+		console.error('renewMember update', upErr.message);
+		fail(back);
+	}
+
+	throw redirect(303, `/${locale}/members/${membership.id}`);
+}
+
+export async function savePersonCareNote(formData: FormData): Promise<{ success?: boolean }> {
+	const locale = localeFromForm(formData);
+	const workspace = await getWorkspace();
+	if (!workspace || !canInWorkspace(workspace, 'manage_members')) {
+		return {};
+	}
+
+	const personId = uuidSchema.safeParse(formString(formData, 'person_id'));
+	if (!personId.success) return {};
+
+	const noteRaw = formString(formData, 'medical_note').trim();
+	const medicalNote = noteRaw.length === 0 ? null : noteRaw.slice(0, 500);
+
+	const supabase = createClient();
+	const { error } = await supabase.from('person_gym_care').upsert(
+		{
+			gym_id: workspace.gymId,
+			person_id: personId.data,
+			medical_note: medicalNote,
+			updated_by: workspace.userId,
+			updated_at: new Date().toISOString()
+		},
+		{ onConflict: 'gym_id,person_id' }
+	);
+
+	if (error) {
+		console.error('savePersonCareNote', error.message);
+		return {};
+	}
+
+	return { success: true };
+}

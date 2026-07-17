@@ -1,14 +1,14 @@
-# E2E tests (Playwright)
+# E2E tests (Playwright) — SvelteKit
 
-Browser end-to-end coverage for AMRAP user flows. Phase 1 focuses on **owner** and **provisional owner** paths from [`docs/product-flows.md`](../docs/product-flows.md).
+Browser end-to-end coverage for AMRAP user flows (SvelteKit at repo root). Phase 1 focuses on **owner** and **provisional owner** paths from [`docs/product-flows.md`](../docs/product-flows.md).
 
 Unit tests (Vitest) are out of scope here — use Playwright for flows.
 
 ## Prerequisites
 
-1. Env vars (from `.env.local` and/or `.env.test`):
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (or legacy anon key)
+1. Env vars (from `.env`, `.env.local`, and/or `.env.test`):
+   - `PUBLIC_SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL`)
+   - `PUBLIC_SUPABASE_PUBLISHABLE_KEY` / `PUBLIC_SUPABASE_ANON_KEY` (or Next `NEXT_PUBLIC_*` equivalents)
    - `SUPABASE_SERVICE_ROLE_KEY` (Admin API for seeding / confirming users)
 2. Prefer a **dedicated test Supabase project** so runs do not pollute production.
 3. Chromium for Playwright: `pnpm exec playwright install chromium`
@@ -21,7 +21,7 @@ pnpm test:e2e:owner    # owner + provisional suite
 pnpm test:e2e:ui       # Playwright UI mode
 ```
 
-Playwright starts `pnpm run dev` (or reuses an existing server on port 3000 when not in CI).
+Playwright starts `pnpm run dev` (or reuses an existing server on port **5173** when not in CI). Override with `PLAYWRIGHT_BASE_URL`.
 
 ## How auth works in tests
 

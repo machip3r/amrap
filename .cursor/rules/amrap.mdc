@@ -1,26 +1,27 @@
 ---
-description: AMRAP project coding standards — always follow AGENTS.md
+description: AMRAP SvelteKit project coding standards — always follow AGENTS.md
 alwaysApply: true
 ---
 
-# AMRAP agent rules
+# AMRAP agent rules (SvelteKit)
 
-Follow the full project standards in **`AGENTS.md`** (repo root) for every change. `CLAUDE.md` also points there.
+Follow the full project standards in **`AGENTS.md`** (this package root) for every change. `CLAUDE.md` also points there.
 
 ## Non-negotiables
 
 - **pnpm only** — never npm/yarn
 - **Do not run `pnpm run build`** unless the user asks or the task is build/CI failure
-- **Read Next.js docs in `node_modules/next/dist/docs/`** before using Next APIs — this app’s Next version may differ from training data
-- **Reuse / extend shared components** — one Input, Button, form field pattern, etc.; extract on the second copy; no one-off duplicates
+- **Read SvelteKit docs** in `node_modules/@sveltejs/kit/` when unsure about load functions, form actions, hooks, or adapters — do not assume Next.js patterns
+- **Reuse / extend shared components** — one Input, Button, FormField pattern, etc.; extract on the second copy; no one-off duplicates
 - **i18n** — all user-facing strings in `es` + `en` dictionaries in the same change; no hardcoded UI copy
-- **Folder structure** — `app/[locale]/(marketing|auth|app)`, `components/`, `lib/`, `types/`, `supabase/migrations/`; colocate `actions.ts` with routes
+- **Folder structure** — `src/routes/`, `src/lib/`, `static/`; colocate form actions in `+page.server.ts` / `+server.ts`
 - **Product docs** — if business rules or general AMRAP behavior change, update `README.md` in the same change
-- **Product flows** — if a feature, screen, nav item, role/permission, or user flow changes (or a new one ships), update `docs/product-flows.md` in the same change for every affected user type (who / where / what / edge cases / shipped·partial·planned)
-- **Database migrations** — every DB change is a **new** file in `supabase/migrations/`; never edit an already-created migration; update `docs/database.md` in the same change
-- **Verify Supabase project before push** — before `db push` / link / remote migration apply, confirm project name + ref (not the wrong env); ask if ambiguous
-- **Validate inputs on the server** with Zod schemas that include **regex + length limits** (`lib/validation/schemas.ts`); map failures to **per-field UI errors** via `zodFieldErrors` + `FormField` `error` (dictionary copy); sanitize outputs (no unsafe HTML from user data)
-- **Backend on the server** — Server Actions / server components + `lib/supabase/server.ts`; REST route handlers when needed; no GraphQL unless asked; safe, dictionary-based errors
-- **Design system + responsive + a11y** — CSS variables, labels, focus, icon `aria-label`s; follow **Responsive UI / UX** in `AGENTS.md` and `.cursor/rules/responsive-ux.mdc` (mobile-first, shared shell chrome, touch targets, no desktop-only layouts)
-- **Tenant/RLS/secrets** — session-scoped data; service role server-only; never expose service keys
-- **E2E (Playwright)** — every new/changed user-facing feature, flow, or permission ships with coverage under `e2e/<role>/` (or an explicit PR note why deferred). Keep `docs/product-flows.md` in sync. Do not use Vitest for flow coverage. See `AGENTS.md` → *Testing / E2E* and `e2e/README.md`.
+- **Product flows** — if a feature, screen, nav item, role/permission, or user flow changes, update `docs/product-flows.md` in the same change (**shipped · partial · planned**)
+- **Database migrations** — every DB change is a **new** file in **`supabase/migrations/`**; never edit an already-applied migration; update `docs/database.md` in the same change
+- **Default app is SvelteKit at repo root** — legacy Next.js is only under `amrap-next/`
+- **Verify Supabase project before push** — confirm project name + ref before any remote DB command; ask if ambiguous
+- **Validate inputs on the server** with Zod (`src/lib/validation/schemas.ts`); map failures via `zodFieldErrors` + `FormField` `error` (dictionary copy)
+- **Backend on the server** — `+page.server.ts` load/actions, `+server.ts` route handlers, `hooks.server.ts`; use `src/lib/supabase/server.ts`; never expose service keys to the client
+- **Design system + responsive + a11y** — CSS variables, labels, focus, icon `aria-label`s; follow **Responsive UI / UX** in `AGENTS.md` and `.cursor/rules/responsive-ux.mdc`
+- **Tenant/RLS/secrets** — session-scoped data; service role server-only
+- **E2E (Playwright)** — every new/changed user-facing feature ships with coverage under `e2e/<role>/` (or an explicit PR note why deferred). Keep `docs/product-flows.md` in sync. See `AGENTS.md` → *Testing / E2E* and `e2e/README.md`.

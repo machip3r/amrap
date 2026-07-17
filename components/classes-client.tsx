@@ -438,6 +438,13 @@ export function ClassesClient({
   const router = useRouter();
   const [view, setView] = useState<ClassesView>(initialView);
   const [pendingNav, startNav] = useTransition();
+
+  // Keep tab in sync when the server re-renders after ?tab= navigation.
+  const [prevInitialView, setPrevInitialView] = useState(initialView);
+  if (initialView !== prevInitialView) {
+    setPrevInitialView(initialView);
+    setView(initialView);
+  }
   const [createOpen, setCreateOpen] = useState(false);
   const [createKey, setCreateKey] = useState(0);
   const [editing, setEditing] = useState<ClassesPageClass | null>(null);
@@ -476,16 +483,14 @@ export function ClassesClient({
     if (editState?.success) setEditing(null);
   }
 
-  const [prevScheduleState, setPrevScheduleState] = useState(scheduleState);
-  if (scheduleState !== prevScheduleState) {
-    setPrevScheduleState(scheduleState);
-    if (scheduleState?.success) {
-      setScheduling(null);
-      setView("calendar");
-    }
-  }
-
   const weekStart = useMemo(() => new Date(weekStartIso), [weekStartIso]);
+  const weekParam = useMemo(() => {
+    const y = weekStart.getFullYear();
+    const m = String(weekStart.getMonth() + 1).padStart(2, "0");
+    const day = String(weekStart.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }, [weekStart]);
+
   const days = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
     [weekStart],
@@ -502,123 +507,167 @@ export function ClassesClient({
     return map;
   }, [sessions]);
 
+  // Prefer days that have sessions (+ today). If the week has sessions but
+  // day-keys disagree (TZ), fall back to the full week so nothing is hidden.
+  // Always keep the full Mon–Sun grid so empty weeks still look like a calendar.
   const visibleDays = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const todayKey = today.toDateString();
-    const inWeek = days.some((d) => d.toDateString() === todayKey);
+    const localTodayKey = today.toDateString();
+    const inWeek = days.some((d) => d.toDateString() === localTodayKey);
 
-    return days.filter((day) => {
+    if (sessions.length === 0) {
+      return days;
+    }
+
+    const filtered = days.filter((day) => {
       const key = day.toDateString();
       const hasSessions = (sessionsByDay.get(key)?.length ?? 0) > 0;
-      const isToday = inWeek && key === todayKey;
+      const isToday = inWeek && key === localTodayKey;
       return hasSessions || isToday;
     });
-  }, [days, sessionsByDay]);
 
-  const active = classes.filter((c) => c.is_active);
-  const archived = classes.filter((c) => !c.is_active);
-  const otherGyms = orgGyms.filter((g) => g.id !== currentGymId);
-  const todayStr = new Date().toISOString().slice(0, 10);
+    if (filtered.length > 0) return filtered;
+    return days;
+  }, [days, sessionsByDay, sessions.length]);
+
+  const todayKey = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today.toDateString();
+  }, []);
+
+  const active = useMemo(() => classes.filter((c) => c.is_active), [classes]);
+  const archived = useMemo(
+    () => classes.filter((c) => !c.is_active),
+    [classes],
+  );
+  const otherGyms = useMemo(
+    () => orgGyms.filter((g) => g.id !== currentGymId),
+    [orgGyms, currentGymId],
+  );
+  const todayStr = useMemo(() => {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }, []);
 
   function selectView(next: ClassesView) {
-    setView(next);
     const q = new URLSearchParams();
     q.set("tab", next);
     if (next === "calendar") {
-      q.set("week", weekStart.toISOString().slice(0, 10));
+      q.set("week", weekParam);
     }
+    // Keep setView inside the transition so we never paint Calendar with
+    // stale empty sessions before the route refresh.
     startNav(() => {
+      setView(next);
       router.replace(`/${locale}/classes?${q.toString()}`, { scroll: false });
     });
   }
 
   function goWeek(delta: number) {
     const next = startOfWeekMonday(addDays(weekStart, delta * 7));
+    const y = next.getFullYear();
+    const m = String(next.getMonth() + 1).padStart(2, "0");
+    const day = String(next.getDate()).padStart(2, "0");
     const q = new URLSearchParams({
       tab: "calendar",
-      week: next.toISOString().slice(0, 10),
+      week: `${y}-${m}-${day}`,
     });
-    setView("calendar");
     startNav(() => {
+      setView("calendar");
       router.push(`/${locale}/classes?${q.toString()}`);
     });
   }
 
+  const [prevScheduleState, setPrevScheduleState] = useState(scheduleState);
+  if (scheduleState !== prevScheduleState) {
+    setPrevScheduleState(scheduleState);
+    if (scheduleState?.success) {
+      setScheduling(null);
+      // Reload calendar data — switching view alone keeps sessions=[].
+      queueMicrotask(() => {
+        selectView("calendar");
+      });
+    }
+  }
+
   return (
     <>
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="font-title text-3xl font-bold tracking-tight text-[var(--color-text)]">
+          <h1 className="font-title text-2xl font-bold tracking-tight text-[var(--color-text)] sm:text-3xl">
             {d.classes.title}
           </h1>
           <p className="mt-1 text-sm text-[var(--color-muted)]">
             {labels.subtitle}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-          <div
-            role="tablist"
-            aria-label={d.classes.title}
-            className="inline-flex rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] p-0.5"
+        {canManage ? (
+          <Button
+            type="button"
+            variant="primary"
+            className="inline-flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap px-3.5 text-sm leading-none shadow-sm"
+            onClick={() => setCreateOpen(true)}
           >
-            {(
-              [
-                {
-                  id: "catalog" as const,
-                  label: labels.tabCatalog,
-                  icon: Layers,
-                },
-                {
-                  id: "calendar" as const,
-                  label: labels.tabCalendar,
-                  icon: CalendarDays,
-                },
-              ] as const
-            ).map((item) => {
-              const selected = view === item.id;
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={selected}
-                  id={`classes-view-${item.id}`}
-                  tabIndex={selected ? 0 : -1}
-                  onClick={() => selectView(item.id)}
-                  disabled={pendingNav}
-                  onKeyDown={(e) => {
-                    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
-                      e.preventDefault();
-                      selectView(item.id === "catalog" ? "calendar" : "catalog");
-                    }
-                  }}
-                  className={`inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] disabled:opacity-60 ${
-                    selected
-                      ? "bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm"
-                      : "text-[var(--color-muted)] hover:text-[var(--color-text)]"
-                  }`}
-                >
-                  <Icon className="h-4 w-4 shrink-0" aria-hidden />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </div>
-          {canManage ? (
-            <Button
-              type="button"
-              variant="primary"
-              className="inline-flex shrink-0 items-center gap-1.5 px-3.5 py-2 shadow-sm"
-              onClick={() => setCreateOpen(true)}
-            >
-              <Plus className="h-4 w-4" aria-hidden />
-              {labels.newClass}
-            </Button>
-          ) : null}
-        </div>
+            <Plus className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="shrink-0">{labels.newClass}</span>
+          </Button>
+        ) : null}
       </header>
+
+      <div
+        role="tablist"
+        aria-label={d.classes.title}
+        className="flex w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] p-0.5"
+      >
+        {(
+          [
+            {
+              id: "catalog" as const,
+              label: labels.tabCatalog,
+              icon: Layers,
+            },
+            {
+              id: "calendar" as const,
+              label: labels.tabCalendar,
+              icon: CalendarDays,
+            },
+          ] as const
+        ).map((item) => {
+          const selected = view === item.id;
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              id={`classes-view-${item.id}`}
+              tabIndex={selected ? 0 : -1}
+              onClick={() => selectView(item.id)}
+              disabled={pendingNav}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+                  e.preventDefault();
+                  selectView(item.id === "catalog" ? "calendar" : "catalog");
+                }
+              }}
+              className={`inline-flex h-11 min-h-11 flex-1 items-center justify-center gap-2 rounded-md px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] disabled:opacity-60 ${
+                selected
+                  ? "bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm"
+                  : "text-[var(--color-muted)] hover:text-[var(--color-text)]"
+              }`}
+            >
+              <Icon className="h-4 w-4 shrink-0" aria-hidden />
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
 
       <div
         role="tabpanel"
@@ -783,7 +832,23 @@ export function ClassesClient({
               {labels.prevWeek}
             </button>
             <p className="text-sm font-semibold text-[var(--color-text)]">
-              {labels.thisWeek}
+              {(() => {
+                const start = days[0];
+                const end = days[6];
+                if (!start || !end) return labels.thisWeek;
+                const sameMonth = start.getMonth() === end.getMonth();
+                const startLabel = start.toLocaleDateString(
+                  locale === "es" ? "es-MX" : "en-US",
+                  { month: "short", day: "numeric" },
+                );
+                const endLabel = end.toLocaleDateString(
+                  locale === "es" ? "es-MX" : "en-US",
+                  sameMonth
+                    ? { day: "numeric" }
+                    : { month: "short", day: "numeric" },
+                );
+                return `${startLabel} – ${endLabel}`;
+              })()}
             </p>
             <button
               type="button"
@@ -797,65 +862,78 @@ export function ClassesClient({
           </div>
 
           <div
-            className={`grid gap-2 ${
+            className={`grid gap-3 ${
+              // Mobile: always stack days as full-width columns for readable cards.
+              // Desktop: multi-column week grid when several days have sessions.
               visibleDays.length <= 1
                 ? "grid-cols-1"
                 : visibleDays.length === 2
-                  ? "grid-cols-2"
+                  ? "grid-cols-1 md:grid-cols-2"
                   : visibleDays.length === 3
-                    ? "grid-cols-3"
+                    ? "grid-cols-1 md:grid-cols-3"
                     : visibleDays.length === 4
-                      ? "grid-cols-2 sm:grid-cols-4"
+                      ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
                       : visibleDays.length <= 5
-                        ? "grid-cols-3 sm:grid-cols-5"
+                        ? "grid-cols-1 md:grid-cols-3 lg:grid-cols-5"
                         : visibleDays.length === 6
-                          ? "grid-cols-3 sm:grid-cols-6"
-                          : "grid-cols-7"
+                          ? "grid-cols-1 md:grid-cols-3 lg:grid-cols-6"
+                          : "grid-cols-1 md:grid-cols-4 lg:grid-cols-7"
             }`}
           >
             {visibleDays.map((day) => {
-              const list = sessionsByDay.get(day.toDateString()) ?? [];
-              const isToday =
-                day.toDateString() === new Date().toDateString();
+              const dayKey = day.toDateString();
+              const list = sessionsByDay.get(dayKey) ?? [];
+              const isToday = dayKey === todayKey;
               const dayLabel = day.toLocaleDateString(
                 locale === "es" ? "es-MX" : "en-US",
                 { weekday: "short" },
               );
+              const dayFull = day.toLocaleDateString(
+                locale === "es" ? "es-MX" : "en-US",
+                { weekday: "long", month: "short", day: "numeric" },
+              );
               return (
                 <section
                   key={day.toISOString()}
-                  className={`flex min-h-[11rem] min-w-0 flex-col rounded-xl border bg-[var(--color-surface)] p-2 sm:p-3 ${
+                  className={`flex min-h-0 min-w-0 flex-col rounded-xl border bg-[var(--color-surface)] p-3 sm:p-3 ${
                     isToday
                       ? "border-[var(--color-primary)]/50 ring-1 ring-[var(--color-primary)]/20"
                       : "border-[var(--color-border)]"
                   }`}
                 >
-                  <header className="mb-2 flex items-center justify-between gap-2 px-0.5">
-                    <span className="text-xs font-bold uppercase tracking-wide text-[var(--color-muted)]">
-                      {dayLabel}
-                    </span>
+                  <header className="mb-3 flex items-center justify-between gap-2 px-0.5">
+                    <div className="min-w-0">
+                      <span className="hidden text-sm font-bold text-[var(--color-text)] md:inline">
+                        {dayLabel}
+                      </span>
+                      <span className="truncate text-sm font-bold text-[var(--color-text)] md:hidden">
+                        {dayFull}
+                      </span>
+                    </div>
                     <span
-                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums ${
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold tabular-nums md:h-7 md:w-7 md:text-xs ${
                         isToday
                           ? "bg-[var(--color-primary)] text-[var(--color-primary-on)]"
-                          : "text-[var(--color-text)]"
+                          : "bg-[var(--color-bg)] text-[var(--color-text)]"
                       }`}
                     >
                       {day.getDate()}
                     </span>
                   </header>
                   {list.length === 0 ? (
-                    <p className="mt-2 flex-1 text-center text-xs text-[var(--color-muted)]">
+                    <p className="mt-1 flex-1 py-2 text-center text-sm text-[var(--color-muted)] md:text-xs">
                       —
                     </p>
                   ) : (
-                    <ul className="flex flex-1 flex-col gap-1.5 overflow-y-auto">
+                    <ul className="flex flex-1 flex-col gap-2 md:gap-1.5">
                       {list.map((s) => {
                         const seats =
                           s.capacity == null
                             ? labels.unlimited
                             : `${s.confirmed_count ?? 0}/${s.capacity}`;
-                        const timeOnly = new Date(s.starts_at).toLocaleTimeString(
+                        const timeOnly = new Date(
+                          s.starts_at,
+                        ).toLocaleTimeString(
                           locale === "es" ? "es-MX" : "en-US",
                           { hour: "2-digit", minute: "2-digit" },
                         );
@@ -863,25 +941,38 @@ export function ClassesClient({
                           <li key={s.id}>
                             <Link
                               href={`/${locale}/classes/${s.id}`}
-                              className={`block rounded-lg border px-2 py-1.5 transition-colors hover:bg-[var(--color-surface-hover)] ${
+                              className={`flex min-h-11 items-center justify-between gap-3 rounded-lg border px-3 py-2.5 transition-colors hover:bg-[var(--color-surface-hover)] md:block md:min-h-0 md:px-2 md:py-1.5 ${
                                 s.status === "cancelled"
                                   ? "border-[var(--color-border)] opacity-55"
                                   : "border-[var(--color-border)]"
                               }`}
                               title={`${s.class_name} · ${seats}`}
                             >
-                              <p className="truncate text-xs font-semibold text-[var(--color-text)]">
-                                {s.class_name}
-                              </p>
-                              <p className="truncate text-[10px] text-[var(--color-muted)]">
-                                {timeOnly}
-                              </p>
-                              <p className="mt-0.5 truncate text-[10px] text-[var(--color-muted)]">
-                                {seats}
-                                {(s.waitlist_count ?? 0) > 0
-                                  ? ` · +${s.waitlist_count}`
-                                  : ""}
-                              </p>
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-semibold text-[var(--color-text)] md:text-xs">
+                                  {s.class_name}
+                                </p>
+                                <p className="truncate text-xs text-[var(--color-muted)] md:text-[10px]">
+                                  {timeOnly}
+                                  <span className="md:hidden">
+                                    {" · "}
+                                    {seats}
+                                    {(s.waitlist_count ?? 0) > 0
+                                      ? ` · +${s.waitlist_count}`
+                                      : ""}
+                                  </span>
+                                </p>
+                                <p className="mt-0.5 hidden truncate text-[10px] text-[var(--color-muted)] md:block">
+                                  {seats}
+                                  {(s.waitlist_count ?? 0) > 0
+                                    ? ` · +${s.waitlist_count}`
+                                    : ""}
+                                </p>
+                              </div>
+                              <ChevronRight
+                                className="h-4 w-4 shrink-0 text-[var(--color-muted)] md:hidden"
+                                aria-hidden
+                              />
                             </Link>
                           </li>
                         );
@@ -893,7 +984,7 @@ export function ClassesClient({
             })}
           </div>
 
-          {sessions.length === 0 && visibleDays.length === 0 ? (
+          {sessions.length === 0 ? (
             <p className="text-center text-sm text-[var(--color-muted)]">
               {labels.noSessions}
             </p>

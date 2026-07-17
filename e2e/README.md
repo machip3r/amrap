@@ -38,6 +38,7 @@ e2e/
   setup/           # storageState seed projects
   fixtures/        # owner seed helpers
   helpers/         # Supabase Admin + UI helpers
+  public/          # marketing / unauthenticated specs
   owner/           # owner / provisional specs
 ```
 

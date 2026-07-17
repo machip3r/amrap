@@ -39,12 +39,12 @@ function pickHero(
   if (active) return active;
 
   const upcomingToday = sessions
-    .filter(
-      (s) =>
-        s.status !== "cancelled" &&
-        s.starts_at > nowIso &&
-        s.starts_at.slice(0, 10) === todayKey,
-    )
+    .filter((s) => {
+      if (s.status === "cancelled" || s.starts_at <= nowIso) return false;
+      const local = new Date(s.starts_at);
+      const key = `${local.getFullYear()}-${String(local.getMonth() + 1).padStart(2, "0")}-${String(local.getDate()).padStart(2, "0")}`;
+      return key === todayKey;
+    })
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
   if (upcomingToday[0]) return upcomingToday[0];
 
@@ -91,7 +91,8 @@ export async function TrainerDashboard({
   const now = new Date();
   const weekStart = startOfWeekMonday(now);
   const nowIso = now.toISOString();
-  const todayKey = nowIso.slice(0, 10);
+  // Local calendar day (UTC slice mis-labels evenings in MX / LATAM).
+  const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
   const [{ data: classLinks }, sessions] = await Promise.all([
     supabase

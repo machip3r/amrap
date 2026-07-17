@@ -335,7 +335,7 @@ Expect future migrations for:
 | `class_session_results` | Express scores per athlete on a session (`amrap` \| `strength` \| `for_time` \| `other`; unique `session_id`+`person_id`) |
 | `inbox_messages` | Internal alerts (e.g. waitlist auto-promote) |
 
-**RPCs:** `generate_class_sessions`, `book_class_session`, `cancel_class_booking` (auto-promote + inbox), `set_class_booking_status`, `walk_in_enroll_class_session`, `list_open_class_sessions_for_check_in`, `duplicate_class_to_gym`. Check-in (`record_check_in`) marks matching class attendance.
+**RPCs:** `generate_class_sessions`, `book_class_session`, `cancel_class_booking` (auto-promote + inbox), `set_class_booking_status`, `walk_in_enroll_class_session`, `list_open_class_sessions_for_check_in`, `list_class_sessions_for_week` (week calendar + SQL booking counts), `duplicate_class_to_gym`. Check-in (`record_check_in`) marks matching class attendance.
 
 **Care / scores RLS (MVP):** `person_gym_care` — select for gym roles; manage for gym managers (staff/owner). `class_session_results` — select for gym roles or the athlete’s own person; manage for OWNER/STAFF/TRAINER at the gym.
 

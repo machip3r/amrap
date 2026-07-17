@@ -9,12 +9,13 @@ import { sectionIdForNav } from "@/lib/i18n/landing-dictionaries";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AmrapLogo } from "./amrap-logo";
 
-type NavKey = "home" | "focus" | "pricing" | "contact";
+type NavKey = "home" | "product" | "pricing" | "faq" | "contact";
 
 const navItems: { key: NavKey; section: LandingSectionId }[] = [
   { key: "home", section: sectionIdForNav("home") },
-  { key: "focus", section: sectionIdForNav("focus") },
+  { key: "product", section: sectionIdForNav("product") },
   { key: "pricing", section: sectionIdForNav("pricing") },
+  { key: "faq", section: sectionIdForNav("faq") },
   { key: "contact", section: sectionIdForNav("contact") },
 ];
 
@@ -157,6 +158,13 @@ export function LandingNav({ locale, d, labels }: Props) {
             >
               {d.nav.login}
             </Link>
+            <Link
+              href={`${prefix}/register`}
+              className="landing-nav-start"
+              onClick={() => setMenuOpen(false)}
+            >
+              {d.nav.start}
+            </Link>
             <button
               type="button"
               className="landing-nav-burger"
@@ -192,6 +200,13 @@ export function LandingNav({ locale, d, labels }: Props) {
                   </button>
                 );
               })}
+              <Link
+                href={`${prefix}/register`}
+                className="landing-nav-sheet-cta"
+                onClick={() => setMenuOpen(false)}
+              >
+                {d.nav.start}
+              </Link>
             </nav>
           </div>
         ) : null}

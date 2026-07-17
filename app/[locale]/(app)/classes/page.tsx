@@ -50,23 +50,30 @@ export default async function ClassesPage({
 
   const supabase = await createClient();
 
-  // Catalog does not need week sessions or sibling gyms — skip those queries.
-  const loadCalendar = initialView === "calendar";
-  const loadSiblingGyms = canManage && !lockTrainersToSelf;
+  // Always load week sessions so Calendar never flashes empty after a tab flip.
+  // Catalog / sibling gyms still load only when needed.
+  const loadCatalog = initialView === "catalog";
+  const loadTrainers = loadCatalog || canManage;
+  const loadSiblingGyms = loadCatalog && canManage && !lockTrainersToSelf;
 
   const [classResult, trainers, sessions, orgGymRows] = await Promise.all([
-    supabase
-      .from("classes")
-      .select(
-        "id, name, description, capacity, duration_minutes, tags, is_active, created_at, class_trainers(user_id)",
-      )
-      .eq("gym_id", workspace.gymId)
-      .order("is_active", { ascending: false })
-      .order("created_at", { ascending: false }),
-    loadTeamMembers(supabase, workspace.gymId, "TRAINER"),
-    loadCalendar
-      ? loadSessionsForWeek(supabase, workspace.gymId, weekStart)
+    loadCatalog
+      ? supabase
+          .from("classes")
+          .select(
+            "id, name, description, capacity, duration_minutes, tags, is_active, created_at, class_trainers(user_id)",
+          )
+          .eq("gym_id", workspace.gymId)
+          .order("is_active", { ascending: false })
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] as never[], error: null }),
+    loadTrainers
+      ? loadTeamMembers(supabase, workspace.gymId, "TRAINER")
       : Promise.resolve([]),
+    // Classes calendar shows the whole gym week. Trainer-only filtering belongs
+    // on the trainer home (Mi Día), not here — otherwise unassigned trainers
+    // see an empty calendar while catalog classes still appear.
+    loadSessionsForWeek(supabase, workspace.gymId, weekStart),
     loadSiblingGyms
       ? supabase
           .from("gyms")
@@ -120,7 +127,7 @@ export default async function ClassesPage({
           name: t.name,
         }))}
         sessions={sessions}
-        weekStartIso={weekStart.toISOString()}
+        weekStartIso={`${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, "0")}-${String(weekStart.getDate()).padStart(2, "0")}T12:00:00`}
         orgGyms={orgGymRows.map((g) => ({
           id: g.id,
           name: g.name,

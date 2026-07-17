@@ -5,15 +5,44 @@ import {
   type ClassSessionRow,
 } from "@/lib/classes/types";
 
-export async function loadSessionsForWeek(
+type WeekSessionRpcRow = {
+  id: string;
+  class_id: string;
+  gym_id: string;
+  schedule_id: string | null;
+  starts_at: string;
+  ends_at: string;
+  capacity: number | null;
+  status: ClassSessionRow["status"];
+  class_name: string;
+  confirmed_count: number;
+  waitlist_count: number;
+};
+
+function mapRpcRows(data: WeekSessionRpcRow[]): ClassSessionRow[] {
+  return data.map((r) => ({
+    id: r.id,
+    class_id: r.class_id,
+    gym_id: r.gym_id,
+    schedule_id: r.schedule_id ?? null,
+    starts_at: r.starts_at,
+    ends_at: r.ends_at,
+    capacity: r.capacity ?? null,
+    status: r.status,
+    class_name: r.class_name ?? "",
+    confirmed_count: r.confirmed_count ?? 0,
+    waitlist_count: r.waitlist_count ?? 0,
+  }));
+}
+
+/** Fallback when the week RPC is unavailable or misbehaves. */
+async function loadSessionsForWeekDirect(
   supabase: SupabaseClient,
   gymId: string,
-  weekStart: Date,
+  from: Date,
+  to: Date,
   opts?: { classId?: string; trainerUserId?: string },
 ): Promise<ClassSessionRow[]> {
-  const from = startOfWeekMonday(weekStart);
-  const to = addDays(from, 7);
-
   let query = supabase
     .from("class_sessions")
     .select(
@@ -40,7 +69,7 @@ export async function loadSessionsForWeek(
 
   const { data, error } = await query;
   if (error) {
-    console.error("loadSessionsForWeek", error.message);
+    console.error("loadSessionsForWeekDirect", error.message);
     return [];
   }
 
@@ -55,7 +84,6 @@ export async function loadSessionsForWeek(
     rows = rows.filter((r) => allowed.has(r.class_id as string));
   }
 
-  // Confirmed-ish counts need a separate filter — PostgREST count is all bookings.
   const sessionIds = rows.map((r) => r.id as string);
   const confirmedBySession = new Map<string, number>();
   const waitlistBySession = new Map<string, number>();
@@ -94,6 +122,42 @@ export async function loadSessionsForWeek(
       waitlist_count: waitlistBySession.get(r.id as string) ?? 0,
     };
   });
+}
+
+export async function loadSessionsForWeek(
+  supabase: SupabaseClient,
+  gymId: string,
+  weekStart: Date,
+  opts?: { classId?: string; trainerUserId?: string },
+): Promise<ClassSessionRow[]> {
+  const from = startOfWeekMonday(weekStart);
+  const to = addDays(from, 7);
+
+  // Direct query first — the week RPC can silently return empty rows
+  // (PL/pgSQL OUT-param collisions) even when sessions exist.
+  const direct = await loadSessionsForWeekDirect(
+    supabase,
+    gymId,
+    from,
+    to,
+    opts,
+  );
+  if (direct.length > 0) return direct;
+
+  const { data, error } = await supabase.rpc("list_class_sessions_for_week", {
+    p_gym_id: gymId,
+    p_from: from.toISOString(),
+    p_to: to.toISOString(),
+    p_trainer_user_id: opts?.trainerUserId ?? null,
+    p_class_id: opts?.classId ?? null,
+  });
+
+  if (error) {
+    console.error("loadSessionsForWeek rpc", error.message);
+    return direct;
+  }
+
+  return mapRpcRows((data ?? []) as WeekSessionRpcRow[]);
 }
 
 export type SessionResultKind = "amrap" | "strength" | "for_time" | "other";
@@ -212,12 +276,15 @@ export async function loadSessionRoster(
         )
         .eq("session_id", sessionId)
         .in("person_id", personIds),
+      // Scope prior attendance to this gym + before this session in SQL.
       supabase
         .from("class_bookings")
         .select("person_id, class_sessions!inner ( gym_id, starts_at )")
         .in("person_id", personIds)
         .in("status", ["attended", "confirmed"])
-        .neq("session_id", sessionId),
+        .neq("session_id", sessionId)
+        .eq("class_sessions.gym_id", gymId)
+        .lt("class_sessions.starts_at", startsAt),
       supabase
         .from("memberships")
         .select("person_id, created_at")
@@ -257,13 +324,7 @@ export async function loadSessionRoster(
     }
 
     for (const row of priorRes.data ?? []) {
-      const sess = Array.isArray(row.class_sessions)
-        ? row.class_sessions[0]
-        : row.class_sessions;
-      const s = sess as { gym_id?: string; starts_at?: string } | null;
-      if (s?.gym_id === gymId && s.starts_at && s.starts_at < startsAt) {
-        priorAttendee.add(row.person_id as string);
-      }
+      priorAttendee.add(row.person_id as string);
     }
 
     const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
@@ -300,8 +361,6 @@ export async function loadSessionRoster(
       } | null;
       const personId = b.person_id as string;
       const dob = p?.date_of_birth ?? null;
-      // Primary: no prior attended/confirmed at this gym before this session.
-      // Fallback (if prior query failed): membership created within 7 days.
       const isFirstDay = priorQueryOk
         ? !priorAttendee.has(personId)
         : newMembershipIds.has(personId);

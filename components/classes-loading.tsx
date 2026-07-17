@@ -36,19 +36,16 @@ export function ClassesCalendarSkeleton({ cols = 3 }: { cols?: number }) {
         <Bone className="h-4 w-24" />
         <Bone className="h-8 w-20 rounded-md" />
       </div>
-      <div
-        className="grid gap-2"
-        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
-      >
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-2">
         {Array.from({ length: cols }, (_, i) => (
           <div
             key={i}
-            className="min-h-[8.5rem] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3"
+            className="min-h-[6rem] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 md:min-h-[8.5rem]"
           >
-            <Bone className="mb-3 h-3 w-12" />
+            <Bone className="mb-3 h-4 w-28 md:h-3 md:w-12" />
             <div className="space-y-2">
-              <Bone className="h-10 w-full rounded-md" />
-              <Bone className="h-10 w-full rounded-md" />
+              <Bone className="h-11 w-full rounded-md md:h-10" />
+              <Bone className="h-11 w-full rounded-md md:h-10" />
             </div>
           </div>
         ))}

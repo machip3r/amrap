@@ -79,9 +79,11 @@ Granular `gym_roles.permissions` JSON: **Planned** (unused in UI today).
 
 ### 1.1 Landing (`/[locale]`) — Shipped
 
-**UI:** Hero with AMRAP brand → product → pricing → contact → footer.
+**UI:** Hero (brand-first, gym-floor value) → audience strip → differentiators + daily product → how-it-works (4 steps) → pricing (monthly/annual) → FAQ → contact → final CTA band → footer.
 
-**CTAs:** Start free → register · Sign in → login · Contact (lead).
+**Positioning:** Ops software for gyms (boxes, functional, strength, combat, boutique) — one QR / many roles, org-pays billing, honest freemium. Not boutique CRM / FitCoins / fiscal-invoice marketing.
+
+**CTAs:** Start free → register · Sign in → login · Contact (lead) · Plan cards → register or scroll to contact (Pro).
 
 **Cases:** Visitor; already logged-in visitor (CTAs may deep-link to app).
 
@@ -221,7 +223,7 @@ Visible for owner / staff / trainer (after completed onboarding + gym workspace)
 | Settings (header gear on `md+` · More on mobile) | All ops roles — sections inside are role-gated | Shipped |
 | Nav visibility (per user) | If a role has **more than 5** main sections, that user can hide/show optional pages in Settings → My menu (`gym_roles.nav_visibility`). ≤5 sections → all shown, no picker. **Dashboard always visible.** Settings stays for everyone; Organization stays owner-only. | Shipped |
 | Theme toggle · logout | Header / sidebar footer / More sheet | Shipped |
-| Watermark (“powered by”) | Desktop only (`md+`); hidden on phones to save space | Shipped |
+| Watermark (“powered by”) | All breakpoints; sits above mobile bottom tabs | Shipped |
 | Gym selector | List gyms where user has ops role | **Planned** (cookie only) |
 | Branch selector | Filter attendance / kiosk | **Planned** |
 | Limit / unpaid banners | Freemium near 30 members · grace · read-only | **Planned** (limits enforced in actions; no persistent chrome banners) |
@@ -294,6 +296,10 @@ See §7. Owner has full staff check-in powers.
 **Catalog:** Create/edit/duplicate classes · assign trainers · schedules.
 
 **Sessions:** Week calendar · session detail · bookings / roster (care badges + express scores) · session check-in.
+
+**Calendar UX:** On phones, days stack as full-width columns (readable session rows). From `md` up, multi-column week grid. Empty weeks still show the full Mon–Sun grid. Trainers default to calendar and see the **gym’s** week sessions (same as staff); Mi Día stays filtered to classes they coach. Managers default to catalog.
+
+**Performance:** Calendar loads week sessions via `list_class_sessions_for_week` (SQL seat counts — no booking-row download). Catalog vs calendar load only the data for the active tab.
 
 **Who:** Owner and staff manage; trainers can participate via check-in / session views per permissions.
 
@@ -417,7 +423,7 @@ Data model and cookie support multi-gym roles. **UI:** create gym / switcher / a
 **Shipped**
 
 - Invited via `/trainers`.
-- Ops access: **Mi Día / week home** (next/live class hero · week strip · upcoming) + **Classes** (create/edit with self as coach) + **Timers** (`/timers`, client-local clocks + Web Audio bells) + **Settings** (personal menu; no gym branding).
+- Ops access: **Mi Día / week home** (next/live class hero · week strip · upcoming) + **Classes** (create/edit with self as coach) + **Timers** (`/timers`: saved routines list, Simple/Complex editor, full-screen run, localStorage) + **Settings** (personal menu; no gym branding).
 - Session roster: care badges (medical note · first day · birthday) + express score capture (AMRAP / strength / for time).
 - **No** reception check-in page.
 - **No** remote wall-screen timer control.
@@ -453,7 +459,7 @@ No app login. Manual check-in at reception. Optional invite to register / claim 
 | `/me` | Memberships list · switch active gym (cookie) |
 | `/me/qr` | Full-screen platform QR |
 | `/me/classes` | Upcoming · book / waitlist / cancel · attendance history |
-| `/me/timers` | Client-local workout timers (AMRAP / EMOM / Tabata / countdown) |
+| `/me/timers` | Routines list · Simple/Complex create-edit · full-screen run (localStorage templates) |
 | `/me/inbox` | Read `inbox_messages` (auto-mark read); e.g. waitlist promotion alerts |
 
 **Header:** Home · Classes · Timers · Inbox · QR · theme · logout.

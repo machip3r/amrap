@@ -159,7 +159,7 @@ export default async function AppShellLayout({
             isProvisionalOwner={workspace.isProvisionalOwner}
           />
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-            <header className="flex h-16 shrink-0 items-center gap-2 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 sm:h-[4.25rem] sm:gap-3 sm:px-6">
+            <header className="flex h-[4.5rem] shrink-0 items-center gap-2 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 sm:h-[4.25rem] sm:gap-3 sm:px-6">
               <Link
                 href={`/${locale}/dashboard`}
                 className="min-w-0 flex-1 md:hidden"
@@ -175,7 +175,7 @@ export default async function AppShellLayout({
               <div className="ml-auto flex items-center gap-2 sm:gap-3">
                 <ThemeToggle
                   label={d.a11y.toggleTheme}
-                  className="h-11 w-11"
+                  className="h-12 w-12 sm:h-11 sm:w-11"
                 />
                 <Link
                   href={`/${locale}/settings`}
@@ -185,17 +185,21 @@ export default async function AppShellLayout({
                 >
                   <Settings className="h-5 w-5" aria-hidden />
                 </Link>
-                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[var(--color-primary)]/20 text-sm font-bold text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30">
+                <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-[var(--color-primary)]/20 text-base font-bold text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30 sm:h-10 sm:w-10 sm:text-sm">
                   {initial}
                 </div>
               </div>
             </header>
-            <main className="flex-1 overflow-y-auto p-4 pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:p-6 md:pb-6 lg:p-8">
+            <main className="flex-1 overflow-y-auto p-4 pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:p-6 md:pb-6 lg:p-8">
               {children}
             </main>
           </div>
         </div>
-        <AmrapWatermark locale={locale} label={d.shell.poweredBy} />
+        <AmrapWatermark
+          locale={locale}
+          label={d.shell.poweredBy}
+          className="hidden md:flex"
+        />
         <OpsMobileNav
           locale={locale}
           role={workspace.role}

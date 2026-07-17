@@ -252,15 +252,39 @@ export type Dictionary = {
   timers: {
     title: string;
     subtitle: string;
-    modeCountdown: string;
-    modeAmrap: string;
-    modeEmom: string;
-    modeTabata: string;
+    routinesTitle: string;
+    routinesSubtitle: string;
+    emptyRoutines: string;
+    create: string;
+    createTitle: string;
+    editTitle: string;
+    edit: string;
+    delete: string;
+    deleteConfirm: string;
+    save: string;
+    unnamed: string;
+    namePlaceholder: string;
+    template: string;
+    templateCustom: string;
+    tplCountdown: string;
+    tplAmrap: string;
+    tplEmom: string;
+    tplTabata: string;
+    tplHiit: string;
+    type: string;
+    typeSimple: string;
+    typeComplex: string;
+    phaseWarmup: string;
+    phaseWork: string;
+    phaseRest: string;
+    phaseCooldown: string;
+    intervalCycle: string;
+    sets: string;
+    addCycle: string;
+    total: string;
     minutes: string;
-    intervalSec: string;
-    workSec: string;
-    restSec: string;
-    rounds: string;
+    seconds: string;
+    needDuration: string;
     start: string;
     pause: string;
     resume: string;
@@ -268,10 +292,17 @@ export type Dictionary = {
     mute: string;
     unmute: string;
     phaseReady: string;
-    phaseWork: string;
-    phaseRest: string;
     phaseDone: string;
     roundOf: string;
+    setOf: string;
+    elapsed: string;
+    remaining: string;
+    lock: string;
+    unlock: string;
+    lockedHint: string;
+    closeRun: string;
+    prevPhase: string;
+    nextPhase: string;
   };
   roster: {
     medical: string;
@@ -1086,16 +1117,40 @@ const es: Dictionary = {
   },
   timers: {
     title: "Timers",
-    subtitle: "Cronómetros para WOD: AMRAP, EMOM, Tabata y cuenta atrás.",
-    modeCountdown: "Cuenta atrás",
-    modeAmrap: "AMRAP",
-    modeEmom: "EMOM",
-    modeTabata: "Tabata",
+    subtitle: "Guarda intervalos y ábrelos en pantalla completa.",
+    routinesTitle: "Timers",
+    routinesSubtitle: "Guarda intervalos y ábrelos en pantalla completa.",
+    emptyRoutines: "Aún no hay timers. Crea uno para empezar.",
+    create: "Nuevo timer",
+    createTitle: "Nuevo timer",
+    editTitle: "Editar timer",
+    edit: "Editar",
+    delete: "Eliminar",
+    deleteConfirm: "¿Eliminar este timer?",
+    save: "Guardar",
+    unnamed: "Sin nombre",
+    namePlaceholder: "Nombre del timer",
+    template: "Plantilla",
+    templateCustom: "Personalizada",
+    tplCountdown: "Cuenta atrás",
+    tplAmrap: "AMRAP",
+    tplEmom: "EMOM",
+    tplTabata: "Tabata",
+    tplHiit: "HIIT",
+    type: "Tipo",
+    typeSimple: "Simple",
+    typeComplex: "Complejo",
+    phaseWarmup: "Calentamiento",
+    phaseWork: "Alta intensidad",
+    phaseRest: "Baja intensidad",
+    phaseCooldown: "Enfriamiento",
+    intervalCycle: "Ciclo",
+    sets: "Series",
+    addCycle: "Añadir ciclo",
+    total: "Total",
     minutes: "Minutos",
-    intervalSec: "Intervalo (seg)",
-    workSec: "Trabajo (seg)",
-    restSec: "Descanso (seg)",
-    rounds: "Rondas",
+    seconds: "Segundos",
+    needDuration: "Añade al menos un intervalo con tiempo.",
     start: "Iniciar",
     pause: "Pausa",
     resume: "Continuar",
@@ -1103,10 +1158,17 @@ const es: Dictionary = {
     mute: "Silenciar",
     unmute: "Sonido",
     phaseReady: "Listo",
-    phaseWork: "Trabajo",
-    phaseRest: "Descanso",
     phaseDone: "Listo",
-    roundOf: "Ronda {current}/{total}",
+    roundOf: "Serie {current}/{total}",
+    setOf: "Serie {current}/{total}",
+    elapsed: "Transcurrido",
+    remaining: "Restante",
+    lock: "Bloquear pantalla",
+    unlock: "Desbloquear",
+    lockedHint: "Pantalla bloqueada — toca el candado para desbloquear",
+    closeRun: "Cerrar",
+    prevPhase: "Fase anterior",
+    nextPhase: "Fase siguiente",
   },
   roster: {
     medical: "Alerta médica",
@@ -1937,16 +1999,40 @@ const en: Dictionary = {
   },
   timers: {
     title: "Timers",
-    subtitle: "Workout clocks: AMRAP, EMOM, Tabata, and countdown.",
-    modeCountdown: "Countdown",
-    modeAmrap: "AMRAP",
-    modeEmom: "EMOM",
-    modeTabata: "Tabata",
+    subtitle: "Save interval clocks and run them full screen.",
+    routinesTitle: "Timers",
+    routinesSubtitle: "Save interval clocks and run them full screen.",
+    emptyRoutines: "No timers yet. Create one to get started.",
+    create: "New timer",
+    createTitle: "New timer",
+    editTitle: "Edit timer",
+    edit: "Edit",
+    delete: "Delete",
+    deleteConfirm: "Delete this timer?",
+    save: "Save",
+    unnamed: "Untitled",
+    namePlaceholder: "Timer name",
+    template: "Template",
+    templateCustom: "Custom",
+    tplCountdown: "Countdown",
+    tplAmrap: "AMRAP",
+    tplEmom: "EMOM",
+    tplTabata: "Tabata",
+    tplHiit: "HIIT",
+    type: "Type",
+    typeSimple: "Simple",
+    typeComplex: "Complex",
+    phaseWarmup: "Warm Up",
+    phaseWork: "High Intensity",
+    phaseRest: "Low Intensity",
+    phaseCooldown: "Cool Down",
+    intervalCycle: "Interval Cycle",
+    sets: "Sets",
+    addCycle: "Add New Cycle",
+    total: "Total",
     minutes: "Minutes",
-    intervalSec: "Interval (sec)",
-    workSec: "Work (sec)",
-    restSec: "Rest (sec)",
-    rounds: "Rounds",
+    seconds: "Seconds",
+    needDuration: "Add at least one interval with time.",
     start: "Start",
     pause: "Pause",
     resume: "Resume",
@@ -1954,10 +2040,17 @@ const en: Dictionary = {
     mute: "Mute",
     unmute: "Sound on",
     phaseReady: "Ready",
-    phaseWork: "Work",
-    phaseRest: "Rest",
     phaseDone: "Done",
-    roundOf: "Round {current}/{total}",
+    roundOf: "Set {current}/{total}",
+    setOf: "Set {current}/{total}",
+    elapsed: "Elapsed",
+    remaining: "Remaining",
+    lock: "Lock screen",
+    unlock: "Unlock",
+    lockedHint: "Screen locked — tap the lock to unlock",
+    closeRun: "Close",
+    prevPhase: "Previous phase",
+    nextPhase: "Next phase",
   },
   roster: {
     medical: "Medical alert",

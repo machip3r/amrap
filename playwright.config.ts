@@ -39,6 +39,10 @@ export default defineConfig({
   },
   projects: [
     {
+      name: "public",
+      testMatch: /public\/.*\.spec\.ts/,
+    },
+    {
       name: "owner-setup",
       testMatch: /setup\/owner\.setup\.ts/,
     },

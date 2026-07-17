@@ -16,6 +16,7 @@ import {
 } from "@/lib/nav/ops-nav";
 import { LogOut, MoreHorizontal, QrCode } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
+import { AmrapWatermark } from "@/components/amrap-watermark";
 import { LogoutButton } from "./logout-button";
 import { QrCodeImage } from "./qr-code-image";
 
@@ -35,9 +36,9 @@ export type OpsMobileNavProps = {
 
 function tabClass(active: boolean) {
   if (active) {
-    return "flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 py-2 text-[var(--color-primary)]";
+    return "flex min-h-[4.25rem] min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 py-2.5 text-[var(--color-primary)]";
   }
-  return "flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 py-2 text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]";
+  return "flex min-h-[4.25rem] min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 py-2.5 text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]";
 }
 
 function moreLinkClass(active: boolean) {
@@ -67,8 +68,8 @@ function TabLink({
       className={tabClass(active)}
       aria-current={active ? "page" : undefined}
     >
-      <Icon className="h-6 w-6 shrink-0" aria-hidden />
-      <span className="max-w-full truncate text-[11px] font-semibold leading-tight">
+      <Icon className="h-7 w-7 shrink-0" aria-hidden />
+      <span className="max-w-full truncate text-xs font-semibold leading-tight">
         {label}
       </span>
     </Link>
@@ -110,7 +111,7 @@ export function OpsMobileNav({
   return (
     <>
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-surface)] pb-[env(safe-area-inset-bottom)] md:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-surface)] md:hidden"
         aria-label={d.nav.brandTitle}
       >
         <div className="relative flex items-stretch justify-around px-1 pt-1">
@@ -125,18 +126,18 @@ export function OpsMobileNav({
           ))}
 
           {qrCode ? (
-            <div className="relative flex min-w-[4.5rem] flex-1 items-start justify-center">
+            <div className="relative flex min-w-[5rem] flex-1 items-start justify-center">
               <button
                 type="button"
                 onClick={() => setQrOpen(true)}
-                className="absolute -top-5 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-primary-on)] shadow-lg ring-4 ring-[var(--color-surface)] transition-transform active:scale-95"
+                className="absolute -top-6 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-primary-on)] shadow-lg ring-4 ring-[var(--color-surface)] transition-transform active:scale-95"
                 aria-label={d.a11y.showMyQr}
                 aria-haspopup="dialog"
                 aria-expanded={qrOpen}
               >
-                <QrCode className="h-7 w-7" aria-hidden />
+                <QrCode className="h-8 w-8" aria-hidden />
               </button>
-              <span className="mt-10 max-w-full truncate px-0.5 text-center text-[11px] font-semibold leading-tight text-[var(--color-muted)]">
+              <span className="mt-11 max-w-full truncate px-0.5 text-center text-xs font-semibold leading-tight text-[var(--color-muted)]">
                 {d.nav.myQr}
               </span>
             </div>
@@ -160,12 +161,17 @@ export function OpsMobileNav({
             aria-expanded={moreOpen}
             aria-haspopup="dialog"
           >
-            <MoreHorizontal className="h-6 w-6 shrink-0" aria-hidden />
-            <span className="max-w-full truncate text-[11px] font-semibold leading-tight">
+            <MoreHorizontal className="h-7 w-7 shrink-0" aria-hidden />
+            <span className="max-w-full truncate text-xs font-semibold leading-tight">
               {d.nav.more}
             </span>
           </button>
         </div>
+        <AmrapWatermark
+          locale={locale}
+          label={d.shell.poweredBy}
+          className="border-[var(--color-border)] bg-[var(--color-surface)] pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+        />
       </nav>
 
       <Dialog

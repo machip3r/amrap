@@ -4,7 +4,7 @@ import { canInWorkspace } from "@/lib/auth/permissions";
 import type { Locale } from "@/lib/i18n/config";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { WorkoutTimer } from "@/components/timers/workout-timer";
+import { TimerApp } from "@/components/timers/timer-app";
 
 export default async function OpsTimersPage({
   params,
@@ -25,16 +25,8 @@ export default async function OpsTimersPage({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-      <header>
-        <h1 className="font-title text-3xl font-bold tracking-tight text-[var(--color-text)]">
-          {d.timers.title}
-        </h1>
-        <p className="mt-1 text-sm text-[var(--color-muted)]">
-          {d.timers.subtitle}
-        </p>
-      </header>
-      <WorkoutTimer locale={locale} />
+    <div className="mx-auto w-full max-w-3xl">
+      <TimerApp locale={locale} />
     </div>
   );
 }

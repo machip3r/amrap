@@ -76,10 +76,8 @@
 					if (data?.emailWarning) emailWarning = data.emailWarning;
 					if (data?.success && data.teamMemberId) {
 						onSuccess?.(data.teamMemberId);
-						if (!data.emailWarning) {
-							onOpenChange(false);
-							resetForm();
-						}
+						onOpenChange(false);
+						resetForm();
 					}
 				}
 				await update({ reset: false });

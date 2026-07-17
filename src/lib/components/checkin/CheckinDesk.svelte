@@ -450,13 +450,7 @@
 				<h2 class="text-sm font-bold uppercase tracking-wider text-[var(--color-text)]">
 					{labels.manualTitle}
 				</h2>
-				<form
-					class="mt-3 flex flex-col gap-3"
-					onsubmit={(e) => {
-						e.preventDefault();
-						void handleManualSearch();
-					}}
-				>
+				<div class="mt-3 flex flex-col gap-3">
 					<label class="sr-only" for="checkin-manual">{labels.manualLabel}</label>
 					<div class="relative">
 						<Search
@@ -471,6 +465,12 @@
 								placeholder={labels.manualPlaceholder}
 								maxlength={LIMITS.checkInCode}
 								spellcheck={false}
+								onkeydown={(e) => {
+									if (e.key === 'Enter') {
+										e.preventDefault();
+										void handleManualSearch();
+									}
+								}}
 							/>
 						</div>
 					</div>
@@ -483,15 +483,16 @@
 							{labels.clear}
 						</button>
 						<button
-							type="submit"
+							type="button"
 							disabled={pending || manual.trim().length === 0}
+							onclick={() => void handleManualSearch()}
 							class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[var(--color-primary)] px-3 py-2.5 text-sm font-semibold text-[var(--color-primary-on)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60"
 						>
 							<Search class="h-4 w-4" aria-hidden="true" />
 							{pending && !cameraOn ? labels.lookingUp : labels.lookup}
 						</button>
 					</div>
-				</form>
+				</div>
 			</section>
 
 			<section

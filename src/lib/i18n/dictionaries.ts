@@ -75,6 +75,7 @@ export type Dictionary = {
     rpcFailed: string;
     emailInUse: string;
     emailRateLimited: string;
+    emailInvalid: string;
   };
   confirmEmail: {
     title: string;
@@ -933,6 +934,8 @@ const es: Dictionary = {
       "Ese correo ya está registrado. Inicia sesión o usa el enlace de confirmación si aún no terminaste.",
     emailRateLimited:
       "Demasiados correos enviados. Espera un minuto e inténtalo de nuevo, o revisa tu bandeja si ya te llegó un código.",
+    emailInvalid:
+      "Ese correo no es válido para registro. Usa un correo real (evita dominios de ejemplo o de prueba).",
   },
   confirmEmail: {
     title: "Confirma tu correo",
@@ -1818,6 +1821,8 @@ const en: Dictionary = {
       "That email is already registered. Log in or use the confirmation link if you have not finished setup.",
     emailRateLimited:
       "Too many emails sent. Wait a minute and try again, or check your inbox if you already received a code.",
+    emailInvalid:
+      "That email is not valid for signup. Use a real address (avoid example or test domains).",
   },
   confirmEmail: {
     title: "Confirm your email",

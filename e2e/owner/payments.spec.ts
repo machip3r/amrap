@@ -14,7 +14,7 @@ test.describe("owner payments", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     const combobox = dialog.getByRole("combobox", {
-      name: /Buscar socio/i,
+      name: /^Socio$/i,
     });
     await combobox.fill(memberName);
     await dialog

@@ -51,13 +51,13 @@
 	const d = getDictionary(locale);
 	const prefix = `/${locale}`;
 	const pathname = $derived(page.url.pathname);
-	const ctx: OpsNavContext = {
+	const ctx = $derived<OpsNavContext>({
 		role,
 		canManageSettings,
 		canManageStaff,
 		hiddenNavIds
-	};
-	const items = getSidebarOpsNavItems(ctx);
+	});
+	const items = $derived(getSidebarOpsNavItems(ctx));
 	const orgHref = opsNavHref(prefix, '/organization');
 
 	let collapsed = $state(false);

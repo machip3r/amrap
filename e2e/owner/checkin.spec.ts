@@ -11,8 +11,11 @@ test.describe("owner check-in", () => {
     await expect(
       page.getByRole("heading", { name: "Entrada", exact: true }),
     ).toBeVisible();
-    await page.locator("#checkin-manual").fill(memberName);
-    await page.getByRole("button", { name: "Buscar" }).click();
+    const search = page.getByRole("textbox", { name: /^Socio$/i });
+    await search.fill(memberName);
+    const lookup = page.getByRole("button", { name: "Buscar" });
+    await expect(lookup).toBeEnabled();
+    await lookup.click();
 
     await expect(
       page.getByRole("button", { name: new RegExp(memberName) }).first(),

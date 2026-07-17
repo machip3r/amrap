@@ -41,6 +41,14 @@
 				{d.members.error}
 			</p>
 		{/if}
+		{#if formResult?.emailWarning}
+			<p
+				class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] px-4 py-3 text-sm text-[var(--color-muted)]"
+				role="status"
+			>
+				{formResult.emailWarning}
+			</p>
+		{/if}
 
 		<header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 			<div>

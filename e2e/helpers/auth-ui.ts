@@ -72,6 +72,7 @@ export async function createMemberViaUi(
   await dialog.locator('input[name="name"]').fill(name);
   await dialog.locator('input[name="email"]').fill(email);
   await dialog.getByRole("button", { name: "Registrar" }).click();
+  await expect(dialog).toBeHidden({ timeout: 45_000 });
   await expect(
     page.getByRole("link", { name: new RegExp(name) }).first(),
   ).toBeVisible({ timeout: 45_000 });

@@ -17,6 +17,7 @@
 		describedBy?: string;
 		class?: string;
 		oninput?: (event: Event) => void;
+		onkeydown?: (event: KeyboardEvent) => void;
 	};
 
 	let {
@@ -36,7 +37,8 @@
 		invalid = false,
 		describedBy = undefined,
 		class: className = '',
-		oninput
+		oninput,
+		onkeydown
 	}: Props = $props();
 
 	const baseClass =
@@ -63,4 +65,5 @@
 		? 'border-[var(--color-primary)] focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]'
 		: ''} {className}"
 	oninput={oninput}
+	{onkeydown}
 />

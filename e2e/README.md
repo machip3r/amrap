@@ -10,6 +10,7 @@ Unit tests (Vitest) are out of scope here — use Playwright for flows.
    - `PUBLIC_SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL`)
    - `PUBLIC_SUPABASE_PUBLISHABLE_KEY` / `PUBLIC_SUPABASE_ANON_KEY` (or Next `NEXT_PUBLIC_*` equivalents)
    - `SUPABASE_SERVICE_ROLE_KEY` (Admin API for seeding / confirming users)
+   - Optional: `E2E_EMAIL_DOMAIN` (default `amrap-e2e.com`) — must not be a reserved example/test domain; Supabase Auth rejects those
 2. Prefer a **dedicated test Supabase project** so runs do not pollute production.
 3. Chromium for Playwright: `pnpm exec playwright install chromium`
 

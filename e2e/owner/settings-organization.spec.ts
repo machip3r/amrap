@@ -12,7 +12,7 @@ test.describe("owner settings and organization", () => {
       page.getByRole("switch", { name: /Vista general/i }),
     ).toHaveCount(0);
     await expect(
-      page.getByRole("heading", { name: "Personalización" }),
+      page.getByRole("heading", { name: "Personalización", exact: true }),
     ).toBeVisible();
   });
 
@@ -31,6 +31,7 @@ test.describe("owner settings and organization", () => {
     await expect(page.getByText("Cambios guardados")).toBeVisible();
 
     await page.setViewportSize({ width: 1280, height: 800 });
+    await page.reload();
     await expect(
       page.locator("aside").getByRole("link", { name: "Pagos" }),
     ).toHaveCount(0);

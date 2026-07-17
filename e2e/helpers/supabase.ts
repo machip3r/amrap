@@ -128,9 +128,13 @@ export async function deleteAuthUserByEmail(email: string): Promise<void> {
   await admin.auth.admin.deleteUser(userId);
 }
 
+/** Domain must not be a reserved example/test host — Supabase Auth rejects those. */
+const E2E_EMAIL_DOMAIN =
+  process.env.E2E_EMAIL_DOMAIN?.trim() || "amrap-e2e.com";
+
 export function uniqueEmail(prefix: string): string {
   const stamp = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
-  return `${prefix}.${stamp}@example.com`;
+  return `${prefix}.${stamp}@${E2E_EMAIL_DOMAIN}`;
 }
 
 /** Person names cannot include digits (sanitizePersonNameInput / personNameSchema). */

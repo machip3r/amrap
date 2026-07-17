@@ -148,11 +148,9 @@
 		if (data.emailWarning) emailWarning = data.emailWarning;
 		if (data.success) {
 			onSuccess?.({ role: 'member', memberId: data.memberId });
-			if (!data.emailWarning) {
-				onOpenChange(false);
-				if (data.memberId) {
-					void goto(`/${locale}/members/${data.memberId}`);
-				}
+			onOpenChange(false);
+			if (data.memberId) {
+				void goto(`/${locale}/members/${data.memberId}`);
 			}
 		}
 	}
@@ -165,12 +163,10 @@
 		if (data.success) {
 			const r = (data.role ?? role) as RegisterRole;
 			onSuccess?.({ role: r, teamMemberId: data.teamMemberId });
-			if (!data.emailWarning) {
-				onOpenChange(false);
-				if (data.teamMemberId) {
-					const path = r === 'trainer' ? 'trainers' : 'staff';
-					void goto(`/${locale}/${path}/${data.teamMemberId}`);
-				}
+			onOpenChange(false);
+			if (data.teamMemberId) {
+				const path = r === 'trainer' ? 'trainers' : 'staff';
+				void goto(`/${locale}/${path}/${data.teamMemberId}`);
 			}
 		}
 	}

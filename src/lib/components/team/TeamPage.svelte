@@ -58,6 +58,14 @@
 </svelte:head>
 
 <div class="mx-auto flex w-full max-w-6xl animate-fade-in-up flex-col gap-5">
+	{#if formResult?.emailWarning}
+		<p
+			class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] px-4 py-3 text-sm text-[var(--color-muted)]"
+			role="status"
+		>
+			{formResult.emailWarning}
+		</p>
+	{/if}
 	<header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 		<div>
 			<h1 class="font-title text-3xl font-bold tracking-tight text-[var(--color-text)]">

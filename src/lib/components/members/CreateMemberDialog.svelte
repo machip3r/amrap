@@ -129,10 +129,8 @@
 						if (data?.emailWarning) emailWarning = data.emailWarning;
 						if (data?.success && data.memberId) {
 							onSuccess?.(data.memberId);
-							if (!data.emailWarning) {
-								onOpenChange(false);
-								resetForm();
-							}
+							onOpenChange(false);
+							resetForm();
 						}
 					}
 					await update({ reset: false });

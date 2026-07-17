@@ -53,12 +53,12 @@
 	let moreOpen = $state(false);
 	let qrOpen = $state(false);
 
-	const ctx: OpsNavContext = {
+	const ctx = $derived<OpsNavContext>({
 		role,
 		canManageSettings,
 		canManageStaff,
 		hiddenNavIds
-	};
+	});
 	const split = $derived(splitMobileOpsNav(getVisibleOpsNavItems(ctx)));
 	const leftTabs = $derived(split.primary.slice(0, Math.ceil(split.primary.length / 2)));
 	const rightTabs = $derived(split.primary.slice(leftTabs.length));

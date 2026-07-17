@@ -27,17 +27,24 @@ test.describe("owner register + onboarding", () => {
     const rateLimited = page.getByRole("alert").filter({
       hasText: /Demasiados correos|rate limit|Too many/i,
     });
+    const emailRejected = page.getByRole("alert").filter({
+      hasText: /no es válido|not valid|example|test domains|completar el registro|could not be completed/i,
+    });
     const otpOrOnboarding = page.getByRole("heading", {
       name: /Confirma tu correo|Configura tu espacio/i,
     });
 
-    await expect(rateLimited.or(otpOrOnboarding)).toBeVisible({
+    await expect(rateLimited.or(emailRejected).or(otpOrOnboarding)).toBeVisible({
       timeout: 60_000,
     });
 
-    if (await rateLimited.isVisible().catch(() => false)) {
-      // Shared Supabase projects rate-limit Auth emails; Admin seed is the
-      // equivalent of “register + confirmed email” for E2E.
+    const needsAdminSeed =
+      (await rateLimited.isVisible().catch(() => false)) ||
+      (await emailRejected.isVisible().catch(() => false));
+
+    if (needsAdminSeed) {
+      // Shared Supabase projects rate-limit Auth emails or reject some domains;
+      // Admin seed is the equivalent of “register + confirmed email” for E2E.
       const user = await createConfirmedAuthUser(email, E2E_PASSWORD);
       await bootstrapOrganizationAccount(user.id, organizationName);
       await loginViaUi(page, email, E2E_PASSWORD);
@@ -61,7 +68,7 @@ test.describe("owner register + onboarding", () => {
 
   test("invalid login shows error", async ({ page }) => {
     await page.goto("/es/login");
-    await page.locator('input[name="email"]').fill("nobody@example.com");
+    await page.locator('input[name="email"]').fill("nobody@amrap-e2e.com");
     await page.locator('input[name="password"]').fill("WrongPass99!");
     await page.getByRole("button", { name: "Entrar" }).click();
     await expect(page.getByRole("alert")).toBeVisible({ timeout: 15_000 });

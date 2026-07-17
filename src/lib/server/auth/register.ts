@@ -40,6 +40,15 @@ function looksLikeEmailRateLimited(msg: string): boolean {
 	);
 }
 
+function looksLikeEmailAddressInvalid(msg: string): boolean {
+	const m = msg.toLowerCase();
+	return (
+		(m.includes('email address') && m.includes('invalid')) ||
+		m.includes('example and test domains') ||
+		m.includes('email_address_invalid')
+	);
+}
+
 const registerSchema = z
 	.object({
 		locale: localeSchema,
@@ -90,6 +99,9 @@ export async function registerAction(formData: FormData): Promise<RegisterState>
 		}
 		if (looksLikeEmailRateLimited(error.message)) {
 			return { error: d.register.emailRateLimited };
+		}
+		if (looksLikeEmailAddressInvalid(error.message)) {
+			return { error: d.register.emailInvalid };
 		}
 		return { error: d.register.error };
 	}

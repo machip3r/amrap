@@ -1,16 +1,15 @@
-import {
-	PUBLIC_APP_URL,
-	PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-	PUBLIC_SUPABASE_URL
-} from '$env/static/public';
+import { env as publicEnv } from '$env/dynamic/public';
 
 /**
  * Supabase project URL (same for publishable vs legacy keys).
  * Falls back to NEXT_PUBLIC_* when sharing .env with amrap-next.
  * Safe for browser + server (public vars only).
+ *
+ * Uses `$env/dynamic/public` so optional / fallback vars (e.g. PUBLIC_APP_URL)
+ * do not fail the Vite build when unset on Vercel.
  */
 export function getSupabaseUrl(): string {
-	const url = PUBLIC_SUPABASE_URL || envFallback('NEXT_PUBLIC_SUPABASE_URL');
+	const url = publicEnv.PUBLIC_SUPABASE_URL || envFallback('NEXT_PUBLIC_SUPABASE_URL');
 	if (!url) {
 		throw new Error('Missing PUBLIC_SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL)');
 	}
@@ -20,7 +19,7 @@ export function getSupabaseUrl(): string {
 /** Public client key: publishable or legacy anon JWT. */
 export function getSupabasePublishableKey(): string {
 	const key =
-		PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+		publicEnv.PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
 		envFallback('PUBLIC_SUPABASE_ANON_KEY') ||
 		envFallback('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY') ||
 		envFallback('NEXT_PUBLIC_SUPABASE_ANON_KEY');
@@ -33,7 +32,7 @@ export function getSupabasePublishableKey(): string {
 }
 
 export function getPublicAppUrl(): string | undefined {
-	const url = PUBLIC_APP_URL || envFallback('NEXT_PUBLIC_APP_URL');
+	const url = publicEnv.PUBLIC_APP_URL || envFallback('NEXT_PUBLIC_APP_URL');
 	return url?.trim().replace(/\/$/, '');
 }
 

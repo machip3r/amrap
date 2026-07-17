@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { PUBLIC_FORMSPREE_FORM_ID } from '$env/static/public';
+	import { env as publicEnv } from '$env/dynamic/public';
 	import type { LandingDictionary } from '$lib/i18n/landing-dictionaries';
 	import {
 		LIMITS,
@@ -36,7 +36,7 @@
 	);
 
 	function formspreeEndpoint() {
-		const id = PUBLIC_FORMSPREE_FORM_ID?.trim();
+		const id = publicEnv.PUBLIC_FORMSPREE_FORM_ID?.trim();
 		if (!id) return null;
 		return `https://formspree.io/f/${id}`;
 	}

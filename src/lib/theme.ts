@@ -4,13 +4,13 @@ export type Theme = 'light' | 'dark';
 
 const STORAGE_KEY = 'amrap-theme';
 
-export function getStoredTheme(): Theme | null {
+function getStoredTheme(): Theme | null {
 	if (!browser) return null;
 	const stored = localStorage.getItem(STORAGE_KEY);
 	return stored === 'light' || stored === 'dark' ? stored : null;
 }
 
-export function getSystemTheme(): Theme {
+function getSystemTheme(): Theme {
 	if (!browser) return 'light';
 	return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
@@ -19,12 +19,12 @@ export function resolveTheme(): Theme {
 	return getStoredTheme() ?? getSystemTheme();
 }
 
-export function applyTheme(theme: Theme) {
+function applyTheme(theme: Theme) {
 	if (!browser) return;
 	document.documentElement.classList.toggle('dark', theme === 'dark');
 }
 
-export function setTheme(theme: Theme) {
+function setTheme(theme: Theme) {
 	if (!browser) return;
 	localStorage.setItem(STORAGE_KEY, theme);
 	applyTheme(theme);

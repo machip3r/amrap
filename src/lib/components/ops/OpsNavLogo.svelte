@@ -20,7 +20,7 @@
 	const lightLogo = $derived(logoUrlLight || logoUrlDark);
 	const darkLogo = $derived(logoUrlDark || logoUrlLight);
 	const hasCustomLogo = $derived(Boolean(lightLogo || darkLogo));
-	const sizeClass = $derived(size === 'sm' ? 'h-6 max-w-[2.75rem]' : 'h-9 max-w-full');
+	const sizeClass = $derived(size === 'sm' ? 'h-9 max-w-[7.5rem]' : 'h-9 max-w-full');
 </script>
 
 {#if hasCustomLogo}

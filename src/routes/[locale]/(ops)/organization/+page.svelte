@@ -13,7 +13,7 @@
 {#if data.forbidden}
 	<p class="text-[var(--color-muted)]">{d.common.forbidden}</p>
 {:else}
-	<div class="mx-auto w-full max-w-6xl animate-fade-in-up">
+	<div class="w-full animate-fade-in-up">
 		<OrganizationClient
 			locale={data.locale}
 			{d}

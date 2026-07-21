@@ -29,6 +29,16 @@ export type Dictionary = {
     poweredBy: string;
     myQrHint: string;
   };
+  pwa: {
+    installTitle: string;
+    installDescription: string;
+    installIosHint: string;
+    install: string;
+    dismiss: string;
+    offlineReady: string;
+    updateAvailable: string;
+    reload: string;
+  };
   a11y: {
     toggleTheme: string;
     moreActions: string;
@@ -304,6 +314,7 @@ export type Dictionary = {
     closeRun: string;
     prevPhase: string;
     nextPhase: string;
+    backToApp: string;
   };
   roster: {
     medical: string;
@@ -432,6 +443,7 @@ export type Dictionary = {
     date: string;
     selectMember: string;
     searchMember: string;
+    registerNewMember: string;
     noMemberMatches: string;
     submit: string;
     submitting: string;
@@ -513,6 +525,11 @@ export type Dictionary = {
     historyTitle: string;
     historySubtitle: string;
     filterDate: string;
+    filterPersonType: string;
+    filterAllTypes: string;
+    filterMembers: string;
+    filterTrainers: string;
+    filterStaff: string;
     filterApply: string;
     filterClear: string;
     colMember: string;
@@ -736,6 +753,9 @@ export type Dictionary = {
     close: string;
     save: string;
     upgrade: string;
+    upgradeConfirmTitle: string;
+    upgradeConfirmDescription: string;
+    upgradeConfirmSubmit: string;
     contactSales: string;
     current: string;
     checkoutComingSoon: string;
@@ -768,27 +788,32 @@ export type Dictionary = {
     previous: string;
     next: string;
   };
-  registerUser: {
-    open: string;
-    title: string;
-    description: string;
-    roleLabel: string;
-    roleMember: string;
-    roleTrainer: string;
-    roleStaff: string;
-    namePlaceholder: string;
-    phonePlaceholder: string;
-    countryCode: string;
-    email: string;
-    emailPlaceholder: string;
-    close: string;
-    cancel: string;
-    submit: string;
-    submitting: string;
-    success: string;
-    noPlans: string;
-    planPrice: string;
-  };
+	registerUser: {
+		open: string;
+		title: string;
+		description: string;
+		roleLabel: string;
+		roleMember: string;
+		roleTrainer: string;
+		roleStaff: string;
+		pickTitle: string;
+		pickDescription: string;
+		pickMemberHint: string;
+		pickTrainerHint: string;
+		pickStaffHint: string;
+		namePlaceholder: string;
+		phonePlaceholder: string;
+		countryCode: string;
+		email: string;
+		emailPlaceholder: string;
+		close: string;
+		cancel: string;
+		submit: string;
+		submitting: string;
+		success: string;
+		noPlans: string;
+		planPrice: string;
+	};
   validation: {
     required: string;
     email: string;
@@ -854,8 +879,9 @@ export type Dictionary = {
 
 const es: Dictionary = {
   meta: {
-    title: "Control de membresías",
-    description: "Administración de membresías para gimnasios",
+    title: "AMRAP | Software para gyms — check-in QR y membresías",
+    description:
+      "Administra tu gym con check-in QR, membresías, clases y recepción. Una cuenta, un QR, varios roles. Empieza gratis.",
   },
   nav: {
     dashboard: "Vista general",
@@ -883,6 +909,16 @@ const es: Dictionary = {
     help: "Ayuda",
     poweredBy: "Powered by",
     myQrHint: "Muestra este código en recepción para registrar tu entrada.",
+  },
+  pwa: {
+    installTitle: "Instalar AMRAP",
+    installDescription: "Añade la app a tu pantalla de inicio para abrirla como una app nativa.",
+    installIosHint: "En Safari: toca Compartir y luego “Añadir a pantalla de inicio”.",
+    install: "Instalar",
+    dismiss: "Ahora no",
+    offlineReady: "AMRAP listo para usar con la app en caché.",
+    updateAvailable: "Hay una nueva versión de AMRAP.",
+    reload: "Actualizar",
   },
   a11y: {
     toggleTheme: "Cambiar tema",
@@ -1056,9 +1092,9 @@ const es: Dictionary = {
     passwordError: "No se pudo guardar la contraseña. Intenta de nuevo.",
   },
   inviteStatus: {
-    pending: "Pendiente",
-    accepted: "Activo",
-    cancelled: "Cancelado",
+    pending: "Invitación pendiente",
+    accepted: "Cuenta vinculada",
+    cancelled: "Invitación cancelada",
   },
   completeSetup: {
     title: "Terminar registro",
@@ -1174,6 +1210,7 @@ const es: Dictionary = {
     closeRun: "Cerrar",
     prevPhase: "Fase anterior",
     nextPhase: "Fase siguiente",
+    backToApp: "Volver al panel",
   },
   roster: {
     medical: "Alerta médica",
@@ -1251,7 +1288,7 @@ const es: Dictionary = {
     emailFailed: "Se registró, pero el correo de invitación no se pudo enviar",
   },
   members: {
-    title: "Gestión de miembros",
+    title: "Miembros",
     subtitle: "Administra membresías, accesos y el estado de tu comunidad.",
     newMember: "Añadir miembro",
     name: "Nombre",
@@ -1303,6 +1340,7 @@ const es: Dictionary = {
     date: "Fecha",
     selectMember: "Seleccionar socio",
     searchMember: "Buscar socio por nombre o correo…",
+    registerNewMember: "Registrar nuevo socio",
     noMemberMatches: "Ningún socio coincide.",
     submit: "Registrar",
     submitting: "Registrando…",
@@ -1385,6 +1423,11 @@ const es: Dictionary = {
     historyTitle: "Historial de entradas",
     historySubtitle: "Todas las entradas registradas en este gimnasio.",
     filterDate: "Fecha",
+    filterPersonType: "Tipo de usuario",
+    filterAllTypes: "Todos",
+    filterMembers: "Miembros",
+    filterTrainers: "Entrenadores",
+    filterStaff: "Staff",
     filterApply: "Filtrar",
     filterClear: "Quitar filtro",
     colMember: "Socio",
@@ -1614,12 +1657,16 @@ const es: Dictionary = {
     close: "Cerrar",
     save: "Continuar",
     upgrade: "Mejorar plan",
+    upgradeConfirmTitle: "Mejorar suscripción",
+    upgradeConfirmDescription:
+      "Vas a mejorar al plan {plan}. Confirma para continuar con el cambio de suscripción.",
+    upgradeConfirmSubmit: "Confirmar mejora",
     contactSales: "Contactar a AMRAP",
     current: "Actual",
     checkoutComingSoon:
       "El pago de suscripción AMRAP llegará pronto. Mientras tanto, contacta soporte para cambiar de plan.",
     contactProPlan:
-      "Pro es un acuerdo personalizado. Escríbenos a hello@amrap.space (o usa Contacto en la web) si necesitas más de 3 gyms o términos a medida.",
+      "Pro es un acuerdo personalizado. Usa Contacto en la web si necesitas más de 3 gyms o términos a medida.",
     createGymComingSoon:
       "La creación de gimnasios adicionales llega con Growth / Multi-Gym (2–3 gyms, tarifa plana). Si necesitas más, contacta a AMRAP para Pro.",
     gymCapContact:
@@ -1706,6 +1753,11 @@ const es: Dictionary = {
     roleMember: "Miembro",
     roleTrainer: "Entrenador",
     roleStaff: "Personal",
+    pickTitle: "¿Qué quieres registrar?",
+    pickDescription: "Elige el tipo de usuario y continúa con el formulario.",
+    pickMemberHint: "Socio con plan y acceso al gym.",
+    pickTrainerHint: "Entrenador del equipo de la sede.",
+    pickStaffHint: "Personal de recepción u operación.",
     namePlaceholder: "Nombre completo",
     phonePlaceholder: "Teléfono",
     countryCode: "Código de país",
@@ -1741,8 +1793,9 @@ const es: Dictionary = {
 
 const en: Dictionary = {
   meta: {
-    title: "Membership control",
-    description: "Membership admin for gyms",
+    title: "AMRAP | Gym software — QR check-in & memberships",
+    description:
+      "Run your gym with QR check-in, memberships, classes, and front-desk tools. One account, one QR, many roles. Start free.",
   },
   nav: {
     dashboard: "Dashboard",
@@ -1770,6 +1823,16 @@ const en: Dictionary = {
     help: "Help",
     poweredBy: "Powered by",
     myQrHint: "Show this code at the front desk to check in.",
+  },
+  pwa: {
+    installTitle: "Install AMRAP",
+    installDescription: "Add AMRAP to your home screen for a full-screen app experience.",
+    installIosHint: "On Safari: tap Share, then “Add to Home Screen”.",
+    install: "Install",
+    dismiss: "Not now",
+    offlineReady: "AMRAP is ready with a cached app shell.",
+    updateAvailable: "A new version of AMRAP is available.",
+    reload: "Update",
   },
   a11y: {
     toggleTheme: "Toggle theme",
@@ -1942,9 +2005,9 @@ const en: Dictionary = {
     passwordError: "Could not save the password. Please try again.",
   },
   inviteStatus: {
-    pending: "Pending",
-    accepted: "Active",
-    cancelled: "Cancelled",
+    pending: "Invite pending",
+    accepted: "Account linked",
+    cancelled: "Invite cancelled",
   },
   completeSetup: {
     title: "Finish registration",
@@ -2060,6 +2123,7 @@ const en: Dictionary = {
     closeRun: "Close",
     prevPhase: "Previous phase",
     nextPhase: "Next phase",
+    backToApp: "Back to app",
   },
   roster: {
     medical: "Medical alert",
@@ -2136,7 +2200,7 @@ const en: Dictionary = {
     emailFailed: "Saved, but the invitation email could not be sent",
   },
   members: {
-    title: "Member management",
+    title: "Members",
     subtitle: "Manage memberships, access, and your community status.",
     newMember: "Add member",
     name: "Name",
@@ -2188,6 +2252,7 @@ const en: Dictionary = {
     date: "Date",
     selectMember: "Select member",
     searchMember: "Search member by name or email…",
+    registerNewMember: "Register new member",
     noMemberMatches: "No members match.",
     submit: "Save",
     submitting: "Saving…",
@@ -2269,6 +2334,11 @@ const en: Dictionary = {
     historyTitle: "Check-in history",
     historySubtitle: "All recorded check-ins at this gym.",
     filterDate: "Date",
+    filterPersonType: "User type",
+    filterAllTypes: "All",
+    filterMembers: "Members",
+    filterTrainers: "Trainers",
+    filterStaff: "Staff",
     filterApply: "Filter",
     filterClear: "Clear filter",
     colMember: "Member",
@@ -2498,12 +2568,16 @@ const en: Dictionary = {
     close: "Close",
     save: "Continue",
     upgrade: "Upgrade",
+    upgradeConfirmTitle: "Upgrade subscription",
+    upgradeConfirmDescription:
+      "You’re about to upgrade to {plan}. Confirm to continue with the subscription change.",
+    upgradeConfirmSubmit: "Confirm upgrade",
     contactSales: "Contact AMRAP",
     current: "Current",
     checkoutComingSoon:
       "AMRAP subscription checkout is coming soon. Contact support to change plans for now.",
     contactProPlan:
-      "Pro is a custom agreement. Email hello@amrap.space (or use Contact on the site) if you need more than 3 gyms or tailored terms.",
+      "Pro is a custom agreement. Use Contact on the site if you need more than 3 gyms or tailored terms.",
     createGymComingSoon:
       "Creating additional gyms ships with Growth / Multi-Gym (2–3 gyms, flat rate). Need more? Contact AMRAP for Pro.",
     gymCapContact:
@@ -2590,6 +2664,11 @@ const en: Dictionary = {
     roleMember: "Member",
     roleTrainer: "Trainer",
     roleStaff: "Staff",
+    pickTitle: "What do you want to register?",
+    pickDescription: "Pick a user type, then continue with the form.",
+    pickMemberHint: "Member with a plan and gym access.",
+    pickTrainerHint: "Trainer on this gym’s team.",
+    pickStaffHint: "Front-desk or ops staff.",
     namePlaceholder: "Full name",
     phonePlaceholder: "Phone number",
     countryCode: "Country code",

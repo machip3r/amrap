@@ -148,7 +148,7 @@ export async function loadSessionsForWeek(
 	return mapRpcRows((data ?? []) as WeekSessionRpcRow[]);
 }
 
-export type SessionResultKind = 'amrap' | 'strength' | 'for_time' | 'other';
+type SessionResultKind = 'amrap' | 'strength' | 'for_time' | 'other';
 
 export type SessionRosterResult = {
 	id: string;
@@ -160,12 +160,19 @@ export type SessionRosterResult = {
 	note: string | null;
 };
 
+type ClassBookingStatus =
+	| 'confirmed'
+	| 'waitlisted'
+	| 'cancelled'
+	| 'attended'
+	| 'no_show';
+
 export type SessionRosterBooking = {
 	id: string;
 	session_id: string;
 	person_id: string;
 	membership_id: string;
-	status: import('$lib/classes/types').ClassBookingStatus;
+	status: ClassBookingStatus;
 	waitlist_position: number | null;
 	booked_at: string;
 	person_name: string;
@@ -344,7 +351,7 @@ export async function loadSessionRoster(supabase: SupabaseClient, sessionId: str
 				session_id: b.session_id as string,
 				person_id: personId,
 				membership_id: b.membership_id as string,
-				status: b.status as import('$lib/classes/types').ClassBookingStatus,
+				status: b.status as ClassBookingStatus,
 				waitlist_position: (b.waitlist_position as number | null) ?? null,
 				booked_at: b.booked_at as string,
 				person_name: p?.full_name ?? '',
@@ -356,34 +363,4 @@ export async function loadSessionRoster(supabase: SupabaseClient, sessionId: str
 			};
 		})
 	};
-}
-
-export async function loadSchedulesForClass(supabase: SupabaseClient, classId: string) {
-	const { data, error } = await supabase
-		.from('class_schedules')
-		.select(
-			'id, class_id, gym_id, recurrence, days_of_week, local_time, timezone, valid_from, valid_until, capacity, duration_minutes, is_active'
-		)
-		.eq('class_id', classId)
-		.order('created_at', { ascending: false });
-
-	if (error) {
-		console.error('loadSchedulesForClass', error.message);
-		return [];
-	}
-
-	return (data ?? []).map((s) => ({
-		id: s.id as string,
-		class_id: s.class_id as string,
-		gym_id: s.gym_id as string,
-		recurrence: s.recurrence as 'none' | 'weekly',
-		days_of_week: (s.days_of_week as number[]) ?? [],
-		local_time: String(s.local_time).slice(0, 5),
-		timezone: s.timezone as string,
-		valid_from: s.valid_from as string,
-		valid_until: (s.valid_until as string | null) ?? null,
-		capacity: (s.capacity as number | null) ?? null,
-		duration_minutes: (s.duration_minutes as number | null) ?? null,
-		is_active: Boolean(s.is_active)
-	}));
 }

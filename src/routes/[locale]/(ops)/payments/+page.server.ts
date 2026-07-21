@@ -10,6 +10,7 @@ import {
 	searchPaymentMembers
 } from '$lib/payments/member-options';
 import { parsePage, sanitizeSearchTerm } from '$lib/pagination';
+import { createMember, type CreateMemberState } from '$lib/server/members/actions';
 import { createPayment, type CreatePaymentState } from '$lib/server/payments/actions';
 import { createClient } from '$lib/supabase/server';
 import { formString } from '$lib/validation/schemas';
@@ -56,11 +57,14 @@ export const load: PageServerLoad = async ({ parent, url, depends }) => {
 	const d = getDictionary(locale as Locale);
 	if (!workspace) throw redirect(303, `/${locale}/login`);
 
+	const canManageMembers = canInWorkspace(workspace, 'manage_members');
+
 	if (!canInWorkspace(workspace, 'record_payment')) {
 		return {
 			forbidden: true as const,
 			locale: locale as Locale,
 			d,
+			canManageMembers: false,
 			members: [],
 			plans: [],
 			dayPassPrice: null as number | null,
@@ -144,6 +148,7 @@ export const load: PageServerLoad = async ({ parent, url, depends }) => {
 		forbidden: false as const,
 		locale: locale as Locale,
 		d,
+		canManageMembers,
 		members,
 		plans,
 		dayPassPrice,
@@ -169,6 +174,11 @@ export const load: PageServerLoad = async ({ parent, url, depends }) => {
 
 export const actions = {
 	create: async ({ request }) => createPayment(await request.formData()) as CreatePaymentState,
+	createMember: async ({ request }) => {
+		const result = await createMember(await request.formData());
+		if (result?.success) return result as CreateMemberState;
+		return fail(400, (result ?? { error: 'error' }) as CreateMemberState);
+	},
 	searchMembers: async ({ request }) => {
 		const formData = await request.formData();
 		const workspace = await getWorkspace();

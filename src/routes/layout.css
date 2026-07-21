@@ -24,6 +24,35 @@
 	--color-success-bg: #d1fae5;
 	--color-danger: #ef4444;
 	--color-danger-bg: #fee2e2;
+
+	/* Responsive layout tokens — use these instead of one-off rem values */
+	--safe-top: env(safe-area-inset-top, 0px);
+	--safe-bottom: env(safe-area-inset-bottom, 0px);
+	--safe-left: env(safe-area-inset-left, 0px);
+	--safe-right: env(safe-area-inset-right, 0px);
+
+	--touch-target: 2.75rem; /* 44px */
+	--control-height: 2.75rem;
+	--control-radius: 0.5rem;
+
+	--spacing-page: 1.25rem;
+	--spacing-page-md: 1.75rem;
+	--spacing-page-lg: 2.25rem;
+	/* Desktop gutters ≈ 5% each side (≈10% total horizontal padding) */
+	--spacing-page-x-lg: 5%;
+	--spacing-section: 1.25rem;
+
+	/* App shells use full available width; gutters come from page padding */
+	--content-max: 100%;
+	--content-max-narrow: 100%;
+
+	--ops-header-height: 4.5rem;
+	--ops-bottom-nav-height: 3.75rem;
+	/* Watermark strip + QR FAB overhang + breathing room above the bar */
+	--ops-bottom-nav-extra: 4.5rem;
+	--ops-bottom-clearance: calc(
+		var(--ops-bottom-nav-height) + var(--ops-bottom-nav-extra) + var(--safe-bottom)
+	);
 }
 
 .dark {
@@ -52,6 +81,12 @@ body {
 	transition:
 		background-color 0.3s ease,
 		color 0.3s ease;
+}
+
+/* App shells: prefer dynamic viewport so iOS URL chrome does not clip */
+.amrap-app-shell {
+	height: 100svh;
+	height: 100dvh;
 }
 
 h1,
@@ -121,7 +156,7 @@ textarea:focus {
 	}
 	100% {
 		opacity: 1;
-		transform: translateY(0);
+		transform: none;
 	}
 }
 
@@ -192,7 +227,7 @@ textarea:focus {
 	display: block !important;
 	width: 100% !important;
 	height: auto !important;
-	max-height: min(70vh, 560px);
+	max-height: min(70dvh, 560px);
 	object-fit: contain;
 	background: #000;
 	transform: scaleX(-1);

@@ -5,7 +5,7 @@ import { getSessionUser } from '$lib/auth/session';
 /** Cookie storing the member's preferred active gym (distinct from staff ACTIVE_GYM_COOKIE). */
 export const MEMBER_GYM_COOKIE = 'amrap_member_gym_id';
 
-export type MemberGym = {
+type MemberGym = {
 	gymId: string;
 	gymName: string;
 	membershipId: string;

@@ -4,7 +4,7 @@ import { createServiceRoleClient } from "$lib/supabase/admin";
 import { getSessionUser } from "$lib/auth/session";
 import type { Locale } from "$lib/i18n/config";
 
-export type PendingInviteKind = "team" | "member";
+type PendingInviteKind = "team" | "member";
 
 export type PendingInvite = {
   kind: PendingInviteKind;

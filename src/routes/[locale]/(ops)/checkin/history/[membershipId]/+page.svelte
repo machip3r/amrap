@@ -23,7 +23,7 @@
 	<title>{member.memberName} — {d.checkin.calendarTitle} — AMRAP</title>
 </svelte:head>
 
-<div class="animate-fade-in-up mx-auto flex w-full max-w-6xl flex-col gap-5 pb-4">
+<div class="animate-fade-in-up flex w-full flex-col gap-5 pb-4">
 	<a
 		href={`/${locale}/checkin/history`}
 		class="inline-flex min-h-11 w-fit items-center gap-1.5 text-sm font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"

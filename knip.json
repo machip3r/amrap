@@ -1,0 +1,6 @@
+{
+	"$schema": "https://unpkg.com/knip@6/schema.json",
+	"entry": ["e2e/**/*.{ts,js}"],
+	"project": ["src/**/*.{ts,js,svelte}", "e2e/**/*.{ts,js}"],
+	"ignoreDependencies": ["tailwindcss"]
+}

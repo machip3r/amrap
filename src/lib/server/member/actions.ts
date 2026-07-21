@@ -61,22 +61,6 @@ export async function cancelBooking(formData: FormData): Promise<MemberActionSta
 	return { success: true };
 }
 
-export async function markInboxRead(formData: FormData): Promise<void> {
-	const member = await getMemberContext();
-	if (!member) return;
-
-	const messageId = uuidSchema.safeParse(formString(formData, 'message_id'));
-	if (!messageId.success) return;
-
-	const supabase = createClient();
-	await supabase
-		.from('inbox_messages')
-		.update({ read_at: new Date().toISOString() })
-		.eq('id', messageId.data)
-		.eq('recipient_person_id', member.personId)
-		.is('read_at', null);
-}
-
 export async function switchMemberGymAction(formData: FormData): Promise<void> {
 	const locale = localeFromForm(formData);
 	const member = await getMemberContext();

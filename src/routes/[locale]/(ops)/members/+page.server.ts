@@ -30,7 +30,8 @@ export const load: PageServerLoad = async ({ parent, url, depends }) => {
 			activePlans: [],
 			meta: { page: 1, pageSize: 25, total: 0, totalPages: 1, from: 0, to: 0 },
 			filters: { q: '', status: 'all' as const, planId: 'all' },
-			listError: false
+			listError: false,
+			showCheckInHistory: false
 		};
 	}
 
@@ -80,7 +81,8 @@ export const load: PageServerLoad = async ({ parent, url, depends }) => {
 		activePlans,
 		meta,
 		filters: { q, status, planId },
-		listError
+		listError,
+		showCheckInHistory: canInWorkspace(workspace, 'checkin')
 	};
 };
 

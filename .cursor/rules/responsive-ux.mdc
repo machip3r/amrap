@@ -12,7 +12,7 @@ Every UI change and feature must work well on phone (~375px) and desktop. Prefer
 - **`md+`:** collapsible sidebar (`AppNav`)
 - **`< md`:** bottom tabs (primary destinations) + **More** sheet — do not invent per-page nav
 - Keep gym-floor actions (check-in, members, classes) in primary tabs when the role allows
-- Respect bottom-bar clearance and `safe-area-inset-*` on fixed chrome
+- Respect bottom-bar clearance via `--ops-bottom-clearance` and `safe-area` tokens on fixed chrome
 
 ## Layout
 
@@ -20,17 +20,18 @@ Every UI change and feature must work well on phone (~375px) and desktop. Prefer
 <!-- ❌ BAD — desktop-only density -->
 <div class="grid grid-cols-4 gap-6 p-8">
 
-<!-- ✅ GOOD — stack first, expand later -->
-<div class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6 lg:p-8">
+<!-- ✅ GOOD — stack first, expand later; prefer page spacing tokens; desktop uses ~5% side gutters -->
+<div class="grid grid-cols-1 gap-4 p-[var(--spacing-page)] sm:grid-cols-2 lg:grid-cols-4 lg:gap-6 lg:px-[var(--spacing-page-x-lg)] lg:py-[var(--spacing-page-lg)]">
 ```
 
-- Touch targets ≥ ~44px
+- Touch targets ≥ `--touch-target` (44px); app shells use `.amrap-app-shell` (`dvh`)
+- Desktop content uses full available width with `--spacing-page-x-lg` (~5% each side); avoid hard `max-w-6xl` page shells
 - Avoid `min-w-[36rem]` tables without a mobile alternative (cards / stack / intentional scroll)
 - One job per section; no competing chrome
 
 ## Design system
 
-- Reuse `--color-*`, shared `Input` / `Button` / `FormField` / form fields under `src/lib/components/ui/`
+- Reuse `--color-*`, layout tokens in `layout.css`, shared `Input` / `Button` / `FormField` under `src/lib/components/ui/`
 - No one-off visual forks or hardcoded product copy — `es` + `en` dictionaries
 - Icon-only controls need `aria-label`; nav links use `aria-current` when active
 

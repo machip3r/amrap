@@ -10,9 +10,8 @@ import {
 } from '$lib/nav/ops-nav';
 import { canUseWhitelabel } from '$lib/plans/limits';
 import { createClient } from '$lib/supabase/server';
-import type { BrandThemeTokens } from '$lib/types';
 import { zodFieldErrors } from '$lib/validation/field-errors';
-import { formString, localeSchema, optionalHexColorSchema } from '$lib/validation/schemas';
+import { formString, localeSchema } from '$lib/validation/schemas';
 import { z } from 'zod';
 
 const LOGO_MAX_BYTES = 2 * 1024 * 1024;
@@ -32,29 +31,7 @@ function localeFromForm(formData: FormData) {
 	return localeParsed.success ? localeParsed.data : ('es' as const);
 }
 
-const themeFormSchema = z.object({
-	locale: localeSchema,
-	lightPrimary: optionalHexColorSchema,
-	lightBg: optionalHexColorSchema,
-	lightSurface: optionalHexColorSchema,
-	darkPrimary: optionalHexColorSchema,
-	darkBg: optionalHexColorSchema,
-	darkSurface: optionalHexColorSchema
-});
-
 const logoModeSchema = z.enum(['light', 'dark']);
-
-function tokensFromPartial(input: {
-	primary?: string;
-	bg?: string;
-	surface?: string;
-}): BrandThemeTokens {
-	const out: BrandThemeTokens = {};
-	if (input.primary) out.primary = input.primary;
-	if (input.bg) out.bg = input.bg;
-	if (input.surface) out.surface = input.surface;
-	return out;
-}
 
 function extForMime(mime: string): string {
 	switch (mime) {
@@ -67,57 +44,6 @@ function extForMime(mime: string): string {
 		default:
 			return 'jpg';
 	}
-}
-
-export async function saveGymThemeAction(formData: FormData): Promise<SettingsActionState> {
-	const locale = localeFromForm(formData);
-	const d = getDictionary(locale);
-
-	const workspace = await getWorkspace();
-	if (!workspace || !canInWorkspace(workspace, 'manage_billing')) {
-		return { error: d.common.forbidden };
-	}
-	if (!canUseWhitelabel(workspace.planTier)) {
-		return { error: d.settings.whitelabelLocked };
-	}
-
-	const parsed = themeFormSchema.safeParse({
-		locale: formString(formData, 'locale') || 'es',
-		lightPrimary: formString(formData, 'lightPrimary'),
-		lightBg: formString(formData, 'lightBg'),
-		lightSurface: formString(formData, 'lightSurface'),
-		darkPrimary: formString(formData, 'darkPrimary'),
-		darkBg: formString(formData, 'darkBg'),
-		darkSurface: formString(formData, 'darkSurface')
-	});
-	if (!parsed.success) {
-		return { fieldErrors: zodFieldErrors(parsed.error, d.validation) };
-	}
-
-	const themeLight = tokensFromPartial({
-		primary: parsed.data.lightPrimary,
-		bg: parsed.data.lightBg,
-		surface: parsed.data.lightSurface
-	});
-	const themeDark = tokensFromPartial({
-		primary: parsed.data.darkPrimary,
-		bg: parsed.data.darkBg,
-		surface: parsed.data.darkSurface
-	});
-
-	const supabase = createClient();
-	const { error } = await supabase.rpc('update_gym_branding', {
-		p_gym_id: workspace.gymId,
-		p_theme_light: themeLight,
-		p_theme_dark: themeDark
-	});
-
-	if (error) {
-		console.error('saveGymThemeAction', error.message);
-		return { error: d.settings.error };
-	}
-
-	return { success: d.settings.saved };
 }
 
 export async function applyPaletteTemplateAction(

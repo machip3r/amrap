@@ -21,21 +21,15 @@
 	let { routines, labels, onOpen, onEdit, onDelete, onCreate }: Props = $props();
 </script>
 
-<div class="flex flex-col gap-4">
-	<header class="flex items-start justify-between gap-3">
+<div class="flex w-full flex-col gap-5">
+	<header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 		<div class="min-w-0">
-			<h1
-				class="font-title text-2xl font-bold tracking-tight text-[var(--color-text)] sm:text-3xl"
-			>
+			<h1 class="font-title text-3xl font-bold tracking-tight text-[var(--color-text)]">
 				{labels.routinesTitle}
 			</h1>
 			<p class="mt-1 text-sm text-[var(--color-muted)]">{labels.routinesSubtitle}</p>
 		</div>
-		<Button
-			type="button"
-			class="inline-flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap px-3.5 text-sm leading-none shadow-sm"
-			onclick={onCreate}
-		>
+		<Button type="button" variant="toolbar" onclick={onCreate}>
 			<Plus class="h-4 w-4 shrink-0" aria-hidden="true" />
 			<span class="shrink-0">{labels.create}</span>
 		</Button>
@@ -43,7 +37,7 @@
 
 	{#if routines.length === 0}
 		<p
-			class="rounded-xl border border-dashed border-[var(--color-border)] px-4 py-10 text-center text-sm text-[var(--color-muted)]"
+			class="rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-10 text-center text-sm text-[var(--color-muted)]"
 		>
 			{labels.emptyRoutines}
 		</p>

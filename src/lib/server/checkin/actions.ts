@@ -18,7 +18,7 @@ export type CheckinMember = {
 	openSessions?: OpenClassSession[];
 };
 
-export type OpenClassSession = {
+type OpenClassSession = {
 	sessionId: string;
 	classId: string;
 	className: string;

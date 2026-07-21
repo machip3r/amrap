@@ -3,7 +3,9 @@
 	import { invalidate } from '$app/navigation';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Search from '@lucide/svelte/icons/search';
+	import UserPlus from '@lucide/svelte/icons/user-plus';
 	import X from '@lucide/svelte/icons/x';
+	import CreateMemberDialog from '$lib/components/members/CreateMemberDialog.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Dialog from '$lib/components/ui/Dialog.svelte';
 	import FormField from '$lib/components/ui/FormField.svelte';
@@ -35,12 +37,22 @@
 		members: PaymentMemberOption[];
 		plans: PaymentPlanOption[];
 		dayPassPrice: number | null;
+		canManageMembers?: boolean;
 		onSuccess?: (paymentId: string) => void;
 	};
 
-	let { locale, d, members, plans, dayPassPrice, onSuccess }: Props = $props();
+	let {
+		locale,
+		d,
+		members,
+		plans,
+		dayPassPrice,
+		canManageMembers = false,
+		onSuccess
+	}: Props = $props();
 
 	let open = $state(false);
+	let createOpen = $state(false);
 	let formKey = $state(0);
 
 	let memberId = $state('');
@@ -91,6 +103,10 @@
 			})
 			.slice(0, 8);
 	});
+
+	/** Combobox rows: optional register action at index 0, then members. */
+	const registerRowOffset = $derived(canManageMembers ? 1 : 0);
+	const optionCount = $derived(registerRowOffset + filteredMembers.length);
 
 	function cancelMemberSearch() {
 		if (searchTimer) {
@@ -143,9 +159,7 @@
 	}
 
 	const safeActiveIndex = $derived(
-		filteredMembers.length === 0
-			? 0
-			: Math.min(activeIndex, filteredMembers.length - 1)
+		optionCount === 0 ? 0 : Math.min(activeIndex, optionCount - 1)
 	);
 
 	const canSubmit = $derived(
@@ -154,9 +168,19 @@
 			!pending
 	);
 
-	const showList = $derived(memberListOpen && filteredMembers.length > 0);
+	const canOpenPayment = $derived(members.length > 0 || canManageMembers);
+
+	const showList = $derived(
+		memberListOpen && (canManageMembers || filteredMembers.length > 0)
+	);
 	const showEmpty = $derived(
-		memberListOpen && memberQuery.trim().length > 0 && filteredMembers.length === 0
+		memberListOpen &&
+			!canManageMembers &&
+			memberQuery.trim().length > 0 &&
+			filteredMembers.length === 0
+	);
+	const showNoMatchesHint = $derived(
+		canManageMembers && memberQuery.trim().length > 0 && filteredMembers.length === 0
 	);
 
 	function formatMoney(value: number) {
@@ -206,6 +230,27 @@
 		inputEl?.blur();
 	}
 
+	function openCreateMember() {
+		cancelMemberSearch();
+		memberListOpen = false;
+		createOpen = true;
+	}
+
+	function onMemberCreated(
+		newMemberId: string,
+		meta?: { name: string; email: string }
+	) {
+		const option: PaymentMemberOption = {
+			id: newMemberId,
+			name: meta?.name?.trim() || d.payments.member,
+			email: meta?.email?.trim() || null
+		};
+		if (!memberOptions.some((m) => m.id === newMemberId)) {
+			memberOptions = [option, ...memberOptions];
+		}
+		pickMember(option);
+	}
+
 	function clearMember() {
 		cancelMemberSearch();
 		memberId = '';
@@ -241,13 +286,18 @@
 
 		if (e.key === 'ArrowDown') {
 			e.preventDefault();
-			activeIndex = Math.min(activeIndex + 1, Math.max(filteredMembers.length - 1, 0));
+			activeIndex = Math.min(activeIndex + 1, Math.max(optionCount - 1, 0));
 		} else if (e.key === 'ArrowUp') {
 			e.preventDefault();
 			activeIndex = Math.max(activeIndex - 1, 0);
 		} else if (e.key === 'Enter') {
 			e.preventDefault();
-			const pickMe = filteredMembers[safeActiveIndex];
+			if (canManageMembers && safeActiveIndex === 0) {
+				openCreateMember();
+				return;
+			}
+			const memberIndex = safeActiveIndex - registerRowOffset;
+			const pickMe = filteredMembers[memberIndex];
 			if (pickMe) pickMember(pickMe);
 		} else if (e.key === 'Escape') {
 			e.preventDefault();
@@ -297,17 +347,19 @@
 
 <Button
 	type="button"
-	class="inline-flex min-h-11 shrink-0 items-center gap-1.5 px-3.5 py-2 shadow-sm"
+	variant="toolbar"
 	onclick={openDialog}
-	disabled={members.length === 0}
+	disabled={!canOpenPayment}
 >
-	<Plus class="h-4 w-4" aria-hidden="true" />
-	{d.payments.newPayment}
+	<Plus class="h-4 w-4 shrink-0" aria-hidden="true" />
+	<span class="shrink-0">{d.payments.newPayment}</span>
 </Button>
 
 <Dialog
 	{open}
 	onOpenChange={(next) => {
+		// Keep payment dialog open while the nested create-member dialog is up.
+		if (!next && createOpen) return;
 		open = next;
 		if (!next) resetForm();
 	}}
@@ -319,7 +371,7 @@
 	autoFocus={false}
 >
 	{#if open}
-		{#if members.length === 0}
+		{#if !canOpenPayment}
 			<p class="text-sm text-[var(--color-muted)]">{d.payments.noMembers}</p>
 		{:else}
 			<form
@@ -411,8 +463,37 @@
 											</p>
 										{:else}
 											<ul class="py-1">
+												{#if canManageMembers}
+													{@const registerActive = safeActiveIndex === 0}
+													<li
+														id="payment-member-opt-register"
+														role="option"
+														aria-selected={false}
+													>
+														<button
+															type="button"
+															class="flex w-full items-center gap-3 border-b border-[var(--color-border)] px-4 py-2.5 text-left transition-colors {registerActive
+																? 'bg-[var(--color-primary-soft)]'
+																: 'hover:bg-[var(--color-surface-hover)]'}"
+															onmouseenter={() => (activeIndex = 0)}
+															onclick={openCreateMember}
+														>
+															<span
+																class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)] text-[var(--color-primary-on)]"
+															>
+																<UserPlus class="h-4 w-4" aria-hidden="true" />
+															</span>
+															<span
+																class="min-w-0 flex-1 text-sm font-semibold text-[var(--color-primary)]"
+															>
+																{d.payments.registerNewMember}
+															</span>
+														</button>
+													</li>
+												{/if}
 												{#each filteredMembers as m, index (m.id)}
-													{@const active = index === safeActiveIndex}
+													{@const rowIndex = index + registerRowOffset}
+													{@const active = rowIndex === safeActiveIndex}
 													{@const isSelected = m.id === memberId}
 													<li
 														id="payment-member-opt-{m.id}"
@@ -425,7 +506,7 @@
 															isSelected
 																? 'bg-[var(--color-primary-soft)]'
 																: 'hover:bg-[var(--color-surface-hover)]'}"
-															onmouseenter={() => (activeIndex = index)}
+															onmouseenter={() => (activeIndex = rowIndex)}
 															onclick={() => pickMember(m)}
 														>
 															<span
@@ -464,6 +545,11 @@
 														</button>
 													</li>
 												{/each}
+												{#if showNoMatchesHint}
+													<li class="px-4 py-2.5 text-sm text-[var(--color-muted)]" role="presentation">
+														{d.payments.noMemberMatches}
+													</li>
+												{/if}
 											</ul>
 										{/if}
 									</div>
@@ -621,3 +707,16 @@
 		{/if}
 	{/if}
 </Dialog>
+
+{#if canManageMembers}
+	<CreateMemberDialog
+		open={createOpen}
+		onOpenChange={(next) => (createOpen = next)}
+		{locale}
+		{d}
+		{plans}
+		formResult={null}
+		action="?/createMember"
+		onSuccess={onMemberCreated}
+	/>
+{/if}

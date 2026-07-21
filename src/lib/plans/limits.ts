@@ -17,24 +17,6 @@ export function canCreatePlan(tier: OrgPlanTier, activePlanCount: number): boole
 }
 
 /**
- * Soft cap on active members per gym (product / infra guard).
- * `null` = no product soft-cap (e.g. custom Pro).
- */
-export function maxActiveMembers(tier: OrgPlanTier): number | null {
-	switch (tier) {
-		case 'FREEMIUM':
-			return 30;
-		case 'STARTER':
-		case 'GROWTH':
-			return 500;
-		case 'PRO':
-			return null;
-		default:
-			return 30;
-	}
-}
-
-/**
  * Max gyms per organization for self-serve / product caps.
  * Growth = Multi-Gym flat (2–3). Pro = custom (agreement).
  */
@@ -62,7 +44,7 @@ export function canCreateGym(tier: OrgPlanTier, gymCount: number): boolean {
  * Max STAFF + TRAINER seats per gym (OWNER does not count).
  * `null` = unlimited.
  */
-export function maxStaffSeats(tier: OrgPlanTier): number | null {
+function maxStaffSeats(tier: OrgPlanTier): number | null {
 	switch (tier) {
 		case 'FREEMIUM':
 			return 2;
@@ -83,11 +65,6 @@ export function canInviteStaff(
 	const max = maxStaffSeats(tier);
 	if (max == null) return true;
 	return currentStaffAndTrainerCount < max;
-}
-
-/** Self-serve plans that can use in-app checkout when billing is wired. */
-export function isSelfServePlan(tier: OrgPlanTier): boolean {
-	return tier === 'FREEMIUM' || tier === 'STARTER' || tier === 'GROWTH';
 }
 
 /** Custom logo + theme (white-label). Freemium stays on default AMRAP branding. */

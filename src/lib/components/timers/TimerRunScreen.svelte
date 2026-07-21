@@ -173,7 +173,7 @@
 	);
 </script>
 
-<div class="fixed inset-0 z-50 flex flex-col text-white" style:background-color={routine.color}>
+<div class="relative flex min-h-0 flex-1 flex-col overflow-hidden text-white" style:background-color={routine.color}>
 	<div
 		class="grid grid-cols-[auto_1fr_auto] items-center gap-2 px-3 pb-3 pt-[max(0.5rem,env(safe-area-inset-top))] sm:px-5"
 	>

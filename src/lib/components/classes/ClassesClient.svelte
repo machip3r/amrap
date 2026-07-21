@@ -234,7 +234,7 @@
 	{#if canManage}
 		<Button
 			type="button"
-			class="inline-flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap px-3.5 text-sm leading-none shadow-sm"
+			variant="toolbar"
 			onclick={() => {
 				resetCreate();
 				createOpen = true;
@@ -301,44 +301,9 @@
 					<article
 						class="rounded-2xl border border-[var(--color-border)] border-l-4 border-l-[var(--color-primary)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-6"
 					>
-						<div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-							<div class="min-w-0 flex-1">
-								<div class="flex flex-wrap items-center gap-2">
-									<h2 class="font-title text-xl font-bold text-[var(--color-text)]">{c.name}</h2>
-									<span
-										class="rounded-md bg-[var(--color-success)]/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[var(--color-success)]"
-									>
-										{labels.active}
-									</span>
-								</div>
-								{#if c.description}
-									<p class="mt-1 text-sm text-[var(--color-muted)]">{c.description}</p>
-								{/if}
-								{#if c.tags.length > 0}
-									<div class="mt-2 flex flex-wrap gap-1.5">
-										{#each c.tags as t (t)}
-											<span
-												class="rounded-md bg-[var(--color-surface-hover)] px-2 py-0.5 text-xs text-[var(--color-muted)]"
-											>
-												{t}
-											</span>
-										{/each}
-									</div>
-								{/if}
-								<div class="mt-3 flex flex-wrap gap-3 text-sm text-[var(--color-muted)]">
-									<span class="inline-flex items-center gap-1.5">
-										<Users class="h-3.5 w-3.5" aria-hidden="true" />
-										{c.capacity != null ? String(c.capacity) : labels.unlimited}
-									</span>
-									<span>{c.duration_minutes} min</span>
-									<span>
-										{trainerCountLabel(labels.trainerCount, c.trainerIds.length)}
-										{c.trainerNames.length > 0 ? `: ${c.trainerNames.join(', ')}` : ''}
-									</span>
-								</div>
-							</div>
+						<div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-4">
 							{#if canManage}
-								<div class="flex shrink-0 flex-wrap items-center gap-1">
+								<div class="order-2 flex shrink-0 flex-wrap items-center gap-1 sm:order-1">
 									<button
 										type="button"
 										onclick={() => {
@@ -380,6 +345,41 @@
 									</button>
 								</div>
 							{/if}
+							<div class="order-1 min-w-0 flex-1 sm:order-2">
+								<div class="flex flex-wrap items-center gap-2">
+									<h2 class="font-title text-xl font-bold text-[var(--color-text)]">{c.name}</h2>
+									<span
+										class="rounded-md bg-[var(--color-success)]/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[var(--color-success)]"
+									>
+										{labels.active}
+									</span>
+								</div>
+								{#if c.description}
+									<p class="mt-1 text-sm text-[var(--color-muted)]">{c.description}</p>
+								{/if}
+								{#if c.tags.length > 0}
+									<div class="mt-2 flex flex-wrap gap-1.5">
+										{#each c.tags as t (t)}
+											<span
+												class="rounded-md bg-[var(--color-surface-hover)] px-2 py-0.5 text-xs text-[var(--color-muted)]"
+											>
+												{t}
+											</span>
+										{/each}
+									</div>
+								{/if}
+								<div class="mt-3 flex flex-wrap gap-3 text-sm text-[var(--color-muted)]">
+									<span class="inline-flex items-center gap-1.5">
+										<Users class="h-3.5 w-3.5" aria-hidden="true" />
+										{c.capacity != null ? String(c.capacity) : labels.unlimited}
+									</span>
+									<span>{c.duration_minutes} min</span>
+									<span>
+										{trainerCountLabel(labels.trainerCount, c.trainerIds.length)}
+										{c.trainerNames.length > 0 ? `: ${c.trainerNames.join(', ')}` : ''}
+									</span>
+								</div>
+							</div>
 						</div>
 					</article>
 				{/each}
@@ -393,11 +393,11 @@
 							<article
 								class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/50 p-5 sm:p-6"
 							>
-								<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-									<h2 class="font-title text-lg font-bold text-[var(--color-text)]">{c.name}</h2>
+								<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
 									<form
 										method="POST"
 										action="?/setActive"
+										class="order-2 sm:order-1"
 										use:enhance={() => {
 											restorePending = c.id;
 											return async ({ update }) => {
@@ -423,6 +423,9 @@
 											{/if}
 										</button>
 									</form>
+									<h2 class="order-1 font-title text-lg font-bold text-[var(--color-text)] sm:order-2">
+										{c.name}
+									</h2>
 								</div>
 							</article>
 						{/each}

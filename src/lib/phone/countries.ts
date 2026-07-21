@@ -6,7 +6,7 @@ export type PhoneCountry = {
   dial: string;
 };
 
-export const PHONE_COUNTRIES: readonly PhoneCountry[] = [
+const PHONE_COUNTRIES: readonly PhoneCountry[] = [
   { iso2: "MX", dial: "52" },
   { iso2: "US", dial: "1" },
   { iso2: "CA", dial: "1" },
@@ -35,17 +35,6 @@ export const PHONE_COUNTRIES: readonly PhoneCountry[] = [
 ] as const;
 
 export const DEFAULT_PHONE_COUNTRY = "MX";
-
-const FLAG_OFFSET = 0x1f1e6 - 65;
-
-/** Regional-indicator flag emoji from ISO2 (e.g. MX → 🇲🇽). */
-export function flagEmoji(iso2: string): string {
-  const code = iso2.toUpperCase();
-  if (!/^[A-Z]{2}$/.test(code)) return "";
-  return String.fromCodePoint(
-    ...[...code].map((c) => FLAG_OFFSET + c.charCodeAt(0)),
-  );
-}
 
 export function countryByIso2(iso2: string): PhoneCountry | undefined {
   return PHONE_COUNTRIES.find((c) => c.iso2 === iso2.toUpperCase());

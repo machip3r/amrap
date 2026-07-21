@@ -15,18 +15,20 @@
 	let { locale, d, title, subtitle, children }: Props = $props();
 </script>
 
-<div class="auth-container flex min-h-screen flex-col items-center justify-center p-6">
+<div
+	class="auth-container flex min-h-dvh flex-col items-center justify-center overflow-y-auto px-[var(--spacing-page)] py-4 sm:px-6 sm:py-6"
+>
 	<div
-		class="glass-panel animate-fade-in-up flex w-full max-w-md flex-col items-center rounded-2xl p-8 shadow-2xl sm:p-10"
+		class="glass-panel animate-fade-in-up my-auto flex w-full max-w-md flex-col items-center rounded-2xl p-5 shadow-2xl sm:p-10"
 	>
-		<div class="mb-8 flex flex-col items-center text-center">
-			<div class="mb-5 flex w-full justify-center">
+		<div class="mb-5 flex flex-col items-center text-center sm:mb-8">
+			<div class="mb-4 flex w-full justify-center sm:mb-5">
 				<a href="/{locale}" aria-label="AMRAP">
-					<AmrapLogo class="h-14 w-auto sm:h-16" />
+					<AmrapLogo class="h-12 w-auto sm:h-16" />
 				</a>
 			</div>
-			<h1 class="text-2xl font-bold tracking-tight text-[var(--color-text)]">{title}</h1>
-			<p class="mt-2 text-sm text-[var(--color-muted)]">{subtitle}</p>
+			<h1 class="text-xl font-bold tracking-tight text-[var(--color-text)] sm:text-2xl">{title}</h1>
+			<p class="mt-1.5 text-sm text-[var(--color-muted)] sm:mt-2">{subtitle}</p>
 		</div>
 		{@render children()}
 	</div>

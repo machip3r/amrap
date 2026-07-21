@@ -32,56 +32,64 @@
 	]);
 </script>
 
-<div class="flex h-screen flex-col overflow-hidden bg-[var(--color-bg)]">
+<div class="amrap-app-shell flex flex-col overflow-hidden bg-[var(--color-bg)]">
 	<header
-		class="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 sm:px-6"
+		class="flex h-[calc(4rem+var(--safe-top))] shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-[var(--spacing-page)] pt-[var(--safe-top)] sm:gap-3 sm:px-[var(--spacing-page-md)] lg:px-[var(--spacing-page-x-lg)]"
 	>
-		<a href={prefix} class="flex items-center gap-2" aria-label="AMRAP">
-			<AmrapLogo class="h-7 w-auto" />
+		<a href={prefix} class="flex min-h-[var(--touch-target)] items-center gap-2" aria-label="AMRAP">
+			<AmrapLogo class="h-9 w-auto" />
 			<span class="hidden text-sm font-semibold text-[var(--color-text)] sm:inline">
 				{data.d.member.title}
 			</span>
 		</a>
-		<nav class="flex items-center gap-1 sm:gap-2">
+		<nav class="flex min-w-0 flex-1 items-center justify-center gap-0.5 overflow-x-auto sm:gap-1">
 			{#each links as link (link.href)}
 				{@const Icon = link.icon}
 				<a
 					href={link.href}
-					class="inline-flex h-9 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium transition-colors hover:bg-[var(--color-surface-hover)] sm:px-3 {page.url.pathname ===
+					class="inline-flex h-[var(--touch-target)] min-w-[var(--touch-target)] items-center justify-center gap-1.5 rounded-md px-2 text-sm font-medium transition-colors hover:bg-[var(--color-surface-hover)] sm:px-3 {page.url.pathname ===
 					link.href
 						? 'text-[var(--color-primary)]'
 						: 'text-[var(--color-text)]/70 hover:text-[var(--color-text)]'}"
 					title={link.label}
+					aria-label={link.label}
 					aria-current={page.url.pathname === link.href ? 'page' : undefined}
 				>
-					<Icon class="h-4 w-4 shrink-0" aria-hidden="true" />
+					<Icon class="h-5 w-5 shrink-0" aria-hidden="true" />
 					<span class="hidden sm:inline">{link.label}</span>
 				</a>
 			{/each}
 		</nav>
-		<div class="flex items-center gap-2">
-			<ThemeToggle label={data.d.a11y.toggleTheme} />
+		<div class="flex items-center gap-1 sm:gap-2">
+			<ThemeToggle
+				label={data.d.a11y.toggleTheme}
+				class="h-[var(--touch-target)] w-[var(--touch-target)]"
+			/>
 			<LogoutButton
 				locale={data.locale}
-				class="inline-flex h-9 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium text-[var(--color-text)]/70 transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)]"
+				class="inline-flex h-[var(--touch-target)] min-w-[var(--touch-target)] items-center justify-center gap-1.5 rounded-md px-2 text-sm font-medium text-[var(--color-text)]/70 transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)] sm:px-3"
 				title={data.d.member.logout}
 			>
-				<LogOut class="h-4 w-4 shrink-0" aria-hidden="true" />
+				<LogOut class="h-5 w-5 shrink-0" aria-hidden="true" />
 				<span class="hidden sm:inline">{data.d.member.logout}</span>
 			</LogoutButton>
 			<div
-				class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[var(--color-primary)]/20 text-xs font-bold text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30"
+				class="flex h-[var(--touch-target)] w-[var(--touch-target)] items-center justify-center overflow-hidden rounded-full bg-[var(--color-primary)]/20 text-sm font-bold text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30"
 			>
 				{data.initial}
 			</div>
 		</div>
 	</header>
-	<main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-		<div class="mx-auto w-full max-w-3xl">
+	<main
+		class="flex-1 overflow-y-auto px-[var(--spacing-page)] py-[var(--spacing-page)] sm:px-[var(--spacing-page-md)] sm:py-[var(--spacing-page-md)] lg:px-[var(--spacing-page-x-lg)] lg:py-[var(--spacing-page-lg)]"
+	>
+		<div class="w-full">
 			{@render children()}
 		</div>
 	</main>
-	<footer class="shrink-0 border-t border-[var(--color-border)] py-2 text-center text-xs text-[var(--color-muted)]">
+	<footer
+		class="shrink-0 border-t border-[var(--color-border)] py-2 pb-[max(0.5rem,var(--safe-bottom))] text-center text-xs text-[var(--color-muted)]"
+	>
 		{data.d.shell.poweredBy}
 	</footer>
 </div>

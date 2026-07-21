@@ -12,7 +12,7 @@
 </svelte:head>
 
 {#if data.orgError}
-	<div class="auth-container flex min-h-screen flex-col items-center justify-center p-6">
+	<div class="auth-container flex min-h-dvh flex-col items-center justify-center px-[var(--spacing-page)] py-4 sm:px-6 sm:py-6">
 		<div class="glass-panel flex w-full max-w-md flex-col items-center rounded-2xl p-8 text-center shadow-2xl sm:p-10">
 			<AmrapLogo class="mb-6 h-12 w-auto" />
 			<h1 class="text-xl font-bold text-[var(--color-text)]">{data.d.onboarding.title}</h1>
@@ -32,7 +32,7 @@
 		</div>
 	</div>
 {:else}
-	<div class="auth-container flex min-h-screen flex-col items-center justify-center p-6">
+	<div class="auth-container flex min-h-dvh flex-col items-center justify-center px-[var(--spacing-page)] py-4 sm:px-6 sm:py-6">
 		<div class="glass-panel animate-fade-in-up flex w-full max-w-lg flex-col rounded-2xl p-8 shadow-2xl sm:p-10">
 			<div class="mb-8 flex flex-col items-center text-center">
 				<div class="mb-5 flex w-full justify-center">

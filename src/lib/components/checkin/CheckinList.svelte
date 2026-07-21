@@ -1,4 +1,5 @@
 <script lang="ts">
+	import UserRound from '@lucide/svelte/icons/user-round';
 	import type { Locale } from '$lib/i18n/config';
 	import type { CheckInListItem } from '$lib/checkin/queries';
 
@@ -70,10 +71,10 @@
 		{#each items as row (row.id)}
 			{@const calendarHref = `${detailBaseHref}/${row.membershipId}`}
 			{@const memberHref = `/${locale}/members/${row.membershipId}`}
-			<li class="px-4 py-3">
+			<li class="flex items-stretch gap-1 px-3 py-3">
 				<a
 					href={calendarHref}
-					class="flex items-start gap-3 rounded-lg outline-none ring-[var(--color-ring)] focus-visible:ring-2"
+					class="flex min-w-0 flex-1 items-start gap-3 rounded-lg px-1 outline-none ring-[var(--color-ring)] focus-visible:ring-2"
 				>
 					<span
 						class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)]/15 text-[10px] font-bold text-[var(--color-primary)]"
@@ -97,12 +98,14 @@
 						</span>
 					</span>
 				</a>
-				{#if showMemberProfileLink && labels.viewMemberProfile}
+				{#if showMemberProfileLink && labels.viewMemberProfile && row.membershipId}
 					<a
 						href={memberHref}
-						class="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-[var(--color-primary)] hover:underline"
+						class="inline-flex h-11 w-11 shrink-0 self-center items-center justify-center rounded-lg text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)]/10"
+						aria-label={labels.viewMemberProfile}
+						title={labels.viewMemberProfile}
 					>
-						{labels.viewMemberProfile}
+						<UserRound class="h-5 w-5" aria-hidden="true" />
 					</a>
 				{/if}
 			</li>
@@ -121,7 +124,9 @@
 					<th class="px-4 py-3">{labels.colPlan}</th>
 					<th class="px-4 py-3">{labels.colSource}</th>
 					{#if showMemberProfileLink && labels.viewMemberProfile}
-						<th class="px-4 py-3 pr-5 text-right">{labels.viewMemberProfile}</th>
+						<th class="w-14 px-2 py-3 pr-4 text-right">
+							<span class="sr-only">{labels.viewMemberProfile}</span>
+						</th>
 					{/if}
 				</tr>
 			</thead>
@@ -159,13 +164,17 @@
 							{sourceLabel(row.source)}
 						</td>
 						{#if showMemberProfileLink && labels.viewMemberProfile}
-							<td class="px-4 py-3 pr-5 text-right">
-								<a
-									href={memberHref}
-									class="text-sm font-semibold text-[var(--color-primary)] hover:underline"
-								>
-									{labels.viewMemberProfile}
-								</a>
+							<td class="px-2 py-3 pr-4 text-right">
+								{#if row.membershipId}
+									<a
+										href={memberHref}
+										class="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)]/10"
+										aria-label={labels.viewMemberProfile}
+										title={labels.viewMemberProfile}
+									>
+										<UserRound class="h-5 w-5" aria-hidden="true" />
+									</a>
+								{/if}
 							</td>
 						{/if}
 					</tr>

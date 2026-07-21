@@ -28,16 +28,6 @@ export function createServiceRoleClient() {
  * Creates organization + person for a user id (no gym yet).
  * Used when signUp returns a user but no session (email confirmation flow).
  */
-export async function bootstrapTenantForUser(
-  userId: string,
-  organizationName: string,
-  _fullName: string | null = null,
-): Promise<
-  { ok: true; organizationId: string } | { ok: false; message: string }
-> {
-  return bootstrapOrganizationAccount(userId, organizationName);
-}
-
 export async function bootstrapOrganizationAccount(
   userId: string,
   organizationName: string,

@@ -89,15 +89,3 @@ export function deleteRoutine(id: string): TimerRoutine[] {
   emit();
   return memory;
 }
-
-/** @deprecated prefer getRoutinesSnapshot */
-export function loadRoutines(): TimerRoutine[] {
-  return getRoutinesSnapshot();
-}
-
-/** @deprecated prefer upsert/delete which persist */
-export function saveRoutines(routines: TimerRoutine[]) {
-  memory = [...routines].sort((a, b) => b.updatedAt - a.updatedAt);
-  writeToLocalStorage(memory);
-  emit();
-}

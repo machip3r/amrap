@@ -135,15 +135,15 @@
 	</div>
 	<Button
 		type="button"
-		class="inline-flex min-h-11 shrink-0 items-center gap-1.5 px-3.5 py-2 shadow-sm"
+		variant="toolbar"
 		onclick={() => {
 			resetCreateForm();
 			createOpen = true;
 		}}
 		disabled={!canAdd}
 	>
-		<Plus class="h-4 w-4" aria-hidden="true" />
-		{d.plans.newPlan}
+		<Plus class="h-4 w-4 shrink-0" aria-hidden="true" />
+		<span class="shrink-0">{d.plans.newPlan}</span>
 	</Button>
 </header>
 
@@ -174,7 +174,7 @@
 		<form
 			method="POST"
 			action="?/dayPass"
-			class="flex flex-col gap-2 border-t border-[var(--color-border)] px-3 py-3"
+			class="flex flex-col gap-3 border-t border-[var(--color-border)] px-5 py-4 sm:px-6"
 			novalidate
 			use:enhance={() => {
 				dayPassPending = true;
@@ -194,41 +194,38 @@
 			}}
 		>
 			<input type="hidden" name="locale" value={locale} />
-			<div class="flex items-end gap-2">
-				<FormField
-					label={d.plans.dayPassPrice}
-					htmlFor="day-pass-price"
-					error={dayPassFieldErrors?.day_pass_price}
-				>
-					{#snippet children({ invalid, describedBy })}
-						<Input
-							id="day-pass-price"
-							name="day_pass_price"
-							type="number"
-							min={0}
-							max={1_000_000}
-							step="0.01"
-							inputmode="decimal"
-							required
-							bind:value={dayPassValue}
-							placeholder="0.00"
-							{invalid}
-							{describedBy}
-							class="min-w-0"
-						/>
-					{/snippet}
-				</FormField>
-				<Button
-					type="submit"
-					class="mb-0.5 inline-flex min-h-11 shrink-0 items-center gap-2 px-4 py-2.5 shadow-sm"
-					disabled={dayPassPending}
-				>
-					{#if dayPassPending}
-						<Loader2 class="h-4 w-4 animate-spin" aria-hidden="true" />
-					{/if}
-					{dayPassPending ? d.plans.saving : d.plans.dayPassSave}
-				</Button>
-			</div>
+			<FormField
+				label={d.plans.dayPassPrice}
+				htmlFor="day-pass-price"
+				error={dayPassFieldErrors?.day_pass_price}
+			>
+				{#snippet children({ invalid, describedBy })}
+					<Input
+						id="day-pass-price"
+						name="day_pass_price"
+						type="number"
+						min={0}
+						max={1_000_000}
+						step="0.01"
+						inputmode="decimal"
+						required
+						bind:value={dayPassValue}
+						placeholder="0.00"
+						{invalid}
+						{describedBy}
+					/>
+				{/snippet}
+			</FormField>
+			<Button
+				type="submit"
+				class="inline-flex w-full min-h-11 items-center justify-center gap-2 shadow-sm"
+				disabled={dayPassPending}
+			>
+				{#if dayPassPending}
+					<Loader2 class="h-4 w-4 animate-spin" aria-hidden="true" />
+				{/if}
+				{dayPassPending ? d.plans.saving : d.plans.dayPassSave}
+			</Button>
 			{#if dayPassError}
 				<p class="text-sm font-medium text-[var(--color-primary)]" role="alert">{dayPassError}</p>
 			{/if}
@@ -245,14 +242,15 @@
 			<p class="text-sm text-[var(--color-muted)]">{d.plans.noPlans}</p>
 			<Button
 				type="button"
-				class="mt-4 inline-flex min-h-11 items-center gap-1.5 shadow-sm"
+				variant="toolbar"
+				class="mt-4"
 				onclick={() => {
 					resetCreateForm();
 					createOpen = true;
 				}}
 			>
-				<Plus class="h-4 w-4" aria-hidden="true" />
-				{d.plans.newPlan}
+				<Plus class="h-4 w-4 shrink-0" aria-hidden="true" />
+				<span class="shrink-0">{d.plans.newPlan}</span>
 			</Button>
 		</article>
 	{/if}

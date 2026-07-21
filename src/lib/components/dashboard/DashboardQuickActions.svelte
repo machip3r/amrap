@@ -26,13 +26,13 @@
 
 	const prefix = $derived(`/${locale}`);
 	const actionClass =
-		'inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-semibold text-[var(--color-text)] shadow-sm transition-colors hover:border-[var(--color-primary)]/40 hover:bg-[var(--color-surface-hover)]';
+		'inline-flex min-h-14 w-full items-center justify-center gap-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3.5 text-base font-semibold text-[var(--color-text)] shadow-sm transition-colors hover:border-[var(--color-primary)]/40 hover:bg-[var(--color-surface-hover)] sm:min-h-16 sm:py-4';
 </script>
 
-<section aria-label={labels.quickActions} class="grid w-full grid-cols-2 gap-2 lg:grid-cols-4">
+<section aria-label={labels.quickActions} class="grid w-full grid-cols-2 gap-3 lg:grid-cols-4">
 	{#if canCheckIn}
 		<a href="{prefix}/checkin" class={actionClass}>
-			<QrCode class="h-4 w-4 text-[var(--color-primary)]" aria-hidden="true" />
+			<QrCode class="h-5 w-5 shrink-0 text-[var(--color-primary)]" aria-hidden="true" />
 			{labels.quickCheckIn}
 		</a>
 	{/if}
@@ -48,7 +48,7 @@
 			appearance="quickAction"
 		>
 			{#snippet icon()}
-				<UserPlus class="h-4 w-4 text-[var(--color-primary)]" aria-hidden="true" />
+				<UserPlus class="h-5 w-5 shrink-0 text-[var(--color-primary)]" aria-hidden="true" />
 			{/snippet}
 		</RegisterUserButton>
 	{/if}
@@ -63,7 +63,7 @@
 			appearance="quickAction"
 		>
 			{#snippet icon()}
-				<Dumbbell class="h-4 w-4 text-[var(--color-primary)]" aria-hidden="true" />
+				<Dumbbell class="h-5 w-5 shrink-0 text-[var(--color-primary)]" aria-hidden="true" />
 			{/snippet}
 		</RegisterUserButton>
 		<RegisterUserButton
@@ -76,7 +76,7 @@
 			appearance="quickAction"
 		>
 			{#snippet icon()}
-				<Briefcase class="h-4 w-4 text-[var(--color-primary)]" aria-hidden="true" />
+				<Briefcase class="h-5 w-5 shrink-0 text-[var(--color-primary)]" aria-hidden="true" />
 			{/snippet}
 		</RegisterUserButton>
 	{/if}

@@ -23,10 +23,3 @@ export function createClient() {
 		cookies: cookieAdapter(event.cookies)
 	});
 }
-
-/** Supabase client for hooks.server.ts before getRequestEvent is available. */
-export function createClientFromCookies(cookies: Cookies) {
-	return createServerClient(getSupabaseUrl(), getSupabasePublishableKey(), {
-		cookies: cookieAdapter(cookies)
-	});
-}

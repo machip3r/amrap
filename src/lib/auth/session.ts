@@ -3,7 +3,7 @@ import { createClient } from '$lib/supabase/server';
 import { parseBrandThemeTokens } from '$lib/branding/theme';
 import { gymLogoPublicUrl } from '$lib/branding/logo';
 import { parseHiddenNavIds } from '$lib/nav/ops-nav';
-import type { BrandThemeTokens, OrgPlanTier, Profile, Role, Workspace } from '$lib/types';
+import type { BrandThemeTokens, OrgPlanTier, Role, Workspace } from '$lib/types';
 
 export const ACTIVE_GYM_COOKIE = 'amrap_gym_id';
 
@@ -153,15 +153,6 @@ function toWorkspace(
 	};
 }
 
-function asProfile(ws: Workspace): Profile {
-	return {
-		...ws,
-		id: ws.userId,
-		tenant_id: ws.gymId,
-		full_name: ws.fullName
-	};
-}
-
 /**
  * Resolves the signed-in user's active gym workspace (cookie or first role).
  * Memoized on `event.locals` for the duration of one request (incl. in-flight
@@ -271,13 +262,6 @@ export async function getWorkspace(): Promise<Workspace | null> {
 	}
 }
 
-/** @deprecated Use getWorkspace — returns Profile-shaped workspace for existing callers. */
-export async function getProfile(): Promise<Profile | null> {
-	const ws = await getWorkspace();
-	if (!ws) return null;
-	return asProfile(ws);
-}
-
 export async function getOnboardingState(): Promise<OnboardingState | null> {
 	const locals = tryLocals();
 	if (locals?.onboardingResolved) {
@@ -366,28 +350,4 @@ export async function getOnboardingState(): Promise<OnboardingState | null> {
 	}
 
 	return state;
-}
-
-export async function listUserGymRoles(): Promise<
-	{ gymId: string; gymName: string; role: Role }[]
-> {
-	const supabase = createClient();
-	const user = await getSessionUser();
-	if (!user) return [];
-
-	const { data } = await supabase
-		.from('gym_roles')
-		.select('gym_id, role, gyms ( name )')
-		.eq('user_id', user.id);
-
-	if (!data) return [];
-
-	return data.map((r) => {
-		const gyms = r.gyms as unknown as { name: string } | null;
-		return {
-			gymId: r.gym_id as string,
-			gymName: gyms?.name ?? '',
-			role: r.role as Role
-		};
-	});
 }

@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { onDestroy } from 'svelte';
 	import type { Locale } from '$lib/i18n/config';
 	import { getDictionary } from '$lib/i18n/dictionaries';
+	import { setTimersImmersive } from '$lib/timers/shell.svelte';
 	import {
 		deleteRoutine,
 		getRoutinesSnapshot,
@@ -38,6 +40,13 @@
 		});
 	});
 
+	/** Hide ops chrome only while running or editing — do not clear on every view change. */
+	$effect(() => {
+		setTimersImmersive(view.kind === 'run' || view.kind === 'edit');
+	});
+
+	onDestroy(() => setTimersImmersive(false));
+
 	const runRoutine = $derived.by(() => {
 		const v = view;
 		if (v.kind !== 'run') return null;
@@ -48,24 +57,28 @@
 {#if !hydrated}
 	<p class="text-sm text-[var(--color-muted)]">{d.common.loading}</p>
 {:else if view.kind === 'edit'}
-	<TimerEditor
-		initial={view.routine}
-		{labels}
-		closeLabel={d.registerUser.close}
-		onCancel={() => (view = { kind: 'list' })}
-		onSave={(routine) => {
-			upsertRoutine(routine);
-			view = { kind: 'list' };
-		}}
-	/>
+	<div class="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--color-bg)]">
+		<TimerEditor
+			initial={view.routine}
+			{labels}
+			closeLabel={d.registerUser.close}
+			onCancel={() => (view = { kind: 'list' })}
+			onSave={(routine) => {
+				upsertRoutine(routine);
+				view = { kind: 'list' };
+			}}
+		/>
+	</div>
 {:else if view.kind === 'run' && runRoutine}
 	{#key runRoutine.id}
-		<TimerRunScreen
-			routine={runRoutine}
-			{labels}
-			onClose={() => (view = { kind: 'list' })}
-			onEdit={() => (view = { kind: 'edit', routine: runRoutine })}
-		/>
+		<div class="flex min-h-0 flex-1 flex-col overflow-hidden">
+			<TimerRunScreen
+				routine={runRoutine}
+				{labels}
+				onClose={() => (view = { kind: 'list' })}
+				onEdit={() => (view = { kind: 'edit', routine: runRoutine })}
+			/>
+		</div>
 	{/key}
 {:else}
 	<TimerRoutinesList

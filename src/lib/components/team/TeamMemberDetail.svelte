@@ -55,7 +55,7 @@
 	<title>{member.name} — AMRAP</title>
 </svelte:head>
 
-<div class="mx-auto flex w-full max-w-6xl animate-fade-in-up flex-col gap-5">
+<div class="flex w-full animate-fade-in-up flex-col gap-5">
 	<div>
 		<a
 			href={listHref}

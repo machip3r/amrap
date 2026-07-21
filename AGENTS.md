@@ -1,13 +1,17 @@
 # AMRAP — SvelteKit (repo root)
 
-This repo’s **default app** is SvelteKit. The previous Next.js app lives in [`amrap-next/`](amrap-next/) as a reference archive.
+This repo’s **default app** is SvelteKit. The previous Next.js app lives in [`amrap-next/`](amrap-next/) as a **read-only reference archive**.
 
 | Path | Role |
 |------|------|
 | `src/`, `static/`, `e2e/` | SvelteKit app (source of truth) |
 | `supabase/migrations/` | Shared Postgres schema |
 | `README.md`, `docs/*` | Product + schema docs |
-| `amrap-next/` | Legacy Next.js app (not the default) |
+| `amrap-next/` | Legacy Next.js — **do not edit** |
+
+### SvelteKit only (do not dual-maintain Next)
+
+**Never implement, port, or “keep in sync” the same change in both apps.** All product work happens in the SvelteKit tree (`src/`, `static/`, `e2e/`, root configs). Treat `amrap-next/` as historical reference only — do not modify it unless the user **explicitly** asks to change the legacy Next app.
 
 **Stack:** SvelteKit · Svelte 5 (runes) · Tailwind v4 · Supabase SSR · TypeScript · Zod · Playwright (E2E under `e2e/`).
 
@@ -21,7 +25,7 @@ Use **pnpm** only (`pnpm install`, `pnpm add`, `pnpm run dev`, etc.). Do not use
 
 ## Verification
 
-Do **not** run `pnpm run build` (or `vite build`) on every change unless the user asks for a production build check, or the task is specifically about build/deploy/CI failures. Prefer `pnpm run check` (`svelte-check`) when you need a quick type pass, or rely on the dev server.
+Do **not** run `pnpm run build` (or `vite build`) on every change unless the user asks for a production build check, or the task is specifically about build/deploy/CI failures. Prefer `pnpm run check` (`svelte-check`) when you need a quick type pass, or rely on the dev server. **PWA:** service worker + install criteria are production-oriented; `devOptions.enabled` is on for local SW testing — use HTTPS/`localhost` and Chrome Application panel to verify.
 
 ## Local development
 
@@ -31,8 +35,6 @@ cp .env.example .env
 pnpm dev               # http://localhost:5173
 ```
 
-Legacy Next (optional): `cd amrap-next && pnpm install && pnpm dev` (port 3000).
-
 ### Environment
 
 | Variable | Purpose |
@@ -40,7 +42,7 @@ Legacy Next (optional): `cd amrap-next && pnpm install && pnpm dev` (port 3000).
 | `PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Anon / publishable key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only (bootstrap, invites) |
-| `PUBLIC_APP_URL` | Auth email redirect origin |
+| `PUBLIC_APP_URL` | Auth email redirect origin **and** absolute SEO/canonical base in production |
 | `PUBLIC_FORMSPREE_FORM_ID` | Landing contact form |
 
 Also accepts `NEXT_PUBLIC_*` fallbacks when sharing env with `amrap-next/` (see `src/lib/supabase/env.ts`).
@@ -60,7 +62,7 @@ Rules:
 3. Use locale routes (`/es/…` by default) and dictionary-backed copy for assertions.
 4. Seed auth via Admin API helpers in `e2e/helpers/` — do not depend on real inbox OTP in CI.
 5. Never commit `SUPABASE_SERVICE_ROLE_KEY` or `e2e/.auth/` storage state.
-6. Mark flows **shipped · partial · planned** in `product-flows.md` when SvelteKit lags or leads the Next app.
+6. Mark flows **shipped · partial · planned** in `product-flows.md` for the SvelteKit app (ignore Next parity).
 
 Run: `pnpm test:e2e` · `pnpm test:e2e:owner` · see [`e2e/README.md`](e2e/README.md).
 
@@ -73,7 +75,21 @@ Multi-tenant gym membership admin (SvelteKit, Supabase, Tailwind). Marketing at 
 - **Product / business docs:** [`README.md`](README.md) — business hierarchy, roles, pricing, phases. Update when **business rules** change.
 - **UI flows:** [`docs/product-flows.md`](docs/product-flows.md) — per-role flows (SvelteKit status labels).
 - **Schema:** [`docs/database.md`](docs/database.md) — tables, RPCs, RLS (shared DB).
-- **Legacy Next:** [`amrap-next/`](amrap-next/) — do not treat as the default app.
+- **Legacy Next:** [`amrap-next/`](amrap-next/) — read-only archive; do not edit or dual-maintain.
+
+### SEO (public pages — always improve)
+
+When changing **marketing/public** UI, copy, routes, or product positioning — and whenever updating **`README.md`** or **`docs/product-flows.md`** in ways that affect how the product is described publicly — **proactively improve SEO** in the same change (do not wait to be asked):
+
+1. **Titles & descriptions** — unique, intent-matched (`es` + `en`); brand + primary benefit; ~50–60 / ~140–160 chars where practical.
+2. **Canonical + hreflang** — every indexable locale page; absolute URLs via `PUBLIC_APP_URL` / `getPublicAppUrl()`.
+3. **Open Graph / Twitter** — title, description, image (absolute), `og:locale`.
+4. **Structured data** — JSON-LD where it fits (Organization, SoftwareApplication, FAQPage, etc.); keep in sync with visible copy.
+5. **Crawl control** — `robots.txt` + sitemap for public URLs; **`noindex`** on auth-gated ops/member/onboarding/invite surfaces (never leak private app URLs into the index).
+6. **Semantics** — one clear `h1`, meaningful headings, descriptive link text; avoid cloaking or keyword stuffing.
+7. **Docs** — if public positioning or indexable routes change, note it in `docs/product-flows.md` (marketing/landing row) when relevant.
+
+Private app chrome (dashboard, members, check-in, etc.) stays `noindex` — SEO effort targets **landing, register, login**, and future public pages.
 
 ### Migration status (high level)
 
@@ -126,13 +142,14 @@ src/
   hooks.server.ts               # session refresh, locale redirect, auth guard
 static/                         # public assets
 supabase/migrations/            # SQL schema (shared)
-amrap-next/                     # legacy Next.js app
+amrap-next/                     # legacy Next.js — read-only archive (do not edit)
 ```
 
 - Route UI lives under `src/routes/`. Shared logic in `src/lib/`. Shared UI in `src/lib/components/`.
 - **Form actions** live in `+page.server.ts` (`export const actions = { … }`), not separate `actions.ts` files unless the file would become huge.
 - **Route handlers** use `+server.ts` (`GET`, `POST`, …).
-- **Do not** add a parallel root `app/` tree — this is SvelteKit, not Next.js (`amrap-next/` is the archive).
+- **Do not** add a parallel root `app/` tree — this is SvelteKit, not Next.js.
+- **Do not** dual-maintain features in `amrap-next/` — SvelteKit only unless the user explicitly requests Next changes.
 - DB migrations stay in **`supabase/migrations/`**.
 
 ---
@@ -225,6 +242,18 @@ Every UI change must work on phone and desktop.
 - **Touch targets** ≥ ~44×44px; respect `safe-area-inset-*` on fixed chrome.
 - **Layout:** stack on small screens; no desktop-only tables without a mobile alternative.
 - **One job per section;** reuse design system — no one-off forks.
+- **Viewport:** `viewport-fit=cover` in `src/app.html` so `env(safe-area-inset-*)` works on real devices.
+- **App shells:** use `.amrap-app-shell` (`100dvh` / `100svh`) — not `h-screen` / `100vh` — for ops and member layouts.
+- **Shared tokens** in `src/routes/layout.css` `:root` — prefer these over one-off rem values:
+
+| Token | Use for |
+|-------|---------|
+| `--touch-target` / `--control-height` | Buttons, inputs, icon hit areas (44px) |
+| `--spacing-page` (+ `-md` / `-lg`) | Page padding (vertical on large screens) |
+| `--spacing-page-x-lg` | Desktop horizontal gutters (~5% each side) |
+| `--ops-header-height` / `--ops-bottom-nav-height` / `--ops-bottom-clearance` | Ops chrome + main bottom pad |
+| `--safe-top` / `--safe-bottom` | Notch / home indicator |
+| `--content-max` / `--content-max-narrow` | Full available width (gutters via page padding) |
 
 See also `.cursor/rules/responsive-ux.mdc`.
 

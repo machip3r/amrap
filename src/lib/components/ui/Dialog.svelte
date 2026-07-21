@@ -34,6 +34,16 @@
 	const descId = `${titleId}-desc`;
 	let panelEl: HTMLDivElement | undefined = $state();
 
+	/** Move overlay to `document.body` so `fixed` is not trapped by animated/transformed ancestors. */
+	function portal(node: HTMLElement) {
+		document.body.appendChild(node);
+		return {
+			destroy() {
+				node.remove();
+			}
+		};
+	}
+
 	$effect(() => {
 		if (!open) return;
 
@@ -69,12 +79,13 @@
 	const panelSize = $derived(
 		fullScreen
 			? 'h-dvh max-h-dvh w-full rounded-none border-0 shadow-none'
-			: 'max-h-[min(94vh,56rem)] w-full rounded-2xl border border-[var(--color-border)] shadow-2xl'
+			: 'max-h-[min(96dvh,64rem)] w-full rounded-2xl border border-[var(--color-border)] shadow-2xl'
 	);
 </script>
 
 {#if open}
 	<div
+		use:portal
 		class="fixed inset-0 z-50 flex {fullScreen
 			? 'items-stretch justify-stretch p-0'
 			: containerClass}"
@@ -97,7 +108,7 @@
 		>
 			<div
 				class="relative shrink-0 border-b border-[var(--color-border)] px-6 pb-4 pr-14 {fullScreen
-					? 'pt-[max(1.25rem,env(safe-area-inset-top))]'
+					? 'pt-[max(1.25rem,var(--safe-top))]'
 					: 'pt-6'}"
 			>
 				<h2
@@ -115,7 +126,7 @@
 					type="button"
 					data-dialog-close
 					onclick={() => onOpenChange(false)}
-					class="absolute right-4 top-[max(0.75rem,env(safe-area-inset-top))] rounded-lg p-2.5 text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]"
+					class="absolute right-4 top-[max(0.75rem,var(--safe-top))] flex h-[var(--touch-target)] w-[var(--touch-target)] items-center justify-center rounded-lg text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]"
 					aria-label={closeLabel}
 				>
 					<X class="h-5 w-5" aria-hidden="true" />

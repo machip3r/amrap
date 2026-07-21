@@ -14,7 +14,9 @@
 	<CheckinDesk
 		{locale}
 		canManageMembers={data.canManageMembers}
+		canManageStaff={data.canManageStaff}
 		todayCheckIns={data.todayCheckIns}
+		registerPlans={data.registerPlans}
 		registerLabel={d.registerUser.open}
 		labels={{
 			title: d.checkin.title,

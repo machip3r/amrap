@@ -1,6 +1,6 @@
 import type { BrandThemeTokens } from "$lib/types";
 
-export const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 
 export const DEFAULT_THEME_LIGHT = {
   primary: "#ff6b6b",
@@ -22,7 +22,7 @@ export const DEFAULT_THEME_DARK = {
   ring: "#ff7171",
 } as const;
 
-export type ResolvedBrandTheme = {
+type ResolvedBrandTheme = {
   primary: string;
   primaryHover: string;
   primarySoft: string;
@@ -53,13 +53,13 @@ function toHex(r: number, g: number, b: number) {
 }
 
 /** Slightly darker for hover. */
-export function derivePrimaryHover(primary: string): string {
+function derivePrimaryHover(primary: string): string {
   const rgb = parseHex(primary);
   if (!rgb) return primary;
   return toHex(rgb[0] * 0.92, rgb[1] * 0.92, rgb[2] * 0.92);
 }
 
-export function derivePrimarySoft(primary: string, dark: boolean): string {
+function derivePrimarySoft(primary: string, dark: boolean): string {
   const rgb = parseHex(primary);
   if (!rgb) return dark ? "rgba(255, 113, 113, 0.18)" : "#ffe4e4";
   if (dark) {
@@ -72,7 +72,7 @@ export function derivePrimarySoft(primary: string, dark: boolean): string {
   );
 }
 
-export function deriveSurfaceHover(surface: string, dark: boolean): string {
+function deriveSurfaceHover(surface: string, dark: boolean): string {
   const rgb = parseHex(surface);
   if (!rgb) return dark ? "#1e293b" : "#f1f5f9";
   if (dark) {
@@ -93,7 +93,7 @@ function relativeLuminance(hex: string): number {
 }
 
 /** Text on primary buttons — dark on light primaries (e.g. charcoal dark). */
-export function derivePrimaryOn(primary: string): string {
+function derivePrimaryOn(primary: string): string {
   return relativeLuminance(primary) > 0.45 ? "#0f172a" : "#ffffff";
 }
 
@@ -107,7 +107,7 @@ function pickHex(
   return fallback;
 }
 
-export function resolveBrandTheme(
+function resolveBrandTheme(
   tokens: BrandThemeTokens | null | undefined,
   mode: "light" | "dark",
 ): ResolvedBrandTheme {
@@ -162,10 +162,4 @@ export function brandThemeCssVars(
   });
 
   return { light: map(L), dark: map(D) };
-}
-
-export function cssVarsToInlineStyle(
-  vars: Record<string, string>,
-): Record<string, string> {
-  return vars;
 }

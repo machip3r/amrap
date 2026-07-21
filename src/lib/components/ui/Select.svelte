@@ -34,7 +34,7 @@
 	bind:value
 	aria-invalid={invalid || undefined}
 	aria-describedby={describedBy}
-	class="min-h-11 w-full appearance-none rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] bg-[length:1rem] bg-[right_0.75rem_center] bg-no-repeat px-4 py-2.5 pr-10 text-base text-[var(--color-text)] transition-colors focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)] {invalid
+	class="box-border min-h-[var(--control-height)] w-full min-w-0 max-w-full appearance-none rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] bg-[length:1rem] bg-[right_0.75rem_center] bg-no-repeat px-4 py-2.5 pr-10 text-base text-[var(--color-text)] transition-colors focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)] {invalid
 		? 'border-[var(--color-primary)] focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]'
 		: ''}"
 	style="background-image: {chevron}"

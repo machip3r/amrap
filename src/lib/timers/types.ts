@@ -13,7 +13,7 @@ export type TimerCycle = {
   phases: TimerPhase[];
 };
 
-export type TimerRoutineType = "simple" | "complex";
+type TimerRoutineType = "simple" | "complex";
 
 export type TimerRoutine = {
   id: string;
@@ -61,7 +61,7 @@ export function newId(): string {
   return `t_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
-export function pad2(n: number) {
+function pad2(n: number) {
   return String(Math.max(0, n)).padStart(2, "0");
 }
 

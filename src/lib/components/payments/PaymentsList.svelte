@@ -59,9 +59,10 @@
 	$effect(() => {
 		if (!highlightId) return;
 		const scrollTimer = window.setTimeout(() => {
-			document
-				.getElementById(`payment-row-${highlightId}`)
-				?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+			const el =
+				document.getElementById(`payment-row-${highlightId}`) ??
+				document.getElementById(`payment-row-desk-${highlightId}`);
+			el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 		}, 80);
 		return () => window.clearTimeout(scrollTimer);
 	});
@@ -140,7 +141,7 @@
 
 <div class="flex flex-col gap-4">
 	<div class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm sm:p-5">
-		<div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+		<div class="flex items-center gap-2">
 			<div class="relative min-w-0 flex-1">
 				<label class="sr-only" for="payments-search">{labels.searchPlaceholder}</label>
 				<Search
@@ -166,7 +167,7 @@
 				type="button"
 				onclick={reload}
 				disabled={pending}
-				class="ml-auto inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)] disabled:opacity-60"
+				class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)] disabled:opacity-60"
 				aria-label={labels.reload}
 				title={labels.reload}
 			>
@@ -176,31 +177,76 @@
 	</div>
 
 	<div class="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
-		<div class="overflow-x-auto">
-			<table class="w-full min-w-[42rem] border-collapse text-left text-sm">
-				<thead>
-					<tr
-						class="border-b border-[var(--color-border)] bg-[var(--color-surface-hover)]/50 text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]"
+		{#if payments.length === 0}
+			<p class="px-5 py-12 text-center text-sm text-[var(--color-muted)]">{emptyMessage}</p>
+		{:else}
+			<!-- Mobile cards: member + amount primary; date/method secondary -->
+			<ul class="flex flex-col divide-y divide-[var(--color-border)]/70 sm:hidden">
+				{#each payments as p (p.id)}
+					{@const isNew = highlightId === p.id}
+					<li
+						id="payment-row-{p.id}"
+						class="px-4 py-3.5 {isNew ? 'amrap-row-shine' : ''}"
 					>
-						<th class="px-4 py-3 sm:px-5">{labels.date}</th>
-						<th class="px-4 py-3">{labels.member}</th>
-						<th class="px-4 py-3">{labels.concept}</th>
-						<th class="px-4 py-3">{labels.amount}</th>
-						<th class="px-4 py-3 pr-5">{labels.method}</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#if payments.length === 0}
-						<tr>
-							<td colspan="5" class="px-5 py-12 text-center text-[var(--color-muted)]">
-								{emptyMessage}
-							</td>
+						<div class="flex items-start justify-between gap-3">
+							<div class="min-w-0 flex-1">
+								<p class="truncate font-semibold text-[var(--color-text)]">
+									{p.memberName}
+									{#if isNew}
+										<span class="ml-2 text-[11px] font-medium text-[var(--color-primary)]">
+											{labels.newBadge}
+										</span>
+									{/if}
+								</p>
+								<p class="mt-0.5 text-xs tabular-nums text-[var(--color-muted)]">
+									{formatDate(p.createdAt)}
+								</p>
+								<span
+									class="mt-1.5 inline-flex max-w-full flex-col gap-0.5 rounded-md px-2 py-0.5 text-xs font-semibold {p.kind ===
+									'day_pass'
+										? 'bg-[var(--color-muted)]/15 text-[var(--color-text)]'
+										: 'bg-[var(--color-primary-soft)] text-[var(--color-text)]'}"
+								>
+									<span class="truncate">{p.kindLabel}</span>
+									{#if p.planName}
+										<span class="truncate font-medium text-[var(--color-muted)]">{p.planName}</span>
+									{/if}
+								</span>
+							</div>
+							<div class="shrink-0 text-right">
+								<p class="tabular-nums font-semibold text-[var(--color-text)]">
+									{formatAmount(p.amount)}
+								</p>
+								<span
+									class="mt-1 inline-flex rounded-md bg-[var(--color-surface-hover)] px-2 py-0.5 text-xs font-semibold text-[var(--color-text)]"
+								>
+									{p.methodLabel}
+								</span>
+							</div>
+						</div>
+					</li>
+				{/each}
+			</ul>
+
+			<!-- Desktop table -->
+			<div class="hidden overflow-x-auto sm:block">
+				<table class="w-full border-collapse text-left text-sm">
+					<thead>
+						<tr
+							class="border-b border-[var(--color-border)] bg-[var(--color-surface-hover)]/50 text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]"
+						>
+							<th class="px-4 py-3 sm:px-5">{labels.date}</th>
+							<th class="px-4 py-3">{labels.member}</th>
+							<th class="px-4 py-3">{labels.concept}</th>
+							<th class="px-4 py-3">{labels.amount}</th>
+							<th class="px-4 py-3 pr-5">{labels.method}</th>
 						</tr>
-					{:else}
+					</thead>
+					<tbody>
 						{#each payments as p (p.id)}
 							{@const isNew = highlightId === p.id}
 							<tr
-								id="payment-row-{p.id}"
+								id="payment-row-desk-{p.id}"
 								class="border-b border-[var(--color-border)]/70 transition-colors last:border-b-0 hover:bg-[var(--color-surface-hover)]/40 {isNew
 									? 'amrap-row-shine'
 									: ''}"
@@ -241,10 +287,10 @@
 								</td>
 							</tr>
 						{/each}
-					{/if}
-				</tbody>
-			</table>
-		</div>
+					</tbody>
+				</table>
+			</div>
+		{/if}
 
 		<TablePagination
 			{meta}

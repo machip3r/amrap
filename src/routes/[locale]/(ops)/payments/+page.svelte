@@ -46,7 +46,7 @@
 {#if data.forbidden}
 	<p class="text-[var(--color-muted)]">{d.common.forbidden}</p>
 {:else}
-	<div class="mx-auto flex w-full max-w-6xl animate-fade-in-up flex-col gap-5">
+	<div class="flex w-full animate-fade-in-up flex-col gap-5">
 		{#if data.listError}
 			<p
 				class="rounded-lg border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 px-4 py-3 text-sm font-medium text-[var(--color-primary)]"
@@ -72,11 +72,12 @@
 				members={data.members}
 				plans={data.plans}
 				dayPassPrice={data.dayPassPrice}
+				canManageMembers={data.canManageMembers}
 				onSuccess={flashRow}
 			/>
 		</header>
 
-		<div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+		<div class="grid grid-cols-2 gap-3">
 			<div
 				class="relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm"
 			>

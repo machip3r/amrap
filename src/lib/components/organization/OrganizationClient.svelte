@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
+	import ArrowUpRight from '@lucide/svelte/icons/arrow-up-right';
 	import Building2 from '@lucide/svelte/icons/building-2';
 	import Plus from '@lucide/svelte/icons/plus';
 	import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
@@ -40,12 +41,17 @@
 	let { locale, d, organizationName, planTier, gyms }: Props = $props();
 
 	const labels = $derived(d.organization);
+	const contactHref = $derived(`/${locale}#contacto`);
+
+	/** Soft-delete gym / org UI — re-enable when product is ready. */
+	const showDeletionUi = false;
 
 	let createOpen = $state(false);
 	let deleteGym = $state<OrgGymRow | null>(null);
 	let deleteOrgOpen = $state(false);
 	let orgConfirmName = $state('');
 	let gymConfirmName = $state('');
+	let upgradeTier = $state<OrgPlanTier | null>(null);
 
 	let flash = $state<string | undefined>(undefined);
 	let flashError = $state<string | undefined>(undefined);
@@ -59,6 +65,10 @@
 	const gymCap = $derived(maxGyms(planTier));
 	const canAddGym = $derived(canCreateGym(planTier, activeGymCount));
 	const needsUpgradeForGym = $derived(!canAddGym);
+
+	const upgradePlanLabel = $derived(
+		upgradeTier != null ? planLabel(upgradeTier) : ''
+	);
 
 	function planLabel(tier: OrgPlanTier) {
 		switch (tier) {
@@ -115,6 +125,10 @@
 			flashError = undefined;
 		}
 	}
+
+	function openUpgradeConfirm(tier: OrgPlanTier) {
+		upgradeTier = tier;
+	}
 </script>
 
 <div class="flex flex-col gap-5">
@@ -148,86 +162,6 @@
 	{/if}
 
 	<section
-		id="subscription"
-		class="scroll-mt-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]/80 px-4 py-4 sm:px-5"
-	>
-		<div class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-			<h2 class="text-sm font-semibold text-[var(--color-text)]">{labels.subscriptionTitle}</h2>
-			<p class="text-xs text-[var(--color-muted)]">
-				{labels.currentPlan}:
-				<span class="font-semibold text-[var(--color-text)]">{planLabel(planTier)}</span>
-			</p>
-		</div>
-
-		<div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-			{#each AMRAP_PLANS as plan (plan.tier)}
-				{@const isCurrent = plan.tier === planTier}
-				{@const pricing = priceLine(plan.tier)}
-				<article
-					class="flex flex-col rounded-lg border px-3 py-3 {isCurrent
-						? 'border-[var(--color-primary)]/50 bg-[var(--color-primary)]/5'
-						: 'border-[var(--color-border)]/80'}"
-				>
-					<div class="flex items-center justify-between gap-2">
-						<h3 class="text-sm font-semibold text-[var(--color-text)]">{planLabel(plan.tier)}</h3>
-						{#if isCurrent}
-							<span
-								class="rounded-full bg-[var(--color-success)]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--color-success)]"
-							>
-								{labels.current}
-							</span>
-						{/if}
-					</div>
-					<p class="mt-2 text-lg font-bold tabular-nums text-[var(--color-text)]">
-						{pricing.amount}
-					</p>
-					<p class="text-[11px] leading-snug text-[var(--color-muted)]">{pricing.note}</p>
-					{#if plan.tier !== 'FREEMIUM' && !isCurrent}
-						{#if plan.priceNote === 'contact'}
-							<a href="mailto:hello@amrap.space?subject=AMRAP%20Pro" class="mt-auto pt-3">
-								<Button
-									type="button"
-									variant="ghost"
-									class="mt-0 h-8 w-full px-2 text-xs font-semibold"
-								>
-									{labels.contactSales}
-								</Button>
-							</a>
-						{:else}
-							<form
-								method="POST"
-								action="?/checkout"
-								class="mt-auto pt-3"
-								use:enhance={() => {
-									checkoutPending = true;
-									return async ({ result, update }) => {
-										checkoutPending = false;
-										await update();
-										if (result.type === 'success') applyState(result.data as OrgActionState);
-									};
-								}}
-							>
-								<input type="hidden" name="locale" value={locale} />
-								<input type="hidden" name="tier" value={plan.tier} />
-								<Button
-									type="submit"
-									variant="ghost"
-									class="mt-0 h-8 w-full px-2 text-xs font-semibold"
-									disabled={checkoutPending}
-								>
-									{labels.upgrade}
-								</Button>
-							</form>
-						{/if}
-					{:else}
-						<div class="mt-auto pt-3"></div>
-					{/if}
-				</article>
-			{/each}
-		</div>
-	</section>
-
-	<section
 		id="gyms"
 		class="scroll-mt-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-6"
 	>
@@ -247,23 +181,17 @@
 				{/if}
 			</div>
 			{#if !needsUpgradeForGym}
-				<Button
-					type="button"
-					class="mt-0 inline-flex shrink-0 items-center gap-1.5 shadow-sm"
-					onclick={() => (createOpen = true)}
-				>
-					<Plus class="h-4 w-4" aria-hidden="true" />
-					{labels.addGym}
+				<Button type="button" variant="toolbar" class="mt-0" onclick={() => (createOpen = true)}>
+					<Plus class="h-4 w-4 shrink-0" aria-hidden="true" />
+					<span class="shrink-0">{labels.addGym}</span>
 				</Button>
 			{/if}
 		</div>
 
 		<ul class="divide-y divide-[var(--color-border)] rounded-xl border border-[var(--color-border)]">
 			{#each gyms as gym (gym.id)}
-				<li
-					class="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-				>
-					<div class="min-w-0">
+				<li class="flex flex-row items-center gap-3 px-4 py-3">
+					<div class="min-w-0 flex-1">
 						<p class="flex min-w-0 flex-wrap items-center gap-2">
 							<span class="truncate font-semibold text-[var(--color-text)]">{gym.name}</span>
 							{#if gym.isCurrent}
@@ -284,85 +212,245 @@
 							</p>
 						{/if}
 					</div>
-					<div class="flex flex-wrap gap-2">
-						{#if gym.deleted_at}
-							<form
-								method="POST"
-								action="?/cancelGymDelete"
-								use:enhance={() => {
-									gymCancelPending = true;
-									return async ({ result, update }) => {
-										gymCancelPending = false;
-										await update();
-										if (result.type === 'success') applyState(result.data as OrgActionState);
-									};
-								}}
-							>
-								<input type="hidden" name="locale" value={locale} />
-								<input type="hidden" name="gym_id" value={gym.id} />
-								<Button
-									type="submit"
-									variant="ghost"
-									class="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold"
-									disabled={gymCancelPending}
+					{#if showDeletionUi || gym.deleted_at}
+						<div class="ml-auto flex shrink-0 items-center">
+							{#if gym.deleted_at}
+								<form
+									method="POST"
+									action="?/cancelGymDelete"
+									use:enhance={() => {
+										gymCancelPending = true;
+										return async ({ result, update }) => {
+											gymCancelPending = false;
+											await update();
+											if (result.type === 'success') applyState(result.data as OrgActionState);
+										};
+									}}
 								>
-									<RotateCcw class="h-3.5 w-3.5" aria-hidden="true" />
-									{labels.cancelDeletion}
-								</Button>
-							</form>
-						{:else}
-							<Button
-								type="button"
-								variant="ghost"
-								class="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-[var(--color-danger)] hover:text-[var(--color-danger)]"
-								onclick={() => {
-									deleteGym = gym;
-									gymConfirmName = '';
-								}}
-							>
-								<Trash2 class="h-3.5 w-3.5" aria-hidden="true" />
-								{labels.deleteGym}
-							</Button>
-						{/if}
-					</div>
+									<input type="hidden" name="locale" value={locale} />
+									<input type="hidden" name="gym_id" value={gym.id} />
+									<button
+										type="submit"
+										disabled={gymCancelPending}
+										class="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)] disabled:opacity-60"
+										aria-label={labels.cancelDeletion}
+										title={labels.cancelDeletion}
+									>
+										<RotateCcw class="h-4 w-4" aria-hidden="true" />
+									</button>
+								</form>
+							{:else if showDeletionUi}
+								<button
+									type="button"
+									class="inline-flex h-11 w-11 items-center justify-center rounded-lg text-[var(--color-danger)] transition-colors hover:bg-[var(--color-danger)]/10"
+									aria-label={labels.deleteGym}
+									title={labels.deleteGym}
+									onclick={() => {
+										deleteGym = gym;
+										gymConfirmName = '';
+									}}
+								>
+									<Trash2 class="h-4 w-4" aria-hidden="true" />
+								</button>
+							{/if}
+						</div>
+					{/if}
 				</li>
 			{/each}
 		</ul>
 	</section>
 
+	<div class="flex items-center gap-3 px-1" role="separator" aria-label={labels.subscriptionTitle}>
+		<div class="h-px flex-1 bg-[var(--color-border)]"></div>
+		<span
+			class="shrink-0 text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]"
+		>
+			{labels.subscriptionTitle}
+		</span>
+		<div class="h-px flex-1 bg-[var(--color-border)]"></div>
+	</div>
+
 	<section
-		id="danger"
-		class="scroll-mt-6 rounded-2xl border border-[var(--color-danger)]/30 bg-[var(--color-surface)] p-5 shadow-sm sm:p-6"
+		id="subscription"
+		class="scroll-mt-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm sm:p-5"
 	>
-		<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-			<div class="flex min-w-0 items-start gap-3">
-				<div
-					class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-danger)]/10 text-[var(--color-danger)]"
+		<p class="mb-3 text-xs text-[var(--color-muted)]">
+			{labels.currentPlan}:
+			<span class="font-semibold text-[var(--color-text)]">{planLabel(planTier)}</span>
+		</p>
+
+		<ul class="flex flex-col gap-2">
+			{#each AMRAP_PLANS as plan (plan.tier)}
+				{@const isCurrent = plan.tier === planTier}
+				{@const pricing = priceLine(plan.tier)}
+				{@const isContact = plan.priceNote === 'contact'}
+				{@const canAct = plan.tier !== 'FREEMIUM' && !isCurrent}
+				{@const rowClass = `group flex min-h-[var(--touch-target)] w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors sm:gap-4 sm:px-4 ${
+					isCurrent
+						? 'border-[var(--color-primary)]/50 bg-[var(--color-primary)]/5'
+						: canAct
+							? 'border-[var(--color-border)] bg-[var(--color-surface-hover)]/40 hover:border-[var(--color-primary)]/40 hover:bg-[var(--color-primary)]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]'
+							: 'border-[var(--color-border)]/80'
+				}`}
+
+				<li>
+					{#if canAct && isContact}
+						<a href={contactHref} class={rowClass}>
+							<div class="min-w-0 flex-1">
+								<div class="flex min-w-0 flex-wrap items-center gap-2">
+									<span class="text-sm font-semibold text-[var(--color-text)]"
+										>{planLabel(plan.tier)}</span
+									>
+								</div>
+								<p class="mt-0.5 truncate text-xs text-[var(--color-muted)]">
+									<span class="font-semibold tabular-nums text-[var(--color-text)]"
+										>{pricing.amount}</span
+									>
+									<span class="text-[var(--color-muted)]"> · {pricing.note}</span>
+								</p>
+							</div>
+							<span
+								class="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 px-3 text-xs font-bold text-[var(--color-primary)] transition-colors group-hover:bg-[var(--color-primary)] group-hover:text-[var(--color-primary-on)]"
+							>
+								{labels.contactSales}
+								<ArrowUpRight class="h-3.5 w-3.5" aria-hidden="true" />
+							</span>
+						</a>
+					{:else if canAct}
+						<button
+							type="button"
+							class={rowClass}
+							onclick={() => openUpgradeConfirm(plan.tier)}
+						>
+							<div class="min-w-0 flex-1">
+								<div class="flex min-w-0 flex-wrap items-center gap-2">
+									<span class="text-sm font-semibold text-[var(--color-text)]"
+										>{planLabel(plan.tier)}</span
+									>
+								</div>
+								<p class="mt-0.5 truncate text-xs text-[var(--color-muted)]">
+									<span class="font-semibold tabular-nums text-[var(--color-text)]"
+										>{pricing.amount}</span
+									>
+									<span class="text-[var(--color-muted)]"> · {pricing.note}</span>
+								</p>
+							</div>
+							<span
+								class="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-[var(--color-primary)] px-3.5 text-xs font-bold text-[var(--color-primary-on)] shadow-sm transition-colors group-hover:bg-[var(--color-primary-hover)]"
+							>
+								{labels.upgrade}
+							</span>
+						</button>
+					{:else}
+						<div class={rowClass} aria-current={isCurrent ? 'true' : undefined}>
+							<div class="min-w-0 flex-1">
+								<div class="flex min-w-0 flex-wrap items-center gap-2">
+									<span class="text-sm font-semibold text-[var(--color-text)]"
+										>{planLabel(plan.tier)}</span
+									>
+									{#if isCurrent}
+										<span
+											class="rounded-full bg-[var(--color-success)]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--color-success)]"
+										>
+											{labels.current}
+										</span>
+									{/if}
+								</div>
+								<p class="mt-0.5 truncate text-xs text-[var(--color-muted)]">
+									<span class="font-semibold tabular-nums text-[var(--color-text)]"
+										>{pricing.amount}</span
+									>
+									<span class="text-[var(--color-muted)]"> · {pricing.note}</span>
+								</p>
+							</div>
+						</div>
+					{/if}
+				</li>
+			{/each}
+		</ul>
+	</section>
+
+	{#if showDeletionUi}
+		<section
+			id="danger"
+			class="scroll-mt-6 rounded-2xl border border-[var(--color-danger)]/30 bg-[var(--color-surface)] p-5 shadow-sm sm:p-6"
+		>
+			<div class="flex flex-row items-center justify-between gap-3">
+				<div class="flex min-w-0 flex-1 items-start gap-3">
+					<div
+						class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-danger)]/10 text-[var(--color-danger)]"
+					>
+						<AlertTriangle class="h-5 w-5" aria-hidden="true" />
+					</div>
+					<div class="min-w-0">
+						<h2 class="font-title text-xl font-bold text-[var(--color-text)]">{labels.dangerTitle}</h2>
+						<p class="mt-1 text-sm text-[var(--color-muted)]">{labels.dangerHint}</p>
+						<p class="mt-2 text-xs text-[var(--color-muted)]">
+							{labels.retentionNote.replace('{days}', String(ORG_DELETION_RETENTION_DAYS))}
+						</p>
+					</div>
+				</div>
+				<button
+					type="button"
+					class="inline-flex h-11 w-11 shrink-0 items-center justify-center gap-1.5 self-center rounded-lg bg-[var(--color-danger)] text-white shadow-sm transition-colors hover:bg-[var(--color-danger)]/90 focus:outline-none focus:ring-2 focus:ring-[var(--color-danger)] focus:ring-offset-2 focus:ring-offset-[var(--color-bg)] sm:w-auto sm:px-4"
+					aria-label={labels.deleteOrg}
+					onclick={() => {
+						deleteOrgOpen = true;
+						orgConfirmName = '';
+					}}
 				>
-					<AlertTriangle class="h-5 w-5" aria-hidden="true" />
-				</div>
-				<div class="min-w-0">
-					<h2 class="font-title text-xl font-bold text-[var(--color-text)]">{labels.dangerTitle}</h2>
-					<p class="mt-1 text-sm text-[var(--color-muted)]">{labels.dangerHint}</p>
-					<p class="mt-2 text-xs text-[var(--color-muted)]">
-						{labels.retentionNote.replace('{days}', String(ORG_DELETION_RETENTION_DAYS))}
-					</p>
-				</div>
+					<Trash2 class="h-4 w-4" aria-hidden="true" />
+					<span class="hidden sm:inline">{labels.deleteOrg}</span>
+				</button>
 			</div>
-			<Button
-				type="button"
-				variant="ghost"
-				class="inline-flex shrink-0 self-start items-center gap-1.5 rounded-lg border border-[var(--color-danger)]/40 px-4 py-2.5 text-sm font-semibold text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 hover:text-[var(--color-danger)] sm:self-center"
-				onclick={() => {
-					deleteOrgOpen = true;
-					orgConfirmName = '';
+		</section>
+	{/if}
+
+	<Dialog
+		open={upgradeTier != null}
+		onOpenChange={(open) => {
+			if (!open) upgradeTier = null;
+		}}
+		title={labels.upgradeConfirmTitle}
+		description={labels.upgradeConfirmDescription.replace('{plan}', upgradePlanLabel)}
+		closeLabel={labels.close}
+		class="max-w-md"
+	>
+		{#if upgradeTier}
+			<form
+				method="POST"
+				action="?/checkout"
+				class="flex flex-col gap-4"
+				use:enhance={() => {
+					checkoutPending = true;
+					return async ({ result, update }) => {
+						checkoutPending = false;
+						await update();
+						if (result.type === 'success') {
+							applyState(result.data as OrgActionState);
+							upgradeTier = null;
+						}
+					};
 				}}
 			>
-				<Trash2 class="h-4 w-4" aria-hidden="true" />
-				{labels.deleteOrg}
-			</Button>
-		</div>
-	</section>
+				<input type="hidden" name="locale" value={locale} />
+				<input type="hidden" name="tier" value={upgradeTier} />
+				<div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+					<Button
+						type="button"
+						variant="ghost"
+						class="rounded-lg px-4 py-2.5 text-sm font-semibold"
+						onclick={() => (upgradeTier = null)}
+					>
+						{labels.cancel}
+					</Button>
+					<Button type="submit" class="mt-0" disabled={checkoutPending}>
+						{checkoutPending ? labels.save : labels.upgradeConfirmSubmit}
+					</Button>
+				</div>
+			</form>
+		{/if}
+	</Dialog>
 
 	<Dialog
 		open={createOpen}
@@ -419,54 +507,123 @@
 		</form>
 	</Dialog>
 
-	<Dialog
-		open={deleteGym != null}
-		onOpenChange={(open) => {
-			if (!open) {
-				deleteGym = null;
-				gymConfirmName = '';
-			}
-		}}
-		title={labels.deleteGymTitle}
-		description={labels.deleteGymHint}
-		closeLabel={labels.close}
-		class="max-w-lg"
-	>
-		{#if deleteGym}
-			{@const gymToDelete = deleteGym}
+	{#if showDeletionUi}
+		<Dialog
+			open={deleteGym != null}
+			onOpenChange={(open) => {
+				if (!open) {
+					deleteGym = null;
+					gymConfirmName = '';
+				}
+			}}
+			title={labels.deleteGymTitle}
+			description={labels.deleteGymHint}
+			closeLabel={labels.close}
+			class="max-w-md"
+			containerClass="items-center justify-center p-[var(--spacing-page)] sm:p-6"
+		>
+			{#if deleteGym}
+				{@const gymToDelete = deleteGym}
+				<form
+					method="POST"
+					action="?/deleteGym"
+					class="flex flex-col gap-4"
+					novalidate
+					use:enhance={() => {
+						gymDeletePending = true;
+						return async ({ result, update }) => {
+							gymDeletePending = false;
+							await update();
+							if (result.type === 'success') {
+								applyState(result.data as OrgActionState);
+								const data = result.data as OrgActionState;
+								if (data?.success) {
+									deleteGym = null;
+									gymConfirmName = '';
+								}
+							}
+						};
+					}}
+				>
+					<input type="hidden" name="locale" value={locale} />
+					<input type="hidden" name="gym_id" value={gymToDelete.id} />
+					<FormField label={labels.confirmName} htmlFor="org-gym-confirm">
+						{#snippet children({ invalid, describedBy })}
+							<Input
+								id="org-gym-confirm"
+								name="confirm_name"
+								required
+								maxlength={LIMITS.entityName}
+								placeholder={labels.confirmNamePlaceholder.replace('{name}', gymToDelete.name)}
+								autocomplete="off"
+								bind:value={gymConfirmName}
+								{invalid}
+								{describedBy}
+							/>
+						{/snippet}
+					</FormField>
+					<div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+						<Button
+							type="button"
+							variant="ghost"
+							class="rounded-lg px-4 py-2.5 text-sm font-semibold"
+							onclick={() => {
+								deleteGym = null;
+								gymConfirmName = '';
+							}}
+						>
+							{labels.cancel}
+						</Button>
+						<Button
+							type="submit"
+							class="mt-0 bg-[var(--color-danger)] hover:bg-[var(--color-danger)]"
+							disabled={gymDeletePending ||
+								gymConfirmName.trim().toLowerCase() !== gymToDelete.name.trim().toLowerCase()}
+						>
+							{labels.confirmDelete}
+						</Button>
+					</div>
+				</form>
+			{/if}
+		</Dialog>
+
+		<Dialog
+			open={deleteOrgOpen}
+			onOpenChange={(open) => {
+				deleteOrgOpen = open;
+				if (!open) orgConfirmName = '';
+			}}
+			title={labels.deleteOrgTitle}
+			description={labels.deleteOrgHint}
+			closeLabel={labels.close}
+			class="max-w-md"
+			containerClass="items-center justify-center p-[var(--spacing-page)] sm:p-6"
+		>
 			<form
 				method="POST"
-				action="?/deleteGym"
+				action="?/deleteOrg"
 				class="flex flex-col gap-4"
 				novalidate
 				use:enhance={() => {
-					gymDeletePending = true;
+					orgDeletePending = true;
 					return async ({ result, update }) => {
-						gymDeletePending = false;
+						orgDeletePending = false;
 						await update();
-						if (result.type === 'success') {
-							applyState(result.data as OrgActionState);
-							const data = result.data as OrgActionState;
-							if (data?.success) {
-								deleteGym = null;
-								gymConfirmName = '';
-							}
-						}
+						if (result.type === 'success') applyState(result.data as OrgActionState);
 					};
 				}}
 			>
 				<input type="hidden" name="locale" value={locale} />
-				<input type="hidden" name="gym_id" value={gymToDelete.id} />
-				<FormField label={labels.confirmName} htmlFor="org-gym-confirm">
+				<FormField label={labels.confirmName} htmlFor="org-confirm">
 					{#snippet children({ invalid, describedBy })}
 						<Input
-							id="org-gym-confirm"
+							id="org-confirm"
 							name="confirm_name"
 							required
 							maxlength={LIMITS.entityName}
-							placeholder={labels.confirmNamePlaceholder.replace('{name}', gymToDelete.name)}
+							placeholder={labels.confirmNamePlaceholder.replace('{name}', organizationName)}
 							autocomplete="off"
-							bind:value={gymConfirmName}
+							bind:value={orgConfirmName}
 							{invalid}
 							{describedBy}
 						/>
@@ -478,8 +635,8 @@
 						variant="ghost"
 						class="rounded-lg px-4 py-2.5 text-sm font-semibold"
 						onclick={() => {
-							deleteGym = null;
-							gymConfirmName = '';
+							deleteOrgOpen = false;
+							orgConfirmName = '';
 						}}
 					>
 						{labels.cancel}
@@ -487,78 +644,13 @@
 					<Button
 						type="submit"
 						class="mt-0 bg-[var(--color-danger)] hover:bg-[var(--color-danger)]"
-						disabled={gymDeletePending ||
-							gymConfirmName.trim().toLowerCase() !== gymToDelete.name.trim().toLowerCase()}
+						disabled={orgDeletePending ||
+							orgConfirmName.trim().toLowerCase() !== organizationName.trim().toLowerCase()}
 					>
 						{labels.confirmDelete}
 					</Button>
 				</div>
 			</form>
-		{/if}
-	</Dialog>
-
-	<Dialog
-		open={deleteOrgOpen}
-		onOpenChange={(open) => {
-			deleteOrgOpen = open;
-			if (!open) orgConfirmName = '';
-		}}
-		title={labels.deleteOrgTitle}
-		description={labels.deleteOrgHint}
-		closeLabel={labels.close}
-		class="max-w-lg"
-	>
-		<form
-			method="POST"
-			action="?/deleteOrg"
-			class="flex flex-col gap-4"
-			novalidate
-			use:enhance={() => {
-				orgDeletePending = true;
-				return async ({ result, update }) => {
-					orgDeletePending = false;
-					await update();
-					if (result.type === 'success') applyState(result.data as OrgActionState);
-				};
-			}}
-		>
-			<input type="hidden" name="locale" value={locale} />
-			<FormField label={labels.confirmName} htmlFor="org-confirm">
-				{#snippet children({ invalid, describedBy })}
-					<Input
-						id="org-confirm"
-						name="confirm_name"
-						required
-						maxlength={LIMITS.entityName}
-						placeholder={labels.confirmNamePlaceholder.replace('{name}', organizationName)}
-						autocomplete="off"
-						bind:value={orgConfirmName}
-						{invalid}
-						{describedBy}
-					/>
-				{/snippet}
-			</FormField>
-			<div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-				<Button
-					type="button"
-					variant="ghost"
-					class="rounded-lg px-4 py-2.5 text-sm font-semibold"
-					onclick={() => {
-						deleteOrgOpen = false;
-						orgConfirmName = '';
-					}}
-				>
-					{labels.cancel}
-				</Button>
-				<Button
-					type="submit"
-					class="mt-0 bg-[var(--color-danger)] hover:bg-[var(--color-danger)]"
-					disabled={orgDeletePending ||
-						orgConfirmName.trim().toLowerCase() !== organizationName.trim().toLowerCase()}
-				>
-					{labels.confirmDelete}
-				</Button>
-			</div>
-		</form>
-	</Dialog>
+		</Dialog>
+	{/if}
 </div>

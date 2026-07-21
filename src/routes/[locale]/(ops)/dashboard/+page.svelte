@@ -1,11 +1,8 @@
 <script lang="ts">
 	import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
-	import CalendarDays from '@lucide/svelte/icons/calendar-days';
 	import Layers from '@lucide/svelte/icons/layers';
-	import LogIn from '@lucide/svelte/icons/log-in';
 	import Timer from '@lucide/svelte/icons/timer';
-	import UserCheck from '@lucide/svelte/icons/user-check';
 	import Users from '@lucide/svelte/icons/users';
 	import DashboardQuickActions from '$lib/components/dashboard/DashboardQuickActions.svelte';
 
@@ -14,6 +11,10 @@
 	const d = $derived(data.d);
 	const locale = $derived(data.locale);
 </script>
+
+<svelte:head>
+	<title>{d.dashboard.title} — AMRAP</title>
+</svelte:head>
 
 {#snippet metricCard(
 	label: string,
@@ -27,36 +28,19 @@
 			: accent === 'success'
 				? 'bg-[var(--color-success)]'
 				: 'bg-[var(--color-danger)]'}
-	{@const iconWrap =
-		accent === 'primary'
-			? 'bg-[var(--color-primary)]/12 text-[var(--color-primary)]'
-			: accent === 'success'
-				? 'bg-[var(--color-success)]/15 text-[var(--color-success)]'
-				: 'bg-[var(--color-danger)]/15 text-[var(--color-danger)]'}
 	{@const hintColor =
 		accent === 'danger' ? 'text-[var(--color-danger)]' : 'text-[var(--color-muted)]'}
 	<div
-		class="relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm"
+		class="relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 shadow-sm sm:p-5"
 	>
-		<div class="absolute left-0 top-0 h-1 w-16 rounded-br-md {accentBar}"></div>
-		<div class="flex items-start justify-between gap-3">
-			<span class="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
-				{label}
-			</span>
-			<span class="inline-flex h-9 w-9 items-center justify-center rounded-lg {iconWrap}">
-				{#if accent === 'success'}
-					<UserCheck class="h-4 w-4" aria-hidden="true" />
-				{:else if accent === 'primary'}
-					<LogIn class="h-4 w-4" aria-hidden="true" />
-				{:else}
-					<AlertTriangle class="h-4 w-4" aria-hidden="true" />
-				{/if}
-			</span>
-		</div>
-		<p class="font-title mt-4 text-4xl font-bold tracking-tight text-[var(--color-text)]">
+		<div class="absolute left-0 top-0 h-1 w-10 rounded-br-md sm:w-16 {accentBar}"></div>
+		<span class="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] sm:text-[11px]">
+			{label}
+		</span>
+		<p class="font-title mt-2 text-2xl font-bold tracking-tight text-[var(--color-text)] sm:mt-4 sm:text-4xl">
 			{value}
 		</p>
-		<p class="mt-2 text-xs font-medium {hintColor}">{hint}</p>
+		<p class="mt-1 text-[10px] font-medium leading-snug {hintColor} sm:mt-2 sm:text-xs">{hint}</p>
 	</div>
 {/snippet}
 
@@ -152,30 +136,21 @@
 			<p class="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
 				{labels.weekStrip}
 			</p>
-			<div class="flex flex-col gap-2 sm:flex-row">
-				{#each [{ label: labels.myClasses, value: dash.myClassesCount, icon: 'layers' }, { label: labels.sessionsThisWeek, value: dash.sessionsThisWeek, icon: 'calendar' }, { label: labels.bookedThisWeek, value: dash.bookedThisWeek, icon: 'users' }] as pill (pill.label)}
+			<div class="flex flex-row gap-2">
+				{#each [{ label: labels.myClasses, value: dash.myClassesCount }, { label: labels.sessionsThisWeek, value: dash.sessionsThisWeek }, { label: labels.bookedThisWeek, value: dash.bookedThisWeek }] as pill (pill.label)}
 					<div
-						class="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 shadow-sm"
+						class="flex min-w-0 flex-1 flex-col justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-2.5 shadow-sm sm:px-4 sm:py-3"
 					>
-						<span
-							class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary)]/12 text-[var(--color-primary)]"
+						<p
+							class="truncate text-[9px] font-bold uppercase tracking-wider text-[var(--color-muted)] sm:text-[11px]"
 						>
-							{#if pill.icon === 'layers'}
-								<Layers class="h-4 w-4" aria-hidden="true" />
-							{:else if pill.icon === 'calendar'}
-								<CalendarDays class="h-4 w-4" aria-hidden="true" />
-							{:else}
-								<Users class="h-4 w-4" aria-hidden="true" />
-							{/if}
-						</span>
-						<div class="min-w-0">
-							<p class="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
-								{pill.label}
-							</p>
-							<p class="font-title text-2xl font-bold tabular-nums text-[var(--color-text)]">
-								{pill.value}
-							</p>
-						</div>
+							{pill.label}
+						</p>
+						<p
+							class="font-title text-xl font-bold tabular-nums text-[var(--color-text)] sm:text-2xl"
+						>
+							{pill.value}
+						</p>
 					</div>
 				{/each}
 			</div>
@@ -245,7 +220,7 @@
 			</div>
 		</div>
 
-		<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+		<div class="grid grid-cols-3 gap-2 sm:gap-4">
 			{@render metricCard(
 				d.dashboard.activeMembers,
 				dash.activeCount,
@@ -394,28 +369,75 @@
 				</a>
 			</div>
 
-			<div class="overflow-x-auto">
-				<table class="w-full min-w-[640px] text-left text-sm">
-					<thead>
-						<tr
-							class="border-b border-[var(--color-border)] text-[11px] uppercase tracking-wider text-[var(--color-muted)]"
-						>
-							<th class="px-5 py-3 font-semibold">{d.dashboard.colMember}</th>
-							<th class="px-5 py-3 font-semibold">{d.dashboard.colTime}</th>
-							<th class="px-5 py-3 font-semibold">{d.dashboard.colPlan}</th>
-							<th class="px-5 py-3 font-semibold">{d.dashboard.colStatus}</th>
-							<th class="px-5 py-3 text-right font-semibold">{d.dashboard.colAction}</th>
-						</tr>
-					</thead>
-					<tbody class="divide-y divide-[var(--color-border)]">
-						{#if dash.recentCheckIns.length === 0}
-							<tr>
-								<td colspan="5" class="px-5 py-10 text-center text-[var(--color-muted)]">
-									<Users class="mx-auto mb-2 h-5 w-5 opacity-50" aria-hidden="true" />
-									{d.dashboard.noCheckIns}
-								</td>
+			{#if dash.recentCheckIns.length === 0}
+				<p class="px-5 py-10 text-center text-sm text-[var(--color-muted)]">
+					<Users class="mx-auto mb-2 h-5 w-5 opacity-50" aria-hidden="true" />
+					{d.dashboard.noCheckIns}
+				</p>
+			{:else}
+				<!-- Mobile cards: member + status + action; plan/time secondary -->
+				<ul class="flex flex-col divide-y divide-[var(--color-border)] sm:hidden">
+					{#each dash.recentCheckIns as row (row.id)}
+						<li class="flex items-center gap-3 px-4 py-3">
+							<span
+								class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)]/15 text-xs font-bold text-[var(--color-primary)]"
+							>
+								{row.initials}
+							</span>
+							<div class="min-w-0 flex-1">
+								<p class="truncate font-medium text-[var(--color-text)]">{row.name}</p>
+								<p class="mt-0.5 text-xs tabular-nums text-[var(--color-muted)]">{row.time}</p>
+								<div class="mt-1.5 flex flex-wrap items-center gap-2">
+									{#if row.status === 'active'}
+										<span
+											class="inline-flex rounded-full bg-[var(--color-success)]/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-[var(--color-success)]"
+										>
+											{d.members.active}
+										</span>
+									{:else}
+										<span
+											class="inline-flex rounded-full bg-[var(--color-danger)]/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-[var(--color-danger)]"
+										>
+											{d.members.expired}
+										</span>
+									{/if}
+									<span class="truncate text-xs text-[var(--color-muted)]">{row.planName}</span>
+								</div>
+							</div>
+							{#if row.status === 'expired'}
+								<a
+									href="/{locale}/members/{row.membershipId}"
+									class="inline-flex min-h-11 shrink-0 items-center rounded-md bg-[var(--color-primary)] px-3 text-xs font-semibold text-[var(--color-primary-on)]"
+								>
+									{d.dashboard.renew}
+								</a>
+							{:else}
+								<a
+									href="/{locale}/members/{row.membershipId}"
+									class="inline-flex min-h-11 shrink-0 items-center text-sm font-medium text-[var(--color-primary)]"
+								>
+									{d.members.view}
+								</a>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+
+				<!-- Desktop table -->
+				<div class="hidden overflow-x-auto sm:block">
+					<table class="w-full text-left text-sm">
+						<thead>
+							<tr
+								class="border-b border-[var(--color-border)] text-[11px] uppercase tracking-wider text-[var(--color-muted)]"
+							>
+								<th class="px-5 py-3 font-semibold">{d.dashboard.colMember}</th>
+								<th class="px-5 py-3 font-semibold">{d.dashboard.colTime}</th>
+								<th class="px-5 py-3 font-semibold">{d.dashboard.colPlan}</th>
+								<th class="px-5 py-3 font-semibold">{d.dashboard.colStatus}</th>
+								<th class="px-5 py-3 text-right font-semibold">{d.dashboard.colAction}</th>
 							</tr>
-						{:else}
+						</thead>
+						<tbody class="divide-y divide-[var(--color-border)]">
 							{#each dash.recentCheckIns as row (row.id)}
 								<tr class="hover:bg-[var(--color-surface-hover)]/60">
 									<td class="px-5 py-3">
@@ -464,10 +486,10 @@
 									</td>
 								</tr>
 							{/each}
-						{/if}
-					</tbody>
-				</table>
-			</div>
+						</tbody>
+					</table>
+				</div>
+			{/if}
 
 			<div class="border-t border-[var(--color-border)] px-5 py-3 text-center">
 				<a

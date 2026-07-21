@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { canInWorkspace } from '$lib/auth/permissions';
-import { listCheckInsPage } from '$lib/checkin/queries';
+import { listCheckInsPage, parseCheckInPersonType } from '$lib/checkin/queries';
 import type { Locale } from '$lib/i18n/config';
 import { getDictionary } from '$lib/i18n/dictionaries';
 import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
@@ -36,11 +36,13 @@ export const load: PageServerLoad = async ({ parent, url, depends }) => {
 	const page = parsePage(url.searchParams.get('page'));
 	const today = todayIsoDate();
 	const date = parseOptionalDate(url.searchParams.get('date') ?? undefined) ?? today;
+	const personType = parseCheckInPersonType(url.searchParams.get('type'));
 	const canManageMembers = canInWorkspace(workspace, 'manage_members');
 
 	const { items, meta } = await listCheckInsPage(supabase, workspace.gymId, {
 		page,
-		date
+		date,
+		personType
 	});
 
 	return {
@@ -50,6 +52,7 @@ export const load: PageServerLoad = async ({ parent, url, depends }) => {
 		meta,
 		date,
 		today,
+		personType,
 		canManageMembers
 	};
 };

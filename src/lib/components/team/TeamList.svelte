@@ -73,9 +73,10 @@
 	$effect(() => {
 		if (!highlightId) return;
 		const scrollTimer = window.setTimeout(() => {
-			document
-				.getElementById(`team-row-${highlightId}`)
-				?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+			const el =
+				document.getElementById(`team-row-${highlightId}`) ??
+				document.getElementById(`team-row-desk-${highlightId}`);
+			el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 		}, 80);
 		return () => window.clearTimeout(scrollTimer);
 	});
@@ -194,7 +195,7 @@
 	<div
 		class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm sm:p-5"
 	>
-		<div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+		<div class="flex items-center gap-2">
 			<div class="relative min-w-0 flex-1">
 				<label class="sr-only" for="team-search">{labels.searchPlaceholder}</label>
 				<Search
@@ -220,7 +221,7 @@
 				type="button"
 				onclick={() => void reload()}
 				disabled={pending}
-				class="ml-auto inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)] disabled:opacity-60"
+				class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)] disabled:opacity-60"
 				aria-label={labels.reload}
 				title={labels.reload}
 			>
@@ -232,30 +233,87 @@
 	<div
 		class="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm"
 	>
-		<div class="overflow-x-auto">
-			<table class="w-full min-w-[36rem] border-collapse text-left text-sm">
-				<thead>
-					<tr
-						class="border-b border-[var(--color-border)] bg-[var(--color-surface-hover)]/50 text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]"
-					>
-						<th class="px-4 py-3 sm:px-5">{labels.name}</th>
-						<th class="px-4 py-3">{labels.email}</th>
-						<th class="px-4 py-3">{labels.joined}</th>
-						<th class="px-4 py-3 pr-5 text-right">{labels.actions}</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#if members.length === 0}
-						<tr>
-							<td colspan="4" class="px-5 py-12 text-center text-[var(--color-muted)]">
-								{emptyMessage}
-							</td>
+		{#if members.length === 0}
+			<p class="px-5 py-12 text-center text-sm text-[var(--color-muted)]">{emptyMessage}</p>
+		{:else}
+			<!-- Mobile cards: name + email; join date on desktop only -->
+			<ul class="flex flex-col divide-y divide-[var(--color-border)]/70 sm:hidden">
+				{#each members as m (m.id)}
+					{@const isNew = highlightId === m.id}
+					<li id="team-row-{m.id}" class={isNew ? 'amrap-row-shine' : ''}>
+						<div class="flex items-start gap-3 px-4 py-3.5">
+							<button
+								type="button"
+								onclick={() => goToMember(m.id)}
+								class="flex min-w-0 flex-1 items-start gap-3 text-left outline-none ring-[var(--color-ring)] focus-visible:ring-2"
+							>
+								<span
+									class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)]/15 text-xs font-bold text-[var(--color-primary)]"
+								>
+									{initials(m.name)}
+								</span>
+								<span class="min-w-0 flex-1">
+									<span class="flex items-center gap-2">
+										<span class="truncate font-semibold text-[var(--color-text)]">{m.name}</span>
+										{#if isNew}
+											<span class="shrink-0 text-[11px] font-medium text-[var(--color-primary)]">
+												{labels.newBadge}
+											</span>
+										{/if}
+									</span>
+									<span class="mt-0.5 block truncate text-xs text-[var(--color-muted)]">
+										{m.email ?? m.phone ?? '—'}
+									</span>
+									{#if m.inviteStatus === 'pending' || m.inviteStatus === 'cancelled'}
+										<span
+											class="mt-1.5 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide {inviteBadgeClass(
+												m.inviteStatus
+											)}"
+										>
+											{inviteBadgeLabel(m.inviteStatus)}
+										</span>
+									{/if}
+								</span>
+								<span
+									class="inline-flex h-11 shrink-0 items-center text-[var(--color-primary)]"
+									aria-hidden="true"
+								>
+									<ArrowRight class="h-4 w-4" />
+								</span>
+							</button>
+							{#if m.userId !== currentUserId}
+								<button
+									type="button"
+									class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-[var(--color-danger)] transition-colors hover:bg-[var(--color-danger)]/10"
+									aria-label={labels.remove}
+									onclick={() => (removing = m)}
+								>
+									<Trash2 class="h-4 w-4" aria-hidden="true" />
+								</button>
+							{/if}
+						</div>
+					</li>
+				{/each}
+			</ul>
+
+			<!-- Desktop table -->
+			<div class="hidden overflow-x-auto sm:block">
+				<table class="w-full border-collapse text-left text-sm">
+					<thead>
+						<tr
+							class="border-b border-[var(--color-border)] bg-[var(--color-surface-hover)]/50 text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]"
+						>
+							<th class="px-4 py-3 sm:px-5">{labels.name}</th>
+							<th class="px-4 py-3">{labels.email}</th>
+							<th class="px-4 py-3">{labels.joined}</th>
+							<th class="px-4 py-3 pr-5 text-right">{labels.actions}</th>
 						</tr>
-					{:else}
+					</thead>
+					<tbody>
 						{#each members as m (m.id)}
 							{@const isNew = highlightId === m.id}
 							<tr
-								id="team-row-{m.id}"
+								id="team-row-desk-{m.id}"
 								role="link"
 								tabindex="0"
 								onclick={() => goToMember(m.id)}
@@ -286,13 +344,15 @@
 												{/if}
 											</p>
 											<div class="mt-0.5 flex flex-wrap items-center gap-1.5">
-												<span
-													class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide {inviteBadgeClass(
-														m.inviteStatus
-													)}"
-												>
-													{inviteBadgeLabel(m.inviteStatus)}
-												</span>
+												{#if m.inviteStatus === 'pending' || m.inviteStatus === 'cancelled'}
+													<span
+														class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide {inviteBadgeClass(
+															m.inviteStatus
+														)}"
+													>
+														{inviteBadgeLabel(m.inviteStatus)}
+													</span>
+												{/if}
 												{#if m.phone}
 													<p class="truncate text-xs text-[var(--color-muted)]">{m.phone}</p>
 												{/if}
@@ -330,10 +390,10 @@
 								</td>
 							</tr>
 						{/each}
-					{/if}
-				</tbody>
-			</table>
-		</div>
+					</tbody>
+				</table>
+			</div>
+		{/if}
 
 		{#if meta.total > 0}
 			<div

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import './layout.css';
+	import { pwaInfo } from 'virtual:pwa-info';
 
 	let { children } = $props();
 
@@ -14,6 +15,8 @@
 			} catch (e) {}
 		})();
 	`;
+
+	const webManifest = $derived(pwaInfo?.webManifest.linkTag ?? '');
 </script>
 
 <svelte:head>
@@ -23,7 +26,17 @@
 		href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
 		rel="stylesheet"
 	/>
+	{#if webManifest}
+		{@html webManifest}
+	{/if}
 	{@html `<script>${themeInit}<\/script>`}
 </svelte:head>
 
 {@render children()}
+
+{#await import('$lib/components/pwa/PwaReloadPrompt.svelte') then { default: PwaReloadPrompt }}
+	<PwaReloadPrompt />
+{/await}
+{#await import('$lib/components/pwa/PwaInstallPrompt.svelte') then { default: PwaInstallPrompt }}
+	<PwaInstallPrompt />
+{/await}

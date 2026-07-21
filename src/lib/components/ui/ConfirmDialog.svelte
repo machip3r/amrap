@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import type { Snippet } from 'svelte';
 	import Button from './Button.svelte';
+	import Dialog from './Dialog.svelte';
 
 	type Props = {
 		open: boolean;
@@ -26,28 +27,24 @@
 	}: Props = $props();
 
 	let pending = $state(false);
-	let dialogEl: HTMLDialogElement | undefined = $state();
-
-	$effect(() => {
-		if (!dialogEl) return;
-		if (open && !dialogEl.open) dialogEl.showModal();
-		if (!open && dialogEl.open) dialogEl.close();
-	});
 </script>
 
-<dialog
-	bind:this={dialogEl}
-	class="w-[min(100%,28rem)] rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-xl backdrop:bg-black/40"
-	onclose={onclose}
+<Dialog
+	{open}
+	onOpenChange={(next) => {
+		if (!next) onclose();
+	}}
+	{title}
+	{description}
+	closeLabel={cancelLabel}
+	class="max-w-md"
+	containerClass="items-center justify-center p-[var(--spacing-page)] sm:p-6"
+	autoFocus={false}
 >
-	<h2 class="text-lg font-bold text-[var(--color-text)]">{title}</h2>
-	{#if description}
-		<p class="mt-2 text-sm text-[var(--color-muted)]">{description}</p>
-	{/if}
 	<form
 		method="POST"
 		{action}
-		class="mt-4 flex flex-col gap-4"
+		class="flex flex-col gap-4"
 		use:enhance={() => {
 			pending = true;
 			return async ({ update }) => {
@@ -58,17 +55,22 @@
 		}}
 	>
 		{@render children()}
-		<div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-			<Button type="button" variant="ghost" class="rounded-lg px-4 py-2.5 text-sm font-semibold" onclick={onclose}>
+		<div class="flex w-full items-center justify-between gap-2">
+			<Button
+				type="button"
+				variant="ghost"
+				class="min-h-11 shrink-0 border border-[var(--color-border)] px-4 text-sm font-semibold"
+				onclick={onclose}
+			>
 				{cancelLabel}
 			</Button>
 			<Button
 				type="submit"
-				class="bg-[var(--color-danger)] hover:bg-[var(--color-danger)] hover:brightness-95"
+				class="min-h-11 shrink-0 bg-[var(--color-danger)] hover:bg-[var(--color-danger)] hover:brightness-95"
 				disabled={pending}
 			>
 				{confirmLabel}
 			</Button>
 		</div>
 	</form>
-</dialog>
+</Dialog>

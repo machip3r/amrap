@@ -25,21 +25,15 @@ export const LIMITS = {
 } as const;
 
 /** Lowercase email local+domain shape (after trim + lowercasing). */
-export const EMAIL_PATTERN =
+const EMAIL_PATTERN =
   /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/;
 
 /** Letters (incl. accents), spaces, apostrophe, hyphen, period. */
-export const PERSON_NAME_PATTERN = /^[\p{L}\p{M}](?:[\p{L}\p{M}\s'.-]*[\p{L}\p{M}.])?$/u;
+const PERSON_NAME_PATTERN = /^[\p{L}\p{M}](?:[\p{L}\p{M}\s'.-]*[\p{L}\p{M}.])?$/u;
 
 /** Org / gym / plan / branch labels — no angle brackets or control chars. */
-export const ENTITY_NAME_PATTERN =
+const ENTITY_NAME_PATTERN =
   /^(?!.*[<>])[\p{L}\p{M}\p{N}](?:[\p{L}\p{M}\p{N}\s.&'+_/\-()]*[\p{L}\p{M}\p{N}.])?$/u;
-
-/** Exactly 10 digits (national number in the UI field). No spaces, +, or punctuation. */
-export const PHONE_PATTERN = /^\d{10}$/;
-
-/** Stored phone: `+` plus 7–15 digits (E.164). National part is validated separately. */
-export const E164_PHONE_PATTERN = /^\+[1-9]\d{6,14}$/;
 
 /** Strip non-digits for the national input; normalize pasted +52 / +1 to 10 digits. */
 export function sanitizePhoneInput(raw: string): string {
@@ -56,7 +50,7 @@ export function sanitizePhoneInput(raw: string): string {
  * Normalize a form/DB phone to `+{dial}{10 national}` or null if empty.
  * Bare 10-digit values default to MX (+52).
  */
-export function normalizeStoredPhone(raw: string): string | null {
+function normalizeStoredPhone(raw: string): string | null {
   const trimmed = raw.trim();
   if (!trimmed) return null;
 
@@ -71,11 +65,6 @@ export function normalizeStoredPhone(raw: string): string | null {
   const national = nationalDigits(parsed.national).slice(0, LIMITS.phone);
   if (national.length !== LIMITS.phone) return null;
   return formatInternationalPhone(parsed.dial, national);
-}
-
-export function isValidStoredPhone(raw: string): boolean {
-  const normalized = normalizeStoredPhone(raw);
-  return Boolean(normalized && E164_PHONE_PATTERN.test(normalized));
 }
 
 /** Lowercase + printable ASCII only, capped — client `onChange` for email. */
@@ -104,20 +93,13 @@ export function sanitizePasswordInput(raw: string): string {
 }
 
 /** Printable password chars only (no control characters). */
-export const PASSWORD_PATTERN = /^[\x20-\x7E]+$/;
+const PASSWORD_PATTERN = /^[\x20-\x7E]+$/;
 
 /** Signup / email OTP tokens (6 digits). */
-export const OTP_PATTERN = /^\d{6}$/;
+const OTP_PATTERN = /^\d{6}$/;
 
 /** HTML date input value. */
-export const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-
-/** `date` or `datetime-local` values. */
-export const DATETIME_LOCAL_PATTERN =
-  /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?)?$/;
-
-/** Free text (contact message) — allow newlines/tabs, reject other controls. */
-export const MESSAGE_PATTERN = /^[^\x00-\x08\x0B\x0C\x0E-\x1F\x7F]+$/;
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export const localeSchema = z
   .string()
@@ -197,18 +179,6 @@ export const optionalAddressSchema = z
   })
   .transform((v) => (v.length === 0 ? null : v));
 
-export const phoneSchema = z
-  .string()
-  .trim()
-  .transform((v, ctx) => {
-    const normalized = normalizeStoredPhone(v);
-    if (!normalized) {
-      ctx.addIssue({ code: "custom", message: "phone" });
-      return z.NEVER;
-    }
-    return normalized;
-  });
-
 export const optionalPhoneSchema = z
   .string()
   .trim()
@@ -238,8 +208,8 @@ export const isoDateSchema = z
   }, { message: "invalid_date" });
 
 /** Date of birth — valid calendar day, age 18–120 (legal majority). */
-export const MIN_PROFILE_AGE_YEARS = 18;
-export const MAX_PROFILE_AGE_YEARS = 120;
+const MIN_PROFILE_AGE_YEARS = 18;
+const MAX_PROFILE_AGE_YEARS = 120;
 
 /** Latest ISO date (YYYY-MM-DD) that still satisfies `minAge` years old today. */
 export function maxDateOfBirthIso(
@@ -279,8 +249,7 @@ export const dateOfBirthSchema = isoDateSchema
     message: "date",
   });
 
-export const SEX_VALUES = ["male", "female", "other", "prefer_not"] as const;
-export type SexValue = (typeof SEX_VALUES)[number];
+const SEX_VALUES = ["male", "female", "other", "prefer_not"] as const;
 
 export const sexSchema = z.enum(SEX_VALUES);
 
@@ -296,29 +265,6 @@ export const weightKgSchema = z.coerce
   .min(20)
   .max(400);
 
-export const membershipExpiresSchema = z
-  .string()
-  .trim()
-  .min(1)
-  .max(32)
-  .regex(DATETIME_LOCAL_PATTERN)
-  .refine((v) => !Number.isNaN(new Date(v).getTime()), {
-    message: "invalid_date",
-  });
-
-export const messageSchema = z
-  .string()
-  .trim()
-  .min(1)
-  .max(LIMITS.message)
-  .regex(MESSAGE_PATTERN);
-
-export const searchQuerySchema = z
-  .string()
-  .trim()
-  .max(LIMITS.search)
-  .regex(/^[\p{L}\p{M}\p{N}\s.@+\-_]*$/u);
-
 /** Search box — strip disallowed chars and cap length. */
 export function sanitizeSearchInput(raw: string): string {
   return raw.replace(/[^\p{L}\p{M}\p{N}\s.@+\-_]/gu, "").slice(0, LIMITS.search);
@@ -332,24 +278,6 @@ export const checkInCodeSchema = z
   .max(LIMITS.checkInCode)
   .regex(/^[^\x00-\x1F\x7F]+$/);
 
-/** @deprecated Prefer personNameSchema / entityNameSchema for typed fields. */
-export const nonEmptyString = (max = 200) =>
-  z
-    .string()
-    .trim()
-    .min(1)
-    .max(max)
-    .regex(/^[^\x00-\x1F\x7F<>]+$/);
-
-/** @deprecated Prefer optionalPhoneSchema / optionalEntityNameSchema. */
-export const optionalTrimmed = (max = 200) =>
-  z
-    .string()
-    .trim()
-    .max(max)
-    .regex(/^[^\x00-\x1F\x7F<>]*$/)
-    .transform((v) => (v.length === 0 ? null : v));
-
 export const uuidSchema = z.uuid();
 
 export const paymentMethodSchema = z.enum(["cash", "transfer"]);
@@ -357,22 +285,6 @@ export const paymentMethodSchema = z.enum(["cash", "transfer"]);
 export const amountSchema = z.coerce.number().finite().min(0).max(1_000_000);
 
 export const durationDaysSchema = z.coerce.number().int().min(1).max(3650);
-
-/** HTML hex color (#RRGGBB). */
-export const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
-
-export const hexColorSchema = z
-  .string()
-  .trim()
-  .regex(HEX_COLOR_PATTERN)
-  .transform((v) => v.toLowerCase());
-
-/** Optional hex — empty string becomes undefined (use default). */
-export const optionalHexColorSchema = z
-  .string()
-  .trim()
-  .transform((v) => (v === "" ? undefined : v))
-  .pipe(z.union([hexColorSchema, z.undefined()]));
 
 export function formString(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "");

@@ -16,6 +16,24 @@ export type CheckInListItem = {
   source: string;
 };
 
+/** Filter history by gym role of the checked-in person. */
+export type CheckInPersonType = "member" | "trainer" | "staff";
+
+export const CHECK_IN_PERSON_TYPES: readonly CheckInPersonType[] = [
+  "member",
+  "trainer",
+  "staff",
+] as const;
+
+export function parseCheckInPersonType(
+  raw: string | null | undefined,
+): CheckInPersonType | null {
+  if (!raw) return null;
+  const v = raw.trim().toLowerCase();
+  if (v === "member" || v === "trainer" || v === "staff") return v;
+  return null;
+}
+
 type PersonEmbed = { full_name: string } | { full_name: string }[] | null;
 type PlanEmbed = { name: string } | { name: string }[] | null;
 type MembershipEmbed =
@@ -71,6 +89,70 @@ function startOfLocalDay(d = new Date()) {
   return x;
 }
 
+/**
+ * Person IDs at this gym by ops role (via `gym_roles.user_id` → `persons.user_id`).
+ * Staff includes OWNER (reception / management).
+ */
+async function personIdsForOpsRoles(
+  supabase: SupabaseClient,
+  gymId: string,
+  roles: Array<"TRAINER" | "STAFF" | "OWNER">,
+): Promise<string[]> {
+  const { data: roleRows, error: roleErr } = await supabase
+    .from("gym_roles")
+    .select("user_id")
+    .eq("gym_id", gymId)
+    .in("role", roles);
+
+  if (roleErr) {
+    console.error("personIdsForOpsRoles roles", roleErr.message);
+    return [];
+  }
+
+  const userIds = [
+    ...new Set(
+      (roleRows ?? [])
+        .map((r) => r.user_id as string | null)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  if (userIds.length === 0) return [];
+
+  const { data: people, error: peopleErr } = await supabase
+    .from("persons")
+    .select("id")
+    .in("user_id", userIds);
+
+  if (peopleErr) {
+    console.error("personIdsForOpsRoles persons", peopleErr.message);
+    return [];
+  }
+
+  return (people ?? []).map((p) => p.id as string).filter(Boolean);
+}
+
+async function personIdsForCheckInType(
+  supabase: SupabaseClient,
+  gymId: string,
+  personType: CheckInPersonType,
+): Promise<{ mode: "in" | "not_in"; ids: string[] } | { mode: "empty" }> {
+  if (personType === "trainer") {
+    const ids = await personIdsForOpsRoles(supabase, gymId, ["TRAINER"]);
+    return ids.length === 0 ? { mode: "empty" } : { mode: "in", ids };
+  }
+  if (personType === "staff") {
+    const ids = await personIdsForOpsRoles(supabase, gymId, ["STAFF", "OWNER"]);
+    return ids.length === 0 ? { mode: "empty" } : { mode: "in", ids };
+  }
+  // Members: check-ins whose person is not trainer/staff/owner at this gym
+  const opsIds = await personIdsForOpsRoles(supabase, gymId, [
+    "TRAINER",
+    "STAFF",
+    "OWNER",
+  ]);
+  return { mode: "not_in", ids: opsIds };
+}
+
 export async function listTodayCheckIns(
   supabase: SupabaseClient,
   gymId: string,
@@ -103,11 +185,26 @@ export async function listCheckInsPage(
     pageSize?: number;
     /** Inclusive local calendar day YYYY-MM-DD */
     date?: string | null;
+    /** Optional filter by ops role of the checked-in person */
+    personType?: CheckInPersonType | null;
   } = {},
 ): Promise<{ items: CheckInListItem[]; meta: PageMeta }> {
   const pageSize = opts.pageSize ?? TABLE_PAGE_SIZE;
   const page = opts.page ?? 1;
   const { from, to } = pageRange(page, pageSize);
+
+  let personFilter: { mode: "in" | "not_in"; ids: string[] } | null = null;
+  if (opts.personType) {
+    const filter = await personIdsForCheckInType(
+      supabase,
+      gymId,
+      opts.personType,
+    );
+    if (filter.mode === "empty") {
+      return { items: [], meta: buildPageMeta(page, 0, pageSize) };
+    }
+    personFilter = filter;
+  }
 
   let query = supabase
     .from("check_ins")
@@ -115,6 +212,12 @@ export async function listCheckInsPage(
     .eq("gym_id", gymId)
     .order("checked_in_at", { ascending: false })
     .range(from, to);
+
+  if (personFilter?.mode === "in") {
+    query = query.in("person_id", personFilter.ids);
+  } else if (personFilter?.mode === "not_in" && personFilter.ids.length > 0) {
+    query = query.not("person_id", "in", `(${personFilter.ids.join(",")})`);
+  }
 
   if (opts.date) {
     const start = new Date(`${opts.date}T00:00:00`);

@@ -2,7 +2,6 @@
 	import { enhance } from '$app/forms';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
-	import CreditCard from '@lucide/svelte/icons/credit-card';
 	import Mail from '@lucide/svelte/icons/mail';
 	import Phone from '@lucide/svelte/icons/phone';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
@@ -49,7 +48,7 @@
 	<p class="text-[var(--color-muted)]">{d.common.forbidden}</p>
 {:else}
 	{@const active = member.status === 'active'}
-	<div class="mx-auto flex w-full max-w-6xl animate-fade-in-up flex-col gap-5">
+	<div class="flex w-full animate-fade-in-up flex-col gap-5">
 		<div>
 			<a
 				href="/{locale}/members"
@@ -81,20 +80,18 @@
 						>
 							{active ? d.members.active : d.members.expired}
 						</span>
-						<span
-							class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold {member.invite_status ===
-							'pending'
-								? 'bg-[var(--color-primary)]/15 text-[var(--color-primary)]'
-								: member.invite_status === 'cancelled'
-									? 'bg-[var(--color-muted)]/20 text-[var(--color-muted)]'
-									: 'bg-[var(--color-success)]/15 text-[var(--color-success)]'}"
-						>
-							{member.invite_status === 'pending'
-								? d.inviteStatus.pending
-								: member.invite_status === 'cancelled'
-									? d.inviteStatus.cancelled
-									: d.inviteStatus.accepted}
-						</span>
+						{#if member.invite_status === 'pending' || member.invite_status === 'cancelled'}
+							<span
+								class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold {member.invite_status ===
+								'pending'
+									? 'bg-[var(--color-primary)]/15 text-[var(--color-primary)]'
+									: 'bg-[var(--color-muted)]/20 text-[var(--color-muted)]'}"
+							>
+								{member.invite_status === 'pending'
+									? d.inviteStatus.pending
+									: d.inviteStatus.cancelled}
+							</span>
+						{/if}
 						<span
 							class="inline-flex rounded-md px-2 py-0.5 text-xs font-semibold {member.plan_name
 								? 'bg-[var(--color-primary-soft)] text-[var(--color-text)]'
@@ -215,79 +212,66 @@
 		<section
 			class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-6"
 		>
-			<div class="flex items-start gap-3">
-				<div
-					class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary)]/15 text-[var(--color-primary)]"
+			<h2 class="font-title text-lg font-bold text-[var(--color-text)]">{d.members.renew}</h2>
+			{#if data.plans.length === 0}
+				<p class="mt-4 text-sm text-[var(--color-muted)]">{d.plans.noPlans}</p>
+			{:else}
+				<form
+					method="POST"
+					action="?/renew"
+					class="mt-4 grid w-full gap-3"
+					use:enhance={() => {
+						renewPending = true;
+						return async ({ update }) => {
+							renewPending = false;
+							await update();
+						};
+					}}
 				>
-					<CreditCard class="h-4 w-4" aria-hidden="true" />
-				</div>
-				<div class="min-w-0 flex-1">
-					<h2 class="font-title text-lg font-bold text-[var(--color-text)]">{d.members.renew}</h2>
-					{#if data.plans.length === 0}
-						<p class="mt-4 text-sm text-[var(--color-muted)]">{d.plans.noPlans}</p>
-					{:else}
-						<form
-							method="POST"
-							action="?/renew"
-							class="mt-4 grid max-w-xl gap-3 sm:grid-cols-2"
-							use:enhance={() => {
-								renewPending = true;
-								return async ({ update }) => {
-									renewPending = false;
-									await update();
-								};
-							}}
-						>
-							<input type="hidden" name="locale" value={locale} />
-							<input type="hidden" name="member_id" value={member.id} />
-							<div class="sm:col-span-2">
-								<FormField label={d.members.selectPlan} htmlFor="renew-plan">
-									{#snippet children({ invalid, describedBy })}
-										<Select
-											id="renew-plan"
-											name="plan_id"
-											required
-											bind:value={renewPlanId}
-											{invalid}
-											{describedBy}
-										>
-											{#each data.plans as plan (plan.id)}
-												<option value={plan.id}>
-													{plan.name} — {plan.duration_days}d / ${plan.price}
-												</option>
-											{/each}
-										</Select>
-									{/snippet}
-								</FormField>
-							</div>
-							<FormField label={d.members.paymentMethod} htmlFor="renew-method">
-								{#snippet children({ invalid, describedBy })}
-									<Select
-										id="renew-method"
-										name="method"
-										bind:value={renewMethod}
-										{invalid}
-										{describedBy}
-									>
-										<option value="cash">{d.members.cash}</option>
-										<option value="transfer">{d.members.transfer}</option>
-									</Select>
-								{/snippet}
-							</FormField>
-							<div class="flex items-end">
-								<Button
-									type="submit"
-									variant="primary"
-									class="w-full shadow-sm"
-									disabled={renewPending}
-								>
-									{d.members.renewSubmit}
-								</Button>
-							</div>
-						</form>
-					{/if}
-				</div>
-			</div>
+					<input type="hidden" name="locale" value={locale} />
+					<input type="hidden" name="member_id" value={member.id} />
+					<FormField label={d.members.selectPlan} htmlFor="renew-plan">
+						{#snippet children({ invalid, describedBy })}
+							<Select
+								id="renew-plan"
+								name="plan_id"
+								required
+								bind:value={renewPlanId}
+								{invalid}
+								{describedBy}
+							>
+								{#each data.plans as plan (plan.id)}
+									<option value={plan.id}>
+										{plan.name} — {plan.duration_days}d / ${plan.price}
+									</option>
+								{/each}
+							</Select>
+						{/snippet}
+					</FormField>
+					<FormField label={d.members.paymentMethod} htmlFor="renew-method">
+						{#snippet children({ invalid, describedBy })}
+							<Select
+								id="renew-method"
+								name="method"
+								bind:value={renewMethod}
+								{invalid}
+								{describedBy}
+							>
+								<option value="cash">{d.members.cash}</option>
+								<option value="transfer">{d.members.transfer}</option>
+							</Select>
+						{/snippet}
+					</FormField>
+					<Button
+						type="submit"
+						variant="primary"
+						class="w-full shadow-sm"
+						disabled={renewPending}
+					>
+						{d.members.renewSubmit}
+					</Button>
+				</form>
+			{/if}
 		</section>
 
 		<section

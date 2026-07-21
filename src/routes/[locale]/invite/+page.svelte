@@ -11,7 +11,7 @@
 	<title>{data.headline} — AMRAP</title>
 </svelte:head>
 
-<div class="auth-container flex min-h-screen flex-col items-center justify-center p-6">
+<div class="auth-container flex min-h-dvh flex-col items-center justify-center px-[var(--spacing-page)] py-4 sm:px-6 sm:py-6">
 	<div class="glass-panel animate-fade-in-up flex w-full max-w-md flex-col rounded-2xl p-8 shadow-2xl sm:p-10">
 		<div class="mb-8 flex flex-col items-center text-center">
 			<div class="mb-5 flex w-full justify-center">

@@ -155,11 +155,9 @@
 	}
 </script>
 
-<div
-	class="-mx-4 -mt-4 flex min-h-[calc(100dvh-8rem)] flex-col bg-[var(--color-bg)] md:-mx-6 md:-mt-6 lg:-mx-8 lg:-mt-8"
->
+<div class="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--color-bg)] pt-[var(--safe-top)]">
 	<header
-		class="sticky top-0 z-20 flex items-center justify-between gap-2 border-b border-[var(--color-border)] bg-[var(--color-bg)]/95 px-4 py-2 backdrop-blur-sm md:px-6 lg:px-8"
+		class="sticky top-0 z-20 flex shrink-0 items-center justify-between gap-2 border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 px-[var(--spacing-page)] py-2 backdrop-blur-sm sm:px-[var(--spacing-page-md)] lg:px-[var(--spacing-page-x-lg)]"
 	>
 		<button
 			type="button"
@@ -185,7 +183,9 @@
 		</Button>
 	</header>
 
-	<div class="mx-auto flex w-full max-w-lg flex-1 flex-col gap-4 px-4 py-4 md:px-6 lg:px-8">
+	<div
+		class="mx-auto flex w-full max-w-lg min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-[var(--spacing-page)] py-4 pb-[max(1rem,var(--safe-bottom))] sm:px-[var(--spacing-page-md)]"
+	>
 		<section class="space-y-3">
 			<p class="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
 				{labels.namePlaceholder}

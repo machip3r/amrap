@@ -43,7 +43,7 @@ export type OpsNavItemDef = {
  * Priority order for mobile bottom tabs.
  * Max 3 destinations + center My QR + More (so bars stay tappable).
  */
-export const OPS_PRIMARY_TAB_ORDER: OpsNavId[] = [
+const OPS_PRIMARY_TAB_ORDER: OpsNavId[] = [
 	'dashboard',
 	'checkin',
 	'members',
@@ -52,16 +52,16 @@ export const OPS_PRIMARY_TAB_ORDER: OpsNavId[] = [
 	'payments'
 ];
 
-export const MAX_PRIMARY_TABS = 3;
+const MAX_PRIMARY_TABS = 3;
 
 /**
  * If a role has this many main sections or fewer, they see all of them
  * (no hide/show UI). Above this, they can choose what to show.
  */
-export const NAV_SECTION_CHOICE_THRESHOLD = 5;
+const NAV_SECTION_CHOICE_THRESHOLD = 5;
 
 /** Nav ids that each user may hide/show in Settings (never includes dashboard). */
-export const OPS_CUSTOMIZABLE_NAV_IDS: OpsNavId[] = [
+const OPS_CUSTOMIZABLE_NAV_IDS: OpsNavId[] = [
 	'checkin',
 	'members',
 	'classes',
@@ -78,7 +78,7 @@ export function isCustomizableOpsNavId(id: string): id is OpsNavId {
 	return CUSTOMIZABLE_SET.has(id);
 }
 
-export const OPS_NAV_ITEMS: OpsNavItemDef[] = [
+const OPS_NAV_ITEMS: OpsNavItemDef[] = [
 	{
 		id: 'dashboard',
 		path: '/dashboard',
@@ -167,7 +167,7 @@ function isHiddenByUser(ctx: OpsNavContext, id: OpsNavId): boolean {
 }
 
 /** Main ops sections for a role (dashboard + role-allowed pages; not org/settings). */
-export function getRoleMainNavItems(ctx: OpsNavContext): OpsNavItemDef[] {
+function getRoleMainNavItems(ctx: OpsNavContext): OpsNavItemDef[] {
 	return OPS_NAV_ITEMS.filter(
 		(item) => item.id !== 'organization' && item.id !== 'settings' && item.visible(ctx)
 	);

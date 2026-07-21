@@ -1,8 +1,8 @@
 import { getRequestEvent } from '$app/server';
 import { emailSchema, entityNameSchema } from '$lib/validation/schemas';
 
-export const PENDING_CONFIRM_EMAIL_COOKIE = 'amrap_pending_confirm_email';
-export const PENDING_ORG_NAME_COOKIE = 'amrap_pending_org_name';
+const PENDING_CONFIRM_EMAIL_COOKIE = 'amrap_pending_confirm_email';
+const PENDING_ORG_NAME_COOKIE = 'amrap_pending_org_name';
 
 const MAX_AGE_SEC = 60 * 60 * 24 * 7;
 

@@ -22,7 +22,7 @@
 	<title>{title} — AMRAP</title>
 </svelte:head>
 
-<div class="mx-auto flex w-full max-w-lg animate-fade-in-up flex-col gap-6">
+<div class="flex w-full animate-fade-in-up flex-col gap-6">
 	<a
 		href="/{locale}/dashboard"
 		class="inline-flex min-h-11 w-fit items-center gap-1 text-sm text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"

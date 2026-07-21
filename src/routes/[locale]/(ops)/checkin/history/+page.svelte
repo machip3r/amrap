@@ -7,13 +7,19 @@
 	let { data } = $props();
 	const d = $derived(data.d);
 	const locale = $derived(data.locale);
+
+	const paginationParams = $derived.by(() => {
+		const params: Record<string, string> = { date: data.date };
+		if (data.personType) params.type = data.personType;
+		return params;
+	});
 </script>
 
 <svelte:head>
 	<title>{d.checkin.historyTitle} — AMRAP</title>
 </svelte:head>
 
-<div class="animate-fade-in-up mx-auto flex w-full max-w-6xl flex-col gap-5 pb-4">
+<div class="animate-fade-in-up flex w-full flex-col gap-5 pb-4">
 	<header class="flex flex-col gap-3">
 		<a
 			href={`/${locale}/checkin`}
@@ -33,8 +39,14 @@
 	<CheckinHistoryFilters
 		date={data.date}
 		today={data.today}
+		personType={data.personType}
 		labels={{
 			filterDate: d.checkin.filterDate,
+			filterPersonType: d.checkin.filterPersonType,
+			filterAllTypes: d.checkin.filterAllTypes,
+			filterMembers: d.checkin.filterMembers,
+			filterTrainers: d.checkin.filterTrainers,
+			filterStaff: d.checkin.filterStaff,
 			filterApply: d.checkin.filterApply,
 			filterClear: d.checkin.filterClear
 		}}
@@ -64,7 +76,7 @@
 		<TablePagination
 			meta={data.meta}
 			href={`/${locale}/checkin/history`}
-			searchParams={{ date: data.date }}
+			searchParams={paginationParams}
 			labels={{
 				showing: d.members.showing,
 				previous: d.common.previous,

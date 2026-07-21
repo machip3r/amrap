@@ -1,12 +1,12 @@
 import { getSupabaseUrl } from "$lib/supabase/env";
 
-export const GYM_LOGOS_BUCKET = "gym-logos";
+const GYM_LOGOS_BUCKET = "gym-logos";
 
 /**
  * Normalize a DB logo value to a storage object path (no bucket, no query).
  * Accepts legacy full public URLs and returns the relative path.
  */
-export function normalizeGymLogoPath(
+function normalizeGymLogoPath(
   value: string | null | undefined,
 ): string | null {
   if (!value) return null;

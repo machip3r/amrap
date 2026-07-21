@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { getLandingDictionary } from "../../lib/i18n/landing-dictionaries";
+import { getLandingDictionary } from "../../src/lib/i18n/landing-dictionaries";
 
 const d = getLandingDictionary("es");
 

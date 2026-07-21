@@ -13,7 +13,7 @@
 {#if 'forbidden' in data && data.forbidden}
 	<p class="text-[var(--color-muted)]">{d.common.forbidden}</p>
 {:else}
-	<div class="mx-auto w-full max-w-3xl animate-fade-in-up">
+	<div class="flex min-h-0 flex-1 flex-col animate-fade-in-up">
 		<TimerApp locale={data.locale} />
 	</div>
 {/if}

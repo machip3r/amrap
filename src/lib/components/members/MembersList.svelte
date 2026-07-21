@@ -81,9 +81,10 @@
 	$effect(() => {
 		if (!highlightId) return;
 		const scrollTimer = window.setTimeout(() => {
-			document
-				.getElementById(`member-row-${highlightId}`)
-				?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+			const el =
+				document.getElementById(`member-row-${highlightId}`) ??
+				document.getElementById(`member-row-desk-${highlightId}`);
+			el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 		}, 80);
 		return () => window.clearTimeout(scrollTimer);
 	});
@@ -216,29 +217,41 @@
 		class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm sm:p-5"
 	>
 		<div class="flex flex-col gap-3 lg:flex-row lg:items-center">
-			<div class="relative min-w-0 flex-1">
-				<label class="sr-only" for="members-search">{labels.searchPlaceholder}</label>
-				<Search
-					class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]"
-					aria-hidden="true"
-				/>
-				<Input
-					id="members-search"
-					name="q"
-					type="search"
-					class="!pl-10"
-					maxlength={LIMITS.search}
-					placeholder={labels.searchPlaceholder}
-					bind:value={query}
-					oninput={(e) => {
-						const value = sanitizeSearchInput((e.currentTarget as HTMLInputElement).value);
-						query = value;
-						void pushParams({ q: value.trim() || null }, { debounce: true });
-					}}
-				/>
+			<div class="flex min-w-0 flex-1 items-center gap-2">
+				<div class="relative min-w-0 flex-1">
+					<label class="sr-only" for="members-search">{labels.searchPlaceholder}</label>
+					<Search
+						class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]"
+						aria-hidden="true"
+					/>
+					<Input
+						id="members-search"
+						name="q"
+						type="search"
+						class="!pl-10"
+						maxlength={LIMITS.search}
+						placeholder={labels.searchPlaceholder}
+						bind:value={query}
+						oninput={(e) => {
+							const value = sanitizeSearchInput((e.currentTarget as HTMLInputElement).value);
+							query = value;
+							void pushParams({ q: value.trim() || null }, { debounce: true });
+						}}
+					/>
+				</div>
+				<button
+					type="button"
+					onclick={() => void reload()}
+					disabled={pending}
+					class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)] disabled:opacity-60"
+					aria-label={labels.reload}
+					title={labels.reload}
+				>
+					<RefreshCw class="h-4 w-4 {pending ? 'animate-spin' : ''}" aria-hidden="true" />
+				</button>
 			</div>
 
-			<div class="flex flex-wrap items-center gap-2">
+			<div class="hidden flex-wrap items-center gap-2 sm:flex">
 				{#each statusChips as [key, label] (key)}
 					{@const selected = filters.status === key}
 					<button
@@ -251,69 +264,120 @@
 						{label}
 					</button>
 				{/each}
+
+				{#if plans.length > 0}
+					<div class="w-full sm:w-auto sm:min-w-[12rem]">
+						<label class="sr-only" for="members-plan-filter">{labels.filterPlan}</label>
+						<Select
+							id="members-plan-filter"
+							value={filters.planId}
+							onchange={(e) => {
+								const value = (e.currentTarget as HTMLSelectElement).value;
+								void pushParams({ plan: value === 'all' ? null : value });
+							}}
+						>
+							<option value="all">{labels.filterPlanAll}</option>
+							{#each plans as plan (plan.id)}
+								<option value={plan.id}>{plan.name}</option>
+							{/each}
+						</Select>
+					</div>
+				{/if}
 			</div>
-
-			{#if plans.length > 0}
-				<div class="w-full sm:w-auto sm:min-w-[12rem]">
-					<label class="sr-only" for="members-plan-filter">{labels.filterPlan}</label>
-					<Select
-						id="members-plan-filter"
-						value={filters.planId}
-						onchange={(e) => {
-							const value = (e.currentTarget as HTMLSelectElement).value;
-							void pushParams({ plan: value === 'all' ? null : value });
-						}}
-					>
-						<option value="all">{labels.filterPlanAll}</option>
-						{#each plans as plan (plan.id)}
-							<option value={plan.id}>{plan.name}</option>
-						{/each}
-					</Select>
-				</div>
-			{/if}
-
-			<button
-				type="button"
-				onclick={() => void reload()}
-				disabled={pending}
-				class="ml-auto inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)] disabled:opacity-60"
-				aria-label={labels.reload}
-				title={labels.reload}
-			>
-				<RefreshCw class="h-4 w-4 {pending ? 'animate-spin' : ''}" aria-hidden="true" />
-			</button>
 		</div>
 	</div>
 
 	<div
 		class="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm"
 	>
-		<div class="overflow-x-auto">
-			<table class="w-full min-w-[44rem] border-collapse text-left text-sm">
-				<thead>
-					<tr
-						class="border-b border-[var(--color-border)] bg-[var(--color-surface-hover)]/50 text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]"
-					>
-						<th class="px-4 py-3 sm:px-5">{labels.name}</th>
-						<th class="px-4 py-3">{labels.plan}</th>
-						<th class="px-4 py-3">{labels.status}</th>
-						<th class="px-4 py-3">{labels.expires}</th>
-						<th class="px-4 py-3 pr-5 text-right">{labels.actions}</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#if members.length === 0}
-						<tr>
-							<td colspan="5" class="px-5 py-12 text-center text-[var(--color-muted)]">
-								{emptyMessage}
-							</td>
+		{#if members.length === 0}
+			<p class="px-5 py-12 text-center text-sm text-[var(--color-muted)]">{emptyMessage}</p>
+		{:else}
+			<!-- Mobile cards: name → email → badges (same rhythm as trainers) -->
+			<ul class="flex flex-col divide-y divide-[var(--color-border)]/70 sm:hidden">
+				{#each members as m (m.id)}
+					{@const active = m.status === 'active'}
+					{@const isNew = highlightId === m.id}
+					<li id="member-row-{m.id}" class={isNew ? 'amrap-row-shine' : ''}>
+						<button
+							type="button"
+							onclick={() => goToMember(m.id)}
+							class="flex w-full items-start gap-3 px-4 py-3.5 text-left outline-none ring-[var(--color-ring)] transition-colors hover:bg-[var(--color-surface-hover)]/40 focus-visible:ring-2"
+						>
+							<span
+								class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)]/15 text-xs font-bold text-[var(--color-primary)]"
+							>
+								{initials(m.name)}
+							</span>
+							<span class="min-w-0 flex-1">
+								<span class="flex items-center gap-2">
+									<span class="truncate font-semibold text-[var(--color-text)]">{m.name}</span>
+									{#if isNew}
+										<span class="shrink-0 text-[11px] font-medium text-[var(--color-primary)]">
+											{labels.newBadge}
+										</span>
+									{/if}
+								</span>
+								<span class="mt-0.5 block truncate text-xs text-[var(--color-muted)]">
+									{m.email ?? m.phone ?? '—'}
+								</span>
+								<span class="mt-1.5 flex flex-wrap items-center gap-1.5">
+									{#if m.invite_status === 'pending' || m.invite_status === 'cancelled'}
+										<span
+											class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide {inviteBadgeClass(
+												m.invite_status
+											)}"
+										>
+											{inviteBadgeLabel(m.invite_status)}
+										</span>
+									{/if}
+									<span
+										class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold {active
+											? 'bg-[var(--color-success)]/15 text-[var(--color-success)]'
+											: 'bg-[var(--color-danger)]/15 text-[var(--color-danger)]'}"
+									>
+										{active ? labels.active : labels.expired}
+									</span>
+									<span
+										class="inline-flex max-w-full truncate rounded-md px-2 py-0.5 text-xs font-semibold {m.plan_name
+											? 'bg-[var(--color-primary-soft)] text-[var(--color-text)]'
+											: 'bg-[var(--color-surface-hover)] text-[var(--color-muted)]'}"
+									>
+										{m.plan_name ?? labels.noPlan}
+									</span>
+								</span>
+							</span>
+							<span
+								class="inline-flex h-11 shrink-0 items-center text-[var(--color-primary)]"
+								aria-hidden="true"
+							>
+								<ArrowRight class="h-4 w-4" />
+							</span>
+						</button>
+					</li>
+				{/each}
+			</ul>
+
+			<!-- Desktop table -->
+			<div class="hidden overflow-x-auto sm:block">
+				<table class="w-full border-collapse text-left text-sm">
+					<thead>
+						<tr
+							class="border-b border-[var(--color-border)] bg-[var(--color-surface-hover)]/50 text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]"
+						>
+							<th class="px-4 py-3 sm:px-5">{labels.name}</th>
+							<th class="px-4 py-3">{labels.plan}</th>
+							<th class="px-4 py-3">{labels.status}</th>
+							<th class="px-4 py-3">{labels.expires}</th>
+							<th class="px-4 py-3 pr-5 text-right">{labels.actions}</th>
 						</tr>
-					{:else}
+					</thead>
+					<tbody>
 						{#each members as m (m.id)}
 							{@const active = m.status === 'active'}
 							{@const isNew = highlightId === m.id}
 							<tr
-								id="member-row-{m.id}"
+								id="member-row-desk-{m.id}"
 								role="link"
 								tabindex="0"
 								onclick={() => goToMember(m.id)}
@@ -344,13 +408,15 @@
 												{/if}
 											</p>
 											<div class="mt-0.5 flex flex-wrap items-center gap-1.5">
-												<span
-													class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide {inviteBadgeClass(
-														m.invite_status
-													)}"
-												>
-													{inviteBadgeLabel(m.invite_status)}
-												</span>
+												{#if m.invite_status === 'pending' || m.invite_status === 'cancelled'}
+													<span
+														class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide {inviteBadgeClass(
+															m.invite_status
+														)}"
+													>
+														{inviteBadgeLabel(m.invite_status)}
+													</span>
+												{/if}
 												<p class="truncate text-xs text-[var(--color-muted)]">
 													{m.email ?? m.phone ?? '—'}
 												</p>
@@ -393,10 +459,10 @@
 								</td>
 							</tr>
 						{/each}
-					{/if}
-				</tbody>
-			</table>
-		</div>
+					</tbody>
+				</table>
+			</div>
+		{/if}
 
 		{#if meta.total > 0}
 			<div

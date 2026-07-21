@@ -58,6 +58,8 @@
 	{title}
 	description={d.registerUser.description}
 	closeLabel={d.registerUser.close}
+	class="max-w-2xl sm:max-w-3xl lg:max-w-4xl"
+	bodyClass="px-6 py-5 sm:px-8 sm:py-7"
 >
 	<form
 		method="POST"
@@ -166,16 +168,16 @@
 			</p>
 		{/if}
 
-		<div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+		<div class="flex w-full gap-2">
 			<Button
 				type="button"
 				variant="ghost"
-				class="rounded-lg px-4 py-2.5 text-sm font-semibold"
+				class="min-h-11 min-w-0 flex-1 border border-[var(--color-border)] px-3 text-sm font-semibold"
 				onclick={() => onOpenChange(false)}
 			>
 				{d.registerUser.cancel}
 			</Button>
-			<Button type="submit" disabled={!canSubmit}>
+			<Button type="submit" class="min-h-11 min-w-0 flex-1" disabled={!canSubmit}>
 				{pending ? d.registerUser.submitting : d.registerUser.submit}
 			</Button>
 		</div>

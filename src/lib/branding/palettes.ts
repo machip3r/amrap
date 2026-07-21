@@ -1,7 +1,7 @@
 import type { BrandThemeTokens } from "$lib/types";
 import { DEFAULT_THEME_DARK, DEFAULT_THEME_LIGHT } from "$lib/branding/theme";
 
-export type BrandPaletteTemplateId = "amrap" | "ocean" | "charcoal";
+type BrandPaletteTemplateId = "amrap" | "ocean" | "charcoal";
 
 export type BrandPaletteTemplate = {
   id: BrandPaletteTemplateId;

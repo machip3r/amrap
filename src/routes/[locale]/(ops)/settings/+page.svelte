@@ -1,5 +1,5 @@
 <script lang="ts">
-	import NavCustomizationForm from '$lib/components/settings/NavCustomizationForm.svelte';
+	// import NavCustomizationForm from '$lib/components/settings/NavCustomizationForm.svelte';
 	import PersonalizationForm from '$lib/components/settings/PersonalizationForm.svelte';
 	import type { PageProps } from './$types';
 
@@ -11,7 +11,7 @@
 	<title>{d.settings.title} — AMRAP</title>
 </svelte:head>
 
-<div class="mx-auto flex w-full max-w-6xl animate-fade-in-up flex-col gap-8">
+<div class="flex w-full animate-fade-in-up flex-col gap-8">
 	<header>
 		<h1 class="font-title text-3xl font-bold tracking-tight text-[var(--color-text)]">
 			{d.settings.title}
@@ -21,6 +21,7 @@
 		</p>
 	</header>
 
+	<!-- My menu (nav visibility) — temporarily disabled
 	<NavCustomizationForm
 		locale={data.locale}
 		{d}
@@ -29,6 +30,7 @@
 		canManageStaff={data.canManageStaff}
 		hiddenNavIds={data.hiddenNavIds}
 	/>
+	-->
 
 	{#if data.canManageGymBrand}
 		<PersonalizationForm

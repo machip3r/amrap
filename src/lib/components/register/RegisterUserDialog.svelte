@@ -49,6 +49,8 @@
 		/** Form action for trainer/staff create. */
 		teamAction?: string;
 		onSuccess?: (payload: RegisterSuccessPayload) => void;
+		/** When false, stay on the current page after create (default true). */
+		navigateOnSuccess?: boolean;
 	};
 
 	let {
@@ -62,7 +64,8 @@
 		plans = [],
 		memberAction = '?/createMember',
 		teamAction = '?/createTeam',
-		onSuccess
+		onSuccess,
+		navigateOnSuccess = true
 	}: Props = $props();
 
 	const d = $derived(getDictionary(locale));
@@ -149,7 +152,7 @@
 		if (data.success) {
 			onSuccess?.({ role: 'member', memberId: data.memberId });
 			onOpenChange(false);
-			if (data.memberId) {
+			if (navigateOnSuccess && data.memberId) {
 				void goto(`/${locale}/members/${data.memberId}`);
 			}
 		}
@@ -164,7 +167,7 @@
 			const r = (data.role ?? role) as RegisterRole;
 			onSuccess?.({ role: r, teamMemberId: data.teamMemberId });
 			onOpenChange(false);
-			if (data.teamMemberId) {
+			if (navigateOnSuccess && data.teamMemberId) {
 				const path = r === 'trainer' ? 'trainers' : 'staff';
 				void goto(`/${locale}/${path}/${data.teamMemberId}`);
 			}
@@ -178,73 +181,74 @@
 	title={d.registerUser.title}
 	description={d.registerUser.description}
 	closeLabel={d.registerUser.close}
-	class="max-w-xl sm:max-w-2xl"
+	class="max-w-2xl sm:max-w-3xl lg:max-w-4xl"
+	bodyClass="px-6 py-5 sm:px-8 sm:py-7"
 >
 	{#if roles.length === 0}
 		<p class="text-sm text-[var(--color-muted)]">{d.common.forbidden}</p>
 	{:else if open}
 		{#key session}
-			<div class="flex flex-col gap-5">
-				<fieldset>
-					<legend class="mb-2 text-sm font-medium text-[var(--color-text)]">
-						{d.registerUser.roleLabel}
-					</legend>
-					<div
-						role="radiogroup"
-						aria-label={d.registerUser.roleLabel}
-						class="grid gap-1 rounded-xl bg-[var(--color-surface-hover)] p-1 {roles.length === 1
-							? 'grid-cols-1'
-							: roles.length === 2
+			<div class="flex flex-col gap-5 sm:gap-6">
+				{#if roles.length > 1}
+					<fieldset>
+						<legend class="mb-2 text-sm font-medium text-[var(--color-text)]">
+							{d.registerUser.roleLabel}
+						</legend>
+						<div
+							role="radiogroup"
+							aria-label={d.registerUser.roleLabel}
+							class="grid gap-1 rounded-xl bg-[var(--color-surface-hover)] p-1 {roles.length === 2
 								? 'grid-cols-2'
 								: 'grid-cols-3'}"
-					>
-						{#each roles as r (r)}
-							{@const selected = role === r}
-							<label
-								class="flex cursor-pointer flex-col items-center gap-1 rounded-lg px-2 py-2.5 text-center text-xs font-semibold transition-all sm:text-sm {selected
-									? 'bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm ring-1 ring-[var(--color-border)]'
-									: 'text-[var(--color-muted)] hover:text-[var(--color-text)]'}"
-							>
-								<input
-									type="radio"
-									name="register-role"
-									value={r}
-									checked={selected}
-									onchange={() => {
-										role = r;
-										formError = undefined;
-										fieldErrors = undefined;
-										emailWarning = undefined;
-									}}
-									class="sr-only"
-								/>
-								{#if r === 'member'}
-									<UserRound
-										class="h-4 w-4 {selected
-											? 'text-[var(--color-primary)]'
-											: 'text-[var(--color-muted)]'}"
-										aria-hidden="true"
+						>
+							{#each roles as r (r)}
+								{@const selected = role === r}
+								<label
+									class="flex cursor-pointer flex-col items-center gap-1 rounded-lg px-2 py-2.5 text-center text-xs font-semibold transition-all sm:text-sm {selected
+										? 'bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm ring-1 ring-[var(--color-border)]'
+										: 'text-[var(--color-muted)] hover:text-[var(--color-text)]'}"
+								>
+									<input
+										type="radio"
+										name="register-role"
+										value={r}
+										checked={selected}
+										onchange={() => {
+											role = r;
+											formError = undefined;
+											fieldErrors = undefined;
+											emailWarning = undefined;
+										}}
+										class="sr-only"
 									/>
-								{:else if r === 'trainer'}
-									<Dumbbell
-										class="h-4 w-4 {selected
-											? 'text-[var(--color-primary)]'
-											: 'text-[var(--color-muted)]'}"
-										aria-hidden="true"
-									/>
-								{:else}
-									<Users
-										class="h-4 w-4 {selected
-											? 'text-[var(--color-primary)]'
-											: 'text-[var(--color-muted)]'}"
-										aria-hidden="true"
-									/>
-								{/if}
-								{roleLabel(r)}
-							</label>
-						{/each}
-					</div>
-				</fieldset>
+									{#if r === 'member'}
+										<UserRound
+											class="h-4 w-4 {selected
+												? 'text-[var(--color-primary)]'
+												: 'text-[var(--color-muted)]'}"
+											aria-hidden="true"
+										/>
+									{:else if r === 'trainer'}
+										<Dumbbell
+											class="h-4 w-4 {selected
+												? 'text-[var(--color-primary)]'
+												: 'text-[var(--color-muted)]'}"
+											aria-hidden="true"
+										/>
+									{:else}
+										<Users
+											class="h-4 w-4 {selected
+												? 'text-[var(--color-primary)]'
+												: 'text-[var(--color-muted)]'}"
+											aria-hidden="true"
+										/>
+									{/if}
+									{roleLabel(r)}
+								</label>
+							{/each}
+						</div>
+					</fieldset>
+				{/if}
 
 				{#if isMember}
 					{#if plans.length === 0}
@@ -393,17 +397,17 @@
 									{emailWarning}
 								</p>
 							{/if}
-							<div class="flex flex-row-reverse flex-wrap items-center gap-3 pt-1">
-								<Button type="submit" class="min-w-[8.5rem] flex-1 sm:flex-none" disabled={!canSubmit}>
-									{pending ? d.registerUser.submitting : d.registerUser.submit}
-								</Button>
+							<div class="flex w-full gap-2 pt-1">
 								<Button
 									type="button"
 									variant="ghost"
-									class="min-w-[6rem] flex-1 px-4 py-2.5 sm:flex-none"
+									class="min-h-11 min-w-0 flex-1 border border-[var(--color-border)] px-3"
 									onclick={() => onOpenChange(false)}
 								>
 									{d.registerUser.cancel}
+								</Button>
+								<Button type="submit" class="min-h-11 min-w-0 flex-1" disabled={!canSubmit}>
+									{pending ? d.registerUser.submitting : d.registerUser.submit}
 								</Button>
 							</div>
 						</form>
@@ -505,17 +509,17 @@
 								{emailWarning}
 							</p>
 						{/if}
-						<div class="flex flex-row-reverse flex-wrap items-center gap-3 pt-1">
-							<Button type="submit" class="min-w-[8.5rem] flex-1 sm:flex-none" disabled={!canSubmit}>
-								{pending ? d.registerUser.submitting : d.registerUser.submit}
-							</Button>
+						<div class="flex w-full gap-2 pt-1">
 							<Button
 								type="button"
 								variant="ghost"
-								class="min-w-[6rem] flex-1 px-4 py-2.5 sm:flex-none"
+								class="min-h-11 min-w-0 flex-1 border border-[var(--color-border)] px-3"
 								onclick={() => onOpenChange(false)}
 							>
 								{d.registerUser.cancel}
+							</Button>
+							<Button type="submit" class="min-h-11 min-w-0 flex-1" disabled={!canSubmit}>
+								{pending ? d.registerUser.submitting : d.registerUser.submit}
 							</Button>
 						</div>
 					</form>

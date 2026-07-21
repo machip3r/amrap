@@ -117,9 +117,9 @@ export type LandingDictionary = {
 
 const es: LandingDictionary = {
   meta: {
-    title: "AMRAP — Software para gyms",
+    title: "AMRAP | Software para gyms — check-in QR y membresías",
     description:
-      "Check-in con QR, membresías y el día a día del gym en un solo panel. Empieza gratis. Una cuenta, un QR, varios roles.",
+      "Software de gestión para gyms en México y EE. UU.: check-in con QR, membresías, clases y recepción en un solo panel. Empieza gratis. Una cuenta, un QR, varios roles.",
   },
   nav: {
     home: "Inicio",
@@ -390,9 +390,9 @@ const es: LandingDictionary = {
 
 const en: LandingDictionary = {
   meta: {
-    title: "AMRAP — Gym operations software",
+    title: "AMRAP | Gym management software — QR check-in & memberships",
     description:
-      "QR check-in, memberships, and the gym floor in one panel. Start free. One account, one QR, many roles.",
+      "Gym operations software for Mexico & the U.S.: QR check-in, memberships, classes, and front-desk tools in one panel. Start free. One account, one QR, many roles.",
   },
   nav: {
     home: "Home",

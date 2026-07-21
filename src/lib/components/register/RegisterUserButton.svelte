@@ -59,8 +59,8 @@
 
 	const triggerClass = $derived(
 		appearance === 'quickAction'
-			? `inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-semibold text-[var(--color-text)] shadow-sm transition-colors hover:border-[var(--color-primary)]/40 hover:bg-[var(--color-surface-hover)] ${className}`.trim()
-			: `inline-flex shrink-0 items-center gap-1.5 px-3.5 py-2 shadow-sm transition-[background-color,box-shadow,transform,filter] duration-200 hover:brightness-[0.92] hover:shadow-md active:translate-y-px active:brightness-[0.88] active:shadow-sm ${className}`.trim()
+			? `inline-flex min-h-14 w-full items-center justify-center gap-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3.5 text-base font-semibold text-[var(--color-text)] shadow-sm transition-colors hover:border-[var(--color-primary)]/40 hover:bg-[var(--color-surface-hover)] sm:min-h-16 sm:py-4 ${className}`.trim()
+			: className
 	);
 </script>
 
@@ -75,13 +75,13 @@
 			{label ?? d.registerUser.open}
 		</button>
 	{:else}
-		<Button type="button" class={triggerClass} onclick={() => (open = true)}>
+		<Button type="button" variant="toolbar" class={triggerClass} onclick={() => (open = true)}>
 			{#if icon}
 				{@render icon()}
 			{:else}
-				<Plus class="h-4 w-4" aria-hidden="true" />
+				<Plus class="h-4 w-4 shrink-0" aria-hidden="true" />
 			{/if}
-			{label ?? d.registerUser.open}
+			<span class="shrink-0">{label ?? d.registerUser.open}</span>
 		</Button>
 	{/if}
 

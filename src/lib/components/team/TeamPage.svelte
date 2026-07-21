@@ -57,7 +57,7 @@
 	<title>{title} — AMRAP</title>
 </svelte:head>
 
-<div class="mx-auto flex w-full max-w-6xl animate-fade-in-up flex-col gap-5">
+<div class="flex w-full animate-fade-in-up flex-col gap-5">
 	{#if formResult?.emailWarning}
 		<p
 			class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] px-4 py-3 text-sm text-[var(--color-muted)]"
@@ -73,23 +73,26 @@
 			</h1>
 			<p class="mt-1 text-sm text-[var(--color-muted)]">{copy.subtitle}</p>
 		</div>
-		<div class="flex flex-wrap items-center gap-2">
+		<div class="flex w-full gap-2 sm:w-auto sm:flex-wrap sm:items-center">
 			{#if showCheckInHistory}
 				<a
 					href="/{locale}/checkin/history"
-					class="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 text-sm font-semibold text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)]"
+					class="inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 text-sm font-semibold text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)] sm:flex-none"
 				>
-					<History class="h-4 w-4" aria-hidden="true" />
-					{d.checkin.viewAllCheckIns}
+					<History class="h-4 w-4 shrink-0" aria-hidden="true" />
+					<span class="truncate">{d.checkin.viewAllCheckIns}</span>
 				</a>
 			{/if}
 			<Button
 				type="button"
-				class="inline-flex min-h-11 items-center gap-2 shadow-sm"
+				variant="toolbar"
+				class="min-w-0 flex-1 sm:flex-none"
 				onclick={() => (createOpen = true)}
 			>
-				<UserPlus class="h-4 w-4" aria-hidden="true" />
-				{listRole === 'trainer' ? d.trainers.newTrainer : d.staffPage.newStaff}
+				<UserPlus class="h-4 w-4 shrink-0" aria-hidden="true" />
+				<span class="truncate">
+					{listRole === 'trainer' ? d.trainers.newTrainer : d.staffPage.newStaff}
+				</span>
 			</Button>
 		</div>
 	</header>

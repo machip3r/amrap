@@ -1,0 +1,45 @@
+User-agent: *
+Allow: /
+Allow: /es
+Allow: /en
+Allow: /es/login
+Allow: /en/login
+Allow: /es/register
+Allow: /en/register
+
+# Private app surfaces — prefer noindex in HTML; keep crawl budget on marketing.
+Disallow: /es/dashboard
+Disallow: /en/dashboard
+Disallow: /es/members
+Disallow: /en/members
+Disallow: /es/checkin
+Disallow: /en/checkin
+Disallow: /es/classes
+Disallow: /en/classes
+Disallow: /es/payments
+Disallow: /en/payments
+Disallow: /es/plans
+Disallow: /en/plans
+Disallow: /es/staff
+Disallow: /en/staff
+Disallow: /es/trainers
+Disallow: /en/trainers
+Disallow: /es/timers
+Disallow: /en/timers
+Disallow: /es/settings
+Disallow: /en/settings
+Disallow: /es/organization
+Disallow: /en/organization
+Disallow: /es/team
+Disallow: /en/team
+Disallow: /es/me
+Disallow: /en/me
+Disallow: /es/onboarding
+Disallow: /en/onboarding
+Disallow: /es/welcome
+Disallow: /en/welcome
+Disallow: /es/invite
+Disallow: /en/invite
+Disallow: /auth/
+
+Sitemap: https://amrap.space/sitemap.xml

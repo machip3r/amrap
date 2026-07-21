@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import Loader2 from '@lucide/svelte/icons/loader-2';
 	import type { Locale } from '$lib/i18n/config';
 	import type { Dictionary } from '$lib/i18n/dictionaries';
 	import type { RegisterState } from '$lib/server/auth/register';
@@ -40,9 +41,37 @@
 			confirmPassword.length > 0
 	);
 	const fe = $derived(form?.fieldErrors);
+
+	function portal(node: HTMLElement) {
+		document.body.appendChild(node);
+		return {
+			destroy() {
+				node.remove();
+			}
+		};
+	}
 </script>
 
-<div class="flex w-full flex-col gap-5">
+<div class="relative flex w-full flex-col gap-5" aria-busy={pending}>
+	{#if pending}
+		<div
+			use:portal
+			class="fixed inset-0 z-[60] flex items-center justify-center bg-[var(--color-text)]/40 px-6 backdrop-blur-[2px]"
+			role="status"
+			aria-live="polite"
+		>
+			<div
+				class="flex flex-col items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-8 py-6 shadow-xl"
+			>
+				<Loader2
+					class="h-8 w-8 animate-spin text-[var(--color-primary)]"
+					aria-hidden="true"
+				/>
+				<p class="text-sm font-semibold text-[var(--color-text)]">{d.register.submitting}</p>
+			</div>
+		</div>
+	{/if}
+
 	<form
 		method="POST"
 		action="?/register"
@@ -50,7 +79,11 @@
 		novalidate
 		use:enhance={() => {
 			pending = true;
-			return async ({ update }) => {
+			return async ({ result, update }) => {
+				if (result.type === 'redirect') {
+					await update();
+					return;
+				}
 				pending = false;
 				await update();
 			};
@@ -70,6 +103,7 @@
 					bind:value={organizationName}
 					{invalid}
 					{describedBy}
+					disabled={pending}
 					oninput={(e) => {
 						organizationName = sanitizeEntityNameInput(
 							(e.currentTarget as HTMLInputElement).value
@@ -94,6 +128,7 @@
 					bind:value={email}
 					{invalid}
 					{describedBy}
+					disabled={pending}
 					oninput={(e) => {
 						email = sanitizeEmailInput((e.currentTarget as HTMLInputElement).value);
 					}}
@@ -115,6 +150,7 @@
 					bind:value={password}
 					{invalid}
 					{describedBy}
+					disabled={pending}
 					oninput={(e) => {
 						password = sanitizePasswordInput((e.currentTarget as HTMLInputElement).value);
 					}}
@@ -136,6 +172,7 @@
 					bind:value={confirmPassword}
 					{invalid}
 					{describedBy}
+					disabled={pending}
 					oninput={(e) => {
 						confirmPassword = sanitizePasswordInput(
 							(e.currentTarget as HTMLInputElement).value
@@ -154,7 +191,10 @@
 			</p>
 		{/if}
 
-		<Button type="submit" variant="primaryBlock" disabled={pending || !canSubmit}>
+		<Button type="submit" variant="primaryBlock" disabled={pending || !canSubmit} class="gap-2">
+			{#if pending}
+				<Loader2 class="h-5 w-5 shrink-0 animate-spin" aria-hidden="true" />
+			{/if}
 			{pending ? d.register.submitting : d.register.submit}
 		</Button>
 	</form>
@@ -165,6 +205,8 @@
 			<a
 				href="/{locale}/login"
 				class="font-semibold text-[var(--color-text)] transition-colors duration-200 hover:text-[var(--color-primary)]"
+				aria-disabled={pending}
+				tabindex={pending ? -1 : undefined}
 			>
 				{d.register.loginLink}
 			</a>

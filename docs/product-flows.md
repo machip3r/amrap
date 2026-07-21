@@ -22,7 +22,7 @@ Locales: `es` (default) · `en`.
 
 | Surface | Who | Typical route | Status | Notes |
 | ------- | --- | ------------- | ------ | ----- |
-| Marketing | Public | `/[locale]` | Shipped | Landing, pricing, contact |
+| Marketing | Public | `/[locale]` | Shipped | Landing, pricing, contact · **SEO:** titles/descriptions, OG, canonical/hreflang, FAQ+org JSON-LD, `/sitemap.xml`, `robots.txt`; private app routes `noindex` |
 | Auth | Public / pending | `/login`, `/register` | Shipped | OTP on same routes; no public “confirm email” nav link |
 | Onboarding | Owner / provisional | `/onboarding` | Shipped | After register or login without completed setup |
 | Profile welcome | Invited staff / trainer / member | `/welcome` | Shipped | After accept + password; blocking until `persons.profile_completed_at` |
@@ -30,13 +30,14 @@ Locales: `es` (default) · `en`.
 | Invite password | After accept | `/invite/password` | Shipped | Required password before `/welcome` |
 | Ops app | Owner, staff, trainer | `/dashboard`, `/timers`, members, plans, … | Shipped | Scoped to active gym (`amrap_gym_id` cookie); dashboard quick actions open unified register dialog |
 | Member app | Member | `/me`, `/me/qr`, `/me/classes`, `/me/timers`, `/me/inbox` | Shipped | Requires active non-expired membership |
-| Organization / billing | Owner / provisional | `/organization` | Partial | Plan UI + deletion; checkout & add gym coming soon |
+| Organization / billing | Owner / provisional | `/organization` | Partial | Plan UI; deletion UI hidden; checkout & add gym coming soon |
 | Gym settings | All ops roles | `/settings` | Partial | Everyone: personal nav menu. Owner/provisional: + gym branding |
 | Team | — | `/team` | Planned | Stub “coming soon”; real UI is `/staff` + `/trainers` |
 | Ops inbox | Staff / owner | — | Planned | Only member inbox exists today |
 | Ownership transfer | Provisional → owner | — | Planned | Provisional flag + powers exist; invite/accept UI does not |
 | Kiosk fullscreen | Staff / iPad | — | Partial | Check-in works inside ops chrome; dedicated kiosk mode not built |
 | Gym / branch switcher | Ops | — | Partial | Cookie + multi-role data exist; no switcher UI |
+| Progressive Web App | Ops / member / public | installable shell | Shipped | Manifest + service worker (shell/fonts/images); install & update prompts; Supabase always network-only — not full offline ops |
 | Platform admin | AMRAP operator | `/platform/…` | Planned | No routes yet |
 | White-label member domain | Member | Gym domain | Planned | Ops branding shipped; member shell still AMRAP |
 | E2E (Playwright) | CI / local | `e2e/` | Shipped | Owner + provisional + public suite; port 5173 |
@@ -228,7 +229,7 @@ Visible for owner / staff / trainer (after completed onboarding + gym workspace)
 | More sheet (mobile) | Full-width bottom sheet: remaining links · Organization · Settings · logout · gym/org label | Shipped |
 | Organization (sidebar footer / More) | Owners / provisional only | Shipped |
 | Settings (header gear on `md+` · More on mobile) | All ops roles — sections inside are role-gated | Shipped |
-| Nav visibility (per user) | If a role has **more than 5** main sections, that user can hide/show optional pages in Settings → My menu (`gym_roles.nav_visibility`). ≤5 sections → all shown, no picker. **Dashboard always visible.** Settings stays for everyone; Organization stays owner-only. | Shipped |
+| Nav visibility (per user) | Temporarily **disabled** in Settings UI (My menu). Backend `gym_roles.nav_visibility` still exists for when re-enabled. | Partial |
 | Theme toggle · logout | Header / sidebar footer / More sheet | Shipped |
 | Watermark (“powered by”) | All breakpoints; sits above mobile bottom tabs | Shipped |
 | Gym selector | List gyms where user has ops role | **Planned** (cookie only) |
@@ -258,7 +259,7 @@ Member-only users without gym role are redirected to `/me` by `(app)/layout`.
 
 ### 4.2 Members (`/members`, `/members/[id]`) — Shipped
 
-**List:** Search · filters (e.g. active / expired) · status · plan · activity.
+**List:** Search · filters (e.g. active / expired) · status · plan · activity · **View all check-ins** (when role can check in) → `/checkin/history`.
 
 **Detail:** Person (name, contact) · memberships at this gym · renew · delete · QR status.
 
@@ -288,7 +289,7 @@ CRUD membership plans at gym level. Price, duration, active/archived. Day-pass p
 
 ### 4.4 Payments (`/payments`) — Shipped (manual)
 
-Register manual payment (cash / transfer, amount, period). Recent list. Member picker seeds a recent subset and searches the server as you type (does not load every membership up front).
+Register manual payment (cash / transfer, amount, period). Recent list. Member picker seeds a recent subset and searches the server as you type (does not load every membership up front). Top option in the member search: **Register new member** (when `manage_members`) → create-member dialog → new membership is selected in the payment form.
 
 **Planned:** Gateway (Mercado Pago / etc.), recurring, failure handling, member portal, CSV export (Starter+).
 
@@ -343,12 +344,12 @@ See §7. Owner has full staff check-in powers.
 **Where:** Header gear (`md+`) · More sheet (mobile) · `/settings`. Always in nav (cannot be hidden).
 
 **What (by role):**
-1. **Everyone (shipped)** — **My menu** (only when the role has **more than 5** main sections): personal hide/show for optional pages they can access. Roles with ≤5 sections see all of them (no picker). **Dashboard is always visible** and cannot be hidden. Saved on `gym_roles.nav_visibility`. Organization cannot be hidden (when role allows); Settings stays for everyone.
+1. **Everyone** — **My menu** (nav visibility) is **temporarily disabled** in the UI (backend/action still exist). Re-enable `NavCustomizationForm` on `/settings` when ready.
 2. **Owner / provisional (`manage_billing`) only** — **Personalization**: logos light/dark + theme palettes (whitelabel gated by plan).
 
 Hiding a nav item is chrome-only for that user; direct URLs still respect page permission guards.
 
-**Planned:** More personal preferences · gym/branch CRUD · device pairing · richer org settings beyond `/organization`.
+**Planned:** Re-enable My menu · more personal preferences · gym/branch CRUD · device pairing · richer org settings beyond `/organization`.
 
 ---
 
@@ -356,7 +357,9 @@ Hiding a nav item is chrome-only for that user; direct URLs still respect page p
 
 **Who:** `manage_billing` (owner / provisional).
 
-**UI (shipped):** Current plan · Freemium / Starter / Growth / Pro (contact) copy · gym list · schedule/cancel gym or org deletion (30-day retention messaging).
+**UI (shipped):** Gym list first · AMRAP subscription below (separator) · plan rows (Freemium / Starter / Growth / Pro) · whole upgradeable row opens confirm → checkout action · Pro / Contact AMRAP goes to landing `#contacto`.
+
+**Hidden for now:** Schedule gym / org deletion (danger zone + delete gym) — flip `showDeletionUi` in `OrganizationClient` when ready.
 
 **Partial / coming soon in UI:** Self-serve checkout · create additional gym.
 
@@ -406,7 +409,7 @@ Data model and cookie support multi-gym roles. **UI:** create gym / switcher / a
 
 ### 7.1 Reception / ops check-in (`/checkin`) — Shipped (in chrome)
 
-**UI:** Camera QR scan · keyboard search (name / phone / id) with multi-match pick · large OK / denied result · walk-in enroll into open classes · register member from result when allowed · **today’s check-ins** list · **View all check-ins** history · click member → **month attendance calendar**.
+**UI:** Camera QR scan · keyboard search (name / phone / id) with multi-match pick · large OK / denied result · walk-in enroll into open classes · **Register** opens a role picker (member / trainer / staff by permission) then the matching create dialog · **today’s check-ins** list · **View all check-ins** history (filter by date + user type: members / trainers / staff; profile = right-end icon action) · click member → **month attendance calendar**.
 
 **Not yet:** Dedicated fullscreen kiosk chrome · branch selector (`p_branch_id` null today) · idle return-to-scan polish as a separate mode.
 
@@ -432,7 +435,7 @@ Data model and cookie support multi-gym roles. **UI:** create gym / switcher / a
 **Shipped**
 
 - Invited via `/trainers`.
-- Ops access: **Mi Día / week home** (next/live class hero · week strip · upcoming) + **Classes** (create/edit with self as coach) + **Timers** (`/timers`: saved routines list, Simple/Complex editor, full-screen run, localStorage) + **Settings** (personal menu; no gym branding).
+- Ops access: **Mi Día / week home** (next/live class hero · week strip · upcoming) + **Classes** (create/edit with self as coach) + **Timers** (`/timers`: list keeps ops shell; opening run/edit hides header/sidebar/bottom tabs for full-viewport use; localStorage) + **Settings** (personal menu; no gym branding).
 - Session roster: care badges (medical note · first day · birthday) + express score capture (AMRAP / strength / for time).
 - **No** reception check-in page.
 - **No** remote wall-screen timer control.
@@ -529,9 +532,9 @@ Theme toggle shipped in app chrome. Locale via URL `/[locale]/…`. In-app local
 
 Dictionary messages (`es`/`en`). Empty states with CTAs (no members → create; no plans → create/skip).
 
-### 12.3 Deletion — Partial
+### 12.3 Deletion — Partial (UI hidden)
 
-Schedule gym / org deletion from `/organization` with name confirm + retention note. Cancel within window. Export CSV path **Planned** as alternative.
+Backend / dialogs for gym / org deletion exist; **UI is off** (`showDeletionUi = false` on `/organization`). Cancel-within-window still available if a gym is already scheduled. Export CSV path **Planned**.
 
 ### 12.4 Announcements — Planned
 

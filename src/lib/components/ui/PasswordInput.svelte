@@ -12,6 +12,7 @@
 		hideLabel: string;
 		invalid?: boolean;
 		describedBy?: string;
+		disabled?: boolean;
 		oninput?: (event: Event) => void;
 	};
 
@@ -28,13 +29,14 @@
 		hideLabel,
 		invalid = false,
 		describedBy = undefined,
+		disabled = false,
 		oninput
 	}: Props = $props();
 
 	let show = $state(false);
 
 	const baseClass =
-		'w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] py-2.5 pl-4 pr-10 text-[var(--color-text)] placeholder-[var(--color-muted)] transition-colors focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)]';
+		'min-h-[var(--control-height)] w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] py-2.5 pl-4 pr-10 text-base text-[var(--color-text)] placeholder-[var(--color-muted)] transition-colors focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)] disabled:cursor-not-allowed disabled:opacity-60';
 </script>
 
 <div class="relative">
@@ -47,6 +49,7 @@
 		{maxlength}
 		{minlength}
 		{required}
+		{disabled}
 		autocomplete={autocomplete as HTMLInputElement['autocomplete']}
 		aria-invalid={invalid || undefined}
 		aria-describedby={describedBy}
@@ -58,8 +61,9 @@
 	<button
 		type="button"
 		aria-label={show ? hideLabel : showLabel}
+		disabled={disabled}
 		onclick={() => (show = !show)}
-		class="absolute inset-y-0 right-0 flex items-center pr-3 text-[var(--color-muted)] transition-colors duration-200 hover:text-[var(--color-text)]"
+		class="absolute inset-y-0 right-0 flex min-w-[var(--touch-target)] items-center justify-center pr-1 text-[var(--color-muted)] transition-colors duration-200 hover:text-[var(--color-text)] disabled:opacity-60"
 	>
 		{#if show}
 			<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

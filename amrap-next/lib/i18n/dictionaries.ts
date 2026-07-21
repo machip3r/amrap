@@ -1246,7 +1246,7 @@ const es: Dictionary = {
     emailFailed: "Se registró, pero el correo de invitación no se pudo enviar",
   },
   members: {
-    title: "Gestión de miembros",
+    title: "Miembros",
     subtitle: "Administra membresías, accesos y el estado de tu comunidad.",
     newMember: "Añadir miembro",
     name: "Nombre",
@@ -2127,7 +2127,7 @@ const en: Dictionary = {
     emailFailed: "Saved, but the invitation email could not be sent",
   },
   members: {
-    title: "Member management",
+    title: "Members",
     subtitle: "Manage memberships, access, and your community status.",
     newMember: "Add member",
     name: "Name",

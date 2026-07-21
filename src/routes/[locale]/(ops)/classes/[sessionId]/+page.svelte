@@ -28,7 +28,7 @@
 {#if data.forbidden || !session}
 	<p class="text-[var(--color-muted)]">{d.common.forbidden}</p>
 {:else}
-	<div class="mx-auto flex w-full max-w-3xl animate-fade-in-up flex-col gap-6">
+	<div class="flex w-full animate-fade-in-up flex-col gap-6">
 		<div>
 			<a
 				href={`/${locale}/classes?tab=calendar`}

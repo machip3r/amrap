@@ -5,18 +5,17 @@ test.describe("owner settings and organization", () => {
     await page.goto("/es/settings");
     await expect(page).toHaveURL(/\/es\/settings/);
     await expect(page.getByRole("heading", { name: "Configuración" })).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: "Mi menú" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("switch", { name: /Vista general/i }),
-    ).toHaveCount(0);
+    // My menu (nav visibility) temporarily disabled
+    await expect(page.getByRole("heading", { name: "Mi menú" })).toHaveCount(0);
     await expect(
       page.getByRole("heading", { name: "Personalización", exact: true }),
     ).toBeVisible();
   });
 
-  test("owner can hide a nav page from their personal menu", async ({ page }) => {
+  test.skip("owner can hide a nav page from their personal menu", async ({
+    page,
+  }) => {
+    // Skipped while Settings → My menu is disabled in the UI.
     await page.goto("/es/settings");
     await expect(
       page.getByRole("heading", { name: "Mi menú" }),
@@ -50,5 +49,16 @@ test.describe("owner settings and organization", () => {
     await expect(page).toHaveURL(/\/es\/organization/);
     await expect(page.getByRole("heading", { name: "Organización" })).toBeVisible();
     await expect(page.getByText(/Plan gratuito|Starter|Growth|Pro/i).first()).toBeVisible();
+
+    const contact = page.getByRole("link", { name: /Contactar a AMRAP/i });
+    await expect(contact).toBeVisible();
+    await expect(contact).toHaveAttribute("href", /\/es#contacto$/);
+
+    await page.getByRole("button", { name: /Mejorar plan/i }).first().click();
+    const confirm = page.getByRole("dialog");
+    await expect(confirm.getByRole("heading", { name: "Mejorar suscripción" })).toBeVisible();
+    await expect(
+      confirm.getByRole("button", { name: "Confirmar mejora" }),
+    ).toBeVisible();
   });
 });

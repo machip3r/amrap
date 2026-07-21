@@ -31,7 +31,12 @@
 		d: Dictionary;
 		plans: ActivePlanOption[];
 		formResult: CreateMemberState;
-		onSuccess?: (memberId: string) => void;
+		/** Form action path (default `?/create` on members page). */
+		action?: string;
+		onSuccess?: (
+			memberId: string,
+			meta?: { name: string; email: string }
+		) => void;
 	};
 
 	let {
@@ -41,6 +46,7 @@
 		d,
 		plans,
 		formResult,
+		action = '?/create',
 		onSuccess
 	}: Props = $props();
 
@@ -94,6 +100,8 @@
 	title={d.members.createTitle}
 	description={d.registerUser.description}
 	closeLabel={d.registerUser.close}
+	class="max-w-2xl sm:max-w-3xl lg:max-w-4xl"
+	bodyClass="px-6 py-5 sm:px-8 sm:py-7"
 >
 	{#if plans.length === 0}
 		<div class="flex flex-col gap-4">
@@ -114,7 +122,7 @@
 	{:else}
 		<form
 			method="POST"
-			action="?/create"
+			{action}
 			class="flex flex-col gap-4"
 			novalidate
 			use:enhance={() => {
@@ -130,7 +138,10 @@
 						if (data?.error) localError = data.error;
 						if (data?.emailWarning) emailWarning = data.emailWarning;
 						if (data?.success && data.memberId) {
-							onSuccess?.(data.memberId);
+							onSuccess?.(data.memberId, {
+								name: name.trim(),
+								email: email.trim()
+							});
 							onOpenChange(false);
 							resetForm();
 							await invalidate(OPS_LOAD_DEPS.members);
@@ -252,11 +263,16 @@
 				</p>
 			{/if}
 
-			<div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-				<Button type="button" variant="ghost" class="rounded-lg px-4 py-2.5 text-sm font-semibold" onclick={() => onOpenChange(false)}>
+			<div class="flex w-full gap-2">
+				<Button
+					type="button"
+					variant="ghost"
+					class="min-h-11 min-w-0 flex-1 border border-[var(--color-border)] px-3 text-sm font-semibold"
+					onclick={() => onOpenChange(false)}
+				>
 					{d.registerUser.cancel}
 				</Button>
-				<Button type="submit" disabled={!canSubmit}>
+				<Button type="submit" class="min-h-11 min-w-0 flex-1" disabled={!canSubmit}>
 					{pending ? d.registerUser.submitting : d.registerUser.submit}
 				</Button>
 			</div>

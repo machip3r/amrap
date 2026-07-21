@@ -13,7 +13,7 @@
 {#if data.forbidden}
 	<p class="text-[var(--color-muted)]">{d.common.forbidden}</p>
 {:else}
-	<div class="mx-auto flex w-full max-w-6xl animate-fade-in-up flex-col gap-5">
+	<div class="flex w-full animate-fade-in-up flex-col gap-5">
 		<ClassesClient
 			locale={data.locale}
 			{d}

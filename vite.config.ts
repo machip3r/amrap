@@ -49,6 +49,8 @@ export default defineConfig({
 			workbox: {
 				// Shell assets only — do not precache authenticated HTML/data.
 				globPatterns: ['client/**/*.{js,css,ico,png,svg,webp,woff,woff2,webmanifest}'],
+				// Landing hero is ~2.3MB — load on demand via runtimeCaching, not SW install.
+				globIgnores: ['**/images/hero-gym.png'],
 				cleanupOutdatedCaches: true,
 				clientsClaim: true,
 				skipWaiting: false,

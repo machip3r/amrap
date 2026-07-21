@@ -62,6 +62,7 @@ export function organizationJsonLd(opts: {
 		'@context': 'https://schema.org',
 		'@type': 'Organization',
 		name: opts.name,
+		alternateName: ['AMRAP Space', 'amrap.space'],
 		url: origin,
 		email: opts.email,
 		telephone: opts.telephone,
@@ -81,19 +82,45 @@ export function softwareApplicationJsonLd(opts: {
 	locale: Locale;
 }) {
 	const origin = getSiteOrigin();
+	const isEs = opts.locale === 'es';
 	return {
 		'@context': 'https://schema.org',
 		'@type': 'SoftwareApplication',
 		name: opts.name,
+		alternateName: isEs
+			? ['AMRAP Space', 'software para gimnasios AMRAP', 'amrap.space']
+			: ['AMRAP Space', 'AMRAP gym software', 'amrap.space'],
 		applicationCategory: 'BusinessApplication',
+		applicationSubCategory: isEs ? 'Software para gimnasios' : 'Gym management software',
 		operatingSystem: 'Web',
 		description: opts.description,
 		url: absoluteUrl(localePath(opts.locale), origin),
+		image: absoluteUrl(OG_IMAGE_PATH, origin),
+		featureList: isEs
+			? [
+					'Check-in con QR',
+					'Membresías y planes',
+					'Recepción y altas',
+					'Clases y cupos',
+					'Multi-gimnasio'
+				]
+			: [
+					'QR check-in',
+					'Memberships and plans',
+					'Front-desk sign-ups',
+					'Classes and capacity',
+					'Multi-gym'
+				],
 		offers: {
 			'@type': 'Offer',
 			price: '0',
 			priceCurrency: 'MXN',
-			description: opts.locale === 'es' ? 'Plan freemium disponible' : 'Freemium plan available'
+			description: isEs ? 'Plan freemium disponible' : 'Freemium plan available'
+		},
+		publisher: {
+			'@type': 'Organization',
+			name: 'AMRAP',
+			url: origin
 		}
 	};
 }
@@ -119,7 +146,13 @@ export function webSiteJsonLd(opts: { name: string; locale: Locale }) {
 		'@context': 'https://schema.org',
 		'@type': 'WebSite',
 		name: opts.name,
+		alternateName: ['AMRAP Space', 'amrap.space'],
 		url: absoluteUrl(localePath(opts.locale), origin),
-		inLanguage: opts.locale === 'es' ? 'es-MX' : 'en-US'
+		inLanguage: opts.locale === 'es' ? 'es-MX' : 'en-US',
+		publisher: {
+			'@type': 'Organization',
+			name: 'AMRAP',
+			url: origin
+		}
 	};
 }

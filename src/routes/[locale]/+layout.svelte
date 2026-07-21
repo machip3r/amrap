@@ -13,17 +13,21 @@
 		titleFromPath(page.url.pathname, data.locale, d, documentBrand)
 	);
 
+	const path = $derived(page.url.pathname.replace(/\/$/, '') || '/');
 	const indexable = $derived.by(() => {
 		const locale = data.locale;
-		const path = page.url.pathname.replace(/\/$/, '') || '/';
 		if (path === `/${locale}`) return true;
 		if (path === `/${locale}/login` || path === `/${locale}/register`) return true;
 		return false;
 	});
+	/** Landing / login / register set the canonical title via SeoHead — avoid a second <title>. */
+	const seoHeadOwnsTitle = $derived(indexable);
 </script>
 
 <svelte:head>
-	<title>{documentTitle}</title>
+	{#if !seoHeadOwnsTitle}
+		<title>{documentTitle}</title>
+	{/if}
 	{#if !indexable}
 		<meta name="robots" content="noindex,nofollow" />
 	{/if}

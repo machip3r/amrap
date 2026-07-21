@@ -4,7 +4,7 @@
 
 Markets: **Mexico first**, with **United States** supported from the product definition (locales `es` / `en`, dual pricing).
 
-**App:** SvelteKit at the **repo root** (`pnpm dev` → `http://localhost:5173`). Installable as a **PWA** (home-screen app shell; live data still requires network). Public marketing pages are SEO-ready (sitemap, structured data, locale alternates). Agent rules: [`AGENTS.md`](AGENTS.md). Legacy Next.js archive (read-only): [`amrap-next/`](amrap-next/).
+**App:** SvelteKit at the **repo root** (`pnpm dev` → `http://localhost:5173`). Installable as a **PWA** (home-screen app shell; live data still requires network). Public marketing at **[amrap.space](https://www.amrap.space)** is SEO-ready (intent titles like “software para gimnasios”, www canonicals, sitemap, structured data, locale alternates). Agent rules: [`AGENTS.md`](AGENTS.md). Legacy Next.js archive (read-only): [`amrap-next/`](amrap-next/).
 
 ---
 

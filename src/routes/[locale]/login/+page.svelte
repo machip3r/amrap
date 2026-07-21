@@ -19,15 +19,15 @@
 		data.showConfirm
 			? `${data.d.confirmEmail.title} — AMRAP`
 			: data.locale === 'es'
-				? 'Iniciar sesión | AMRAP — software para gyms'
+				? 'Iniciar sesión | AMRAP — software para gimnasios'
 				: 'Log in | AMRAP — gym management software'
 	);
 	const seoDescription = $derived(
 		data.showConfirm
 			? data.d.confirmEmail.subtitle
 			: data.locale === 'es'
-				? 'Entra a AMRAP para gestionar check-in QR, membresías, clases y la recepción de tu gym.'
-				: 'Sign in to AMRAP to run QR check-in, memberships, classes, and your gym front desk.'
+				? 'Entra a AMRAP (amrap.space) para gestionar check-in QR, membresías, clases y la recepción de tu gimnasio.'
+				: 'Sign in to AMRAP (amrap.space) to run QR check-in, memberships, classes, and your gym front desk.'
 	);
 </script>
 

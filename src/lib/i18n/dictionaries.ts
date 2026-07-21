@@ -914,9 +914,9 @@ export type Dictionary = {
 
 const es: Dictionary = {
   meta: {
-    title: "AMRAP | Software para gyms — check-in QR y membresías",
+    title: "Software para gimnasios | AMRAP — check-in QR y membresías",
     description:
-      "Administra tu gym con check-in QR, membresías, clases y recepción. Una cuenta, un QR, varios roles. Empieza gratis.",
+      "AMRAP (amrap.space) es software para gimnasios: check-in con QR, membresías, clases y recepción. Empieza gratis.",
   },
   nav: {
     dashboard: "Vista general",
@@ -1867,9 +1867,9 @@ const es: Dictionary = {
 
 const en: Dictionary = {
   meta: {
-    title: "AMRAP | Gym software — QR check-in & memberships",
+    title: "Gym management software | AMRAP — QR check-in & memberships",
     description:
-      "Run your gym with QR check-in, memberships, classes, and front-desk tools. One account, one QR, many roles. Start free.",
+      "AMRAP (amrap.space) is gym management software: QR check-in, memberships, classes, and front desk. Start free.",
   },
   nav: {
     dashboard: "Dashboard",

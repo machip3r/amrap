@@ -19,15 +19,15 @@
 		data.showConfirm
 			? `${data.d.confirmEmail.title} — AMRAP`
 			: data.locale === 'es'
-				? 'Registrar gym | AMRAP — empieza gratis'
-				: 'Register your gym | AMRAP — start free'
+				? 'Registrar gimnasio | AMRAP — software gratis para gyms'
+				: 'Register your gym | AMRAP — free gym management software'
 	);
 	const seoDescription = $derived(
 		data.showConfirm
 			? data.d.confirmEmail.subtitle
 			: data.locale === 'es'
-				? 'Crea tu organización en AMRAP: check-in QR, membresías y operación de gym. Sin tarjeta para empezar.'
-				: 'Create your organization on AMRAP: QR check-in, memberships, and gym ops. No card required to start.'
+				? 'Crea tu organización en AMRAP (amrap.space): check-in QR, membresías y operación de gimnasio. Sin tarjeta para empezar.'
+				: 'Create your organization on AMRAP (amrap.space): QR check-in, memberships, and gym ops. No card required to start.'
 	);
 </script>
 

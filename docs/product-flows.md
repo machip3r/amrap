@@ -22,7 +22,7 @@ Locales: `es` (default) · `en`.
 
 | Surface | Who | Typical route | Status | Notes |
 | ------- | --- | ------------- | ------ | ----- |
-| Marketing | Public | `/[locale]` | Shipped | Landing, pricing, contact · **SEO:** titles/descriptions, OG, canonical/hreflang, FAQ+org JSON-LD, `/sitemap.xml`, `robots.txt`; private app routes `noindex` |
+| Marketing | Public | `/[locale]` | Shipped | Landing, pricing, contact · **SEO:** intent-led titles (`software para gimnasios` / gym management), descriptions with `amrap.space`, single `<title>` (no brand-only shell title), www canonicals, OG, hreflang, FAQ/org/SoftwareApplication JSON-LD, `/sitemap.xml`, `robots.txt`; private app routes `noindex` |
 | Auth | Public / pending | `/login`, `/register` | Shipped | OTP on same routes; no public “confirm email” nav link |
 | Onboarding | Owner / provisional | `/onboarding` | Shipped | After register or login without completed setup |
 | Profile welcome | Invited staff / trainer / member | `/welcome` | Shipped | After accept + password; blocking until `persons.profile_completed_at` |

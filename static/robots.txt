@@ -42,4 +42,4 @@ Disallow: /es/invite
 Disallow: /en/invite
 Disallow: /auth/
 
-Sitemap: https://amrap.space/sitemap.xml
+Sitemap: https://www.amrap.space/sitemap.xml

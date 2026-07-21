@@ -85,7 +85,7 @@
 					return;
 				}
 				pending = false;
-				await update();
+				await update({ reset: false });
 			};
 		}}
 	>
@@ -145,6 +145,7 @@
 					minlength={LIMITS.password.min}
 					maxlength={LIMITS.password.max}
 					required
+					placeholder={d.register.passwordPlaceholder}
 					showLabel={d.register.showPassword}
 					hideLabel={d.register.hidePassword}
 					bind:value={password}
@@ -167,6 +168,7 @@
 					minlength={LIMITS.password.min}
 					maxlength={LIMITS.password.max}
 					required
+					placeholder={d.register.passwordPlaceholder}
 					showLabel={d.register.showPassword}
 					hideLabel={d.register.hidePassword}
 					bind:value={confirmPassword}

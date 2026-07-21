@@ -1,5 +1,6 @@
 <script lang="ts">
 	import CheckinDesk from '$lib/components/checkin/CheckinDesk.svelte';
+	import { brandedTitle } from '$lib/seo/document-title';
 
 	let { data } = $props();
 	const d = $derived(data.d);
@@ -7,10 +8,10 @@
 </script>
 
 <svelte:head>
-	<title>{d.checkin.title} — AMRAP</title>
+	<title>{brandedTitle(d.checkin.title, data.documentBrand)}</title>
 </svelte:head>
 
-<div class="animate-fade-in-up pb-4">
+<div class="animate-fade-in-up h-full min-h-0 pb-4">
 	<CheckinDesk
 		{locale}
 		canManageMembers={data.canManageMembers}
@@ -69,7 +70,10 @@
 			colSource: d.checkin.colSource,
 			sourceQr: d.checkin.sourceQr,
 			sourceManual: d.checkin.sourceManual,
-			sourceKiosk: d.checkin.sourceKiosk
+			sourceKiosk: d.checkin.sourceKiosk,
+			enterKiosk: d.checkin.enterKiosk,
+			exitKiosk: d.checkin.exitKiosk,
+			kioskHint: d.checkin.kioskHint
 		}}
 	/>
 </div>

@@ -1,21 +1,17 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { invalidate } from '$app/navigation';
+	import Button from '$lib/components/ui/Button.svelte';
 	import Dialog from '$lib/components/ui/Dialog.svelte';
 	import FormField from '$lib/components/ui/FormField.svelte';
 	import Input from '$lib/components/ui/Input.svelte';
+	import PhoneInput from '$lib/components/ui/PhoneInput.svelte';
 	import Select from '$lib/components/ui/Select.svelte';
-	import Button from '$lib/components/ui/Button.svelte';
 	import type { Locale } from '$lib/i18n/config';
 	import type { Dictionary } from '$lib/i18n/dictionaries';
 	import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
 	import type { CreateMemberState } from '$lib/server/members/actions';
-	import {
-		LIMITS,
-		sanitizeEmailInput,
-		sanitizePersonNameInput,
-		sanitizePhoneInput
-	} from '$lib/validation/schemas';
+	import { LIMITS, sanitizeEmailInput, sanitizePersonNameInput } from '$lib/validation/schemas';
 
 	export type ActivePlanOption = {
 		id: string;
@@ -59,6 +55,7 @@
 	let localError = $state<string | undefined>(undefined);
 	let localFieldErrors = $state<Record<string, string> | undefined>(undefined);
 	let emailWarning = $state<string | undefined>(undefined);
+	let softCapWarning = $state<string | undefined>(undefined);
 
 	const fe = $derived(localFieldErrors);
 	const canSubmit = $derived(
@@ -85,6 +82,7 @@
 		localError = undefined;
 		localFieldErrors = undefined;
 		emailWarning = undefined;
+		softCapWarning = undefined;
 	}
 
 	$effect(() => {
@@ -130,6 +128,7 @@
 				localError = undefined;
 				localFieldErrors = undefined;
 				emailWarning = undefined;
+				softCapWarning = undefined;
 				return async ({ result, update }) => {
 					pending = false;
 					if (result.type === 'success' || result.type === 'failure') {
@@ -137,16 +136,21 @@
 						if (data?.fieldErrors) localFieldErrors = data.fieldErrors;
 						if (data?.error) localError = data.error;
 						if (data?.emailWarning) emailWarning = data.emailWarning;
+						if (data?.softCapWarning) softCapWarning = data.softCapWarning;
 						if (data?.success && data.memberId) {
 							onSuccess?.(data.memberId, {
 								name: name.trim(),
 								email: email.trim()
 							});
-							onOpenChange(false);
-							resetForm();
 							await invalidate(OPS_LOAD_DEPS.members);
 							await invalidate(OPS_LOAD_DEPS.dashboard);
 							await invalidate(OPS_LOAD_DEPS.payments);
+							if (data.softCapWarning) {
+								// Keep dialog open so the owner sees the soft-cap notice.
+							} else {
+								onOpenChange(false);
+								resetForm();
+							}
 						}
 					}
 					await update({ reset: false, invalidateAll: false });
@@ -197,19 +201,15 @@
 			</div>
 			<FormField label={d.members.phone} htmlFor="create-member-phone" error={fe?.phone}>
 				{#snippet children({ invalid, describedBy })}
-					<Input
+					<PhoneInput
 						id="create-member-phone"
 						name="phone"
-						type="tel"
-						maxlength={LIMITS.phone}
-						inputmode="numeric"
+						{locale}
+						countryLabel={d.registerUser.countryCode}
 						placeholder={d.registerUser.phonePlaceholder}
 						bind:value={phone}
 						{invalid}
 						{describedBy}
-						oninput={(e) => {
-							phone = sanitizePhoneInput((e.currentTarget as HTMLInputElement).value);
-						}}
 					/>
 				{/snippet}
 			</FormField>
@@ -262,7 +262,26 @@
 					{emailWarning}
 				</p>
 			{/if}
+			{#if softCapWarning}
+				<p
+					class="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm font-medium text-[var(--color-text)]"
+					role="status"
+				>
+					{softCapWarning}
+				</p>
+				<Button
+					type="button"
+					class="w-full"
+					onclick={() => {
+						onOpenChange(false);
+						resetForm();
+					}}
+				>
+					{d.registerUser.close}
+				</Button>
+			{/if}
 
+			{#if !softCapWarning}
 			<div class="flex w-full gap-2">
 				<Button
 					type="button"
@@ -276,6 +295,7 @@
 					{pending ? d.registerUser.submitting : d.registerUser.submit}
 				</Button>
 			</div>
+			{/if}
 		</form>
 	{/if}
 </Dialog>

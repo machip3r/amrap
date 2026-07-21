@@ -8,17 +8,13 @@
 	import Dialog from '$lib/components/ui/Dialog.svelte';
 	import FormField from '$lib/components/ui/FormField.svelte';
 	import Input from '$lib/components/ui/Input.svelte';
+	import PhoneInput from '$lib/components/ui/PhoneInput.svelte';
 	import Select from '$lib/components/ui/Select.svelte';
 	import type { Locale } from '$lib/i18n/config';
 	import { getDictionary } from '$lib/i18n/dictionaries';
 	import type { CreateMemberState } from '$lib/server/members/actions';
 	import type { CreateTeamMemberState } from '$lib/server/team/actions';
-	import {
-		LIMITS,
-		sanitizeEmailInput,
-		sanitizePersonNameInput,
-		sanitizePhoneInput
-	} from '$lib/validation/schemas';
+	import { LIMITS, sanitizeEmailInput, sanitizePersonNameInput } from '$lib/validation/schemas';
 
 	export type RegisterRole = 'member' | 'trainer' | 'staff';
 
@@ -334,14 +330,13 @@
 							</div>
 							<FormField label={d.members.phone} htmlFor="reg-phone" error={fieldErrors?.phone}>
 								{#snippet children({ invalid, describedBy })}
-									<Input
+									<PhoneInput
 										id="reg-phone"
 										name="phone"
+										{locale}
+										countryLabel={d.registerUser.countryCode}
 										placeholder={d.registerUser.phonePlaceholder}
 										bind:value={phone}
-										oninput={(e) => {
-											phone = sanitizePhoneInput((e.target as HTMLInputElement).value);
-										}}
 										{invalid}
 										{describedBy}
 									/>
@@ -480,14 +475,13 @@
 						</div>
 						<FormField label={d.members.phone} htmlFor="reg-team-phone" error={fieldErrors?.phone}>
 							{#snippet children({ invalid, describedBy })}
-								<Input
+								<PhoneInput
 									id="reg-team-phone"
 									name="phone"
+									{locale}
+									countryLabel={d.registerUser.countryCode}
 									placeholder={d.registerUser.phonePlaceholder}
 									bind:value={phone}
-									oninput={(e) => {
-										phone = sanitizePhoneInput((e.target as HTMLInputElement).value);
-									}}
 									{invalid}
 									{describedBy}
 								/>

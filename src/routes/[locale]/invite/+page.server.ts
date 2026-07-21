@@ -33,7 +33,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	const headline = d.invite.title.replace('{gym}', invite.gymName).replace('{role}', roleLabel);
 	const body = d.invite.subtitle.replace('{gym}', invite.gymName).replace('{role}', roleLabel);
 
-	return { locale, d, headline, body };
+	return { locale, d, headline, body, hasSession: true };
 };
 
 export const actions = {

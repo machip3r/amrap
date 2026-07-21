@@ -1,6 +1,7 @@
 <script lang="ts">
 	// import NavCustomizationForm from '$lib/components/settings/NavCustomizationForm.svelte';
 	import PersonalizationForm from '$lib/components/settings/PersonalizationForm.svelte';
+	import { brandedTitle } from '$lib/seo/document-title';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -8,7 +9,7 @@
 </script>
 
 <svelte:head>
-	<title>{d.settings.title} — AMRAP</title>
+	<title>{brandedTitle(d.settings.title, data.documentBrand)}</title>
 </svelte:head>
 
 <div class="flex w-full animate-fade-in-up flex-col gap-8">
@@ -39,6 +40,7 @@
 			logoUrlLight={data.logoUrlLight}
 			logoUrlDark={data.logoUrlDark}
 			canCustomizeBrand={data.canCustomizeBrand}
+			canUseCustomDomain={data.canUseCustomDomain}
 		/>
 	{/if}
 </div>

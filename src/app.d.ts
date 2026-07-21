@@ -8,6 +8,14 @@ import type { OnboardingState } from '$lib/auth/session';
 import type { Workspace } from '$lib/types';
 
 declare global {
+	interface Document {
+		startViewTransition?: (callback: () => void | Promise<void>) => {
+			finished: Promise<void>;
+			ready: Promise<void>;
+			updateCallbackDone: Promise<void>;
+		};
+	}
+
 	namespace App {
 		interface Locals {
 			supabase: SupabaseClient;
@@ -23,6 +31,8 @@ declare global {
 			pendingInviteResolved?: boolean;
 			invitedOps?: boolean;
 			invitedOpsResolved?: boolean;
+			invitedMember?: boolean;
+			invitedMemberResolved?: boolean;
 			memberContext?: MemberContext | null;
 			memberContextResolved?: boolean;
 			personProfile?: PersonProfileStatus | null;

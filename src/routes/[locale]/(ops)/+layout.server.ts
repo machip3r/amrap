@@ -1,7 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
 import { getMemberContext } from '$lib/auth/member-session';
 import { getPendingInvite, invitePath } from '$lib/auth/invite-decision';
-import { needsOwnerOnboarding } from '$lib/auth/post-auth-redirect';
+import { needsOwnerOnboarding, noAccessPath } from '$lib/auth/post-auth-redirect';
 import { getPersonProfileStatus, welcomePath } from '$lib/auth/profile-onboarding';
 import { canInWorkspace } from '$lib/auth/permissions';
 import { getOnboardingState, getWorkspace } from '$lib/auth/session';
@@ -44,7 +44,7 @@ export const load: LayoutServerLoad = async ({ params, depends }) => {
 	if (!workspace) {
 		const member = await getMemberContext();
 		if (member) throw redirect(303, `/${locale}/me`);
-		throw redirect(303, `/${locale}/onboarding`);
+		throw redirect(303, noAccessPath(locale));
 	}
 
 	const initial =
@@ -69,6 +69,10 @@ export const load: LayoutServerLoad = async ({ params, depends }) => {
 
 	const logoUrlLight = allowBrand ? workspace.logoUrlLight : null;
 	const logoUrlDark = allowBrand ? workspace.logoUrlDark : null;
+	/** Tab title / PWA name when plan includes white-label. */
+	const documentBrand = allowBrand
+		? workspace.gymName.trim() || workspace.organizationName.trim() || null
+		: null;
 
 	return {
 		locale,
@@ -79,6 +83,8 @@ export const load: LayoutServerLoad = async ({ params, depends }) => {
 		brandStyle,
 		logoUrlLight,
 		logoUrlDark,
+		allowBrand,
+		documentBrand,
 		qrCode: workspace.qrCode
 	};
 };

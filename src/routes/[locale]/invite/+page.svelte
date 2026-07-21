@@ -25,13 +25,16 @@
 
 		<InviteDecideForm locale={data.locale} d={data.d} form={(form as InviteDecideState) ?? null} />
 
-		<div class="mt-8 border-t border-[var(--color-border)] pt-5 text-center">
-			<LogoutButton
-				locale={data.locale}
-				class="text-sm text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
-			>
-				{data.d.nav.logout}
-			</LogoutButton>
-		</div>
+		{#if data.hasSession}
+			<div class="mt-8 border-t border-[var(--color-border)] pt-5 text-center">
+				<LogoutButton
+					locale={data.locale}
+					pendingLabel={data.d.nav.loggingOut}
+					class="text-sm text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
+				>
+					{data.d.nav.logout}
+				</LogoutButton>
+			</div>
+		{/if}
 	</div>
 </div>

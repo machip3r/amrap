@@ -35,10 +35,20 @@
 		d: Dictionary;
 		organizationName: string;
 		planTier: OrgPlanTier;
+		hasStripeCustomer: boolean;
+		billingFlash: 'success' | 'cancel' | null;
 		gyms: OrgGymRow[];
 	};
 
-	let { locale, d, organizationName, planTier, gyms }: Props = $props();
+	let {
+		locale,
+		d,
+		organizationName,
+		planTier,
+		hasStripeCustomer,
+		billingFlash,
+		gyms
+	}: Props = $props();
 
 	const labels = $derived(d.organization);
 	const contactHref = $derived(`/${locale}#contacto`);
@@ -52,14 +62,31 @@
 	let orgConfirmName = $state('');
 	let gymConfirmName = $state('');
 	let upgradeTier = $state<OrgPlanTier | null>(null);
+	let billingInterval = $state<'month' | 'year'>('month');
 
 	let flash = $state<string | undefined>(undefined);
 	let flashError = $state<string | undefined>(undefined);
 	let checkoutPending = $state(false);
+	let portalPending = $state(false);
 	let createPending = $state(false);
 	let gymDeletePending = $state(false);
 	let gymCancelPending = $state(false);
 	let orgDeletePending = $state(false);
+
+	$effect(() => {
+		if (billingFlash === 'success') {
+			flash = labels.billingSuccessFlash;
+			flashError = undefined;
+		} else if (billingFlash === 'cancel') {
+			flashError = labels.billingCancelFlash;
+			flash = undefined;
+		}
+	});
+
+	function openUpgradeConfirm(tier: OrgPlanTier) {
+		upgradeTier = tier;
+		billingInterval = 'month';
+	}
 
 	const activeGymCount = $derived(gyms.filter((g) => !g.deleted_at).length);
 	const gymCap = $derived(maxGyms(planTier));
@@ -124,10 +151,6 @@
 			flash = data.message;
 			flashError = undefined;
 		}
-	}
-
-	function openUpgradeConfirm(tier: OrgPlanTier) {
-		upgradeTier = tier;
 	}
 </script>
 
@@ -274,10 +297,37 @@
 		id="subscription"
 		class="scroll-mt-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm sm:p-5"
 	>
-		<p class="mb-3 text-xs text-[var(--color-muted)]">
-			{labels.currentPlan}:
-			<span class="font-semibold text-[var(--color-text)]">{planLabel(planTier)}</span>
-		</p>
+		<div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+			<p class="text-xs text-[var(--color-muted)]">
+				{labels.currentPlan}:
+				<span class="font-semibold text-[var(--color-text)]">{planLabel(planTier)}</span>
+			</p>
+			{#if hasStripeCustomer}
+				<form
+					method="POST"
+					action="?/billingPortal"
+					use:enhance={() => {
+						portalPending = true;
+						return async ({ result, update }) => {
+							portalPending = false;
+							if (result.type === 'redirect') {
+								window.location.href = result.location;
+								return;
+							}
+							await update();
+							if (result.type === 'success') {
+								applyState(result.data as OrgActionState);
+							}
+						};
+					}}
+				>
+					<input type="hidden" name="locale" value={locale} />
+					<Button type="submit" variant="ghost" class="mt-0 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-text)]" disabled={portalPending}>
+						{portalPending ? labels.save : labels.manageBilling}
+					</Button>
+				</form>
+			{/if}
+		</div>
 
 		<ul class="flex flex-col gap-2">
 			{#each AMRAP_PLANS as plan (plan.tier)}
@@ -414,17 +464,27 @@
 		title={labels.upgradeConfirmTitle}
 		description={labels.upgradeConfirmDescription.replace('{plan}', upgradePlanLabel)}
 		closeLabel={labels.close}
-		class="max-w-md"
+		class="max-w-lg"
 	>
 		{#if upgradeTier}
+			{@const upgradePlan = AMRAP_PLANS.find((p) => p.tier === upgradeTier)}
+			{@const monthlyAmount =
+				locale === 'en'
+					? (upgradePlan?.priceUsdMonthly ?? null)
+					: (upgradePlan?.priceMxnMonthly ?? null)}
+			{@const annualAmount = monthlyAmount != null ? monthlyAmount * 10 : null}
 			<form
 				method="POST"
 				action="?/checkout"
-				class="flex flex-col gap-4"
+				class="flex flex-col gap-5"
 				use:enhance={() => {
 					checkoutPending = true;
 					return async ({ result, update }) => {
 						checkoutPending = false;
+						if (result.type === 'redirect') {
+							window.location.href = result.location;
+							return;
+						}
 						await update();
 						if (result.type === 'success') {
 							applyState(result.data as OrgActionState);
@@ -435,6 +495,103 @@
 			>
 				<input type="hidden" name="locale" value={locale} />
 				<input type="hidden" name="tier" value={upgradeTier} />
+				<input type="hidden" name="interval" value={billingInterval} />
+				<fieldset class="flex flex-col gap-3">
+					<legend class="text-sm font-semibold text-[var(--color-text)] mb-2">
+						{labels.billingIntervalLabel}
+					</legend>
+					<div
+						class="grid grid-cols-1 gap-2 sm:grid-cols-2"
+						role="radiogroup"
+						aria-label={labels.billingIntervalLabel}
+					>
+						<label
+							class="group relative flex min-h-[var(--touch-target)] cursor-pointer flex-col gap-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3.5 transition-colors hover:border-[var(--color-muted)] hover:bg-[var(--color-surface-hover)] has-[:checked]:border-[var(--color-primary)] has-[:checked]:bg-[var(--color-primary-soft)] has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[var(--color-ring)]"
+						>
+							<input
+								type="radio"
+								name="interval_ui"
+								value="month"
+								class="sr-only"
+								checked={billingInterval === 'month'}
+								onchange={() => (billingInterval = 'month')}
+							/>
+							<span class="flex items-start justify-between gap-2">
+								<span class="flex min-w-0 items-center gap-2.5">
+									<span
+										class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-[var(--color-border)] group-has-[:checked]:border-[var(--color-primary)]"
+										aria-hidden="true"
+									>
+										<span
+											class="h-2.5 w-2.5 rounded-full bg-transparent group-has-[:checked]:bg-[var(--color-primary)]"
+										></span>
+									</span>
+									<span class="min-w-0">
+										<span
+											class="block text-sm font-semibold text-[var(--color-text)] group-has-[:checked]:text-[var(--color-primary)]"
+										>
+											{labels.billingMonthly}
+										</span>
+										<span class="mt-0.5 block text-xs leading-snug text-[var(--color-muted)]">
+											{labels.billingMonthlyHint}
+										</span>
+									</span>
+								</span>
+							</span>
+							{#if monthlyAmount != null}
+								<span class="pl-[1.875rem] text-sm font-semibold tabular-nums text-[var(--color-text)]">
+									{formatMoney(monthlyAmount, locale)}
+									<span class="font-normal text-[var(--color-muted)]">{labels.perMonth}</span>
+								</span>
+							{/if}
+						</label>
+						<label
+							class="group relative flex min-h-[var(--touch-target)] cursor-pointer flex-col gap-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3.5 transition-colors hover:border-[var(--color-muted)] hover:bg-[var(--color-surface-hover)] has-[:checked]:border-[var(--color-primary)] has-[:checked]:bg-[var(--color-primary-soft)] has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[var(--color-ring)]"
+						>
+							<input
+								type="radio"
+								name="interval_ui"
+								value="year"
+								class="sr-only"
+								checked={billingInterval === 'year'}
+								onchange={() => (billingInterval = 'year')}
+							/>
+							<span class="flex items-start justify-between gap-2">
+								<span class="flex min-w-0 items-center gap-2.5">
+									<span
+										class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-[var(--color-border)] group-has-[:checked]:border-[var(--color-primary)]"
+										aria-hidden="true"
+									>
+										<span
+											class="h-2.5 w-2.5 rounded-full bg-transparent group-has-[:checked]:bg-[var(--color-primary)]"
+										></span>
+									</span>
+									<span class="min-w-0">
+										<span
+											class="block text-sm font-semibold text-[var(--color-text)] group-has-[:checked]:text-[var(--color-primary)]"
+										>
+											{labels.billingAnnual}
+										</span>
+										<span class="mt-0.5 block text-xs leading-snug text-[var(--color-muted)]">
+											{labels.billingAnnualHint}
+										</span>
+									</span>
+								</span>
+								<span
+									class="shrink-0 rounded-md bg-[var(--color-primary)]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--color-primary)]"
+								>
+									{labels.billingAnnualSaveBadge}
+								</span>
+							</span>
+							{#if annualAmount != null}
+								<span class="pl-[1.875rem] text-sm font-semibold tabular-nums text-[var(--color-text)]">
+									{formatMoney(annualAmount, locale)}
+									<span class="font-normal text-[var(--color-muted)]">{labels.perYear}</span>
+								</span>
+							{/if}
+						</label>
+					</div>
+				</fieldset>
 				<div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
 					<Button
 						type="button"

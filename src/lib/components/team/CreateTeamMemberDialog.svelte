@@ -2,19 +2,15 @@
 	import { enhance } from '$app/forms';
 	import { invalidate } from '$app/navigation';
 	import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
+	import Button from '$lib/components/ui/Button.svelte';
 	import Dialog from '$lib/components/ui/Dialog.svelte';
 	import FormField from '$lib/components/ui/FormField.svelte';
 	import Input from '$lib/components/ui/Input.svelte';
-	import Button from '$lib/components/ui/Button.svelte';
+	import PhoneInput from '$lib/components/ui/PhoneInput.svelte';
 	import type { Locale } from '$lib/i18n/config';
 	import type { Dictionary } from '$lib/i18n/dictionaries';
 	import type { CreateTeamMemberState } from '$lib/server/team/actions';
-	import {
-		LIMITS,
-		sanitizeEmailInput,
-		sanitizePersonNameInput,
-		sanitizePhoneInput
-	} from '$lib/validation/schemas';
+	import { LIMITS, sanitizeEmailInput, sanitizePersonNameInput } from '$lib/validation/schemas';
 
 	type TeamInviteRole = 'trainer' | 'staff';
 
@@ -134,19 +130,15 @@
 		</div>
 		<FormField label={d.members.phone} htmlFor="create-team-phone" error={fe?.phone}>
 			{#snippet children({ invalid, describedBy })}
-				<Input
+				<PhoneInput
 					id="create-team-phone"
 					name="phone"
-					type="tel"
-					maxlength={LIMITS.phone}
-					inputmode="numeric"
+					{locale}
+					countryLabel={d.registerUser.countryCode}
 					placeholder={d.registerUser.phonePlaceholder}
 					bind:value={phone}
 					{invalid}
 					{describedBy}
-					oninput={(e) => {
-						phone = sanitizePhoneInput((e.currentTarget as HTMLInputElement).value);
-					}}
 				/>
 			{/snippet}
 		</FormField>

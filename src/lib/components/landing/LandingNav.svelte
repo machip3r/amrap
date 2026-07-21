@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { fly } from 'svelte/transition';
 	import { Menu, X } from '@lucide/svelte';
 	import type { Locale } from '$lib/i18n/config';
 	import type { LandingDictionary, LandingSectionId } from '$lib/i18n/landing-dictionaries';
 	import { sectionIdForNav } from '$lib/i18n/landing-dictionaries';
+	import { uiFly } from '$lib/motion';
 	import AmrapLogo from './AmrapLogo.svelte';
 	import ThemeToggle from './ThemeToggle.svelte';
 
@@ -168,15 +170,16 @@
 	</div>
 
 	{#if menuOpen}
-		<div id={menuId} class="landing-nav-sheet">
+		<div id={menuId} class="landing-nav-sheet" transition:fly={uiFly(240, -10)}>
 			<nav class="landing-nav-sheet-nav" aria-label={d.nav.mainAria}>
-				{#each navItems as { key, section }}
+				{#each navItems as { key, section }, i}
 					<button
 						type="button"
 						onclick={() => scrollTo(section)}
 						class="landing-nav-sheet-link {active === section
 							? 'landing-nav-sheet-link--active'
 							: ''}"
+						style="animation-delay: {0.04 + i * 0.04}s"
 					>
 						{labels[key]}
 					</button>

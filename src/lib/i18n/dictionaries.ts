@@ -13,6 +13,7 @@ export type Dictionary = {
     classes: string;
     timers: string;
     logout: string;
+    loggingOut: string;
     settings: string;
     more: string;
     myQr: string;
@@ -35,9 +36,12 @@ export type Dictionary = {
     installIosHint: string;
     install: string;
     dismiss: string;
+    offlineReadyTitle: string;
     offlineReady: string;
+    updateTitle: string;
     updateAvailable: string;
     reload: string;
+    reloading: string;
   };
   a11y: {
     toggleTheme: string;
@@ -55,6 +59,7 @@ export type Dictionary = {
     email: string;
     emailPlaceholder: string;
     password: string;
+    passwordPlaceholder: string;
     showPassword: string;
     hidePassword: string;
     submit: string;
@@ -72,6 +77,7 @@ export type Dictionary = {
     email: string;
     emailPlaceholder: string;
     password: string;
+    passwordPlaceholder: string;
     confirmPassword: string;
     passwordMismatch: string;
     showPassword: string;
@@ -205,6 +211,10 @@ export type Dictionary = {
     description: string;
     submit: string;
     error: string;
+  };
+  noAccess: {
+    title: string;
+    body: string;
   };
   dashboard: {
     title: string;
@@ -389,6 +399,8 @@ export type Dictionary = {
     alreadyOnTeam: string;
     alreadyOwner: string;
     emailFailed: string;
+    emailInUse: string;
+    phoneInUse: string;
   };
   members: {
     title: string;
@@ -422,6 +434,10 @@ export type Dictionary = {
     noMembers: string;
     noResults: string;
     error: string;
+    emailInUse: string;
+    phoneInUse: string;
+    freemiumMemberLimit: string;
+    softMemberCapWarning: string;
     notFound: string;
     searchPlaceholder: string;
     filterAll: string;
@@ -539,6 +555,9 @@ export type Dictionary = {
     sourceQr: string;
     sourceManual: string;
     sourceKiosk: string;
+    enterKiosk: string;
+    exitKiosk: string;
+    kioskHint: string;
     calendarTitle: string;
     calendarSubtitle: string;
     calendarPrev: string;
@@ -758,26 +777,40 @@ export type Dictionary = {
     upgradeConfirmSubmit: string;
     contactSales: string;
     current: string;
-    checkoutComingSoon: string;
-    contactProPlan: string;
-    createGymComingSoon: string;
-    gymCapContact: string;
-    retentionNote: string;
-    planFreemium: string;
-    planStarter: string;
-    planGrowth: string;
-    planPro: string;
-    priceFree: string;
-    pricePerOrg: string;
-    pricePerGym: string;
-    priceContact: string;
-    perMonth: string;
-    gymQuota: string;
-    invalidPlan: string;
-    deleteFailed: string;
-    gymDeletionScheduled: string;
-    deletionCancelled: string;
-  };
+		checkoutComingSoon: string;
+		contactProPlan: string;
+		createGymComingSoon: string;
+		gymCapContact: string;
+		retentionNote: string;
+		planFreemium: string;
+		planStarter: string;
+		planGrowth: string;
+		planPro: string;
+		priceFree: string;
+		pricePerOrg: string;
+		pricePerGym: string;
+		priceContact: string;
+		perMonth: string;
+		perYear: string;
+		billingIntervalLabel: string;
+		billingMonthly: string;
+		billingMonthlyHint: string;
+		billingAnnual: string;
+		billingAnnualHint: string;
+		billingAnnualSaveBadge: string;
+		manageBilling: string;
+		checkoutFailed: string;
+		upgradeSuccess: string;
+		alreadyOnPlan: string;
+		portalUnavailable: string;
+		billingSuccessFlash: string;
+		billingCancelFlash: string;
+		gymQuota: string;
+		invalidPlan: string;
+		deleteFailed: string;
+		gymDeletionScheduled: string;
+		deletionCancelled: string;
+	};
   common: {
     loading: string;
     forbidden: string;
@@ -873,6 +906,8 @@ export type Dictionary = {
     preview: string;
     whitelabelLocked: string;
     whitelabelLockedHint: string;
+    whitelabelStarterHint: string;
+    whitelabelGrowthHint: string;
     upgradeWhitelabel: string;
   };
 };
@@ -894,6 +929,7 @@ const es: Dictionary = {
     classes: "Clases",
     timers: "Temporizadores",
     logout: "Salir",
+    loggingOut: "Cerrando sesión…",
     settings: "Configuración",
     more: "Más",
     myQr: "Mi QR",
@@ -916,9 +952,12 @@ const es: Dictionary = {
     installIosHint: "En Safari: toca Compartir y luego “Añadir a pantalla de inicio”.",
     install: "Instalar",
     dismiss: "Ahora no",
-    offlineReady: "AMRAP listo para usar con la app en caché.",
-    updateAvailable: "Hay una nueva versión de AMRAP.",
-    reload: "Actualizar",
+    offlineReadyTitle: "Listo en este dispositivo",
+    offlineReady: "AMRAP ya está en caché y se abre más rápido la próxima vez.",
+    updateTitle: "Nueva versión disponible",
+    updateAvailable: "Hay una actualización de AMRAP. Actualiza ahora para obtener mejoras y correcciones; solo toma un momento.",
+    reload: "Actualizar ahora",
+    reloading: "Actualizando…",
   },
   a11y: {
     toggleTheme: "Cambiar tema",
@@ -936,6 +975,7 @@ const es: Dictionary = {
     email: "Correo",
     emailPlaceholder: "tu@correo.com",
     password: "Contraseña",
+    passwordPlaceholder: "••••••••",
     showPassword: "Mostrar contraseña",
     hidePassword: "Ocultar contraseña",
     submit: "Entrar",
@@ -954,6 +994,7 @@ const es: Dictionary = {
     email: "Correo",
     emailPlaceholder: "tu@correo.com",
     password: "Contraseña",
+    passwordPlaceholder: "••••••••",
     confirmPassword: "Confirmar contraseña",
     passwordMismatch: "Las contraseñas no coinciden.",
     showPassword: "Mostrar contraseña",
@@ -1101,6 +1142,10 @@ const es: Dictionary = {
     description: "Completa la configuración de tu organización",
     submit: "Continuar",
     error: "No se pudo continuar",
+  },
+  noAccess: {
+    title: "Sin gimnasio activo",
+    body: "Tu cuenta no tiene un gimnasio activo vinculado. Pide a tu gimnasio que te invite de nuevo, o cierra sesión para usar otra cuenta.",
   },
   dashboard: {
     title: "Resumen diario",
@@ -1282,10 +1327,12 @@ const es: Dictionary = {
   },
   teamInvites: {
     error: "No se pudo enviar la invitación",
-    seatLimit: "Alcanzaste el límite de asientos de staff de tu plan",
+    seatLimit: "Alcanzaste el límite de asientos de staff de este gimnasio (según tu plan)",
     alreadyOnTeam: "Esa persona ya está en el equipo de este gimnasio",
     alreadyOwner: "Esa persona ya es dueño de este gimnasio",
     emailFailed: "Se registró, pero el correo de invitación no se pudo enviar",
+    emailInUse: "Ese correo ya está registrado en otra persona",
+    phoneInUse: "Ese teléfono ya está registrado en otra persona",
   },
   members: {
     title: "Miembros",
@@ -1319,6 +1366,12 @@ const es: Dictionary = {
     noMembers: "No hay miembros aún.",
     noResults: "Ningún miembro coincide con tu búsqueda.",
     error: "No se pudo guardar el miembro",
+    emailInUse: "Ese correo ya está registrado en otra persona",
+    phoneInUse: "Ese teléfono ya está registrado en otra persona",
+    freemiumMemberLimit:
+      "Alcanzaste el máximo de 30 socios activos del plan gratuito. Mejora a Starter para seguir creciendo.",
+    softMemberCapWarning:
+      "Tu gym ya supera ~500 socios activos. El acceso de tus clientes no se bloquea. Habla con AMRAP sobre Growth/Pro o un excedente si lo necesitas.",
     notFound: "Miembro o plan no encontrado",
     searchPlaceholder: "Buscar por nombre, email o teléfono…",
     filterAll: "Todos",
@@ -1437,6 +1490,10 @@ const es: Dictionary = {
     sourceQr: "QR",
     sourceManual: "Manual",
     sourceKiosk: "Kiosco",
+    enterKiosk: "Modo kiosco",
+    exitKiosk: "Salir de kiosco",
+    kioskHint:
+      "Pantalla completa para recepción o iPad. Escanea o busca socios sin el menú de la app.",
     calendarTitle: "Asistencia",
     calendarSubtitle: "Entradas del mes para este socio.",
     calendarPrev: "Mes anterior",
@@ -1682,6 +1739,20 @@ const es: Dictionary = {
     pricePerGym: "por gym activo",
     priceContact: "A medida",
     perMonth: "/ mes",
+    perYear: "/ año",
+    billingIntervalLabel: "Facturación",
+    billingMonthly: "Mensual",
+    billingMonthlyHint: "Se cobra cada mes",
+    billingAnnual: "Anual",
+    billingAnnualHint: "Un pago al año · mejor precio",
+    billingAnnualSaveBadge: "Ahorra ~17%",
+    manageBilling: "Gestionar facturación",
+    checkoutFailed: "No se pudo iniciar el pago. Inténtalo de nuevo.",
+    upgradeSuccess: "Suscripción actualizada.",
+    alreadyOnPlan: "Ya estás en este plan.",
+    portalUnavailable: "Aún no hay facturación Stripe en esta organización.",
+    billingSuccessFlash: "Pago recibido. Tu plan se actualizará en unos segundos.",
+    billingCancelFlash: "Checkout cancelado. Tu plan no cambió.",
     gymQuota: "{used} / {max} gimnasios",
     invalidPlan: "Plan no válido",
     deleteFailed: "No se pudo programar la eliminación",
@@ -1732,7 +1803,10 @@ const es: Dictionary = {
     preview: "Vista previa",
     whitelabelLocked: "Personalización no incluida en plan gratuito",
     whitelabelLockedHint:
-      "Logo y tema personalizados están en Starter y superiores. En plan gratuito se usa la marca AMRAP.",
+      "En Starter: logo y colores. En Growth/Pro: white-label completo (dominio propio) cuando esté disponible. El plan gratuito usa la marca AMRAP.",
+    whitelabelStarterHint: "Personalización de marca: logo y colores de tu gym.",
+    whitelabelGrowthHint:
+      "White-label completo (dominio propio / branding avanzado) — acceso anticipado / próximamente en Growth y Pro.",
     upgradeWhitelabel: "Mejorar plan",
   },
   common: {
@@ -1808,6 +1882,7 @@ const en: Dictionary = {
     classes: "Classes",
     timers: "Timers",
     logout: "Log out",
+    loggingOut: "Signing out…",
     settings: "Settings",
     more: "More",
     myQr: "My QR",
@@ -1830,9 +1905,12 @@ const en: Dictionary = {
     installIosHint: "On Safari: tap Share, then “Add to Home Screen”.",
     install: "Install",
     dismiss: "Not now",
-    offlineReady: "AMRAP is ready with a cached app shell.",
-    updateAvailable: "A new version of AMRAP is available.",
-    reload: "Update",
+    offlineReadyTitle: "Ready on this device",
+    offlineReady: "AMRAP is cached so it opens faster next time.",
+    updateTitle: "New version available",
+    updateAvailable: "An AMRAP update is ready. Update now for fixes and improvements — it only takes a moment.",
+    reload: "Update now",
+    reloading: "Updating…",
   },
   a11y: {
     toggleTheme: "Toggle theme",
@@ -1850,6 +1928,7 @@ const en: Dictionary = {
     email: "Email",
     emailPlaceholder: "you@example.com",
     password: "Password",
+    passwordPlaceholder: "••••••••",
     showPassword: "Show password",
     hidePassword: "Hide password",
     submit: "Sign in",
@@ -1868,6 +1947,7 @@ const en: Dictionary = {
     email: "Email",
     emailPlaceholder: "you@email.com",
     password: "Password",
+    passwordPlaceholder: "••••••••",
     confirmPassword: "Confirm password",
     passwordMismatch: "Passwords do not match.",
     showPassword: "Show password",
@@ -2014,6 +2094,10 @@ const en: Dictionary = {
     description: "Complete your organization setup",
     submit: "Continue",
     error: "Could not continue",
+  },
+  noAccess: {
+    title: "No active gym",
+    body: "Your account isn’t linked to an active gym. Ask your gym to invite you again, or sign out to use a different account.",
   },
   dashboard: {
     title: "Daily overview",
@@ -2194,10 +2278,12 @@ const en: Dictionary = {
   },
   teamInvites: {
     error: "Could not send the invitation",
-    seatLimit: "You've reached your plan's staff seat limit",
+    seatLimit: "You've reached this gym's staff seat limit for your plan",
     alreadyOnTeam: "That person is already on this gym's team",
     alreadyOwner: "That person is already the owner of this gym",
     emailFailed: "Saved, but the invitation email could not be sent",
+    emailInUse: "That email is already registered to another person",
+    phoneInUse: "That phone is already registered to another person",
   },
   members: {
     title: "Members",
@@ -2231,6 +2317,12 @@ const en: Dictionary = {
     noMembers: "No members yet.",
     noResults: "No members match your search.",
     error: "Could not save member",
+    emailInUse: "That email is already registered to another person",
+    phoneInUse: "That phone is already registered to another person",
+    freemiumMemberLimit:
+      "You've reached the free plan's 30 active members. Upgrade to Starter to keep growing.",
+    softMemberCapWarning:
+      "This gym is past ~500 active members. Member access is not blocked. Talk to AMRAP about Growth/Pro or an overage if you need it.",
     notFound: "Member or plan not found",
     searchPlaceholder: "Search by name, email, or phone…",
     filterAll: "All",
@@ -2348,6 +2440,10 @@ const en: Dictionary = {
     sourceQr: "QR",
     sourceManual: "Manual",
     sourceKiosk: "Kiosk",
+    enterKiosk: "Kiosk mode",
+    exitKiosk: "Exit kiosk",
+    kioskHint:
+      "Full-screen for the front desk or iPad. Scan or search members without the app menu.",
     calendarTitle: "Attendance",
     calendarSubtitle: "This member’s check-ins for the month.",
     calendarPrev: "Previous month",
@@ -2593,6 +2689,20 @@ const en: Dictionary = {
     pricePerGym: "per active gym",
     priceContact: "Custom",
     perMonth: "/ month",
+    perYear: "/ year",
+    billingIntervalLabel: "Billing",
+    billingMonthly: "Monthly",
+    billingMonthlyHint: "Billed every month",
+    billingAnnual: "Annual",
+    billingAnnualHint: "One payment a year · best value",
+    billingAnnualSaveBadge: "Save ~17%",
+    manageBilling: "Manage billing",
+    checkoutFailed: "Could not start checkout. Try again.",
+    upgradeSuccess: "Subscription updated.",
+    alreadyOnPlan: "You’re already on this plan.",
+    portalUnavailable: "No Stripe billing is set up for this organization yet.",
+    billingSuccessFlash: "Payment received. Your plan will update in a moment.",
+    billingCancelFlash: "Checkout canceled. Your plan was not changed.",
     gymQuota: "{used} / {max} gyms",
     invalidPlan: "Invalid plan",
     deleteFailed: "Could not schedule deletion",
@@ -2643,7 +2753,10 @@ const en: Dictionary = {
     preview: "Preview",
     whitelabelLocked: "Customization is not included in free plan",
     whitelabelLockedHint:
-      "Custom logos and themes unlock on Starter and above. The free plan keeps AMRAP branding.",
+      "Starter: logo and colors. Growth/Pro: full white-label (custom domain) when available. Free plan keeps AMRAP branding.",
+    whitelabelStarterHint: "Brand customization: your gym logo and colors.",
+    whitelabelGrowthHint:
+      "Full white-label (custom domain / advanced branding) — early access / coming soon on Growth and Pro.",
     upgradeWhitelabel: "Upgrade plan",
   },
   common: {

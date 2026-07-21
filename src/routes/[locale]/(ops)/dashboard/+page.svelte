@@ -5,6 +5,7 @@
 	import Timer from '@lucide/svelte/icons/timer';
 	import Users from '@lucide/svelte/icons/users';
 	import DashboardQuickActions from '$lib/components/dashboard/DashboardQuickActions.svelte';
+	import { brandedTitle } from '$lib/seo/document-title';
 
 	let { data } = $props();
 	const dash = $derived(data.dashboard);
@@ -13,7 +14,7 @@
 </script>
 
 <svelte:head>
-	<title>{d.dashboard.title} — AMRAP</title>
+	<title>{brandedTitle(d.dashboard.title, data.documentBrand)}</title>
 </svelte:head>
 
 {#snippet metricCard(

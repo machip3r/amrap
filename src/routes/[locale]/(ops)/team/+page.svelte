@@ -3,6 +3,7 @@
 	import Briefcase from '@lucide/svelte/icons/briefcase';
 	import Dumbbell from '@lucide/svelte/icons/dumbbell';
 	import type { PageProps } from './$types';
+	import { brandedTitle } from '$lib/seo/document-title';
 
 	let { data }: PageProps = $props();
 	const d = $derived(data.d!);
@@ -19,7 +20,7 @@
 </script>
 
 <svelte:head>
-	<title>{title} — AMRAP</title>
+	<title>{brandedTitle(title, data.documentBrand)}</title>
 </svelte:head>
 
 <div class="flex w-full animate-fade-in-up flex-col gap-6">

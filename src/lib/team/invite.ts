@@ -1,6 +1,7 @@
 import type { Locale } from "$lib/i18n/config";
 import { getRequestOrigin } from "$lib/http/origin";
 import { createServiceRoleClient } from "$lib/supabase/admin";
+import { personUniqueFieldFromError } from "$lib/supabase/errors";
 import { sendEmail } from "$lib/email/resend";
 import {
   buildExistingUserMemberEmail,
@@ -174,7 +175,10 @@ export async function upsertPersonForUser(opts: {
   fullName: string;
   email: string;
   phone?: string | null;
-}): Promise<{ ok: true; personId: string } | { ok: false; message: string }> {
+}): Promise<
+  | { ok: true; personId: string }
+  | { ok: false; message: string; uniqueField?: "email" | "phone" | "user_id" | "qr_code" }
+> {
   const admin = createServiceRoleClient();
   if (!admin) {
     return { ok: false, message: "Missing SUPABASE_SERVICE_ROLE_KEY" };
@@ -196,7 +200,12 @@ export async function upsertPersonForUser(opts: {
 
   if (error || !data) {
     console.error("upsertPersonForUser", error?.message);
-    return { ok: false, message: error?.message ?? "person upsert failed" };
+    const uniqueField = personUniqueFieldFromError(error) ?? undefined;
+    return {
+      ok: false,
+      message: error?.message ?? "person upsert failed",
+      uniqueField: uniqueField ?? undefined,
+    };
   }
 
   return { ok: true, personId: data.id };

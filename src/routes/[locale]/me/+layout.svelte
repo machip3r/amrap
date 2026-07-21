@@ -67,6 +67,7 @@
 			/>
 			<LogoutButton
 				locale={data.locale}
+				pendingLabel={data.d.nav.loggingOut}
 				class="inline-flex h-[var(--touch-target)] min-w-[var(--touch-target)] items-center justify-center gap-1.5 rounded-md px-2 text-sm font-medium text-[var(--color-text)]/70 transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)] sm:px-3"
 				title={data.d.member.logout}
 			>

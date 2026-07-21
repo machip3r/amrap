@@ -29,7 +29,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 	} = await event.locals.supabase.auth.getUser();
 	event.locals.user = user;
 
-	if (pathname.startsWith('/auth/')) {
+	// Auth callbacks + public HTTP APIs (e.g. Stripe webhooks) — no locale prefix / session gate.
+	if (pathname.startsWith('/auth/') || pathname.startsWith('/api/')) {
 		return resolve(event);
 	}
 

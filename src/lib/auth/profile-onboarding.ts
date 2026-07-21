@@ -113,6 +113,23 @@ export async function resolveWelcomeRole(): Promise<WelcomeRole | null> {
   const member = await getMemberContext();
   if (member) return "member";
 
+  // Accepted/pending membership invite (e.g. not yet ACTIVE) still uses member welcome.
+  const { data: person } = await supabase
+    .from("persons")
+    .select("id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (person) {
+    const { data: membership } = await supabase
+      .from("memberships")
+      .select("id")
+      .eq("person_id", person.id)
+      .in("invite_status", ["pending", "accepted"])
+      .limit(1)
+      .maybeSingle();
+    if (membership) return "member";
+  }
+
   return null;
 }
 

@@ -6,17 +6,17 @@ import { createClient } from '$lib/supabase/server';
 import { entityNameSchema, formString, localeSchema, uuidSchema } from '$lib/validation/schemas';
 import { z } from 'zod';
 
+export type { OrgActionState } from '$lib/server/organization/billing';
+export {
+	requestBillingPortal,
+	requestSubscriptionCheckout
+} from '$lib/server/organization/billing';
+import type { OrgActionState } from '$lib/server/organization/billing';
 function localeFromForm(formData: FormData) {
 	const localeRaw = formString(formData, 'locale') || 'es';
 	const localeParsed = localeSchema.safeParse(localeRaw);
 	return localeParsed.success ? localeParsed.data : ('es' as const);
 }
-
-export type OrgActionState = {
-	error?: string;
-	success?: boolean;
-	message?: string;
-} | null;
 
 async function requireBillingWorkspace() {
 	const workspace = await getWorkspace();
@@ -24,30 +24,6 @@ async function requireBillingWorkspace() {
 		return null;
 	}
 	return workspace;
-}
-
-export async function requestSubscriptionCheckout(formData: FormData): Promise<OrgActionState> {
-	const locale = localeFromForm(formData);
-	const d = getDictionary(locale);
-	const workspace = await requireBillingWorkspace();
-	if (!workspace) return { error: d.common.forbidden };
-
-	const tier = formString(formData, 'tier');
-	if (!['STARTER', 'GROWTH', 'PRO'].includes(tier)) {
-		return { error: d.organization.invalidPlan };
-	}
-
-	if (tier === 'PRO') {
-		return {
-			success: true,
-			message: d.organization.contactProPlan
-		};
-	}
-
-	return {
-		success: true,
-		message: d.organization.checkoutComingSoon
-	};
 }
 
 export async function requestCreateGym(formData: FormData): Promise<OrgActionState> {

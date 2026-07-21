@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { ArrowLeft, ArrowRight, Mail, Phone, CreditCard } from '@lucide/svelte';
 	import CheckinMonthCalendar from '$lib/components/checkin/CheckinMonthCalendar.svelte';
+	import { brandedTitle } from '$lib/seo/document-title';
 
 	let { data } = $props();
 	const d = $derived(data.d);
@@ -20,7 +21,9 @@
 </script>
 
 <svelte:head>
-	<title>{member.memberName} — {d.checkin.calendarTitle} — AMRAP</title>
+	<title
+		>{brandedTitle(`${member.memberName} — ${d.checkin.calendarTitle}`, data.documentBrand)}</title
+	>
 </svelte:head>
 
 <div class="animate-fade-in-up flex w-full flex-col gap-5 pb-4">

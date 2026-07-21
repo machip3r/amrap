@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { fade, slide } from 'svelte/transition';
 	import { ChevronDown } from '@lucide/svelte';
 	import type { LandingDictionary } from '$lib/i18n/landing-dictionaries';
+	import { accordionSlide, reveal, uiFade } from '$lib/motion';
 
 	type Props = {
 		d: LandingDictionary;
@@ -12,7 +14,7 @@
 	const baseId = 'landing-faq';
 </script>
 
-<section id="preguntas" class="landing-section landing-section--muted">
+<section id="preguntas" class="landing-section landing-section--muted" use:reveal>
 	<div class="landing-container">
 		<h2 class="font-title landing-section-title">{d.faq.title}</h2>
 		<p class="landing-section-subtitle">{d.faq.subtitle}</p>
@@ -21,7 +23,10 @@
 				{@const isOpen = open === index}
 				{@const panelId = `${baseId}-panel-${index}`}
 				{@const buttonId = `${baseId}-button-${index}`}
-				<div class="landing-faq-item {isOpen ? 'landing-faq-item--open' : ''}">
+				<div
+					class="landing-faq-item {isOpen ? 'landing-faq-item--open' : ''}"
+					use:reveal={{ delay: index * 50 }}
+				>
 					<h3 class="landing-faq-q">
 						<button
 							id={buttonId}
@@ -35,15 +40,17 @@
 							<ChevronDown class="landing-faq-chevron" aria-hidden="true" />
 						</button>
 					</h3>
-					<div
-						id={panelId}
-						role="region"
-						aria-labelledby={buttonId}
-						hidden={!isOpen}
-						class="landing-faq-a"
-					>
-						<p>{item.a}</p>
-					</div>
+					{#if isOpen}
+						<div
+							id={panelId}
+							role="region"
+							aria-labelledby={buttonId}
+							class="landing-faq-a"
+							transition:slide={accordionSlide()}
+						>
+							<p transition:fade={uiFade(160)}>{item.a}</p>
+						</div>
+					{/if}
 				</div>
 			{/each}
 		</div>

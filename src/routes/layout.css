@@ -161,7 +161,70 @@ textarea:focus {
 }
 
 .animate-fade-in-up {
-	animation: fade-in-up 0.5s ease-out forwards;
+	animation: fade-in-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Scroll / marketing reveals (see `$lib/motion/reveal`) */
+.motion-reveal {
+	opacity: 0;
+	transform: translateY(1.1rem);
+	transition:
+		opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+		transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+	transition-delay: var(--reveal-delay, 0ms);
+	will-change: opacity, transform;
+}
+
+.motion-reveal--in {
+	opacity: 1;
+	transform: none;
+}
+
+.motion-reveal--stagger > .motion-reveal:nth-child(1) {
+	--reveal-delay: 0ms;
+}
+.motion-reveal--stagger > .motion-reveal:nth-child(2) {
+	--reveal-delay: 70ms;
+}
+.motion-reveal--stagger > .motion-reveal:nth-child(3) {
+	--reveal-delay: 140ms;
+}
+.motion-reveal--stagger > .motion-reveal:nth-child(4) {
+	--reveal-delay: 210ms;
+}
+.motion-reveal--stagger > .motion-reveal:nth-child(5) {
+	--reveal-delay: 280ms;
+}
+.motion-reveal--stagger > .motion-reveal:nth-child(6) {
+	--reveal-delay: 350ms;
+}
+
+/* Soft route cross-fade (View Transitions API) */
+@supports (view-transition-name: none) {
+	@media (prefers-reduced-motion: no-preference) {
+		::view-transition-old(root),
+		::view-transition-new(root) {
+			animation-duration: 180ms;
+			animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+		}
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.animate-fade-in-up,
+	.amrap-checkin-success-overlay,
+	.amrap-checkin-success-mark,
+	.amrap-checkin-success-ring {
+		animation: none !important;
+		opacity: 1;
+		transform: none;
+	}
+
+	.motion-reveal {
+		opacity: 1;
+		transform: none;
+		transition: none;
+	}
 }
 
 @keyframes amrap-checkin-pop {

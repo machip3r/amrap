@@ -2,7 +2,7 @@ import { error, redirect } from '@sveltejs/kit';
 import { getMemberContext } from '$lib/auth/member-session';
 import { getPendingInvite, invitePath } from '$lib/auth/invite-decision';
 import {
-	isInvitedOpsUser,
+	isNonOwnerInvitee,
 	needsOwnerOnboarding,
 	resolvePostAuthPath
 } from '$lib/auth/post-auth-redirect';
@@ -36,9 +36,9 @@ export const load: PageServerLoad = async ({ params, url }) => {
 	if (!user) throw redirect(303, `/${locale}/login`);
 
 	// Register / OTP land here — fetch gates in one round instead of a waterfall.
-	const [invite, invitedOps, state, workspace] = await Promise.all([
+	const [invite, invitee, state, workspace] = await Promise.all([
 		getPendingInvite(),
-		isInvitedOpsUser(),
+		isNonOwnerInvitee(),
 		getOnboardingState(),
 		getWorkspace()
 	]);
@@ -47,7 +47,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 		throw redirect(303, invitePath(locale));
 	}
 
-	if (invitedOps) {
+	if (invitee) {
 		throw redirect(303, await resolvePostAuthPath(locale));
 	}
 

@@ -65,13 +65,17 @@ export const actions: Actions = {
 
 	confirm: async ({ request }) => {
 		const formData = await request.formData();
-		const result = await confirmCheckIn(formString(formData, 'membershipId'));
+		const result = await confirmCheckIn(formString(formData, 'membershipId'), {
+			kiosk: formString(formData, 'kiosk') === '1'
+		});
 		return { result };
 	},
 
 	scan: async ({ request }) => {
 		const formData = await request.formData();
-		const result = await runCheckIn(formString(formData, 'code'));
+		const result = await runCheckIn(formString(formData, 'code'), {
+			kiosk: formString(formData, 'kiosk') === '1'
+		});
 		return { result };
 	},
 

@@ -337,7 +337,10 @@ export async function searchCheckInCandidates(raw: string): Promise<SearchCheckI
 }
 
 /** Confirm check-in for a membership chosen from search results. */
-export async function confirmCheckIn(membershipId: string): Promise<CheckinResult> {
+export async function confirmCheckIn(
+	membershipId: string,
+	opts?: { kiosk?: boolean }
+): Promise<CheckinResult> {
 	const id = uuidSchema.safeParse(membershipId);
 	if (!id.success) return { status: 'empty' };
 
@@ -352,7 +355,7 @@ export async function confirmCheckIn(membershipId: string): Promise<CheckinResul
 		p_qr_code: null,
 		p_membership_id: id.data,
 		p_branch_id: null,
-		p_source: 'MANUAL'
+		p_source: opts?.kiosk ? 'KIOSK' : 'MANUAL'
 	});
 
 	if (!byMembership.error && byMembership.data) {
@@ -368,7 +371,10 @@ export async function confirmCheckIn(membershipId: string): Promise<CheckinResul
 }
 
 /** QR / direct code check-in (camera or exact QR token). */
-export async function runCheckIn(raw: string): Promise<CheckinResult> {
+export async function runCheckIn(
+	raw: string,
+	opts?: { kiosk?: boolean }
+): Promise<CheckinResult> {
 	const parsed = checkInCodeSchema.safeParse(raw);
 	if (!parsed.success) return { status: 'empty' };
 	const trimmed = parsed.data;
@@ -379,13 +385,14 @@ export async function runCheckIn(raw: string): Promise<CheckinResult> {
 	}
 
 	const supabase = createClient();
+	const qrSource = opts?.kiosk ? 'KIOSK' : 'QR';
 
 	const byQr = await supabase.rpc('record_check_in', {
 		p_gym_id: workspace.gymId,
 		p_qr_code: trimmed,
 		p_membership_id: null,
 		p_branch_id: null,
-		p_source: 'QR'
+		p_source: qrSource
 	});
 
 	if (!byQr.error && byQr.data) {
@@ -400,7 +407,7 @@ export async function runCheckIn(raw: string): Promise<CheckinResult> {
 			p_qr_code: null,
 			p_membership_id: asUuid.data,
 			p_branch_id: null,
-			p_source: 'MANUAL'
+			p_source: opts?.kiosk ? 'KIOSK' : 'MANUAL'
 		});
 
 		if (!byMembership.error && byMembership.data) {

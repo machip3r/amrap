@@ -166,16 +166,15 @@ Prove QR speed, stability, and the ops UI with **no risk**. Tight enough to push
 | Limit | Freemium |
 | ----- | -------- |
 | Gyms / branches | 1 / 1 |
-| Active members | **30** |
-| Staff seats (login) | 2 |
+| Active members | **30** (hard stop on new actives) |
+| Staff seats (login) | **2 per gym** |
 | Membership plans | 2 |
 | Attendance history | 30 days |
 | QR + manual check-in | Yes |
 | Basic day dashboard | Yes |
 | Feedback inbox | Yes (internal; short retention) |
-| Payment gateway | **No** |
-| Financial reports / CSV | **No** |
-| White-label | **No** (AMRAP branding) |
+| Online member billing | **No** |
+| Branding | AMRAP branding only |
 | Multi-gym / consolidated stats | **No** |
 
 ### Starter (*Solo* — one complete gym)
@@ -183,15 +182,13 @@ Prove QR speed, stability, and the ops UI with **no risk**. Tight enough to push
 | Limit / unlock | Starter |
 | -------------- | ------- |
 | Gyms / branches | **1 / 1** |
-| Active members | **~500** practical soft cap (protects infra without choking a busy single site) |
-| Staff seats | ~5 |
+| Active members | **~500** soft per gym — **never block check-in or create**; warn owner to talk about Growth/Pro or overage |
+| Staff seats | **5 per gym** |
 | Membership plans | Unlimited (practical) |
 | Attendance history | Full |
-| Payment gateway (member billing) | **Yes** — core retention unlock |
-| Basic financial reports | **Yes** |
-| CSV / data export | **Yes** |
-| Inbox | Without Freemium retention ceiling |
-| White-label basics | Optional / later on same tier |
+| Online member billing (gateway) | **Yes — Beta** (Stripe / Mercado Pago early access) |
+| Manual payments (cash / SPEI / terminal) | **Yes** — no AMRAP platform fee (primary MX path today) |
+| Branding | **Logo + colors** (not custom domain) |
 | Multi-gym | **No** |
 
 Positioning: much lower monthly than typical competitors (often **$2,000+ MXN**/mo) while giving predictable cash per single-gym customer.
@@ -201,16 +198,29 @@ Positioning: much lower monthly than typical competitors (often **$2,000+ MXN**/
 Everything in Starter, plus:
 
 - **2–3 gyms** under the same organization (one invoice)
+- **~5 staff seats per gym** (≈ **15** across 3 locations — not a shared org pool of 5)
 - **Consolidated dashboard** (“bird’s-eye” across locations)
-- **Passport-style** member profiles across sites (one person, multi-gym memberships)
+- **Passport-style** member profiles across sites
 - **Comparative analytics** between gyms / branches
 - Same practical member soft cap **per gym** (~500)
+- **Full white-label** (custom domain / advanced branding) — **Coming soon** / early access
 
 Flat **$1,499 MXN / org / mo** — not billed per gym on the public price list.
 
 ### Pro (contact)
 
-For **more than 3 gyms**, higher / custom caps, priority support, and later advanced modules. No public list price — sales sets terms after the organization contacts AMRAP.
+For **more than 3 gyms**, unlimited staff/members, full customization, priority support, and later advanced modules. No public list price — sales sets terms after the organization contacts AMRAP.
+
+### Beta honesty (promise vs product)
+
+During Beta, mark unfinished money features clearly:
+
+- **Online member billing** and **AMRAP subscription checkout**: label **Beta** / early access on marketing and in-app.
+- Lean on **manual payment logging** (cash, SPEI, Clip/MP terminal) as the default strength for small MX gyms — no platform commission.
+
+### Planned competitive wedge: WhatsApp
+
+Automatic WhatsApp messages (Twilio / Meta Cloud API / Evolution, etc.): membership expiry reminders, class booking confirmations. High retention lever for LatAm — document as a near-term Phase 2+ priority.
 
 ---
 
@@ -231,12 +241,14 @@ Architecture and tenancy from day one: **multi-tenant, multi-organization, multi
 - Staff access control and dashboards
 - Owner/staff dashboards
 - Create/edit membership plans and pricing
+- **AMRAP org subscription** (Stripe Checkout / renew / upgrade for Starter & Growth, MXN)
 - Internal feedback / complaints inbox (text, internal view only)
 
 ### Phase 2
 
 - Coach workflows, announcements, penalties
 - Recurring / gateway billing for members, richer membership ops
+- **WhatsApp notifications** (expiry reminders, class booking confirmations) — LatAm retention wedge
 
 ### Later
 
@@ -245,6 +257,7 @@ Architecture and tenancy from day one: **multi-tenant, multi-organization, multi
 - Owner landing-page builder
 - Access hardware (doors / turnstiles)
 - Broader payment-provider coverage
+- Full white-label custom domain (Growth+)
 
 ---
 

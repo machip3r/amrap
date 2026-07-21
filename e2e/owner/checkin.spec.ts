@@ -53,4 +53,16 @@ test.describe("owner check-in", () => {
     await page.getByRole("button", { name: "Filtrar" }).click();
     await expect(page).toHaveURL(/type=member/);
   });
+
+  test("kiosk mode hides ops chrome and can exit", async ({ page }) => {
+    await page.goto("/es/checkin");
+    await expect(
+      page.getByRole("heading", { name: "Entrada", exact: true }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Modo kiosco" }).click();
+    await expect(page.getByRole("button", { name: "Salir de kiosco" })).toBeVisible();
+    await expect(page.locator("aside")).toHaveCount(0);
+    await page.getByRole("button", { name: "Salir de kiosco" }).click();
+    await expect(page.getByRole("button", { name: "Modo kiosco" })).toBeVisible();
+  });
 });

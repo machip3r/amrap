@@ -301,51 +301,8 @@
 					<article
 						class="rounded-2xl border border-[var(--color-border)] border-l-4 border-l-[var(--color-primary)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-6"
 					>
-						<div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-4">
-							{#if canManage}
-								<div class="order-2 flex shrink-0 flex-wrap items-center gap-1 sm:order-1">
-									<button
-										type="button"
-										onclick={() => {
-											scheduleRecurrence = 'weekly';
-											scheduling = c;
-										}}
-										class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 text-sm text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)]"
-										title={labels.schedule}
-									>
-										<CalendarDays class="h-4 w-4" aria-hidden="true" />
-										{labels.schedule}
-									</button>
-									{#if otherGyms.length > 0}
-										<button
-											type="button"
-											onclick={() => (duplicating = c)}
-											class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)]"
-											aria-label={labels.duplicate}
-											title={labels.duplicate}
-										>
-											<Copy class="h-4 w-4" aria-hidden="true" />
-										</button>
-									{/if}
-									<button
-										type="button"
-										onclick={() => (editing = c)}
-										class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)]"
-										aria-label={labels.edit}
-									>
-										<Pencil class="h-4 w-4" aria-hidden="true" />
-									</button>
-									<button
-										type="button"
-										onclick={() => (archiving = c)}
-										class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--color-border)] text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-hover)]"
-										aria-label={labels.archive}
-									>
-										<Archive class="h-4 w-4" aria-hidden="true" />
-									</button>
-								</div>
-							{/if}
-							<div class="order-1 min-w-0 flex-1 sm:order-2">
+						<div class="flex items-start justify-between gap-3 sm:gap-4">
+							<div class="min-w-0 flex-1">
 								<div class="flex flex-wrap items-center gap-2">
 									<h2 class="font-title text-xl font-bold text-[var(--color-text)]">{c.name}</h2>
 									<span
@@ -380,6 +337,53 @@
 									</span>
 								</div>
 							</div>
+							{#if canManage}
+								{@const actionBtn =
+									'inline-flex h-9 w-full min-w-[9.5rem] items-center justify-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 text-sm transition-colors hover:bg-[var(--color-surface-hover)] sm:w-[9.5rem]'}
+								<div class="flex w-max max-w-full shrink-0 flex-col gap-1 sm:flex-row sm:flex-wrap sm:justify-end">
+									<button
+										type="button"
+										onclick={() => {
+											scheduleRecurrence = 'weekly';
+											scheduling = c;
+										}}
+										class="{actionBtn} text-[var(--color-text)]"
+										title={labels.schedule}
+									>
+										<CalendarDays class="h-4 w-4 shrink-0" aria-hidden="true" />
+										{labels.schedule}
+									</button>
+									{#if otherGyms.length > 0}
+										<button
+											type="button"
+											onclick={() => (duplicating = c)}
+											class="{actionBtn} text-[var(--color-text)]"
+											title={labels.duplicate}
+										>
+											<Copy class="h-4 w-4 shrink-0" aria-hidden="true" />
+											{labels.duplicate}
+										</button>
+									{/if}
+									<button
+										type="button"
+										onclick={() => (editing = c)}
+										class="{actionBtn} text-[var(--color-text)]"
+										title={labels.edit}
+									>
+										<Pencil class="h-4 w-4 shrink-0" aria-hidden="true" />
+										{labels.edit}
+									</button>
+									<button
+										type="button"
+										onclick={() => (archiving = c)}
+										class="{actionBtn} text-[var(--color-muted)]"
+										title={labels.archive}
+									>
+										<Archive class="h-4 w-4 shrink-0" aria-hidden="true" />
+										{labels.archive}
+									</button>
+								</div>
+							{/if}
 						</div>
 					</article>
 				{/each}
@@ -393,11 +397,14 @@
 							<article
 								class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/50 p-5 sm:p-6"
 							>
-								<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+								<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+									<h2 class="min-w-0 font-title text-lg font-bold text-[var(--color-text)]">
+										{c.name}
+									</h2>
 									<form
 										method="POST"
 										action="?/setActive"
-										class="order-2 sm:order-1"
+										class="shrink-0 self-end sm:self-auto"
 										use:enhance={() => {
 											restorePending = c.id;
 											return async ({ update }) => {
@@ -423,9 +430,6 @@
 											{/if}
 										</button>
 									</form>
-									<h2 class="order-1 font-title text-lg font-bold text-[var(--color-text)] sm:order-2">
-										{c.name}
-									</h2>
 								</div>
 							</article>
 						{/each}

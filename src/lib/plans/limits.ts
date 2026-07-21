@@ -17,6 +17,30 @@ export function canCreatePlan(tier: OrgPlanTier, activePlanCount: number): boole
 }
 
 /**
+ * Active-member cap per gym.
+ * Freemium = hard block. Starter/Growth = soft (warn, never block check-in / create).
+ * `null` = unlimited (Pro).
+ */
+export function maxActiveMembers(tier: OrgPlanTier): number | null {
+	switch (tier) {
+		case 'FREEMIUM':
+			return 30;
+		case 'STARTER':
+		case 'GROWTH':
+			return 500;
+		case 'PRO':
+			return null;
+		default:
+			return 30;
+	}
+}
+
+/** Freemium hard-stops new active members; paid soft-caps only warn. */
+export function isHardMemberCap(tier: OrgPlanTier): boolean {
+	return tier === 'FREEMIUM';
+}
+
+/**
  * Max gyms per organization for self-serve / product caps.
  * Growth = Multi-Gym flat (2–3). Pro = custom (agreement).
  */
@@ -41,10 +65,10 @@ export function canCreateGym(tier: OrgPlanTier, gymCount: number): boolean {
 }
 
 /**
- * Max STAFF + TRAINER seats per gym (OWNER does not count).
- * `null` = unlimited.
+ * Max STAFF + TRAINER seats **per gym** (OWNER does not count).
+ * Growth ≈ 5/gym → up to 15 across 3 gyms. `null` = unlimited (Pro).
  */
-function maxStaffSeats(tier: OrgPlanTier): number | null {
+export function maxStaffSeats(tier: OrgPlanTier): number | null {
 	switch (tier) {
 		case 'FREEMIUM':
 			return 2;
@@ -58,6 +82,15 @@ function maxStaffSeats(tier: OrgPlanTier): number | null {
 	}
 }
 
+/** Illustrative org-wide staff ceiling when every gym is at the per-gym max. */
+export function maxStaffSeatsOrgHint(tier: OrgPlanTier): number | null {
+	const perGym = maxStaffSeats(tier);
+	const gyms = maxGyms(tier);
+	if (perGym == null) return null;
+	if (gyms == null) return null;
+	return perGym * gyms;
+}
+
 export function canInviteStaff(
 	tier: OrgPlanTier,
 	currentStaffAndTrainerCount: number
@@ -67,9 +100,17 @@ export function canInviteStaff(
 	return currentStaffAndTrainerCount < max;
 }
 
-/** Custom logo + theme (white-label). Freemium stays on default AMRAP branding. */
+/** Logo + theme colors (Starter+). Freemium keeps AMRAP branding. */
 export function canUseWhitelabel(tier: OrgPlanTier): boolean {
 	return tier !== 'FREEMIUM';
+}
+
+/**
+ * Full white-label (custom domain / advanced branding) — Growth & Pro.
+ * Feature may still be Beta / coming soon in UI.
+ */
+export function canUseCustomDomain(tier: OrgPlanTier): boolean {
+	return tier === 'GROWTH' || tier === 'PRO';
 }
 
 export const ORG_DELETION_RETENTION_DAYS = 30;

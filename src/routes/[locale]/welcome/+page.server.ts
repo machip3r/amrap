@@ -1,6 +1,6 @@
 import { error, redirect } from '@sveltejs/kit';
 import { getPendingInvite, invitePath } from '$lib/auth/invite-decision';
-import { needsOwnerOnboarding, resolvePostAuthPath } from '$lib/auth/post-auth-redirect';
+import { needsOwnerOnboarding, noAccessPath, resolvePostAuthPath } from '$lib/auth/post-auth-redirect';
 import {
 	getPersonProfileStatus,
 	resolveWelcomeRole
@@ -32,7 +32,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	if (profile.profileCompleted) throw redirect(303, await resolvePostAuthPath(locale));
 
 	const role = await resolveWelcomeRole();
-	if (!role) throw redirect(303, await resolvePostAuthPath(locale));
+	if (!role) throw redirect(303, noAccessPath(locale));
 
 	const title =
 		role === 'trainer'

@@ -25,6 +25,7 @@
 			</a>
 			<LogoutButton
 				locale={data.locale}
+				pendingLabel={data.d.nav.loggingOut}
 				class="mt-4 text-sm text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
 			>
 				{data.d.nav.logout}
@@ -57,6 +58,7 @@
 			<div class="mt-8 border-t border-[var(--color-border)] pt-5 text-center">
 				<LogoutButton
 					locale={data.locale}
+					pendingLabel={data.d.nav.loggingOut}
 					class="text-sm text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
 				>
 					{data.d.nav.logout}

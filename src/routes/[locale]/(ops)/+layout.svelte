@@ -7,6 +7,8 @@
 	import OpsNavLogo from '$lib/components/ops/OpsNavLogo.svelte';
 	import OpsNavProgress from '$lib/components/ops/OpsNavProgress.svelte';
 	import { getDictionary } from '$lib/i18n/dictionaries';
+	import { getCheckinKiosk } from '$lib/checkin/kiosk-shell.svelte';
+	import { DEFAULT_DOCUMENT_BRAND } from '$lib/seo/document-title';
 	import { getTimersImmersive } from '$lib/timers/shell.svelte';
 	import type { Snippet } from 'svelte';
 
@@ -20,6 +22,8 @@
 			brandStyle: string;
 			logoUrlLight: string | null;
 			logoUrlDark: string | null;
+			allowBrand?: boolean;
+			documentBrand?: string | null;
 			qrCode: string | null;
 		};
 		children: Snippet;
@@ -27,20 +31,70 @@
 
 	let { data, children }: Props = $props();
 	const d = $derived(getDictionary(data.locale));
-	/** Hide chrome without remounting page content (avoids resetting timer view state). */
-	const immersiveTimers = $derived(getTimersImmersive());
+	/** Hide chrome without remounting page content (timers run/edit · check-in kiosk). */
+	const immersive = $derived(getTimersImmersive() || getCheckinKiosk());
+
+	const appName = $derived(data.documentBrand?.trim() || DEFAULT_DOCUMENT_BRAND);
+	const faviconLight = $derived(data.logoUrlLight || data.logoUrlDark);
+	const faviconDark = $derived(data.logoUrlDark || data.logoUrlLight);
+
+	/** Override static AMRAP icons in app.html so the gym logo wins in the tab. */
+	$effect(() => {
+		const light = faviconLight;
+		const dark = faviconDark;
+		if (!light && !dark) return;
+
+		const links = document.querySelectorAll<HTMLLinkElement>(
+			'link[rel="icon"], link[rel="apple-touch-icon"]'
+		);
+		for (const link of links) {
+			const rel = link.getAttribute('rel') ?? '';
+			const media = link.getAttribute('media') ?? '';
+			if (rel.includes('apple-touch-icon')) {
+				if (light) link.href = light;
+				continue;
+			}
+			if (media.includes('dark')) {
+				if (dark) link.href = dark;
+			} else if (light) {
+				link.href = light;
+			}
+		}
+	});
 </script>
 
 <svelte:head>
 	{@html `<style>${data.brandStyle}</style>`}
 	<meta name="robots" content="noindex,nofollow" />
+	<meta name="application-name" content={appName} />
+	<meta name="apple-mobile-web-app-title" content={appName} />
+	{#if faviconLight}
+		<link rel="icon" href={faviconLight} type="image/png" sizes="32x32" />
+		<link
+			rel="icon"
+			href={faviconLight}
+			type="image/png"
+			sizes="32x32"
+			media="(prefers-color-scheme: light)"
+		/>
+		<link rel="apple-touch-icon" href={faviconLight} />
+	{/if}
+	{#if faviconDark}
+		<link
+			rel="icon"
+			href={faviconDark}
+			type="image/png"
+			sizes="32x32"
+			media="(prefers-color-scheme: dark)"
+		/>
+	{/if}
 </svelte:head>
 
 <OpsNavProgress />
 
 <div class="amrap-branded amrap-app-shell flex flex-col overflow-hidden bg-[var(--color-bg)]">
 	<div class="flex min-h-0 flex-1 overflow-hidden">
-		{#if !immersiveTimers}
+		{#if !immersive}
 			<AppNav
 				locale={data.locale}
 				role={data.workspace.role}
@@ -55,7 +109,7 @@
 			/>
 		{/if}
 		<div class="flex min-w-0 flex-1 flex-col overflow-hidden">
-			{#if !immersiveTimers}
+			{#if !immersive}
 				<header
 					class="flex h-[calc(var(--ops-header-height)+var(--safe-top))] shrink-0 items-center gap-2 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-[var(--spacing-page)] pt-[var(--safe-top)] sm:gap-3 sm:px-[var(--spacing-page-md)] lg:px-[var(--spacing-page-x-lg)]"
 				>
@@ -93,7 +147,7 @@
 				</header>
 			{/if}
 			<main
-				class={immersiveTimers
+				class={immersive
 					? 'flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--color-bg)] p-0'
 					: 'flex-1 overflow-y-auto px-[var(--spacing-page)] py-[var(--spacing-page)] pb-[var(--ops-bottom-clearance)] md:px-[var(--spacing-page-md)] md:py-[var(--spacing-page-md)] md:pb-[var(--spacing-page-md)] lg:px-[var(--spacing-page-x-lg)] lg:py-[var(--spacing-page-lg)] lg:pb-[var(--spacing-page-lg)]'}
 			>
@@ -101,7 +155,7 @@
 			</main>
 		</div>
 	</div>
-	{#if !immersiveTimers}
+	{#if !immersive}
 		<AmrapWatermark locale={data.locale} label={d.shell.poweredBy} class="hidden md:flex" />
 		<OpsMobileNav
 			locale={data.locale}

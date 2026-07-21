@@ -1,13 +1,14 @@
 <script lang="ts">
 	import ClassesClient from '$lib/components/classes/ClassesClient.svelte';
 	import type { PageProps } from './$types';
+	import { brandedTitle } from '$lib/seo/document-title';
 
 	let { data }: PageProps = $props();
 	const d = $derived(data.d!);
 </script>
 
 <svelte:head>
-	<title>{d.classes.title} — AMRAP</title>
+	<title>{brandedTitle(d.classes.title, data.documentBrand)}</title>
 </svelte:head>
 
 {#if data.forbidden}

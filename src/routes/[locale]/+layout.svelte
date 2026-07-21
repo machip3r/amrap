@@ -6,7 +6,12 @@
 	let { children, data } = $props();
 
 	const d = $derived(getDictionary(data.locale));
-	const documentTitle = $derived(titleFromPath(page.url.pathname, data.locale, d));
+	const documentBrand = $derived(
+		typeof page.data.documentBrand === 'string' ? page.data.documentBrand : null
+	);
+	const documentTitle = $derived(
+		titleFromPath(page.url.pathname, data.locale, d, documentBrand)
+	);
 
 	const indexable = $derived.by(() => {
 		const locale = data.locale;

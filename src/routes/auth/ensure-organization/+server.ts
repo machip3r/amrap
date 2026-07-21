@@ -1,7 +1,7 @@
 import { redirect, type RequestHandler } from '@sveltejs/kit';
 import { ensureOrganizationAfterConfirm } from '$lib/auth/ensure-organization';
 import {
-	isInvitedOpsUser,
+	isNonOwnerInvitee,
 	resolvePostAuthPath
 } from '$lib/auth/post-auth-redirect';
 import { getOnboardingState, getSessionUser } from '$lib/auth/session';
@@ -14,9 +14,9 @@ export const GET: RequestHandler = async ({ url }) => {
 	const user = await getSessionUser();
 	if (!user) throw redirect(302, `/${locale}/login`);
 
-	const [invitedOps, before] = await Promise.all([isInvitedOpsUser(), getOnboardingState()]);
+	const [invitee, before] = await Promise.all([isNonOwnerInvitee(), getOnboardingState()]);
 
-	if (invitedOps) {
+	if (invitee) {
 		throw redirect(302, await resolvePostAuthPath(locale));
 	}
 

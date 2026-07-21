@@ -1,5 +1,6 @@
 import { error, redirect } from '@sveltejs/kit';
 import { getPendingInvite, invitePath } from '$lib/auth/invite-decision';
+import { noAccessPath } from '$lib/auth/post-auth-redirect';
 import { needsProfileWelcome, welcomePath } from '$lib/auth/profile-onboarding';
 import { getMemberContext } from '$lib/auth/member-session';
 import type { Locale } from '$lib/i18n/config';
@@ -12,7 +13,7 @@ export const load: LayoutServerLoad = async ({ params }) => {
 	const locale = params.locale as Locale;
 
 	const member = await getMemberContext();
-	if (!member) throw redirect(303, `/${locale}/login`);
+	if (!member) throw redirect(303, noAccessPath(locale));
 
 	if (await getPendingInvite()) throw redirect(303, invitePath(locale));
 	if (await needsProfileWelcome()) throw redirect(303, welcomePath(locale));

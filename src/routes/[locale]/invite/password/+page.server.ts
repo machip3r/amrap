@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ params }) => {
 
 	if (await getPendingInvite()) throw redirect(303, invitePath(locale));
 
-	return { locale, d };
+	return { locale, d, hasSession: true };
 };
 
 export const actions = {

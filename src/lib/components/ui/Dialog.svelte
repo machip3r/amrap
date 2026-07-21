@@ -1,6 +1,8 @@
 <script lang="ts">
 	import X from '@lucide/svelte/icons/x';
 	import type { Snippet } from 'svelte';
+	import { fade, fly } from 'svelte/transition';
+	import { uiFade, uiFly } from '$lib/motion';
 
 	type Props = {
 		open: boolean;
@@ -93,9 +95,10 @@
 		{#if !fullScreen}
 			<button
 				type="button"
-				class="absolute inset-0 bg-[var(--color-text)]/40 backdrop-blur-[2px] transition-opacity"
+				class="absolute inset-0 bg-[var(--color-text)]/40 backdrop-blur-[2px]"
 				aria-label={closeLabel}
 				onclick={() => onOpenChange(false)}
+				transition:fade={uiFade(160)}
 			></button>
 		{/if}
 		<div
@@ -104,7 +107,8 @@
 			aria-modal="true"
 			aria-labelledby={titleId}
 			aria-describedby={description ? descId : undefined}
-			class="animate-fade-in-up relative z-10 flex flex-col overflow-hidden bg-[var(--color-surface)] {panelSize} {panelClassName}"
+			class="relative z-10 flex flex-col overflow-hidden bg-[var(--color-surface)] {panelSize} {panelClassName}"
+			transition:fly={uiFly(fullScreen ? 220 : 280, fullScreen ? 12 : 18)}
 		>
 			<div
 				class="relative shrink-0 border-b border-[var(--color-border)] px-6 pb-4 pr-14 {fullScreen

@@ -74,7 +74,7 @@
 					return;
 				}
 				pending = false;
-				await update();
+				await update({ reset: false });
 			};
 		}}
 	>
@@ -110,6 +110,7 @@
 					autocomplete="current-password"
 					maxlength={LIMITS.password.max}
 					required
+					placeholder={d.login.passwordPlaceholder}
 					showLabel={d.login.showPassword}
 					hideLabel={d.login.hidePassword}
 					bind:value={password}

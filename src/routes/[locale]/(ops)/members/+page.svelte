@@ -6,6 +6,7 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import type { CreateMemberState } from '$lib/server/members/actions';
 	import type { PageProps } from './$types';
+	import { brandedTitle } from '$lib/seo/document-title';
 
 	let { data, form }: PageProps = $props();
 	const d = $derived(data.d!);
@@ -27,7 +28,7 @@
 </script>
 
 <svelte:head>
-	<title>{d.members.title} — AMRAP</title>
+	<title>{brandedTitle(d.members.title, data.documentBrand)}</title>
 </svelte:head>
 
 {#if data.forbidden}

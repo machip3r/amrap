@@ -7,6 +7,7 @@ English reference for the Postgres schema (Supabase). Source of truth: migration
 | `001_initial.sql` | Full MVP schema, RLS, RPCs |
 | `002_onboarding.sql` | Onboarding columns / RPC refresh + org select policy (upgrade path) |
 | `20260716003201_harden_security_definer_grants.sql` | Move RLS helpers to `private`; revoke anon EXECUTE on public RPCs; drop `gym-logos` listing policy |
+| `20260721040252_persons_unique_and_auth_cascade.sql` | Unique `persons.email` / `phone` when set; `persons.user_id` `ON DELETE CASCADE` |
 
 **Rule:** never edit an applied migration. Append a new timestamped migration instead.
 
@@ -57,9 +58,9 @@ Platform-wide person profile. May exist **without** `user_id` (staff-created mem
 | Column | Notes |
 | ------ | ----- |
 | `id` | PK |
-| `user_id` | Unique FK → `auth.users`, nullable, `on delete set null` |
+| `user_id` | Unique FK → `auth.users`, nullable, **`on delete cascade`** (claimed person + person-scoped rows go with the auth user; unclaimed persons untouched) |
 | `full_name` | Required |
-| `email`, `phone` | Optional; partial indexes when present |
+| `email`, `phone` | Optional; **unique when present** (`lower(email)`, `phone`); multiple NULLs allowed |
 | `date_of_birth` | Optional; invite profile onboarding (staff/trainer/member) |
 | `sex` | Optional; `male` \| `female` \| `other` \| `prefer_not` (member profile) |
 | `height_cm` / `weight_kg` | Optional numerics with DB range checks (member profile) |
@@ -67,7 +68,16 @@ Platform-wide person profile. May exist **without** `user_id` (staff-created mem
 | `qr_code` | **Unique** credential; default random UUID text |
 | `created_at`, `updated_at` | |
 
-Indexes: `user_id`, `email`, `phone`, `qr_code`.
+Indexes: `user_id`, unique `email` / `phone` (partial), unique `qr_code`.
+
+#### Auth user delete behavior
+
+| FK | On delete | Why |
+| -- | --------- | --- |
+| `persons.user_id` | **CASCADE** | Remove claimed identity + memberships/check-ins/bookings/inbox via person cascades |
+| `gym_roles.user_id`, `branch_assignments.user_id`, `class_trainers.user_id`, `platform_admins.user_id` | **CASCADE** | Drop ops access rows for that account |
+| `organizations.created_by`, `gyms.owner_user_id` | **SET NULL** | Keep org/gym; ownership transfer is a separate product flow |
+| `payments.recorded_by`, `check_ins.recorded_by`, `class_bookings.booked_by`, care/session `updated_by` / `recorded_by` | **SET NULL** | Preserve audit history |
 
 ---
 
@@ -79,6 +89,10 @@ Billing account for AMRAP.
 | ------ | ----- |
 | `name` | Display name |
 | `plan_tier` | `FREEMIUM` \| `STARTER` \| `GROWTH` \| `PRO` (default Freemium) |
+| `stripe_customer_id` | Stripe Customer (`cus_…`) for AMRAP platform subscription; unique when set |
+| `stripe_subscription_id` | Active Stripe Subscription (`sub_…`) when on a paid plan |
+| `stripe_subscription_status` | Mirror of Stripe `subscription.status` (`active`, `past_due`, `canceled`, …) |
+| `billing_interval` | `month` \| `year` for the current paid price |
 | `created_by` | Signup user |
 | `pending_as_provisional` | Signup/onboarding: acting as provisional owner |
 | `onboarding_plans_done` | Step “plans” finished or skipped |
@@ -306,6 +320,7 @@ Exact predicates live in `001_initial.sql` (and `002` for org select). Always re
 
 - `organizations.deleted_at` / `gyms.deleted_at` support scheduled deletion (product: ~30 days + optional CSV export). Hard purge is application/ops work, not fully automated in MVP SQL.
 - Cascade FKs remove children when a gym/org row is **hard**-deleted.
+- Deleting an **`auth.users`** row cascades claimed `persons` (and person-scoped data) plus ops access (`gym_roles`, etc.); org/gym rows and audit `*_by` columns are preserved (`SET NULL`). See `persons` → *Auth user delete behavior*.
 
 ---
 
@@ -319,7 +334,7 @@ Expect future migrations for:
 - Freemium numeric caps as DB constraints or trigger checks
 - Class sessions/schedules → **shipped** (see Classes below)
 - Announcements, penalties, routines, community
-- Org billing (Stripe/MP subscriptions), member payment gateway accounts
+- Org billing (Stripe Checkout + webhooks sync `plan_tier` / subscription ids on `organizations`), member payment gateway accounts
 - Impersonation audit log
 - Member white-label / custom domain (gym branding columns exist for admin dashboard)
 - Hardware device registry

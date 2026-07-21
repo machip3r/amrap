@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { fade } from 'svelte/transition';
 	import type { Locale } from '$lib/i18n/config';
 	import type { LandingDictionary } from '$lib/i18n/landing-dictionaries';
+	import { reveal, uiFade } from '$lib/motion';
 	import LandingNav from './LandingNav.svelte';
 	import LandingContact from './LandingContact.svelte';
 	import LandingFaq from './LandingFaq.svelte';
@@ -69,13 +71,13 @@
 		</div>
 	</section>
 
-	<section class="landing-audience" aria-label={d.audience.title}>
+	<section class="landing-audience" aria-label={d.audience.title} use:reveal>
 		<div class="landing-container landing-audience-head">
 			<p class="landing-audience-title">{d.audience.title}</p>
 		</div>
 		<div class="landing-marquee" aria-hidden="true">
 			<div class="landing-marquee-track">
-				{#each [...d.audience.items, ...d.audience.items] as item, i}
+				{#each [...d.audience.items, ...d.audience.items] as item}
 					<span class="landing-marquee-item">{item}</span>
 				{/each}
 			</div>
@@ -87,7 +89,7 @@
 		</ul>
 	</section>
 
-	<section id="producto" class="landing-section">
+	<section id="producto" class="landing-section" use:reveal>
 		<div class="landing-container">
 			<p class="landing-eyebrow">{d.difference.eyebrow}</p>
 			<h2 class="font-title landing-section-title landing-section-title--left">
@@ -98,7 +100,7 @@
 			</p>
 			<div class="landing-diff-grid">
 				{#each d.difference.items as item, index}
-					<article class="landing-diff-item">
+					<article class="landing-diff-item" use:reveal={{ delay: index * 70 }}>
 						<span class="landing-diff-index" aria-hidden="true">
 							{String(index + 1).padStart(2, '0')}
 						</span>
@@ -108,7 +110,7 @@
 				{/each}
 			</div>
 
-			<div class="landing-product-block">
+			<div class="landing-product-block" use:reveal>
 				<h2 class="font-title landing-section-title landing-section-title--left">
 					{d.product.title}
 				</h2>
@@ -116,8 +118,8 @@
 					{d.product.subtitle}
 				</p>
 				<div class="landing-features-grid">
-					{#each d.product.items as item}
-						<article class="landing-feature">
+					{#each d.product.items as item, index}
+						<article class="landing-feature" use:reveal={{ delay: index * 60 }}>
 							<h3 class="font-title landing-feature-title">{item.title}</h3>
 							<p class="landing-feature-body">{item.body}</p>
 						</article>
@@ -127,27 +129,27 @@
 		</div>
 	</section>
 
-	<section id="proceso" class="landing-section landing-section--muted landing-process">
+	<section id="proceso" class="landing-section landing-section--muted landing-process" use:reveal>
 		<div class="landing-container">
 			<p class="landing-eyebrow">{d.process.eyebrow}</p>
 			<h2 class="font-title landing-section-title">{d.process.title}</h2>
 			<p class="landing-section-subtitle">{d.process.subtitle}</p>
 			<ol class="landing-steps">
-				{#each d.process.steps as step}
-					<li class="landing-step">
+				{#each d.process.steps as step, index}
+					<li class="landing-step" use:reveal={{ delay: index * 80 }}>
 						<span class="landing-step-num font-title" aria-hidden="true">{step.step}</span>
 						<h3 class="font-title landing-step-title">{step.title}</h3>
 						<p class="landing-step-body">{step.body}</p>
 					</li>
 				{/each}
 			</ol>
-			<div class="landing-process-cta">
+			<div class="landing-process-cta" use:reveal={{ delay: 120 }}>
 				<a href="{prefix}/register" class="landing-hero-primary">{d.process.cta}</a>
 			</div>
 		</div>
 	</section>
 
-	<section id="precios" class="landing-section">
+	<section id="precios" class="landing-section" use:reveal>
 		<div class="landing-container">
 			<h2 class="font-title landing-section-title">{d.pricing.title}</h2>
 			<p class="landing-pricing-subtitle">{d.pricing.subtitle}</p>
@@ -177,18 +179,23 @@
 			</div>
 
 			<div class="landing-pricing-grid">
-				{#each d.pricing.plans as plan}
+				{#each d.pricing.plans as plan, index}
 					{@const price = billing === 'annual' ? plan.priceAnnual : plan.priceMonthly}
 					{@const period = billing === 'annual' ? plan.periodAnnual : plan.periodMonthly}
 					<article
 						class="landing-price-card {plan.highlighted ? 'landing-price-card--featured' : ''}"
+						use:reveal={{ delay: index * 70 }}
 					>
 						{#if plan.badge}
 							<span class="landing-price-badge">{plan.badge}</span>
 						{/if}
 						<h3 class="font-title landing-price-name">{plan.name}</h3>
 						<p class="landing-price-amount">
-							<span class="font-title">{price}</span>
+							{#key `${plan.name}-${billing}`}
+								<span class="font-title landing-price-value" in:fade={uiFade(160)}>
+									{price}
+								</span>
+							{/key}
 							{#if period}
 								<span class="landing-price-period">{period}</span>
 							{/if}
@@ -217,9 +224,11 @@
 	</section>
 
 	<LandingFaq {d} />
-	<LandingContact {d} />
+	<div use:reveal>
+		<LandingContact {d} />
+	</div>
 
-	<section class="landing-cta-band">
+	<section class="landing-cta-band" use:reveal>
 		<div class="landing-container landing-cta-band-inner">
 			<p class="landing-eyebrow landing-eyebrow--on-dark">{d.ctaBand.eyebrow}</p>
 			<h2 class="font-title landing-cta-band-title">{d.ctaBand.title}</h2>
@@ -236,7 +245,7 @@
 		</div>
 	</section>
 
-	<footer class="landing-footer">
+	<footer class="landing-footer" use:reveal>
 		<div class="landing-container landing-footer-grid">
 			<div class="landing-footer-brand">
 				<img

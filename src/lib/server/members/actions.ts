@@ -18,7 +18,12 @@ import {
 import { zodFieldErrors } from '$lib/validation/field-errors';
 import { toDbMemberStatus, toDbPaymentMethod } from '$lib/validation/db-enums';
 import { getDictionary } from '$lib/i18n/dictionaries';
+import {
+	isHardMemberCap,
+	maxActiveMembers
+} from '$lib/plans/limits';
 import { createClient } from '$lib/supabase/server';
+import { personUniqueFieldFromError } from '$lib/supabase/errors';
 import { inviteAuthUserByEmail, linkPersonToUser } from '$lib/team/invite';
 import { z } from 'zod';
 
@@ -47,6 +52,8 @@ export type CreateMemberState = {
 	success?: boolean;
 	memberId?: string;
 	emailWarning?: string;
+	/** Soft member-cap notice (Starter/Growth); create still succeeded. */
+	softCapWarning?: string;
 } | null;
 
 export async function createMember(formData: FormData): Promise<CreateMemberState> {
@@ -85,6 +92,28 @@ export async function createMember(formData: FormData): Promise<CreateMemberStat
 
 	const expires = computeNewMembershipExpiry(plan.duration_days);
 
+	const memberCap = maxActiveMembers(workspace.planTier);
+	let softCapWarning: string | undefined;
+	if (memberCap != null) {
+		const { count, error: countErr } = await supabase
+			.from('memberships')
+			.select('id', { count: 'exact', head: true })
+			.eq('gym_id', workspace.gymId)
+			.eq('status', 'ACTIVE');
+
+		if (countErr) {
+			console.error('createMember active count', countErr.message);
+		} else {
+			const active = count ?? 0;
+			if (active >= memberCap && isHardMemberCap(workspace.planTier)) {
+				return { error: d.members.freemiumMemberLimit };
+			}
+			if (active >= memberCap && !isHardMemberCap(workspace.planTier)) {
+				softCapWarning = d.members.softMemberCapWarning;
+			}
+		}
+	}
+
 	const { data: membershipId, error } = await supabase.rpc('create_gym_membership', {
 		p_gym_id: workspace.gymId,
 		p_full_name: parsed.data.name,
@@ -97,6 +126,13 @@ export async function createMember(formData: FormData): Promise<CreateMemberStat
 
 	if (error || !membershipId) {
 		console.error('createMember', error?.message);
+		const uniqueField = personUniqueFieldFromError(error);
+		if (uniqueField === 'email') {
+			return { fieldErrors: { email: d.members.emailInUse } };
+		}
+		if (uniqueField === 'phone') {
+			return { fieldErrors: { phone: d.members.phoneInUse } };
+		}
 		return { error: d.members.error };
 	}
 
@@ -159,7 +195,8 @@ export async function createMember(formData: FormData): Promise<CreateMemberStat
 	return {
 		success: true,
 		memberId: String(membershipId),
-		emailWarning
+		emailWarning,
+		softCapWarning
 	};
 }
 

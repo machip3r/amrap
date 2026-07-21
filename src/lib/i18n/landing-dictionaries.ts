@@ -166,7 +166,7 @@ const es: LandingDictionary = {
       },
       {
         title: "La organización paga, no el socio",
-        body: "Tus miembros te pagan a ti. En planes de pago, la pasarela es tuya — AMRAP no se queda con comisión de plataforma sobre esos cobros.",
+        body: "Hoy registras efectivo, SPEI o terminal (Clip/MP) sin comisión de plataforma — así cobran la mayoría de gyms pequeños en México. La pasarela en línea para socios viene en Beta en planes de pago.",
       },
       {
         title: "Multi-gym sin sorpresa",
@@ -248,10 +248,10 @@ const es: LandingDictionary = {
         features: [
           "Hasta 30 socios activos",
           "Check-in con QR o en recepción",
-          "2 personas de staff · 2 planes",
+          "2 staff por gym · 2 planes",
           "Resumen del día e inbox interno",
           "Historial de 30 días",
-          "Sin cobros en línea ni exportar",
+          "Marca AMRAP · sin cobros en línea",
         ],
       },
       {
@@ -265,11 +265,12 @@ const es: LandingDictionary = {
         badge: "Más elegido",
         cta: "register",
         features: [
-          "Hasta ~500 socios activos",
-          "Cobros en línea (pasarela)",
-          "Reportes básicos de dinero",
-          "Exportar CSV",
-          "Historial completo · hasta ~5 staff",
+          "Hasta ~500 socios activos (aviso suave; no bloquea acceso)",
+          "5 cuentas de staff por sede",
+          "Planes de membresía ilimitados",
+          "Cobros en línea · Beta (Stripe / Mercado Pago)",
+          "Pagos manuales sin comisión de plataforma (efectivo, SPEI, Clip)",
+          "Personalización de marca (logo y colores)",
           "1 gym · 1 sucursal",
         ],
       },
@@ -283,10 +284,9 @@ const es: LandingDictionary = {
         cta: "register",
         features: [
           "Todo lo de Starter",
-          "Hasta 3 gyms en una sola factura",
-          "Vista de todas las sedes juntas",
-          "Membresía que funciona entre sedes",
-          "Comparar números entre gyms",
+          "Hasta 3 sedes · ~5 staff por sede (hasta 15 en la org)",
+          "Vista multi-gym / pasaporte entre sedes",
+          "White-label completo (dominio propio) · Próximamente",
           "El tercer gym no sube el software",
         ],
       },
@@ -300,9 +300,9 @@ const es: LandingDictionary = {
         cta: "contact",
         features: [
           "4 o más gyms, o algo a la medida",
-          "Límites y condiciones acordadas",
+          "Staff y socios ilimitados",
+          "White-label y personalización total",
           "Soporte prioritario",
-          "Módulos extra cuando los necesites",
           "Lo de Growth, adaptado a ti",
         ],
       },
@@ -318,15 +318,15 @@ const es: LandingDictionary = {
       },
       {
         q: "¿Qué incluye el plan gratis de verdad?",
-        a: "1 gym, 1 sucursal, hasta 30 socios activos, check-in QR o manual, 2 staff, 2 planes y el resumen del día. Sirve para probar operación real, no solo una demo.",
+        a: "1 gym, 1 sucursal, hasta 30 socios activos, check-in QR o manual, 2 staff por gym, 2 planes y el resumen del día. Sirve para probar operación real, no solo una demo.",
       },
       {
         q: "¿AMRAP se queda con comisión de mis membresías?",
-        a: "No. En planes de pago conectas tu pasarela; el objetivo es 0% de comisión de plataforma sobre esos cobros. Las comisiones de la tarjeta o la red las cobra el proveedor.",
+        a: "No. Hoy registras pagos en efectivo, SPEI o terminal (Clip/MP) sin comisión de plataforma. La pasarela en línea para socios está en acceso anticipado (Beta) en planes de pago; las comisiones de tarjeta las cobra el proveedor.",
       },
       {
         q: "¿Puedo manejar varios gyms?",
-        a: "Sí. Growth cubre 2–3 gyms con una factura fija. Si necesitas 4 o más, el plan Pro se cotiza contigo.",
+        a: "Sí. Growth cubre 2–3 gyms con una factura fija y hasta ~5 staff por sede. Si necesitas 4 o más, el plan Pro se cotiza contigo.",
       },
       {
         q: "¿Qué pasa con el QR si alguien entrena en varios lugares?",
@@ -439,7 +439,7 @@ const en: LandingDictionary = {
       },
       {
         title: "Your org pays — not your members",
-        body: "Members pay your gym. On paid plans you connect your own gateway — AMRAP aims for 0% platform fee on those charges.",
+        body: "Today you log cash, SPEI, or terminal (Clip/MP) with no platform fee — how most small MX gyms collect. Online member billing ships as Beta on paid plans.",
       },
       {
         title: "Multi-gym without the gotcha",
@@ -521,10 +521,10 @@ const en: LandingDictionary = {
         features: [
           "Up to 30 active members",
           "QR check-in or front-desk lookup",
-          "2 staff seats · 2 membership plans",
+          "2 staff per gym · 2 membership plans",
           "Day overview and internal inbox",
           "30-day history",
-          "No online payments or data export",
+          "AMRAP branding · no online member billing",
         ],
       },
       {
@@ -538,11 +538,12 @@ const en: LandingDictionary = {
         badge: "Most chosen",
         cta: "register",
         features: [
-          "Up to about 500 active members",
-          "Online payment gateway",
-          "Basic money reports",
-          "CSV export",
-          "Full history · about 5 staff seats",
+          "Up to ~500 active members (soft notice; access never blocked)",
+          "5 staff accounts per location",
+          "Unlimited membership plans",
+          "Online member billing · Beta (Stripe / Mercado Pago)",
+          "Manual payments with no platform fee (cash, transfer, terminal)",
+          "Brand customization (logo and colors)",
           "1 gym · 1 branch",
         ],
       },
@@ -556,10 +557,9 @@ const en: LandingDictionary = {
         cta: "register",
         features: [
           "Everything in Starter",
-          "Up to 3 gyms on one invoice",
-          "See all locations in one place",
-          "Membership that works across sites",
-          "Compare numbers between gyms",
+          "Up to 3 locations · ~5 staff per gym (up to 15 in the org)",
+          "Multi-gym rollup / passport across sites",
+          "Full white-label (custom domain) · Coming soon",
           "A third gym doesn’t raise the software bill",
         ],
       },
@@ -573,9 +573,9 @@ const en: LandingDictionary = {
         cta: "contact",
         features: [
           "4+ gyms, or something custom",
-          "Limits and terms we agree on together",
+          "Unlimited staff and members",
+          "Full white-label and customization",
           "Priority support",
-          "Extra modules when you need them",
           "Growth, shaped to your setup",
         ],
       },
@@ -591,15 +591,15 @@ const en: LandingDictionary = {
       },
       {
         q: "What’s actually in the free plan?",
-        a: "1 gym, 1 branch, up to 30 active members, QR or manual check-in, 2 staff, 2 plans, and the day overview. Enough to prove real ops — not just a demo.",
+        a: "1 gym, 1 branch, up to 30 active members, QR or manual check-in, 2 staff per gym, 2 plans, and the day overview. Enough to prove real ops — not just a demo.",
       },
       {
         q: "Does AMRAP take a cut of my memberships?",
-        a: "No. On paid plans you connect your own gateway; we aim for 0% platform fee on those charges. Card/network fees stay with the provider.",
+        a: "No. Today you log cash, SPEI, or terminal (Clip/MP) payments with no platform fee. Online member billing is early access (Beta) on paid plans; card fees stay with the provider.",
       },
       {
         q: "Can I run multiple gyms?",
-        a: "Yes. Growth covers 2–3 gyms on one flat invoice. Need 4 or more? Pro is quoted with you.",
+        a: "Yes. Growth covers 2–3 gyms on one flat invoice with ~5 staff per location. Need 4 or more? Pro is quoted with you.",
       },
       {
         q: "What about QR if someone trains in several places?",

@@ -1,12 +1,14 @@
 <script lang="ts">
 	import History from '@lucide/svelte/icons/history';
 	import UserPlus from '@lucide/svelte/icons/user-plus';
+	import { page } from '$app/state';
 	import CreateTeamMemberDialog from '$lib/components/team/CreateTeamMemberDialog.svelte';
 	import TeamList from '$lib/components/team/TeamList.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import type { Dictionary } from '$lib/i18n/dictionaries';
 	import type { Locale } from '$lib/i18n/config';
 	import type { PageMeta } from '$lib/pagination';
+	import { brandedTitle } from '$lib/seo/document-title';
 	import type { CreateTeamMemberState } from '$lib/server/team/actions';
 	import type { TeamMember } from '$lib/team/queries';
 
@@ -54,7 +56,7 @@
 </script>
 
 <svelte:head>
-	<title>{title} — AMRAP</title>
+	<title>{brandedTitle(title, typeof page.data.documentBrand === 'string' ? page.data.documentBrand : null)}</title>
 </svelte:head>
 
 <div class="flex w-full animate-fade-in-up flex-col gap-5">

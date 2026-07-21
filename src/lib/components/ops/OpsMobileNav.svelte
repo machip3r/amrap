@@ -217,6 +217,7 @@
 		{/each}
 		<LogoutButton
 			{locale}
+			pendingLabel={d.nav.loggingOut}
 			class={moreLinkClass(false)}
 			title={d.nav.logout}
 		>

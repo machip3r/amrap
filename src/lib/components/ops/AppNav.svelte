@@ -201,6 +201,7 @@
 		{/if}
 		<LogoutButton
 			{locale}
+			pendingLabel={d.nav.loggingOut}
 			class={navLinkClass(false)}
 			title={collapsed ? d.nav.logout : undefined}
 		>

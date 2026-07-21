@@ -7,6 +7,7 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import { formatSessionTime } from '$lib/classes/types';
 	import type { PageProps } from './$types';
+	import { brandedTitle } from '$lib/seo/document-title';
 
 	let { data }: PageProps = $props();
 	const d = $derived(data.d!);
@@ -22,7 +23,7 @@
 </script>
 
 <svelte:head>
-	<title>{session?.class_name ?? d.nav.classes} — AMRAP</title>
+	<title>{brandedTitle(session?.class_name ?? d.nav.classes, data.documentBrand)}</title>
 </svelte:head>
 
 {#if data.forbidden || !session}

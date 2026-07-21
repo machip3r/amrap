@@ -26,6 +26,9 @@ importers:
       resend:
         specifier: ^6.17.2
         version: 6.17.2
+      stripe:
+        specifier: ^22.3.2
+        version: 22.3.2(@types/node@26.1.1)
       workbox-window:
         specifier: ^7.4.1
         version: 7.4.1
@@ -2599,6 +2602,15 @@ packages:
   strip-json-comments@5.0.3:
     resolution: {integrity: sha512-1tB5mhVo7U+ETBKNf92xT4hrQa3pm0MZ0PQvuDnWgAAGHDsfp4lPSpiS6psrSiet87wyGPh9ft6wmhOMQ0hDiw==}
     engines: {node: '>=14.16'}
+
+  stripe@22.3.2:
+    resolution: {integrity: sha512-O13QOvgEIQvDlTy6Ubb5kB980wpbhmoZNsgCXKILjCMZS67f+bW+6w99k3gnSi/N1lkryoj1WYdpGT5Wc5edjg==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@types/node': '>=18'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
 
   supports-preserve-symlinks-flag@1.0.0:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
@@ -5429,6 +5441,10 @@ snapshots:
   strip-comments@2.0.1: {}
 
   strip-json-comments@5.0.3: {}
+
+  stripe@22.3.2(@types/node@26.1.1):
+    optionalDependencies:
+      '@types/node': 26.1.1
 
   supports-preserve-symlinks-flag@1.0.0: {}
 

@@ -20,9 +20,17 @@
 		logoUrlLight: string | null;
 		logoUrlDark: string | null;
 		canCustomizeBrand: boolean;
+		canUseCustomDomain?: boolean;
 	};
 
-	let { locale, d, logoUrlLight, logoUrlDark, canCustomizeBrand }: Props = $props();
+	let {
+		locale,
+		d,
+		logoUrlLight,
+		logoUrlDark,
+		canCustomizeBrand,
+		canUseCustomDomain = false
+	}: Props = $props();
 
 	let displayLight = $state<string | null>(null);
 	let displayDark = $state<string | null>(null);
@@ -131,6 +139,11 @@
 				</h2>
 				<p class="mt-1 max-w-xl text-sm text-[var(--color-muted)]">
 					{d.settings.personalizationHint}
+				</p>
+				<p class="mt-2 max-w-xl text-sm text-[var(--color-muted)]">
+					{canUseCustomDomain
+						? d.settings.whitelabelGrowthHint
+						: d.settings.whitelabelStarterHint}
 				</p>
 			</div>
 			{#if flash}

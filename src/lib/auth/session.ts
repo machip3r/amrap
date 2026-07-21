@@ -65,6 +65,8 @@ export function setRequestUser(user: import('@supabase/supabase-js').User) {
 	locals.pendingInvite = undefined;
 	locals.invitedOpsResolved = false;
 	locals.invitedOps = undefined;
+	locals.invitedMemberResolved = false;
+	locals.invitedMember = undefined;
 	locals.memberContextResolved = false;
 	locals.memberContext = undefined;
 	locals.personProfileResolved = false;

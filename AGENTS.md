@@ -44,6 +44,9 @@ pnpm dev               # http://localhost:5173
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only (bootstrap, invites) |
 | `PUBLIC_APP_URL` | Auth email redirect origin **and** absolute SEO/canonical base in production |
 | `PUBLIC_FORMSPREE_FORM_ID` | Landing contact form |
+| `STRIPE_SECRET_KEY` | Server-only Stripe secret (org subscription Checkout / Portal / webhooks) |
+| `PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (optional client use; also accepts `STRIPE_PUBLISHABLE_KEY`) |
+| `STRIPE_WEBHOOK_SECRET` | Signing secret for `POST /api/stripe/webhook` |
 
 Also accepts `NEXT_PUBLIC_*` fallbacks when sharing env with `amrap-next/` (see `src/lib/supabase/env.ts`).
 
@@ -98,7 +101,7 @@ Private app chrome (dashboard, members, check-in, etc.) stays `noindex` — SEO 
 | Landing · auth · onboarding · invite · welcome | shipped |
 | Ops app · member app · dashboard register dialog | shipped |
 | Playwright E2E (`e2e/`) | shipped |
-| Stripe checkout · multi-gym create · transfer UI · kiosk | planned / partial (same as Next) |
+| Stripe checkout · multi-gym create · transfer UI · kiosk | checkout shipped (MXN); multi-gym create / transfer / kiosk polish planned |
 
 ---
 

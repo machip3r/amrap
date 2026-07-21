@@ -3,7 +3,7 @@ import { canInWorkspace } from '$lib/auth/permissions';
 import type { Locale } from '$lib/i18n/config';
 import { getDictionary } from '$lib/i18n/dictionaries';
 import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
-import { canUseWhitelabel } from '$lib/plans/limits';
+import { canUseCustomDomain, canUseWhitelabel } from '$lib/plans/limits';
 import {
 	applyPaletteTemplateAction,
 	removeGymLogoAction,
@@ -33,7 +33,8 @@ export const load: PageServerLoad = async ({ parent, depends }) => {
 		hiddenNavIds: workspace.hiddenNavIds,
 		logoUrlLight: workspace.logoUrlLight,
 		logoUrlDark: workspace.logoUrlDark,
-		canCustomizeBrand: canUseWhitelabel(workspace.planTier)
+		canCustomizeBrand: canUseWhitelabel(workspace.planTier),
+		canUseCustomDomain: canUseCustomDomain(workspace.planTier)
 	};
 };
 

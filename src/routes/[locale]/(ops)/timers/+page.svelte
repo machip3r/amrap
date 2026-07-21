@@ -1,13 +1,14 @@
 <script lang="ts">
 	import TimerApp from '$lib/components/timers/TimerApp.svelte';
 	import type { PageProps } from './$types';
+	import { brandedTitle } from '$lib/seo/document-title';
 
 	let { data }: PageProps = $props();
 	const d = $derived(data.d!);
 </script>
 
 <svelte:head>
-	<title>{d.nav.timers} — AMRAP</title>
+	<title>{brandedTitle(d.nav.timers, data.documentBrand)}</title>
 </svelte:head>
 
 {#if 'forbidden' in data && data.forbidden}

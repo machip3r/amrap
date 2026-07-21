@@ -1,8 +1,11 @@
 <script lang="ts">
 	import './layout.css';
 	import { pwaInfo } from 'virtual:pwa-info';
+	import { enableViewTransitions } from '$lib/motion';
 
 	let { children } = $props();
+
+	enableViewTransitions();
 
 	const themeInit = `
 		(function () {

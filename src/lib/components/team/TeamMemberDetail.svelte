@@ -6,10 +6,12 @@
 	import Mail from '@lucide/svelte/icons/mail';
 	import Phone from '@lucide/svelte/icons/phone';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
+	import { page } from '$app/state';
 	import Button from '$lib/components/ui/Button.svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import type { Dictionary } from '$lib/i18n/dictionaries';
 	import type { Locale } from '$lib/i18n/config';
+	import { brandedTitle } from '$lib/seo/document-title';
 	import type { TeamMember } from '$lib/team/queries';
 
 	type ListRole = 'trainer' | 'staff';
@@ -52,7 +54,7 @@
 </script>
 
 <svelte:head>
-	<title>{member.name} — AMRAP</title>
+	<title>{brandedTitle(member.name, typeof page.data.documentBrand === 'string' ? page.data.documentBrand : null)}</title>
 </svelte:head>
 
 <div class="flex w-full animate-fade-in-up flex-col gap-5">

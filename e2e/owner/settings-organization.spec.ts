@@ -57,6 +57,9 @@ test.describe("owner settings and organization", () => {
     await page.getByRole("button", { name: /Mejorar plan/i }).first().click();
     const confirm = page.getByRole("dialog");
     await expect(confirm.getByRole("heading", { name: "Mejorar suscripción" })).toBeVisible();
+    await expect(confirm.getByText("Facturación")).toBeVisible();
+    await expect(confirm.getByText("Mensual")).toBeVisible();
+    await expect(confirm.getByText(/Anual/i)).toBeVisible();
     await expect(
       confirm.getByRole("button", { name: "Confirmar mejora" }),
     ).toBeVisible();

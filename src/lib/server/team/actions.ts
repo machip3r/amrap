@@ -95,6 +95,12 @@ export async function createStaffOrTrainer(
 		phone: parsed.data.phone
 	});
 	if (!person.ok) {
+		if (person.uniqueField === 'email') {
+			return { fieldErrors: { email: d.teamInvites.emailInUse } };
+		}
+		if (person.uniqueField === 'phone') {
+			return { fieldErrors: { phone: d.teamInvites.phoneInUse } };
+		}
 		return { error: d.teamInvites.error };
 	}
 

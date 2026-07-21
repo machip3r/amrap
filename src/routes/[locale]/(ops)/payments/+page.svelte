@@ -6,6 +6,7 @@
 	import PaymentsList from '$lib/components/payments/PaymentsList.svelte';
 	import RegisterPaymentDialog from '$lib/components/payments/RegisterPaymentDialog.svelte';
 	import type { PageProps } from './$types';
+	import { brandedTitle } from '$lib/seo/document-title';
 
 	let { data }: PageProps = $props();
 	const d = $derived(data.d!);
@@ -40,7 +41,7 @@
 </script>
 
 <svelte:head>
-	<title>{d.payments.title} — AMRAP</title>
+	<title>{brandedTitle(d.payments.title, data.documentBrand)}</title>
 </svelte:head>
 
 {#if data.forbidden}

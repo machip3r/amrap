@@ -7,6 +7,8 @@
 		ArrowRight,
 		Check,
 		LoaderCircle,
+		Maximize2,
+		Minimize2,
 		QrCode,
 		Search,
 		UserRoundCheck,
@@ -14,6 +16,7 @@
 	} from '@lucide/svelte';
 	import type { Html5Qrcode } from 'html5-qrcode';
 	import type { Locale } from '$lib/i18n/config';
+	import { setCheckinKiosk } from '$lib/checkin/kiosk-shell.svelte';
 	import type { CheckInListItem } from '$lib/checkin/queries';
 	import type {
 		CheckinCandidate,
@@ -78,6 +81,9 @@
 		sourceQr: string;
 		sourceManual: string;
 		sourceKiosk: string;
+		enterKiosk: string;
+		exitKiosk: string;
+		kioskHint: string;
 	};
 
 	type ResultView =
@@ -108,6 +114,7 @@
 
 	let manual = $state('');
 	let cameraOn = $state(false);
+	let kioskMode = $state(false);
 	let resultView = $state<ResultView>({ kind: 'idle' });
 	let qrCelebration = $state<{ name: string } | null>(null);
 	let pending = $state(false);
@@ -119,6 +126,9 @@
 	let scanner: Html5Qrcode | null = null;
 	const regionId = `checkin-qr-${Math.random().toString(36).slice(2, 10)}`;
 
+	function kioskFields(extra: Record<string, string> = {}) {
+		return kioskMode ? { ...extra, kiosk: '1' } : extra;
+	}
 	/** Keep overlays on `document.body` so they aren't trapped by page transforms. */
 	function portal(node: HTMLElement) {
 		document.body.appendChild(node);
@@ -209,12 +219,15 @@
 		qrProcessing = true;
 		pending = true;
 		try {
-			const r = await postAction<CheckinResult>('scan', { code });
+			const r = await postAction<CheckinResult>('scan', kioskFields({ code }));
 			if (r) applyResult(r, { celebrate: true });
 			else applyResult({ status: 'error' });
 		} finally {
 			pending = false;
 			qrProcessing = false;
+			if (kioskMode && !cameraOn) {
+				queueMicrotask(() => void startCamera());
+			}
 		}
 	}
 
@@ -261,12 +274,25 @@
 	async function handleSelectCandidate(membershipId: string) {
 		pending = true;
 		try {
-			const r = await postAction<CheckinResult>('confirm', { membershipId });
+			const r = await postAction<CheckinResult>('confirm', kioskFields({ membershipId }));
 			if (r) applyResult(r);
 			else applyResult({ status: 'error' });
 		} finally {
 			pending = false;
 		}
+	}
+
+	async function enterKiosk() {
+		kioskMode = true;
+		setCheckinKiosk(true);
+		resultView = { kind: 'idle' };
+		if (!cameraOn) void startCamera();
+	}
+
+	async function exitKiosk() {
+		kioskMode = false;
+		setCheckinKiosk(false);
+		await stopCamera();
 	}
 
 	async function startCamera() {
@@ -353,6 +379,7 @@
 	}
 
 	onDestroy(() => {
+		setCheckinKiosk(false);
 		void scanner?.stop().catch(() => {});
 		try {
 			scanner?.clear();
@@ -368,7 +395,11 @@
 	);
 </script>
 
-<div class="flex w-full min-w-0 flex-col gap-5 overflow-x-hidden">
+<div
+	class="flex w-full min-w-0 flex-col gap-5 overflow-x-hidden {kioskMode
+		? 'h-full min-h-0 gap-3 overflow-y-auto p-[var(--spacing-page)] pb-[max(1rem,var(--safe-bottom))] sm:p-[var(--spacing-page-md)]'
+		: ''}"
+>
 	{#if qrProcessing}
 		<div
 			use:portal
@@ -423,34 +454,69 @@
 			<h1 class="font-title text-3xl font-bold tracking-tight text-[var(--color-text)]">
 				{labels.title}
 			</h1>
-			<p class="mt-1 text-sm text-[var(--color-muted)]">{labels.subtitle}</p>
+			<p class="mt-1 text-sm text-[var(--color-muted)]">
+				{kioskMode ? labels.kioskHint : labels.subtitle}
+			</p>
 		</div>
-		{#if registerLabel && (canManageMembers || canManageStaff)}
-			<div class="shrink-0 self-stretch sm:self-auto">
-				<CheckinRegisterButton
-					{locale}
-					{canManageMembers}
-					{canManageStaff}
-					plans={registerPlans}
-					label={registerLabel}
-					class="w-full sm:w-auto"
-				/>
-			</div>
-		{/if}
+		<div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
+			{#if kioskMode}
+				<button
+					type="button"
+					onclick={() => void exitKiosk()}
+					class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm font-semibold text-[var(--color-text)] shadow-sm transition-colors hover:bg-[var(--color-surface-hover)] sm:w-auto"
+				>
+					<Minimize2 class="h-4 w-4" aria-hidden="true" />
+					{labels.exitKiosk}
+				</button>
+			{:else}
+				<button
+					type="button"
+					onclick={() => void enterKiosk()}
+					class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-[var(--color-primary)]/40 bg-[var(--color-primary)]/10 px-4 py-2.5 text-sm font-semibold text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-[var(--color-primary-on)] sm:w-auto"
+				>
+					<Maximize2 class="h-4 w-4" aria-hidden="true" />
+					{labels.enterKiosk}
+				</button>
+				{#if registerLabel && (canManageMembers || canManageStaff)}
+					<div class="shrink-0 self-stretch sm:self-auto">
+						<CheckinRegisterButton
+							{locale}
+							{canManageMembers}
+							{canManageStaff}
+							plans={registerPlans}
+							label={registerLabel}
+							class="w-full sm:w-auto"
+						/>
+					</div>
+				{/if}
+			{/if}
+		</div>
 	</header>
 
-	<div class="grid min-w-0 gap-4 lg:grid-cols-[1.4fr_1fr]">
-		<section
-			class="flex min-w-0 flex-col rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-6"
+	<div
+		class="grid min-w-0 gap-4 {kioskMode
+			? 'min-h-0 flex-1 lg:grid-cols-[1.6fr_1fr]'
+			: 'lg:grid-cols-[1.4fr_1fr]'}"
+	>		<section
+			class="flex min-w-0 flex-col rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-6 {kioskMode
+				? 'min-h-0'
+				: ''}"
 		>
 			<h2 class="font-title text-2xl font-bold text-[var(--color-text)]">{labels.scanTitle}</h2>
 			<p class="mt-1 max-w-md text-sm text-[var(--color-muted)]">{labels.scanHint}</p>
 
-			<div class="relative mx-auto mt-6 flex w-full max-w-md flex-1 flex-col items-center justify-center">
+			<div
+				class="relative mx-auto mt-6 flex w-full flex-1 flex-col items-center justify-center {kioskMode
+					? 'max-w-xl'
+					: 'max-w-md'}"
+			>
 				<div
 					class="relative w-full overflow-hidden rounded-2xl border-2 {cameraOn
 						? 'border-[var(--color-primary)] bg-black'
-						: 'aspect-square border-[var(--color-border)] bg-[var(--color-bg)]'}"
+						: 'aspect-square border-[var(--color-border)] bg-[var(--color-bg)]'} {kioskMode &&
+					cameraOn
+						? 'min-h-[min(52dvh,28rem)]'
+						: ''}"
 				>
 					<div id={regionId} class="checkin-qr-reader w-full"></div>
 					{#if !cameraOn}
@@ -762,36 +828,38 @@
 		</div>
 	</div>
 
-	<section
-		class="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm"
-	>
-		<div
-			class="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border)] px-5 py-4"
+	{#if !kioskMode}
+		<section
+			class="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm"
 		>
-			<h2 class="font-title text-lg font-bold text-[var(--color-text)]">{labels.todayTitle}</h2>
-			<a
-				href={`/${locale}/checkin/history`}
-				class="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-[var(--color-primary)] transition-opacity hover:opacity-80"
+			<div
+				class="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border)] px-5 py-4"
 			>
-				{labels.viewAllCheckIns}
-				<ArrowRight class="h-3.5 w-3.5" aria-hidden="true" />
-			</a>
-		</div>
-		<CheckinList
-			{locale}
-			items={todayCheckIns}
-			detailBaseHref={`/${locale}/checkin/history`}
-			labels={{
-				colMember: labels.colMember,
-				colTime: labels.colTime,
-				colPlan: labels.colPlan,
-				colSource: labels.colSource,
-				noPlan: labels.noPlan,
-				sourceQr: labels.sourceQr,
-				sourceManual: labels.sourceManual,
-				sourceKiosk: labels.sourceKiosk,
-				empty: labels.todayEmpty
-			}}
-		/>
-	</section>
+				<h2 class="font-title text-lg font-bold text-[var(--color-text)]">{labels.todayTitle}</h2>
+				<a
+					href={`/${locale}/checkin/history`}
+					class="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-[var(--color-primary)] transition-opacity hover:opacity-80"
+				>
+					{labels.viewAllCheckIns}
+					<ArrowRight class="h-3.5 w-3.5" aria-hidden="true" />
+				</a>
+			</div>
+			<CheckinList
+				{locale}
+				items={todayCheckIns}
+				detailBaseHref={`/${locale}/checkin/history`}
+				labels={{
+					colMember: labels.colMember,
+					colTime: labels.colTime,
+					colPlan: labels.colPlan,
+					colSource: labels.colSource,
+					noPlan: labels.noPlan,
+					sourceQr: labels.sourceQr,
+					sourceManual: labels.sourceManual,
+					sourceKiosk: labels.sourceKiosk,
+					empty: labels.todayEmpty
+				}}
+			/>
+		</section>
+	{/if}
 </div>

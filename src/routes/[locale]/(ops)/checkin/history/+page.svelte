@@ -3,6 +3,7 @@
 	import CheckinList from '$lib/components/checkin/CheckinList.svelte';
 	import CheckinHistoryFilters from '$lib/components/checkin/CheckinHistoryFilters.svelte';
 	import TablePagination from '$lib/components/ui/TablePagination.svelte';
+	import { brandedTitle } from '$lib/seo/document-title';
 
 	let { data } = $props();
 	const d = $derived(data.d);
@@ -16,7 +17,7 @@
 </script>
 
 <svelte:head>
-	<title>{d.checkin.historyTitle} — AMRAP</title>
+	<title>{brandedTitle(d.checkin.historyTitle, data.documentBrand)}</title>
 </svelte:head>
 
 <div class="animate-fade-in-up flex w-full flex-col gap-5 pb-4">

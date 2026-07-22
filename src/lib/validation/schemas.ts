@@ -207,8 +207,8 @@ export const isoDateSchema = z
     return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v;
   }, { message: "invalid_date" });
 
-/** Date of birth — valid calendar day, age 18–120 (legal majority). */
-const MIN_PROFILE_AGE_YEARS = 18;
+/** Date of birth — valid calendar day, age 13–120. */
+const MIN_PROFILE_AGE_YEARS = 13;
 const MAX_PROFILE_AGE_YEARS = 120;
 
 /** Latest ISO date (YYYY-MM-DD) that still satisfies `minAge` years old today. */

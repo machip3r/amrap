@@ -52,6 +52,9 @@ export type Dictionary = {
     closeMoreNav: string;
     showMyQr: string;
     closeMyQr: string;
+    bookClass: string;
+    cancelClass: string;
+    joinWaitlist: string;
   };
   login: {
     title: string;
@@ -436,6 +439,7 @@ export type Dictionary = {
     error: string;
     emailInUse: string;
     phoneInUse: string;
+    alreadyAtGym: string;
     freemiumMemberLimit: string;
     softMemberCapWarning: string;
     notFound: string;
@@ -638,6 +642,8 @@ export type Dictionary = {
     trainersHint: string;
     trainersSelfHint: string;
     youAreTrainer: string;
+    noTrainer: string;
+    noTrainerHint: string;
     noTrainers: string;
     save: string;
     saving: string;
@@ -684,6 +690,7 @@ export type Dictionary = {
     seats: string;
     waitlist: string;
     cancelled: string;
+    scheduled: string;
     noSessions: string;
     duplicate: string;
     duplicateTitle: string;
@@ -704,18 +711,42 @@ export type Dictionary = {
     cancelBooking: string;
     bookMember: string;
     selectMember: string;
+    searchMember: string;
+    bookHint: string;
+    noMemberMatches: string;
     book: string;
     markAttended: string;
     markNoShow: string;
+    statusConfirmed: string;
+    statusAttended: string;
+    statusNoShow: string;
+    statusWaitlisted: string;
     loading: string;
   };
   member: {
     title: string;
     home: string;
     classes: string;
+    classesSubtitle: string;
     inbox: string;
+    inboxSubtitle: string;
     qr: string;
     timers: string;
+    profile: string;
+    profileSubtitle: string;
+    feedbackTitle: string;
+    feedbackHint: string;
+    feedbackTargetLegend: string;
+    feedbackTargetGym: string;
+    feedbackTargetAmrap: string;
+    feedbackTargetAmrapHint: string;
+    feedbackBody: string;
+    feedbackBodyPlaceholder: string;
+    feedbackSubmit: string;
+    feedbackSubmitting: string;
+    feedbackSuccess: string;
+    feedbackError: string;
+    feedbackForbidden: string;
     logout: string;
     gyms: string;
     activeUntil: string;
@@ -730,6 +761,10 @@ export type Dictionary = {
     waitlist: string;
     emptySessions: string;
     emptyBookings: string;
+    emptyMyBookings: string;
+    filterAll: string;
+    filterMine: string;
+    today: string;
     emptyInbox: string;
     statusConfirmed: string;
     statusWaitlisted: string;
@@ -749,6 +784,11 @@ export type Dictionary = {
     subscriptionTitle: string;
     gymsTitle: string;
     gymsHint: string;
+    feedbackTitle: string;
+    feedbackHint: string;
+    feedbackEmpty: string;
+    feedbackAuthor: string;
+    feedbackFromAmrap: string;
     addGym: string;
     addGymTitle: string;
     addGymDescription: string;
@@ -777,40 +817,40 @@ export type Dictionary = {
     upgradeConfirmSubmit: string;
     contactSales: string;
     current: string;
-		checkoutComingSoon: string;
-		contactProPlan: string;
-		createGymComingSoon: string;
-		gymCapContact: string;
-		retentionNote: string;
-		planFreemium: string;
-		planStarter: string;
-		planGrowth: string;
-		planPro: string;
-		priceFree: string;
-		pricePerOrg: string;
-		pricePerGym: string;
-		priceContact: string;
-		perMonth: string;
-		perYear: string;
-		billingIntervalLabel: string;
-		billingMonthly: string;
-		billingMonthlyHint: string;
-		billingAnnual: string;
-		billingAnnualHint: string;
-		billingAnnualSaveBadge: string;
-		manageBilling: string;
-		checkoutFailed: string;
-		upgradeSuccess: string;
-		alreadyOnPlan: string;
-		portalUnavailable: string;
-		billingSuccessFlash: string;
-		billingCancelFlash: string;
-		gymQuota: string;
-		invalidPlan: string;
-		deleteFailed: string;
-		gymDeletionScheduled: string;
-		deletionCancelled: string;
-	};
+    checkoutComingSoon: string;
+    contactProPlan: string;
+    createGymComingSoon: string;
+    gymCapContact: string;
+    retentionNote: string;
+    planFreemium: string;
+    planStarter: string;
+    planGrowth: string;
+    planPro: string;
+    priceFree: string;
+    pricePerOrg: string;
+    pricePerGym: string;
+    priceContact: string;
+    perMonth: string;
+    perYear: string;
+    billingIntervalLabel: string;
+    billingMonthly: string;
+    billingMonthlyHint: string;
+    billingAnnual: string;
+    billingAnnualHint: string;
+    billingAnnualSaveBadge: string;
+    manageBilling: string;
+    checkoutFailed: string;
+    upgradeSuccess: string;
+    alreadyOnPlan: string;
+    portalUnavailable: string;
+    billingSuccessFlash: string;
+    billingCancelFlash: string;
+    gymQuota: string;
+    invalidPlan: string;
+    deleteFailed: string;
+    gymDeletionScheduled: string;
+    deletionCancelled: string;
+  };
   common: {
     loading: string;
     forbidden: string;
@@ -821,32 +861,32 @@ export type Dictionary = {
     previous: string;
     next: string;
   };
-	registerUser: {
-		open: string;
-		title: string;
-		description: string;
-		roleLabel: string;
-		roleMember: string;
-		roleTrainer: string;
-		roleStaff: string;
-		pickTitle: string;
-		pickDescription: string;
-		pickMemberHint: string;
-		pickTrainerHint: string;
-		pickStaffHint: string;
-		namePlaceholder: string;
-		phonePlaceholder: string;
-		countryCode: string;
-		email: string;
-		emailPlaceholder: string;
-		close: string;
-		cancel: string;
-		submit: string;
-		submitting: string;
-		success: string;
-		noPlans: string;
-		planPrice: string;
-	};
+  registerUser: {
+    open: string;
+    title: string;
+    description: string;
+    roleLabel: string;
+    roleMember: string;
+    roleTrainer: string;
+    roleStaff: string;
+    pickTitle: string;
+    pickDescription: string;
+    pickMemberHint: string;
+    pickTrainerHint: string;
+    pickStaffHint: string;
+    namePlaceholder: string;
+    phonePlaceholder: string;
+    countryCode: string;
+    email: string;
+    emailPlaceholder: string;
+    close: string;
+    cancel: string;
+    submit: string;
+    submitting: string;
+    success: string;
+    noPlans: string;
+    planPrice: string;
+  };
   validation: {
     required: string;
     email: string;
@@ -968,6 +1008,9 @@ const es: Dictionary = {
     closeMoreNav: "Cerrar más opciones de navegación",
     showMyQr: "Mostrar mi código QR",
     closeMyQr: "Cerrar mi código QR",
+    bookClass: "Reservar clase",
+    cancelClass: "Cancelar reserva",
+    joinWaitlist: "Unirse a lista de espera",
   },
   login: {
     title: "Iniciar sesión",
@@ -1058,7 +1101,7 @@ const es: Dictionary = {
       "El gimnasio es la marca. La sucursal es el lugar físico (después puedes agregar más).",
     gymName: "Nombre del gimnasio",
     gymNamePlaceholder: "Ej. Titan Fitness",
-    gymNameHint: "Cómo se llama tu gym o brand para socios y staff.",
+    gymNameHint: "Cómo se llama tu gym o brand para miembros y staff.",
     gymAddress: "Dirección del gimnasio (opcional)",
     gymAddressPlaceholder: "Calle, colonia, ciudad",
     gymAddressHint:
@@ -1068,16 +1111,16 @@ const es: Dictionary = {
     branchNameHint:
       "Un nombre corto para este local. Si dejas vacío, usamos “Principal”.",
     branchAddress: "Dirección de esta ubicación (opcional)",
-    branchAddressPlaceholder: "Calle y número donde entran los socios",
+    branchAddressPlaceholder: "Calle y número donde entran los miembros",
     branchAddressHint: "La dirección física de este local.",
-    plansTitle: "Qué le cobras a tus socios",
+    plansTitle: "Qué le cobras a tus miembros",
     plansSubtitle:
-      "Aquí defines los paquetes que vendes en tu gym (por ejemplo Mensual $500 por 30 días). Después los usarás al dar de alta o renovar socios. Es opcional: puedes saltarlo y crearlos luego.",
+      "Aquí defines los paquetes que vendes en tu gym (por ejemplo Mensual $500 por 30 días). Después los usarás al dar de alta o renovar miembros. Es opcional: puedes saltarlo y crearlos luego.",
     plansExample:
       "Ejemplo: “Mensual” · $500 · 30 días. O “Trimestral” · $1,350 · 90 días.",
     planNameHint: "El nombre que usarás al vender o renovar membresías.",
     planNamePlaceholder: "Ej. Mensual, Semanal, Trimestral",
-    planPriceHint: "Lo que paga el socio por ese paquete (MXN).",
+    planPriceHint: "Lo que paga el miembro por ese paquete (MXN).",
     planDurationHint: "Cuántos días dura la membresía. 30 ≈ un mes.",
     addPlan: "Agregar paquete",
     skipPlans: "Saltar por ahora",
@@ -1099,7 +1142,7 @@ const es: Dictionary = {
     subtitleMember:
       "Cuéntanos un poco sobre ti para personalizar tu experiencia.",
     dateOfBirth: "Fecha de nacimiento",
-    sex: "Sexo",
+    sex: "Género",
     sexMale: "Masculino",
     sexFemale: "Femenino",
     sexOther: "Otro",
@@ -1169,7 +1212,7 @@ const es: Dictionary = {
     realtime: "En tiempo real",
     viewFullHistory: "Ver historial completo",
     viewAll: "Ver todos",
-    colMember: "Socio",
+    colMember: "Miembro",
     colTime: "Hora",
     colPlan: "Plan",
     colStatus: "Estado",
@@ -1362,16 +1405,17 @@ const es: Dictionary = {
     transfer: "Transferencia",
     renewSubmit: "Renovar y registrar pago",
     delete: "Eliminar",
-    confirmDelete: "¿Eliminar socio?",
+    confirmDelete: "¿Eliminar miembro?",
     noMembers: "No hay miembros aún.",
     noResults: "Ningún miembro coincide con tu búsqueda.",
     error: "No se pudo guardar el miembro",
     emailInUse: "Ese correo ya está registrado en otra persona",
     phoneInUse: "Ese teléfono ya está registrado en otra persona",
+    alreadyAtGym: "Esta persona ya tiene membresía en este gimnasio",
     freemiumMemberLimit:
-      "Alcanzaste el máximo de 30 socios activos del plan gratuito. Mejora a Starter para seguir creciendo.",
+      "Alcanzaste el máximo de 30 miembros activos del plan gratuito. Mejora a Starter para seguir creciendo.",
     softMemberCapWarning:
-      "Tu gym ya supera ~500 socios activos. El acceso de tus clientes no se bloquea. Habla con AMRAP sobre Growth/Pro o un excedente si lo necesitas.",
+      "Tu gym ya supera ~500 miembros activos. El acceso de tus clientes no se bloquea. Habla con AMRAP sobre Growth/Pro o un excedente si lo necesitas.",
     notFound: "Miembro o plan no encontrado",
     searchPlaceholder: "Buscar por nombre, email o teléfono…",
     filterAll: "Todos",
@@ -1385,28 +1429,28 @@ const es: Dictionary = {
   },
   payments: {
     title: "Pagos",
-    subtitle: "Consulta cobros registrados y anota pagos de socios.",
+    subtitle: "Consulta cobros registrados y anota pagos de miembros.",
     newPayment: "Registrar pago",
-    member: "Socio",
+    member: "Miembro",
     amount: "Monto",
     method: "Método",
     date: "Fecha",
-    selectMember: "Seleccionar socio",
-    searchMember: "Buscar socio por nombre o correo…",
-    registerNewMember: "Registrar nuevo socio",
-    noMemberMatches: "Ningún socio coincide.",
+    selectMember: "Seleccionar miembro",
+    searchMember: "Buscar miembro por nombre o correo…",
+    registerNewMember: "Registrar nuevo miembro",
+    noMemberMatches: "Ningún miembro coincide.",
     submit: "Registrar",
     submitting: "Registrando…",
     cancel: "Cancelar",
     close: "Cerrar",
     noPayments: "Sin pagos registrados.",
     noResults: "Ningún pago coincide con tu búsqueda.",
-    noMembers: "No hay socios para registrar un pago. Agrega un miembro primero.",
-    searchPlaceholder: "Buscar por socio o método…",
+    noMembers: "No hay miembros para registrar un pago. Agrega un miembro primero.",
+    searchPlaceholder: "Buscar por miembro o método…",
     reload: "Recargar",
     showing: "Mostrando {from}–{to} de {total}",
     newBadge: "Nuevo",
-    description: "Elige socio, qué paga (plan o visita) y el método.",
+    description: "Elige miembro, qué paga (plan o visita) y el método.",
     cash: "Efectivo",
     transfer: "Transferencia",
     error: "No se pudo registrar el pago",
@@ -1435,7 +1479,7 @@ const es: Dictionary = {
     scanHint:
       "Acerca tu código QR a la cámara para registrar el acceso automáticamente.",
     manualTitle: "Búsqueda manual",
-    manualLabel: "Socio",
+    manualLabel: "Miembro",
     manualPlaceholder: "Nombre, correo, teléfono, QR o ID…",
     lookup: "Buscar",
     clear: "Limpiar",
@@ -1444,8 +1488,8 @@ const es: Dictionary = {
     startCamera: "Activar cámara",
     resultOk: "Órale, todo en orden",
     resultDenied: "No ha pagado. No puede pasar",
-    memberNotFound: "Socio no encontrado",
-    selectMember: "Elige al socio",
+    memberNotFound: "Miembro no encontrado",
+    selectMember: "Elige al miembro",
     confirmCheckIn: "Registrar entrada",
     matchesHint: "{count} coincidencias — selecciona para confirmar",
     lookingUp: "Buscando…",
@@ -1458,7 +1502,7 @@ const es: Dictionary = {
     qrSuccessTitle: "¡Asistencia registrada!",
     qrSuccessHint: "Toca para continuar",
     waitingResult: "Listo para escanear",
-    waitingResultHint: "El resultado del socio aparecerá aquí.",
+    waitingResultHint: "El resultado del miembro aparecerá aquí.",
     expiresIn: "Vencimiento en",
     days: "días",
     weekAttendance: "Asistencias semanales",
@@ -1483,7 +1527,7 @@ const es: Dictionary = {
     filterStaff: "Staff",
     filterApply: "Filtrar",
     filterClear: "Quitar filtro",
-    colMember: "Socio",
+    colMember: "Miembro",
     colTime: "Hora",
     colPlan: "Plan",
     colSource: "Origen",
@@ -1493,9 +1537,9 @@ const es: Dictionary = {
     enterKiosk: "Modo kiosco",
     exitKiosk: "Salir de kiosco",
     kioskHint:
-      "Pantalla completa para recepción o iPad. Escanea o busca socios sin el menú de la app.",
+      "Pantalla completa para recepción o iPad. Escanea o busca miembros sin el menú de la app.",
     calendarTitle: "Asistencia",
-    calendarSubtitle: "Entradas del mes para este socio.",
+    calendarSubtitle: "Entradas del mes para este miembro.",
     calendarPrev: "Mes anterior",
     calendarNext: "Mes siguiente",
     calendarToday: "Mes actual",
@@ -1511,7 +1555,7 @@ const es: Dictionary = {
     bySource: "Por origen",
     selectedDayTitle: "Detalle del día",
     visitCount: "{count} entradas",
-    viewMemberProfile: "Ver ficha del socio",
+    viewMemberProfile: "Ver ficha del miembro",
   },
   plans: {
     title: "Planes",
@@ -1536,14 +1580,14 @@ const es: Dictionary = {
     active: "Activo",
     archived: "Archivado",
     noPlans: "No hay planes. Crea uno para renovar membresías.",
-    membersEnrolled: "{count} socios inscritos",
+    membersEnrolled: "{count} miembros inscritos",
     perDays: "/ {n} días",
     perMonth: "/ mes",
     perMonths: "/ {n} meses",
     createTitle: "Nuevo plan",
     createDescription: "Define el nombre, precio y duración de la membresía.",
     editTitle: "Editar plan",
-    editDescription: "Actualiza los datos del plan. Los socios actuales no cambian.",
+    editDescription: "Actualiza los datos del plan. Los miembros actuales no cambian.",
     limitReached: "Límite alcanzado",
     limitReachedHint:
       "El plan gratuito permite hasta 2 planes activos. Archiva uno o mejora tu plan para crear más.",
@@ -1573,9 +1617,11 @@ const es: Dictionary = {
     tags: "Etiquetas",
     tagsHint: "Separadas por comas (yoga, hiit, etc.).",
     trainers: "Entrenadores",
-    trainersHint: "Puedes asignar uno o varios.",
+    trainersHint: "Elige uno o varios, o deja la clase sin entrenador.",
     trainersSelfHint: "Esta clase se asigna a ti como entrenador.",
     youAreTrainer: "Tú (entrenador)",
+    noTrainer: "Sin entrenador",
+    noTrainerHint: "La clase puede quedar sin coach asignado.",
     noTrainers: "Aún no hay entrenadores. Regístralos en Entrenadores.",
     save: "Guardar",
     saving: "Guardando…",
@@ -1592,7 +1638,7 @@ const es: Dictionary = {
     archived: "Archivadas",
     noClasses: "Todavía no hay clases. Crea la primera.",
     createTitle: "Nueva clase",
-    createDescription: "Define el nombre y asigna entrenadores.",
+    createDescription: "Define el nombre y, si quieres, asigna entrenadores.",
     editTitle: "Editar clase",
     editDescription: "Actualiza datos o trainers de la clase.",
     unlimited: "Sin límite",
@@ -1624,10 +1670,11 @@ const es: Dictionary = {
     seats: "Cupos",
     waitlist: "Lista de espera",
     cancelled: "Cancelada",
+    scheduled: "Programada",
     noSessions: "No hay sesiones esta semana. Añade un horario a una clase.",
     duplicate: "Duplicar",
     duplicateTitle: "Duplicar a otro gym",
-    duplicateHint: "Copia la clase y sus horarios. Sin socios ni trainers.",
+    duplicateHint: "Copia la clase y sus horarios. Sin miembros ni trainers.",
     targetGym: "Gimnasio destino",
     noOtherGyms: "No hay otros gimnasios en la organización.",
     dayMon: "Lun",
@@ -1642,20 +1689,44 @@ const es: Dictionary = {
     waitlistEmpty: "Lista de espera vacía.",
     cancelSession: "Cancelar sesión",
     cancelBooking: "Cancelar reserva",
-    bookMember: "Inscribir socio",
-    selectMember: "Elige un socio",
-    book: "Reservar",
+    bookMember: "Inscribir miembro",
+    selectMember: "Elige un miembro",
+    searchMember: "Buscar miembro…",
+    bookHint: "Miembros con membresía activa que aún no están inscritos.",
+    noMemberMatches: "Ningún miembro coincide.",
+    book: "Inscribir",
     markAttended: "Asistió",
-    markNoShow: "No show",
+    markNoShow: "No asistió",
+    statusConfirmed: "Confirmado",
+    statusAttended: "Asistió",
+    statusNoShow: "No asistió",
+    statusWaitlisted: "En espera",
     loading: "Cargando clases…",
   },
   member: {
     title: "Mi espacio",
     home: "Inicio",
     classes: "Clases",
+    classesSubtitle: "Reserva clases y revisa tu historial.",
     inbox: "Buzón",
+    inboxSubtitle: "Avisos y recomendaciones de tu gimnasio.",
     qr: "Mi QR",
     timers: "Timers",
+    profile: "Mi perfil",
+    profileSubtitle: "Tu cuenta.",
+    feedbackTitle: "Enviar feedback",
+    feedbackHint: "Comentarios para tu gimnasio o para el equipo de AMRAP.",
+    feedbackTargetLegend: "Enviar a",
+    feedbackTargetGym: "Este gimnasio",
+    feedbackTargetAmrap: "AMRAP",
+    feedbackTargetAmrapHint: "Producto, soporte o sugerencias",
+    feedbackBody: "Mensaje",
+    feedbackBodyPlaceholder: "Escribe tu comentario…",
+    feedbackSubmit: "Enviar",
+    feedbackSubmitting: "Enviando…",
+    feedbackSuccess: "Feedback enviado. Gracias.",
+    feedbackError: "No se pudo enviar el feedback",
+    feedbackForbidden: "No puedes enviar feedback con esta cuenta",
     logout: "Salir",
     gyms: "Mis gimnasios",
     activeUntil: "Activo hasta",
@@ -1670,12 +1741,16 @@ const es: Dictionary = {
     waitlist: "Espera",
     emptySessions: "No hay clases próximas.",
     emptyBookings: "Aún no tienes reservas.",
+    emptyMyBookings: "No tienes reservas en este periodo.",
+    filterAll: "Todas",
+    filterMine: "Mis reservas",
+    today: "Hoy",
     emptyInbox: "Sin mensajes.",
     statusConfirmed: "Confirmada",
     statusWaitlisted: "En espera",
     statusCancelled: "Cancelada",
     statusAttended: "Asistió",
-    statusNoShow: "No show",
+    statusNoShow: "No asistió",
     qrHint: "Muestra este código en recepción.",
     copyQr: "Copiar",
     copiedQr: "Copiado",
@@ -1689,6 +1764,11 @@ const es: Dictionary = {
     subscriptionTitle: "Suscripción AMRAP",
     gymsTitle: "Gimnasios",
     gymsHint: "Gestiona las sedes de esta organización.",
+    feedbackTitle: "Feedback del gym",
+    feedbackHint: "Comentarios de miembros, staff y entrenadores sobre esta sede.",
+    feedbackEmpty: "Aún no hay feedback para este gym.",
+    feedbackAuthor: "Autor",
+    feedbackFromAmrap: "—",
     addGym: "Añadir gimnasio",
     addGymTitle: "Nuevo gimnasio",
     addGymDescription: "Crea otra sede bajo la misma organización y factura.",
@@ -1829,7 +1909,7 @@ const es: Dictionary = {
     roleStaff: "Personal",
     pickTitle: "¿Qué quieres registrar?",
     pickDescription: "Elige el tipo de usuario y continúa con el formulario.",
-    pickMemberHint: "Socio con plan y acceso al gym.",
+    pickMemberHint: "Miembro con plan y acceso al gym.",
     pickTrainerHint: "Entrenador del equipo de la sede.",
     pickStaffHint: "Personal de recepción u operación.",
     namePlaceholder: "Nombre completo",
@@ -1859,7 +1939,7 @@ const es: Dictionary = {
     amount: "Introduce un monto válido",
     duration: "Introduce una duración en días válida",
     date: "Introduce una fecha válida",
-    dateMinAge: "Debes tener al menos 18 años",
+    dateMinAge: "Debes tener al menos 13 años",
     invalid: "Valor no válido",
     hexColor: "Usa un color hexadecimal (#RRGGBB)",
   },
@@ -1921,6 +2001,9 @@ const en: Dictionary = {
     closeMoreNav: "Close more navigation options",
     showMyQr: "Show my QR code",
     closeMyQr: "Close my QR code",
+    bookClass: "Book class",
+    cancelClass: "Cancel booking",
+    joinWaitlist: "Join waitlist",
   },
   login: {
     title: "Log in",
@@ -2052,7 +2135,7 @@ const en: Dictionary = {
     subtitleMember:
       "Tell us a bit about you so we can personalize your experience.",
     dateOfBirth: "Date of birth",
-    sex: "Sex",
+    sex: "Gender",
     sexMale: "Male",
     sexFemale: "Female",
     sexOther: "Other",
@@ -2319,6 +2402,7 @@ const en: Dictionary = {
     error: "Could not save member",
     emailInUse: "That email is already registered to another person",
     phoneInUse: "That phone is already registered to another person",
+    alreadyAtGym: "This person already has a membership at this gym",
     freemiumMemberLimit:
       "You've reached the free plan's 30 active members. Upgrade to Starter to keep growing.",
     softMemberCapWarning:
@@ -2523,9 +2607,11 @@ const en: Dictionary = {
     tags: "Tags",
     tagsHint: "Comma-separated (yoga, hiit, etc.).",
     trainers: "Trainers",
-    trainersHint: "You can assign one or more.",
+    trainersHint: "Pick one or more, or leave the class without a coach.",
     trainersSelfHint: "This class is assigned to you as the coach.",
     youAreTrainer: "You (coach)",
+    noTrainer: "No trainer",
+    noTrainerHint: "The class can run without an assigned coach.",
     noTrainers: "No trainers yet. Add them under Trainers.",
     save: "Save",
     saving: "Saving…",
@@ -2542,7 +2628,7 @@ const en: Dictionary = {
     archived: "Archived",
     noClasses: "No classes yet. Create the first one.",
     createTitle: "New class",
-    createDescription: "Set a name and assign trainers.",
+    createDescription: "Set a name and optionally assign trainers.",
     editTitle: "Edit class",
     editDescription: "Update details or trainers for this class.",
     unlimited: "Unlimited",
@@ -2574,6 +2660,7 @@ const en: Dictionary = {
     seats: "Seats",
     waitlist: "Waitlist",
     cancelled: "Cancelled",
+    scheduled: "Scheduled",
     noSessions: "No sessions this week. Add a schedule to a class.",
     duplicate: "Duplicate",
     duplicateTitle: "Duplicate to another gym",
@@ -2594,18 +2681,42 @@ const en: Dictionary = {
     cancelBooking: "Cancel booking",
     bookMember: "Book a member",
     selectMember: "Choose a member",
-    book: "Book",
+    searchMember: "Search member…",
+    bookHint: "Active members who are not enrolled yet.",
+    noMemberMatches: "No matching members.",
+    book: "Enroll",
     markAttended: "Attended",
     markNoShow: "No-show",
+    statusConfirmed: "Confirmed",
+    statusAttended: "Attended",
+    statusNoShow: "No-show",
+    statusWaitlisted: "Waitlisted",
     loading: "Loading classes…",
   },
   member: {
     title: "My space",
     home: "Home",
     classes: "Classes",
+    classesSubtitle: "Book classes and review your history.",
     inbox: "Inbox",
+    inboxSubtitle: "Advice and announcements from your gym.",
     qr: "My QR",
     timers: "Timers",
+    profile: "My profile",
+    profileSubtitle: "Your account.",
+    feedbackTitle: "Send feedback",
+    feedbackHint: "Comments for your gym or for the AMRAP team.",
+    feedbackTargetLegend: "Send to",
+    feedbackTargetGym: "This gym",
+    feedbackTargetAmrap: "AMRAP",
+    feedbackTargetAmrapHint: "Product, support, or suggestions",
+    feedbackBody: "Message",
+    feedbackBodyPlaceholder: "Write your comment…",
+    feedbackSubmit: "Send",
+    feedbackSubmitting: "Sending…",
+    feedbackSuccess: "Feedback sent. Thank you.",
+    feedbackError: "Could not send feedback",
+    feedbackForbidden: "You can’t send feedback with this account",
     logout: "Log out",
     gyms: "My gyms",
     activeUntil: "Active until",
@@ -2620,6 +2731,10 @@ const en: Dictionary = {
     waitlist: "Waitlist",
     emptySessions: "No upcoming classes.",
     emptyBookings: "You have no bookings yet.",
+    emptyMyBookings: "You have no bookings in this period.",
+    filterAll: "All",
+    filterMine: "My bookings",
+    today: "Today",
     emptyInbox: "No messages.",
     statusConfirmed: "Confirmed",
     statusWaitlisted: "Waitlisted",
@@ -2639,6 +2754,11 @@ const en: Dictionary = {
     subscriptionTitle: "AMRAP subscription",
     gymsTitle: "Gyms",
     gymsHint: "Manage locations under this organization.",
+    feedbackTitle: "Gym feedback",
+    feedbackHint: "Comments from members, staff, and trainers about this location.",
+    feedbackEmpty: "No feedback for this gym yet.",
+    feedbackAuthor: "Author",
+    feedbackFromAmrap: "—",
     addGym: "Add gym",
     addGymTitle: "New gym",
     addGymDescription: "Create another location under the same organization and invoice.",
@@ -2809,7 +2929,7 @@ const en: Dictionary = {
     amount: "Enter a valid amount",
     duration: "Enter a valid duration in days",
     date: "Enter a valid date",
-    dateMinAge: "You must be at least 18 years old",
+    dateMinAge: "You must be at least 13 years old",
     invalid: "Invalid value",
     hexColor: "Use a hex color (#RRGGBB)",
   },

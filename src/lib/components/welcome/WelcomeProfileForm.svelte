@@ -42,14 +42,41 @@
 	let weight = $state(defaultWeightKg != null ? String(defaultWeightKg) : '');
 	let pending = $state(false);
 
+	/** Digits + optional single decimal (comma → dot). */
+	function sanitizeDecimalInput(raw: string): string {
+		let out = '';
+		let seenDot = false;
+		for (const ch of raw.replaceAll(',', '.')) {
+			if (ch >= '0' && ch <= '9') {
+				out += ch;
+			} else if (ch === '.' && !seenDot) {
+				out += '.';
+				seenDot = true;
+			}
+		}
+		return out;
+	}
+
+	function onDecimalInput(
+		event: Event,
+		set: (value: string) => void
+	) {
+		const el = event.currentTarget as HTMLInputElement;
+		const next = sanitizeDecimalInput(el.value);
+		if (el.value !== next) el.value = next;
+		set(next);
+	}
+
 	const canSubmit = $derived(
 		isMember
-			? dob.length > 0 &&
-					sex.length > 0 &&
+			? dob.trim().length > 0 &&
+					sex.trim().length > 0 &&
 					height.trim().length > 0 &&
+					Number.isFinite(Number(height)) &&
 					weight.trim().length > 0 &&
+					Number.isFinite(Number(weight)) &&
 					!pending
-			: dob.length > 0 && !pending
+			: dob.trim().length > 0 && !pending
 	);
 </script>
 
@@ -61,8 +88,11 @@
 	use:enhance={() => {
 		pending = true;
 		return async ({ update }) => {
-			pending = false;
-			await update();
+			try {
+				await update({ reset: false });
+			} finally {
+				pending = false;
+			}
 		};
 	}}
 >
@@ -101,13 +131,12 @@
 					<Input
 						id="height"
 						name="height_cm"
-						type="number"
+						type="text"
 						inputmode="decimal"
+						autocomplete="off"
 						required
-						min={50}
-						max={250}
-						step="0.1"
 						bind:value={height}
+						oninput={(e) => onDecimalInput(e, (v) => (height = v))}
 						{invalid}
 						{describedBy}
 					/>
@@ -118,13 +147,12 @@
 					<Input
 						id="weight"
 						name="weight_kg"
-						type="number"
+						type="text"
 						inputmode="decimal"
+						autocomplete="off"
 						required
-						min={20}
-						max={400}
-						step="0.1"
 						bind:value={weight}
+						oninput={(e) => onDecimalInput(e, (v) => (weight = v))}
 						{invalid}
 						{describedBy}
 					/>

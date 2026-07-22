@@ -20,6 +20,42 @@
 	);
 	const waitlisted = $derived(bookings.filter((b) => b.status === 'waitlisted'));
 	const rosterLabels = $derived({ ...d.roster, close: d.registerUser.close });
+
+	const rosterActionClass = 'w-full sm:w-auto';
+
+	const seatsLabel = $derived(
+		session?.capacity == null
+			? d.classes.unlimited
+			: `${confirmed.length}/${session.capacity}`
+	);
+
+	function bookingStatusLabel(status: string) {
+		switch (status) {
+			case 'confirmed':
+				return d.classes.statusConfirmed;
+			case 'attended':
+				return d.classes.statusAttended;
+			case 'no_show':
+				return d.classes.statusNoShow;
+			case 'waitlisted':
+				return d.classes.statusWaitlisted;
+			default:
+				return status;
+		}
+	}
+
+	function bookingStatusClass(status: string) {
+		switch (status) {
+			case 'attended':
+				return 'bg-[var(--color-success)]/15 text-[var(--color-success)]';
+			case 'no_show':
+				return 'bg-[var(--color-danger)]/15 text-[var(--color-danger)]';
+			case 'waitlisted':
+				return 'bg-[var(--color-muted)]/20 text-[var(--color-muted)]';
+			default:
+				return 'bg-[var(--color-primary)]/15 text-[var(--color-primary)]';
+		}
+	}
 </script>
 
 <svelte:head>
@@ -29,38 +65,64 @@
 {#if data.forbidden || !session}
 	<p class="text-[var(--color-muted)]">{d.common.forbidden}</p>
 {:else}
-	<div class="flex w-full animate-fade-in-up flex-col gap-6">
+	<div class="flex w-full animate-fade-in-up flex-col gap-5">
 		<div>
 			<a
 				href={`/${locale}/classes?tab=calendar`}
-				class="inline-flex items-center gap-1.5 text-sm text-[var(--color-muted)] hover:text-[var(--color-text)]"
+				class="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
 			>
-				<ArrowLeft class="h-4 w-4" />
+				<ArrowLeft class="h-4 w-4" aria-hidden="true" />
 				{d.classes.tabCalendar}
 			</a>
-			<h1 class="mt-3 font-title text-3xl font-bold text-[var(--color-text)]">
-				{session.class_name}
-			</h1>
-			<p class="mt-1 text-sm text-[var(--color-muted)]">
-				{formatSessionTime(session.starts_at, locale)}
-				{session.status === 'cancelled' ? ` · ${d.classes.cancelled}` : ''}
-			</p>
-			<p class="mt-1 text-sm text-[var(--color-muted)]">
-				{d.classes.seats}:
-				{session.capacity == null
-					? d.classes.unlimited
-					: `${confirmed.length}/${session.capacity}`}
-				{waitlisted.length > 0 ? ` · ${d.classes.waitlist}: ${waitlisted.length}` : ''}
-			</p>
 		</div>
 
-		{#if data.canManage && session.status === 'scheduled'}
-			<form method="POST" action="?/cancelSession" use:enhance>
-				<input type="hidden" name="locale" value={locale} />
-				<input type="hidden" name="session_id" value={session.id} />
-				<Button type="submit" variant="ghost" class="text-sm">{d.classes.cancelSession}</Button>
-			</form>
-		{/if}
+		<header
+			class="flex flex-col gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm sm:flex-row sm:items-start sm:justify-between sm:p-6"
+		>
+			<div class="min-w-0">
+				<h1 class="font-title text-3xl font-bold tracking-tight text-[var(--color-text)]">
+					{session.class_name}
+				</h1>
+				<p class="mt-1 text-sm text-[var(--color-muted)]">
+					{formatSessionTime(session.starts_at, locale)}
+				</p>
+				<div class="mt-3 flex flex-wrap items-center gap-2">
+					<span
+						class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold {session.status ===
+						'cancelled'
+							? 'bg-[var(--color-danger)]/15 text-[var(--color-danger)]'
+							: 'bg-[var(--color-success)]/15 text-[var(--color-success)]'}"
+					>
+						{session.status === 'cancelled' ? d.classes.cancelled : d.classes.scheduled}
+					</span>
+					<span
+						class="inline-flex rounded-md bg-[var(--color-primary-soft)] px-2.5 py-0.5 text-xs font-semibold text-[var(--color-text)]"
+					>
+						{d.classes.seats}: {seatsLabel}
+					</span>
+					{#if waitlisted.length > 0}
+						<span
+							class="inline-flex rounded-md bg-[var(--color-surface-hover)] px-2.5 py-0.5 text-xs font-semibold text-[var(--color-muted)]"
+						>
+							{d.classes.waitlist}: {waitlisted.length}
+						</span>
+					{/if}
+				</div>
+			</div>
+			{#if data.canManage && session.status === 'scheduled'}
+				<form method="POST" action="?/cancelSession" use:enhance class="shrink-0 sm:pt-1">
+					<input type="hidden" name="locale" value={locale} />
+					<input type="hidden" name="session_id" value={session.id} />
+					<Button
+						type="submit"
+						variant="toolbarSecondary"
+						class="w-full border-[var(--color-danger)]/35 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 sm:w-auto"
+					>
+						{d.classes.cancelSession}
+					</Button>
+				</form>
+			{/if}
+		</header>
 
 		{#if data.canCheckin && session.status === 'scheduled'}
 			<ClassSessionBookForm
@@ -71,22 +133,32 @@
 				labels={{
 					bookMember: d.classes.bookMember,
 					selectMember: d.classes.selectMember,
+					searchMember: d.classes.searchMember,
+					bookHint: d.classes.bookHint,
+					noMemberMatches: d.classes.noMemberMatches,
 					book: d.classes.book
 				}}
 			/>
 		{/if}
 
 		<section>
-			<h2 class="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
-				{d.classes.roster}
-			</h2>
+			<div class="mb-3 flex items-center gap-2">
+				<h2 class="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
+					{d.classes.roster}
+				</h2>
+				<span
+					class="inline-flex min-w-6 items-center justify-center rounded-full bg-[var(--color-surface-hover)] px-2 py-0.5 text-xs font-semibold tabular-nums text-[var(--color-muted)]"
+				>
+					{confirmed.length}
+				</span>
+			</div>
 			{#if confirmed.length === 0}
 				<p class="text-sm text-[var(--color-muted)]">{d.classes.rosterEmpty}</p>
 			{:else}
 				<ul class="flex flex-col gap-2">
 					{#each confirmed as b (b.id)}
 						<li
-							class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3"
+							class="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
 						>
 							<div class="min-w-0">
 								<div class="flex flex-wrap items-center gap-1.5">
@@ -98,9 +170,17 @@
 										labels={rosterLabels}
 									/>
 								</div>
-								<p class="text-xs text-[var(--color-muted)]">{b.status}</p>
+								<span
+									class="mt-1.5 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold {bookingStatusClass(
+										b.status
+									)}"
+								>
+									{bookingStatusLabel(b.status)}
+								</span>
 							</div>
-							<div class="flex flex-wrap gap-1">
+							<div
+								class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end"
+							>
 								{#if data.canManage}
 									<RosterResultButton
 										{locale}
@@ -112,42 +192,37 @@
 									/>
 								{/if}
 								{#if data.canCheckin && b.status === 'confirmed'}
-									<form method="POST" action="?/setBookingStatus" use:enhance>
+									<form method="POST" action="?/setBookingStatus" use:enhance class="contents">
 										<input type="hidden" name="locale" value={locale} />
 										<input type="hidden" name="booking_id" value={b.id} />
 										<input type="hidden" name="session_id" value={session.id} />
 										<input type="hidden" name="status" value="attended" />
-										<button
-											type="submit"
-											class="rounded-md border border-[var(--color-border)] px-2 py-1 text-xs"
-										>
+										<Button type="submit" variant="toolbarSecondary" class={rosterActionClass}>
 											{d.classes.markAttended}
-										</button>
+										</Button>
 									</form>
-									<form method="POST" action="?/setBookingStatus" use:enhance>
+									<form method="POST" action="?/setBookingStatus" use:enhance class="contents">
 										<input type="hidden" name="locale" value={locale} />
 										<input type="hidden" name="booking_id" value={b.id} />
 										<input type="hidden" name="session_id" value={session.id} />
 										<input type="hidden" name="status" value="no_show" />
-										<button
-											type="submit"
-											class="rounded-md border border-[var(--color-border)] px-2 py-1 text-xs"
-										>
+										<Button type="submit" variant="toolbarSecondary" class={rosterActionClass}>
 											{d.classes.markNoShow}
-										</button>
+										</Button>
 									</form>
 								{/if}
 								{#if b.status !== 'attended' && b.status !== 'no_show'}
-									<form method="POST" action="?/cancelBooking" use:enhance>
+									<form method="POST" action="?/cancelBooking" use:enhance class="contents">
 										<input type="hidden" name="locale" value={locale} />
 										<input type="hidden" name="booking_id" value={b.id} />
 										<input type="hidden" name="session_id" value={session.id} />
-										<button
+										<Button
 											type="submit"
-											class="rounded-md border border-[var(--color-border)] px-2 py-1 text-xs text-[var(--color-muted)]"
+											variant="toolbarSecondary"
+											class="{rosterActionClass} text-[var(--color-muted)]"
 										>
 											{d.classes.cancelBooking}
-										</button>
+										</Button>
 									</form>
 								{/if}
 							</div>
@@ -158,36 +233,58 @@
 		</section>
 
 		<section>
-			<h2 class="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
-				{d.classes.waitlist}
-			</h2>
+			<div class="mb-3 flex items-center gap-2">
+				<h2 class="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
+					{d.classes.waitlist}
+				</h2>
+				<span
+					class="inline-flex min-w-6 items-center justify-center rounded-full bg-[var(--color-surface-hover)] px-2 py-0.5 text-xs font-semibold tabular-nums text-[var(--color-muted)]"
+				>
+					{waitlisted.length}
+				</span>
+			</div>
 			{#if waitlisted.length === 0}
 				<p class="text-sm text-[var(--color-muted)]">{d.classes.waitlistEmpty}</p>
 			{:else}
 				<ul class="flex flex-col gap-2">
 					{#each waitlisted as b (b.id)}
 						<li
-							class="flex items-center justify-between rounded-xl border border-[var(--color-border)] px-4 py-3"
+							class="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
 						>
-							<div class="flex flex-wrap items-center gap-1.5">
-								<p class="font-medium">#{b.waitlist_position ?? '—'} {b.person_name}</p>
-								<RosterCareBadges
-									medicalNote={b.medical_note}
-									isFirstDay={b.isFirstDay}
-									isBirthday={b.isBirthday}
-									labels={rosterLabels}
-								/>
+							<div class="min-w-0">
+								<div class="flex flex-wrap items-center gap-1.5">
+									<p class="font-medium text-[var(--color-text)]">
+										<span class="tabular-nums text-[var(--color-muted)]"
+											>#{b.waitlist_position ?? '—'}</span
+										>
+										{b.person_name}
+									</p>
+									<RosterCareBadges
+										medicalNote={b.medical_note}
+										isFirstDay={b.isFirstDay}
+										isBirthday={b.isBirthday}
+										labels={rosterLabels}
+									/>
+								</div>
+								<span
+									class="mt-1.5 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold {bookingStatusClass(
+										'waitlisted'
+									)}"
+								>
+									{bookingStatusLabel('waitlisted')}
+								</span>
 							</div>
-							<form method="POST" action="?/cancelBooking" use:enhance>
+							<form method="POST" action="?/cancelBooking" use:enhance class="contents">
 								<input type="hidden" name="locale" value={locale} />
 								<input type="hidden" name="booking_id" value={b.id} />
 								<input type="hidden" name="session_id" value={session.id} />
-								<button
+								<Button
 									type="submit"
-									class="rounded-md border border-[var(--color-border)] px-2 py-1 text-xs"
+									variant="toolbarSecondary"
+									class="{rosterActionClass} text-[var(--color-muted)]"
 								>
 									{d.classes.cancelBooking}
-								</button>
+								</Button>
 							</form>
 						</li>
 					{/each}

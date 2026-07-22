@@ -4,7 +4,7 @@ import { uniqueEmail, uniquePersonLabel } from "../helpers/supabase";
 
 test.describe("owner members", () => {
   test("create member, find in list, open detail", async ({ page }) => {
-    const memberName = uniquePersonLabel("Socio");
+    const memberName = uniquePersonLabel("Miembro");
     const memberEmail = uniqueEmail("e2e.member");
 
     await createMemberViaUi(page, memberName, memberEmail);

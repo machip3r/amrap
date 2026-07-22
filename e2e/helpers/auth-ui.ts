@@ -37,7 +37,7 @@ export async function completeOnboardingViaUi(
   await page.getByRole("button", { name: "Continuar" }).click();
 
   await expect(
-    page.getByRole("heading", { name: "Qué le cobras a tus socios" }),
+    page.getByRole("heading", { name: "Qué le cobras a tus miembros" }),
   ).toBeVisible({ timeout: 30_000 });
 
   if (options.planName) {

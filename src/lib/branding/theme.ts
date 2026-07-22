@@ -163,3 +163,19 @@ export function brandThemeCssVars(
 
   return { light: map(L), dark: map(D) };
 }
+
+/** CSS block for `.amrap-branded` (and `.dark .amrap-branded`) theme overrides. */
+export function brandThemeStyleBlock(
+  light: BrandThemeTokens | null | undefined,
+  dark: BrandThemeTokens | null | undefined,
+  selector = ".amrap-branded",
+): string {
+  const { light: L, dark: D } = brandThemeCssVars(light, dark);
+  const lightDecls = Object.entries(L)
+    .map(([k, v]) => `${k}:${v}`)
+    .join(";");
+  const darkDecls = Object.entries(D)
+    .map(([k, v]) => `${k}:${v}`)
+    .join(";");
+  return `${selector}{${lightDecls}}.dark ${selector}{${darkDecls}}`;
+}

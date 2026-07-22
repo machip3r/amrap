@@ -5,6 +5,7 @@
 	import CreateTeamMemberDialog from '$lib/components/team/CreateTeamMemberDialog.svelte';
 	import TeamList from '$lib/components/team/TeamList.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
+	import { buttonVariants } from '$lib/components/ui/button-variants';
 	import type { Dictionary } from '$lib/i18n/dictionaries';
 	import type { Locale } from '$lib/i18n/config';
 	import type { PageMeta } from '$lib/pagination';
@@ -79,7 +80,7 @@
 			{#if showCheckInHistory}
 				<a
 					href="/{locale}/checkin/history"
-					class="inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 text-sm font-semibold text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)] sm:flex-none"
+					class="{buttonVariants.toolbarSecondary} min-w-0 flex-1 sm:flex-none"
 				>
 					<History class="h-4 w-4 shrink-0" aria-hidden="true" />
 					<span class="truncate">{d.checkin.viewAllCheckIns}</span>
@@ -107,6 +108,7 @@
 		{q}
 		{highlightId}
 		{currentUserId}
+		showListRemove={listRole === 'staff'}
 		labels={{
 			name: d.members.name,
 			email: d.members.email,

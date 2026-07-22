@@ -6,9 +6,11 @@ import {
 	invitePasswordPath,
 	invitePath
 } from '$lib/auth/invite-decision';
+import { userNeedsInvitePassword } from '$lib/auth/invite-password';
 import { resolvePostAuthPath } from '$lib/auth/post-auth-redirect';
 import { getSessionUser } from '$lib/auth/session';
 import { getDictionary } from '$lib/i18n/dictionaries';
+import { createServiceRoleClient } from '$lib/supabase/admin';
 import { createClient } from '$lib/supabase/server';
 import { zodFieldErrors } from '$lib/validation/field-errors';
 import { formString, localeSchema, passwordSchema } from '$lib/validation/schemas';
@@ -32,6 +34,11 @@ export async function acceptInviteAction(formData: FormData): Promise<InviteDeci
 
 	const result = await acceptPendingInvite(invite);
 	if (!result.ok) return { error: d.invite.error };
+
+	// Existing accounts already have a password — skip create-password.
+	if (!(await userNeedsInvitePassword(user))) {
+		throw redirect(303, await resolvePostAuthPath(locale));
+	}
 
 	throw redirect(303, invitePasswordPath(locale));
 }
@@ -105,6 +112,16 @@ export async function setInvitePasswordAction(formData: FormData): Promise<Invit
 	if (error) {
 		console.error('setInvitePasswordAction', error.message);
 		return { error: d.invite.passwordError };
+	}
+
+	const admin = createServiceRoleClient();
+	if (admin) {
+		const { error: metaErr } = await admin.auth.admin.updateUserById(user.id, {
+			app_metadata: { amrap_needs_invite_password: false }
+		});
+		if (metaErr) {
+			console.error('setInvitePasswordAction clear flag', metaErr.message);
+		}
 	}
 
 	throw redirect(303, await resolvePostAuthPath(locale));

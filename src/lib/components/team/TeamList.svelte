@@ -48,6 +48,8 @@
 		q: string;
 		highlightId?: string | null;
 		currentUserId: string;
+		/** When false, remove only from the detail page (trainers list). */
+		showListRemove?: boolean;
 	};
 
 	let {
@@ -58,7 +60,8 @@
 		meta,
 		q: initialQ,
 		highlightId = null,
-		currentUserId
+		currentUserId,
+		showListRemove = true
 	}: Props = $props();
 
 	let query = $state('');
@@ -281,7 +284,7 @@
 									<ArrowRight class="h-4 w-4" />
 								</span>
 							</button>
-							{#if m.userId !== currentUserId}
+							{#if showListRemove && m.userId !== currentUserId}
 								<button
 									type="button"
 									class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-[var(--color-danger)] transition-colors hover:bg-[var(--color-danger)]/10"
@@ -376,7 +379,7 @@
 											{labels.view}
 											<ArrowRight class="h-3.5 w-3.5" aria-hidden="true" />
 										</span>
-										{#if m.userId !== currentUserId}
+										{#if showListRemove && m.userId !== currentUserId}
 											<button
 												type="button"
 												class="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-[var(--color-danger)] transition-opacity hover:opacity-80"

@@ -10,6 +10,7 @@
 		upsertRoutine
 	} from '$lib/timers/storage';
 	import type { TimerRoutine } from '$lib/timers/types';
+	import PageLoader from '$lib/components/ui/PageLoader.svelte';
 	import TimerEditor from './TimerEditor.svelte';
 	import TimerRoutinesList from './TimerRoutinesList.svelte';
 	import TimerRunScreen from './TimerRunScreen.svelte';
@@ -55,7 +56,7 @@
 </script>
 
 {#if !hydrated}
-	<p class="text-sm text-[var(--color-muted)]">{d.common.loading}</p>
+	<PageLoader label={d.common.loading} />
 {:else if view.kind === 'edit'}
 	<div class="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--color-bg)]">
 		<TimerEditor

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import TimerApp from '$lib/components/timers/TimerApp.svelte';
+	import { brandedTitle } from '$lib/seo/document-title';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -7,7 +8,7 @@
 </script>
 
 <svelte:head>
-	<title>{d.member.timers} — AMRAP</title>
+	<title>{brandedTitle(d.member.timers, data.documentBrand)}</title>
 </svelte:head>
 
 <div class="w-full">

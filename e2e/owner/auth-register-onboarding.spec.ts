@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { completeOnboardingViaUi, loginViaUi } from "../helpers/auth-ui";
 import {
   bootstrapOrganizationAccount,
+  cleanupE2eUserByEmail,
   confirmAuthUserByEmail,
   createConfirmedAuthUser,
   E2E_PASSWORD,
@@ -17,53 +18,63 @@ test.describe("owner register + onboarding", () => {
     const organizationName = `E2E Register Org ${stamp}`;
     const gymName = `E2E Register Gym ${stamp}`;
 
-    await page.goto("/es/register");
-    await page.locator('input[name="organizationName"]').fill(organizationName);
-    await page.locator('input[name="email"]').fill(email);
-    await page.locator('input[name="password"]').fill(E2E_PASSWORD);
-    await page.locator('input[name="confirmPassword"]').fill(E2E_PASSWORD);
-    await page.getByRole("button", { name: "Crear cuenta" }).click();
+    try {
+      await page.goto("/es/register");
+      await page.locator('input[name="organizationName"]').fill(organizationName);
+      await page.locator('input[name="email"]').fill(email);
+      await page.locator('input[name="password"]').fill(E2E_PASSWORD);
+      await page.locator('input[name="confirmPassword"]').fill(E2E_PASSWORD);
+      await page.getByRole("button", { name: "Crear cuenta" }).click();
 
-    const rateLimited = page.getByRole("alert").filter({
-      hasText: /Demasiados correos|rate limit|Too many/i,
-    });
-    const emailRejected = page.getByRole("alert").filter({
-      hasText: /no es válido|not valid|example|test domains|completar el registro|could not be completed/i,
-    });
-    const otpOrOnboarding = page.getByRole("heading", {
-      name: /Confirma tu correo|Configura tu espacio/i,
-    });
+      const rateLimited = page.getByRole("alert").filter({
+        hasText: /Demasiados correos|rate limit|Too many/i,
+      });
+      const emailRejected = page.getByRole("alert").filter({
+        hasText: /no es válido|not valid|example|test domains|completar el registro|could not be completed/i,
+      });
+      const otpOrOnboarding = page.getByRole("heading", {
+        name: /Confirma tu correo|Configura tu espacio/i,
+      });
 
-    await expect(rateLimited.or(emailRejected).or(otpOrOnboarding)).toBeVisible({
-      timeout: 60_000,
-    });
+      await expect(rateLimited.or(emailRejected).or(otpOrOnboarding)).toBeVisible({
+        timeout: 60_000,
+      });
 
-    const needsAdminSeed =
-      (await rateLimited.isVisible().catch(() => false)) ||
-      (await emailRejected.isVisible().catch(() => false));
+      const needsAdminSeed =
+        (await rateLimited.isVisible().catch(() => false)) ||
+        (await emailRejected.isVisible().catch(() => false));
 
-    if (needsAdminSeed) {
-      // Shared Supabase projects rate-limit Auth emails or reject some domains;
-      // Admin seed is the equivalent of “register + confirmed email” for E2E.
-      const user = await createConfirmedAuthUser(email, E2E_PASSWORD);
-      await bootstrapOrganizationAccount(user.id, organizationName);
-      await loginViaUi(page, email, E2E_PASSWORD);
-    } else if (page.url().includes("/register")) {
-      await confirmAuthUserByEmail(email);
-      await loginViaUi(page, email, E2E_PASSWORD);
+      if (needsAdminSeed) {
+        // Shared Supabase projects rate-limit Auth emails or reject some domains;
+        // Admin seed is the equivalent of “register + confirmed email” for E2E.
+        const user = await createConfirmedAuthUser(email, E2E_PASSWORD);
+        await bootstrapOrganizationAccount(user.id, organizationName);
+        await loginViaUi(page, email, E2E_PASSWORD);
+      } else if (page.url().includes("/register")) {
+        await confirmAuthUserByEmail(email);
+        await loginViaUi(page, email, E2E_PASSWORD);
+      }
+
+      await completeOnboardingViaUi(page, {
+        fullName: "Maria Register",
+        roleIntent: "owner",
+        gymName,
+        planName: "Mensual Register",
+      });
+
+      await expect(page).toHaveURL(/\/es\/dashboard/);
+      await expect(
+        page.getByRole("heading", { name: "Resumen diario" }),
+      ).toBeVisible();
+    } finally {
+      if (process.env.E2E_SKIP_CLEANUP !== "1") {
+        try {
+          await cleanupE2eUserByEmail(email);
+        } catch (error) {
+          console.warn("E2E register cleanup failed", email, error);
+        }
+      }
     }
-
-    await completeOnboardingViaUi(page, {
-      fullName: "Maria Register",
-      roleIntent: "owner",
-      gymName,
-      planName: "Mensual Register",
-    });
-
-    await expect(page).toHaveURL(/\/es\/dashboard/);
-    await expect(
-      page.getByRole("heading", { name: "Resumen diario" }),
-    ).toBeVisible();
   });
 
   test("invalid login shows error", async ({ page }) => {

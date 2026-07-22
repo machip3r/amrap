@@ -47,12 +47,17 @@
 	--content-max-narrow: 100%;
 
 	--ops-header-height: 4.5rem;
-	--ops-bottom-nav-height: 3.75rem;
-	/* Watermark strip + QR FAB overhang + breathing room above the bar */
-	--ops-bottom-nav-extra: 4.5rem;
+	--ops-bottom-nav-height: 3.25rem;
+	/* QR FAB overhang + compact watermark strip (safe-area is added separately) */
+	--ops-bottom-nav-extra: 3.25rem;
 	--ops-bottom-clearance: calc(
 		var(--ops-bottom-nav-height) + var(--ops-bottom-nav-extra) + var(--safe-bottom)
 	);
+}
+
+/* Growth/Pro: no powered-by strip — less clearance above the mobile tabs */
+.amrap-app-shell.amrap-no-watermark {
+	--ops-bottom-nav-extra: 2rem;
 }
 
 .dark {

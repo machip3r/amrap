@@ -9,6 +9,7 @@
 	import { getDictionary } from '$lib/i18n/dictionaries';
 	import { getCheckinKiosk } from '$lib/checkin/kiosk-shell.svelte';
 	import { DEFAULT_DOCUMENT_BRAND } from '$lib/seo/document-title';
+	import { showAmrapWatermark } from '$lib/plans/limits';
 	import { getTimersImmersive } from '$lib/timers/shell.svelte';
 	import type { Snippet } from 'svelte';
 
@@ -37,6 +38,7 @@
 	const appName = $derived(data.documentBrand?.trim() || DEFAULT_DOCUMENT_BRAND);
 	const faviconLight = $derived(data.logoUrlLight || data.logoUrlDark);
 	const faviconDark = $derived(data.logoUrlDark || data.logoUrlLight);
+	const showWatermark = $derived(showAmrapWatermark(data.workspace.planTier));
 
 	/** Override static AMRAP icons in app.html so the gym logo wins in the tab. */
 	$effect(() => {
@@ -92,7 +94,10 @@
 
 <OpsNavProgress />
 
-<div class="amrap-branded amrap-app-shell flex flex-col overflow-hidden bg-[var(--color-bg)]">
+<div
+	class="amrap-branded amrap-app-shell flex flex-col overflow-hidden bg-[var(--color-bg)]"
+	class:amrap-no-watermark={!showWatermark}
+>
 	<div class="flex min-h-0 flex-1 overflow-hidden">
 		{#if !immersive}
 			<AppNav
@@ -138,11 +143,14 @@
 						>
 							<Settings class="h-5 w-5" aria-hidden="true" />
 						</a>
-						<div
-							class="flex h-[var(--touch-target)] w-[var(--touch-target)] items-center justify-center overflow-hidden rounded-full bg-[var(--color-primary)]/20 text-base font-bold text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30"
+						<a
+							href="/{data.locale}/profile"
+							class="flex h-[var(--touch-target)] w-[var(--touch-target)] items-center justify-center overflow-hidden rounded-full bg-[var(--color-primary)]/20 text-base font-bold text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30 transition-opacity hover:opacity-90"
+							aria-label={d.member.profile}
+							title={d.member.profile}
 						>
 							{data.initial}
-						</div>
+						</a>
 					</div>
 				</header>
 			{/if}
@@ -156,7 +164,9 @@
 		</div>
 	</div>
 	{#if !immersive}
-		<AmrapWatermark locale={data.locale} label={d.shell.poweredBy} class="hidden md:flex" />
+		{#if showWatermark}
+			<AmrapWatermark locale={data.locale} label={d.shell.poweredBy} class="hidden md:flex" />
+		{/if}
 		<OpsMobileNav
 			locale={data.locale}
 			role={data.workspace.role}
@@ -168,6 +178,7 @@
 			isProvisionalOwner={data.workspace.isProvisionalOwner}
 			qrCode={data.qrCode}
 			fullName={data.workspace.fullName}
+			{showWatermark}
 		/>
 	{/if}
 </div>

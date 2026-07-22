@@ -78,6 +78,8 @@ export function titleFromPath(
 			return brandedTitle(d.settings.title, brand);
 		case 'organization':
 			return brandedTitle(d.organization.title, brand);
+		case 'profile':
+			return brandedTitle(d.member.profile, brand);
 		case 'team':
 			return brandedTitle(d.nav.staff, brand);
 		case 'me':
@@ -90,8 +92,10 @@ export function titleFromPath(
 					return brandedTitle(d.member.inbox, brand);
 				case 'qr':
 					return brandedTitle(d.member.qr, brand);
+				case 'profile':
+					return brandedTitle(d.member.profile, brand);
 				default:
-					return brandedTitle(d.member.title, brand);
+					return brandedTitle(d.member.home, brand);
 			}
 		default:
 			return brandedTitle(DEFAULT_DOCUMENT_BRAND, brand);

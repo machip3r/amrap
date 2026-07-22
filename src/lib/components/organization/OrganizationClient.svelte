@@ -30,6 +30,13 @@
 		isCurrent: boolean;
 	};
 
+	export type OrgFeedbackRow = {
+		id: string;
+		body: string;
+		createdAt: string;
+		authorName: string | null;
+	};
+
 	type Props = {
 		locale: Locale;
 		d: Dictionary;
@@ -38,6 +45,8 @@
 		hasStripeCustomer: boolean;
 		billingFlash: 'success' | 'cancel' | null;
 		gyms: OrgGymRow[];
+		feedback?: OrgFeedbackRow[];
+		activeGymName?: string;
 	};
 
 	let {
@@ -47,7 +56,9 @@
 		planTier,
 		hasStripeCustomer,
 		billingFlash,
-		gyms
+		gyms,
+		feedback = [],
+		activeGymName = ''
 	}: Props = $props();
 
 	const labels = $derived(d.organization);
@@ -281,6 +292,45 @@
 				</li>
 			{/each}
 		</ul>
+	</section>
+
+	<section
+		id="feedback"
+		class="scroll-mt-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-6"
+	>
+		<div class="mb-4">
+			<h2 class="font-title text-xl font-bold text-[var(--color-text)]">{labels.feedbackTitle}</h2>
+			<p class="mt-1 text-sm text-[var(--color-muted)]">
+				{labels.feedbackHint}
+				{#if activeGymName}
+					<span class="font-medium text-[var(--color-text)]"> · {activeGymName}</span>
+				{/if}
+			</p>
+		</div>
+		{#if feedback.length === 0}
+			<p class="text-sm text-[var(--color-muted)]">{labels.feedbackEmpty}</p>
+		{:else}
+			<ul class="flex flex-col gap-2">
+				{#each feedback as item (item.id)}
+					<li
+						class="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-3"
+					>
+						<p class="whitespace-pre-wrap text-sm text-[var(--color-text)]">{item.body}</p>
+						<p class="mt-2 text-xs text-[var(--color-muted)]">
+							{item.authorName ?? labels.feedbackAuthor}
+							·
+							{new Date(item.createdAt).toLocaleString(locale === 'es' ? 'es-MX' : 'en-US', {
+								day: '2-digit',
+								month: 'short',
+								year: 'numeric',
+								hour: '2-digit',
+								minute: '2-digit'
+							})}
+						</p>
+					</li>
+				{/each}
+			</ul>
+		{/if}
 	</section>
 
 	<div class="flex items-center gap-3 px-1" role="separator" aria-label={labels.subscriptionTitle}>

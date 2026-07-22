@@ -14,7 +14,7 @@ test.describe("owner payments", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     const combobox = dialog.getByRole("combobox", {
-      name: /^Socio$/i,
+      name: /^Miembro$/i,
     });
     await combobox.fill(memberName);
     await dialog
@@ -43,10 +43,10 @@ test.describe("owner payments", () => {
     });
     await expect(paymentDialog).toBeVisible();
 
-    const combobox = paymentDialog.getByRole("combobox", { name: /^Socio$/i });
+    const combobox = paymentDialog.getByRole("combobox", { name: /^Miembro$/i });
     await combobox.click();
     await paymentDialog
-      .getByRole("option", { name: /Registrar nuevo socio/i })
+      .getByRole("option", { name: /Registrar nuevo miembro/i })
       .getByRole("button")
       .click();
 

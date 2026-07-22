@@ -48,6 +48,7 @@ test.describe("owner settings and organization", () => {
     await page.goto("/es/organization");
     await expect(page).toHaveURL(/\/es\/organization/);
     await expect(page.getByRole("heading", { name: "Organización" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Feedback del gym" })).toBeVisible();
     await expect(page.getByText(/Plan gratuito|Starter|Growth|Pro/i).first()).toBeVisible();
 
     const contact = page.getByRole("link", { name: /Contactar a AMRAP/i });
@@ -63,5 +64,18 @@ test.describe("owner settings and organization", () => {
     await expect(
       confirm.getByRole("button", { name: "Confirmar mejora" }),
     ).toBeVisible();
+  });
+
+  test("owner profile does not compose feedback", async ({ page }) => {
+    await page.goto("/es/profile");
+    await expect(page).toHaveURL(/\/es\/profile/);
+    await expect(page.getByRole("heading", { name: "Carlos Owner" })).toBeVisible();
+    await expect(
+      page.getByText("No puedes enviar feedback con esta cuenta"),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Feedback del gym" }),
+    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Enviar feedback" })).toHaveCount(0);
   });
 });

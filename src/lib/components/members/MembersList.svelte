@@ -257,7 +257,7 @@
 					<button
 						type="button"
 						onclick={() => void pushParams({ status: key === 'all' ? null : key })}
-						class="inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-semibold transition-colors {selected
+						class="inline-flex h-11 min-h-[var(--touch-target)] shrink-0 items-center justify-center rounded-lg px-3 text-sm font-semibold leading-none transition-colors {selected
 							? 'bg-[var(--color-primary)] text-[var(--color-primary-on)]'
 							: 'border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]'}"
 					>
@@ -271,6 +271,7 @@
 						<Select
 							id="members-plan-filter"
 							value={filters.planId}
+							class="!h-11 !min-h-[var(--touch-target)] !bg-[var(--color-surface)] !px-3 !py-0 !text-sm !leading-none"
 							onchange={(e) => {
 								const value = (e.currentTarget as HTMLSelectElement).value;
 								void pushParams({ plan: value === 'all' ? null : value });

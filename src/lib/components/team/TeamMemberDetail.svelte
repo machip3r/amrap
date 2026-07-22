@@ -168,10 +168,10 @@
 				<Button
 					type="button"
 					variant="ghost"
-					class="inline-flex min-h-11 shrink-0 items-center gap-1.5 self-start border border-[var(--color-danger)]/40 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 sm:self-center"
+					class="inline-flex min-h-11 w-full shrink-0 items-center justify-center gap-2 self-stretch rounded-lg border border-[var(--color-danger)]/40 px-4 py-2.5 text-sm font-semibold text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 sm:w-auto sm:self-center"
 					onclick={() => (removeOpen = true)}
 				>
-					<Trash2 class="h-4 w-4" aria-hidden="true" />
+					<Trash2 class="h-4 w-4 shrink-0" aria-hidden="true" />
 					{copy.remove}
 				</Button>
 			</div>

@@ -93,15 +93,15 @@ export async function getMemberContext(): Promise<MemberContext | null> {
 	const gyms = rows
 		.map((row) => {
 			const gym = firstEmbed(row.gyms);
-			if (!gym) return null;
+			// Gym embed can be null if RLS on gyms is stale; still allow /me with gym_id.
 			return {
 				gymId: row.gym_id,
-				gymName: gym.name,
+				gymName: gym?.name?.trim() || '—',
 				membershipId: row.id,
 				expiresAt: row.expires_at
 			} satisfies MemberGym;
 		})
-		.filter((g): g is MemberGym => g !== null);
+		.filter((g) => Boolean(g.gymId));
 
 	if (gyms.length === 0) return finish(null);
 

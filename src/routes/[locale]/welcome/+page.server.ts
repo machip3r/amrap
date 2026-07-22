@@ -6,6 +6,7 @@ import {
 	resolveWelcomeRole
 } from '$lib/auth/profile-onboarding';
 import { getOnboardingState, getSessionUser } from '$lib/auth/session';
+import { resolveInviteFlowBrand } from '$lib/branding/auth-shell';
 import type { Locale } from '$lib/i18n/config';
 import { isLocale } from '$lib/i18n/config';
 import { getDictionary } from '$lib/i18n/dictionaries';
@@ -47,12 +48,15 @@ export const load: PageServerLoad = async ({ params }) => {
 				? d.welcome.subtitleMember
 				: d.welcome.subtitleStaff;
 
+	const brand = await resolveInviteFlowBrand();
+
 	return {
 		locale,
 		d,
 		role,
 		title,
 		subtitle,
+		brand,
 		defaultDateOfBirth: profile.dateOfBirth,
 		defaultSex: profile.sex,
 		defaultHeightCm: profile.heightCm,

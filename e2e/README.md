@@ -7,8 +7,8 @@ Unit tests (Vitest) are out of scope here — use Playwright for flows.
 ## Prerequisites
 
 1. Env vars (from `.env`, `.env.local`, and/or `.env.test`):
-   - `PUBLIC_SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL`)
-   - `PUBLIC_SUPABASE_PUBLISHABLE_KEY` / `PUBLIC_SUPABASE_ANON_KEY` (or Next `NEXT_PUBLIC_*` equivalents)
+   - `PUBLIC_SUPABASE_URL`
+   - `PUBLIC_SUPABASE_PUBLISHABLE_KEY` / `PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY` (Admin API for seeding / confirming users)
    - Optional: `E2E_EMAIL_DOMAIN` (default `amrap-e2e.com`) — must not be a reserved example/test domain; Supabase Auth rejects those
 2. Prefer a **dedicated test Supabase project** so runs do not pollute production.
@@ -32,6 +32,22 @@ Playwright starts `pnpm run dev` (or reuses an existing server on port **5173** 
 
 Credentials and cookies under `e2e/.auth/` are gitignored.
 
+## Cleanup (after each run)
+
+Playwright `globalTeardown` (`e2e/global-teardown.ts`) hard-deletes seeded **owner** and **provisional** accounts from `e2e/.auth/*-creds.json`. The register/onboarding spec cleans its own user in a `finally` block.
+
+Order matters:
+
+1. **Hard-delete** organizations named `E2E …` created by the user → FK **CASCADE** removes `gyms` → `branches` and gym-scoped rows (plans, memberships, classes, payments, …).
+2. Remove leftover unclaimed **persons** (members) that membership cascade does not delete.
+3. Delete related invite auth users (`gym_roles`), then the owner auth user.
+
+Deleting only the auth user is **not** enough: `organizations.created_by` and `gyms.owner_user_id` are `ON DELETE SET NULL`, so orgs/gyms would remain.
+
+Safety: org hard-delete only runs when `organizations.name` starts with `E2E `. Prefer a dedicated test Supabase project.
+
+Skip cleanup while debugging: `E2E_SKIP_CLEANUP=1 pnpm test:e2e`.
+
 ## Layout
 
 ```
@@ -43,7 +59,7 @@ e2e/
   owner/           # owner / provisional specs
 ```
 
-Later: `e2e/staff/`, `e2e/trainer/`, `e2e/member/`.
+Member / staff feedback flows live under `owner/feedback-shell.spec.ts` (seed via Admin API against the owner gym). Later: dedicated `e2e/staff/`, `e2e/trainer/`, `e2e/member/` projects.
 
 ## Agent rule
 

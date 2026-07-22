@@ -5,12 +5,12 @@ import { needsOwnerOnboarding, noAccessPath } from '$lib/auth/post-auth-redirect
 import { getPersonProfileStatus, welcomePath } from '$lib/auth/profile-onboarding';
 import { canInWorkspace } from '$lib/auth/permissions';
 import { getOnboardingState, getWorkspace } from '$lib/auth/session';
-import { brandThemeCssVars } from '$lib/branding/theme';
-import type { Locale } from '$lib/i18n/config';
-import { isLocale } from '$lib/i18n/config';
-import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
-import { canUseWhitelabel } from '$lib/plans/limits';
-import type { LayoutServerLoad } from './$types';
+	import { brandThemeStyleBlock } from '$lib/branding/theme';
+	import type { Locale } from '$lib/i18n/config';
+	import { isLocale } from '$lib/i18n/config';
+	import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
+	import { canUseWhitelabel } from '$lib/plans/limits';
+	import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ params, depends }) => {
 	depends(OPS_LOAD_DEPS.workspace);
@@ -55,17 +55,10 @@ export const load: LayoutServerLoad = async ({ params, depends }) => {
 	const canManageStaff = canInWorkspace(workspace, 'manage_staff');
 
 	const allowBrand = canUseWhitelabel(workspace.planTier);
-	const { light, dark } = brandThemeCssVars(
+	const brandStyle = brandThemeStyleBlock(
 		allowBrand ? workspace.themeLight : {},
 		allowBrand ? workspace.themeDark : {}
 	);
-	const lightDecls = Object.entries(light)
-		.map(([k, v]) => `${k}:${v}`)
-		.join(';');
-	const darkDecls = Object.entries(dark)
-		.map(([k, v]) => `${k}:${v}`)
-		.join(';');
-	const brandStyle = `.amrap-branded{${lightDecls}}.dark .amrap-branded{${darkDecls}}`;
 
 	const logoUrlLight = allowBrand ? workspace.logoUrlLight : null;
 	const logoUrlDark = allowBrand ? workspace.logoUrlDark : null;

@@ -5,7 +5,7 @@
 		logoUrlLight?: string | null;
 		logoUrlDark?: string | null;
 		gymName?: string;
-		size?: 'sm' | 'md';
+		size?: 'sm' | 'md' | 'lg';
 		class?: string;
 	};
 
@@ -20,7 +20,13 @@
 	const lightLogo = $derived(logoUrlLight || logoUrlDark);
 	const darkLogo = $derived(logoUrlDark || logoUrlLight);
 	const hasCustomLogo = $derived(Boolean(lightLogo || darkLogo));
-	const sizeClass = $derived(size === 'sm' ? 'h-9 max-w-[7.5rem]' : 'h-9 max-w-full');
+	const sizeClass = $derived(
+		size === 'sm'
+			? 'h-9 max-w-[7.5rem]'
+			: size === 'lg'
+				? 'h-12 max-w-[12rem] sm:h-14'
+				: 'h-9 max-w-full'
+	);
 </script>
 
 {#if hasCustomLogo}

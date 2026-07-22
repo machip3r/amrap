@@ -158,15 +158,15 @@ const es: LandingDictionary = {
     eyebrow: "Por qué AMRAP",
     title: "Una persona. Un QR. Varios roles.",
     subtitle:
-      "Los estudios boutique venden reservas y landing pages. Nosotros resolvemos el gym: quién entra, quién paga y cómo operas si eres dueño en un lado y socio en otro.",
+      "Los estudios boutique venden reservas y landing pages. Nosotros resolvemos el gym: quién entra, quién paga y cómo operas si eres dueño en un lado y miembro en otro.",
     items: [
       {
         title: "Un QR en toda la plataforma",
         body: "El mismo código sirve donde entrenes. No se puede usar en otro gym durante 4 horas: menos préstamo de pases, más control real.",
       },
       {
-        title: "La organización paga, no el socio",
-        body: "Hoy registras efectivo, SPEI o terminal (Clip/MP) sin comisión de plataforma — así cobran la mayoría de gyms pequeños en México. La pasarela en línea para socios viene en Beta en planes de pago.",
+        title: "La organización paga, no el miembro",
+        body: "Hoy registras efectivo, SPEI o terminal (Clip/MP) sin comisión de plataforma — así cobran la mayoría de gyms pequeños en México. La pasarela en línea para miembros viene en Beta en planes de pago.",
       },
       {
         title: "Multi-gym sin sorpresa",
@@ -193,7 +193,7 @@ const es: LandingDictionary = {
       },
       {
         title: "Equipo con permisos reales",
-        body: "Invita staff y coaches. Cada persona puede ser dueño, encargado, coach o socio según el gym — con la misma cuenta.",
+        body: "Invita staff y coaches. Cada persona puede ser dueño, encargado, coach o miembro según el gym — con la misma cuenta.",
       },
     ],
   },
@@ -206,7 +206,7 @@ const es: LandingDictionary = {
       {
         step: "01",
         title: "Crea tu organización",
-        body: "Regístrate gratis. Empiezas en Freemium con un gym y hasta 30 socios activos para probar el flujo de verdad.",
+        body: "Regístrate gratis. Empiezas en Freemium con un gym y hasta 30 miembros activos para probar el flujo de verdad.",
       },
       {
         step: "02",
@@ -229,7 +229,7 @@ const es: LandingDictionary = {
   pricing: {
     title: "Planes que crecen con tu gym",
     subtitle:
-      "Paga la organización, no el socio. Precios sin impuestos. Anual ≈ 17% menos. ¿Más de 3 gyms? Escríbenos.",
+      "Paga la organización, no el miembro. Precios sin impuestos. Anual ≈ 17% menos. ¿Más de 3 gyms? Escríbenos.",
     monthly: "Mensual",
     annual: "Anual",
     annualSave: "Ahorra ~17%",
@@ -246,7 +246,7 @@ const es: LandingDictionary = {
         note: "Para probar · 1 gym · 1 sucursal",
         cta: "register",
         features: [
-          "Hasta 30 socios activos",
+          "Hasta 30 miembros activos",
           "Check-in con QR o en recepción",
           "2 staff por gym · 2 planes",
           "Resumen del día e inbox interno",
@@ -265,7 +265,7 @@ const es: LandingDictionary = {
         badge: "Más elegido",
         cta: "register",
         features: [
-          "Hasta ~500 socios activos (aviso suave; no bloquea acceso)",
+          "Hasta ~500 miembros activos (aviso suave; no bloquea acceso)",
           "5 cuentas de staff por sede",
           "Planes de membresía ilimitados",
           "Cobros en línea · Beta (Stripe / Mercado Pago)",
@@ -300,7 +300,7 @@ const es: LandingDictionary = {
         cta: "contact",
         features: [
           "4 o más gyms, o algo a la medida",
-          "Staff y socios ilimitados",
+          "Staff y miembros ilimitados",
           "White-label y personalización total",
           "Soporte prioritario",
           "Lo de Growth, adaptado a ti",
@@ -318,11 +318,11 @@ const es: LandingDictionary = {
       },
       {
         q: "¿Qué incluye el plan gratis de verdad?",
-        a: "1 gym, 1 sucursal, hasta 30 socios activos, check-in QR o manual, 2 staff por gym, 2 planes y el resumen del día. Sirve para probar operación real, no solo una demo.",
+        a: "1 gym, 1 sucursal, hasta 30 miembros activos, check-in QR o manual, 2 staff por gym, 2 planes y el resumen del día. Sirve para probar operación real, no solo una demo.",
       },
       {
         q: "¿AMRAP se queda con comisión de mis membresías?",
-        a: "No. Hoy registras pagos en efectivo, SPEI o terminal (Clip/MP) sin comisión de plataforma. La pasarela en línea para socios está en acceso anticipado (Beta) en planes de pago; las comisiones de tarjeta las cobra el proveedor.",
+        a: "No. Hoy registras pagos en efectivo, SPEI o terminal (Clip/MP) sin comisión de plataforma. La pasarela en línea para miembros está en acceso anticipado (Beta) en planes de pago; las comisiones de tarjeta las cobra el proveedor.",
       },
       {
         q: "¿Puedo manejar varios gyms?",

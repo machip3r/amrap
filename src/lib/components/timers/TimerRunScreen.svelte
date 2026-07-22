@@ -12,6 +12,7 @@
 	import X from '@lucide/svelte/icons/x';
 	import type { Dictionary } from '$lib/i18n/dictionaries';
 	import { expandRoutine } from '$lib/timers/timeline';
+	import { unlockTimerAudio } from '$lib/timers/sound';
 	import { MUTE_KEY, formatClock, playBeep, type TimerRoutine } from '$lib/timers/types';
 
 	type Labels = Dictionary['timers'];
@@ -131,6 +132,8 @@
 		endAt = Date.now() + left * 1000;
 		running = true;
 		done = false;
+		// User gesture: unlock audio for interval/end cues on iOS Safari / PWA
+		unlockTimerAudio();
 		playBeep('start', muted);
 	}
 
@@ -148,6 +151,9 @@
 			localStorage.setItem(MUTE_KEY, muted ? '1' : '0');
 		} catch {
 			/* ignore */
+		}
+		if (!muted) {
+			unlockTimerAudio();
 		}
 	}
 

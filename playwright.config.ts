@@ -24,6 +24,7 @@ export default defineConfig({
 	timeout: 120_000,
 	expect: { timeout: 20_000 },
 	reporter: [['list'], ['html', { open: 'never' }]],
+	globalTeardown: './e2e/global-teardown.ts',
 	use: {
 		baseURL,
 		trace: 'on-first-retry',

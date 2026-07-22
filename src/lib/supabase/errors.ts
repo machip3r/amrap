@@ -15,7 +15,7 @@ export type PersonUniqueField = 'email' | 'phone' | 'user_id' | 'qr_code';
 
 /** Best-effort column from a unique violation on `public.persons`. */
 export function personUniqueFieldFromError(error: DbError): PersonUniqueField | null {
-	if (!isPostgresUniqueViolation(error)) return null;
+	if (!error || !isPostgresUniqueViolation(error)) return null;
 	const m = (error.message ?? '').toLowerCase();
 	if (m.includes('persons_email') || m.includes('email_unique')) return 'email';
 	if (m.includes('persons_phone') || m.includes('phone_unique')) return 'phone';
@@ -25,4 +25,10 @@ export function personUniqueFieldFromError(error: DbError): PersonUniqueField | 
 	if (m.includes('(email)')) return 'email';
 	if (m.includes('(phone)')) return 'phone';
 	return null;
+}
+
+/** `create_gym_membership` when the person is already on this gym. */
+export function isAlreadyMemberAtGymError(error: DbError): boolean {
+	const m = (error?.message ?? '').toLowerCase();
+	return m.includes('already has membership at this gym');
 }

@@ -11,7 +11,7 @@ test.describe("owner check-in", () => {
     await expect(
       page.getByRole("heading", { name: "Entrada", exact: true }),
     ).toBeVisible();
-    const search = page.getByRole("textbox", { name: /^Socio$/i });
+    const search = page.getByRole("textbox", { name: /^Miembro$/i });
     await search.fill(memberName);
     const lookup = page.getByRole("button", { name: "Buscar" });
     await expect(lookup).toBeEnabled();

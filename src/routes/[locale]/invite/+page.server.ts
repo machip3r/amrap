@@ -2,6 +2,7 @@ import { error, redirect } from '@sveltejs/kit';
 import { getPendingInvite } from '$lib/auth/invite-decision';
 import { resolvePostAuthPath } from '$lib/auth/post-auth-redirect';
 import { getSessionUser } from '$lib/auth/session';
+import { getAuthShellBrandForGym } from '$lib/branding/auth-shell';
 import type { Locale } from '$lib/i18n/config';
 import { isLocale } from '$lib/i18n/config';
 import { getDictionary } from '$lib/i18n/dictionaries';
@@ -32,8 +33,9 @@ export const load: PageServerLoad = async ({ params }) => {
 
 	const headline = d.invite.title.replace('{gym}', invite.gymName).replace('{role}', roleLabel);
 	const body = d.invite.subtitle.replace('{gym}', invite.gymName).replace('{role}', roleLabel);
+	const brand = await getAuthShellBrandForGym(invite.gymId);
 
-	return { locale, d, headline, body, hasSession: true };
+	return { locale, d, headline, body, hasSession: true, brand };
 };
 
 export const actions = {

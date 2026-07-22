@@ -4,6 +4,7 @@
 	import CreateMemberDialog from '$lib/components/members/CreateMemberDialog.svelte';
 	import MembersList from '$lib/components/members/MembersList.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
+	import { buttonVariants } from '$lib/components/ui/button-variants';
 	import type { CreateMemberState } from '$lib/server/members/actions';
 	import type { PageProps } from './$types';
 	import { brandedTitle } from '$lib/seo/document-title';
@@ -63,7 +64,7 @@
 				{#if data.showCheckInHistory}
 					<a
 						href="/{data.locale}/checkin/history"
-						class="inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 text-sm font-semibold text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)] sm:flex-none sm:px-3.5"
+						class="{buttonVariants.toolbarSecondary} min-w-0 flex-1 sm:flex-none"
 					>
 						<History class="h-4 w-4 shrink-0" aria-hidden="true" />
 						<span class="truncate">{d.checkin.viewAllCheckIns}</span>

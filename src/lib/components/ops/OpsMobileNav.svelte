@@ -31,6 +31,7 @@
 		isProvisionalOwner?: boolean;
 		qrCode?: string | null;
 		fullName?: string | null;
+		showWatermark?: boolean;
 	};
 
 	let {
@@ -44,6 +45,7 @@
 		isProvisionalOwner = false,
 		qrCode = null,
 		fullName = null,
+		showWatermark = true,
 	}: Props = $props();
 
 	const d = getDictionary(locale);
@@ -72,9 +74,9 @@
 
 	function tabClass(active: boolean) {
 		if (active) {
-			return "flex min-h-[var(--ops-bottom-nav-height)] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 py-1.5 text-[var(--color-primary)]";
+			return "flex min-h-[var(--ops-bottom-nav-height)] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 py-1 text-[var(--color-primary)]";
 		}
-		return "flex min-h-[var(--ops-bottom-nav-height)] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 py-1.5 text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]";
+		return "flex min-h-[var(--ops-bottom-nav-height)] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 py-1 text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]";
 	}
 
 	function moreLinkClass(active: boolean) {
@@ -106,7 +108,7 @@
 	class="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-surface)] md:hidden"
 	aria-label={d.nav.brandTitle}
 >
-	<div class="relative flex items-stretch justify-around px-0.5 pt-0.5">
+	<div class="relative flex items-stretch justify-around px-0.5">
 		{#each leftTabs as item (item.id)}
 			{@render tabLink(item)}
 		{/each}
@@ -152,11 +154,18 @@
 			>
 		</button>
 	</div>
-	<AmrapWatermark
-		{locale}
-		label={d.shell.poweredBy}
-		class="border-[var(--color-border)] bg-[var(--color-surface)] pb-[max(0.35rem,var(--safe-bottom))]"
-	/>
+	{#if showWatermark}
+		<AmrapWatermark
+			{locale}
+			label={d.shell.poweredBy}
+			class="border-[var(--color-border)] bg-[var(--color-surface)] !py-0 pt-1 pb-[max(0.125rem,var(--safe-bottom))]"
+		/>
+	{:else}
+		<div
+			class="bg-[var(--color-surface)] pb-[max(0.125rem,var(--safe-bottom))]"
+			aria-hidden="true"
+		></div>
+	{/if}
 </nav>
 
 <Dialog
@@ -170,7 +179,7 @@
 	autoFocus={false}
 >
 	<div class="space-y-0.5">
-		{#if organizationName || gymName}
+		{#if gymName || organizationName}
 			<div
 				class="mb-2 border-b border-[var(--color-border)] px-4 pb-3 pt-1"
 			>
@@ -197,6 +206,17 @@
 				{/if}
 			</div>
 		{/if}
+		<a
+			href="{prefix}/profile"
+			class={moreLinkClass(pathname.includes('/profile'))}
+			aria-current={pathname.includes('/profile') ? 'page' : undefined}
+			onclick={() => (moreOpen = false)}
+		>
+			<span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-primary)]/20 text-[10px] font-bold text-[var(--color-primary)]"
+				>{(fullName ?? '?').charAt(0).toUpperCase()}</span
+			>
+			<span class="min-w-0 truncate">{d.member.profile}</span>
+		</a>
 		{#each split.more as item (item.id)}
 			{@const href = opsNavHref(prefix, item.path)}
 			{@const active = isOpsNavActive(pathname, href)}

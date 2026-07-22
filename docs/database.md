@@ -8,6 +8,8 @@ English reference for the Postgres schema (Supabase). Source of truth: migration
 | `002_onboarding.sql` | Onboarding columns / RPC refresh + org select policy (upgrade path) |
 | `20260716003201_harden_security_definer_grants.sql` | Move RLS helpers to `private`; revoke anon EXECUTE on public RPCs; drop `gym-logos` listing policy |
 | `20260721040252_persons_unique_and_auth_cascade.sql` | Unique `persons.email` / `phone` when set; `persons.user_id` `ON DELETE CASCADE` |
+| `20260722052641_gyms_select_for_members.sql` | Members can `SELECT` gyms they have a pending/accepted membership at |
+| `20260722053822_create_gym_membership_reuse_person.sql` | `create_gym_membership` reuses `persons` by email (multi-gym) |
 
 **Rule:** never edit an applied migration. Append a new timestamped migration instead.
 
@@ -210,13 +212,17 @@ Anti-abuse is enforced in `record_check_in`: no new check-in at gym B while pers
 
 ### `feedback_messages`
 
-Internal inbox (MVP: text only).
+Internal feedback (MVP: text). Members / staff / trainers compose; gym owners (and provisional) read **gym** target; `amrap` target is for the future AMRAP admin app (`platform_admins`).
 
 | Column | Notes |
 | ------ | ----- |
-| `gym_id` | |
+| `gym_id` | Active gym context when sent |
+| `target` | `gym` \| `amrap` (default `gym`) |
 | `body` | 1–4000 chars |
 | `author_person_id` | Optional |
+| `created_at` | |
+
+**RLS:** Select — platform admin, or (`target = gym` and OWNER / provisional at gym). Insert — gym role or membership at gym (app blocks owner/provisional from composing).
 
 ---
 
@@ -260,6 +266,7 @@ RLS / storage helpers live in schema **`private`** (not exposed via the Data API
 | `private.can_manage_gym(gym_id)` | boolean | OWNER or STAFF (or provisional via `has_gym_role`) |
 | `private.is_provisional_owner_of_gym(gym_id)` | boolean | Provisional owner flag |
 | `private.user_in_organization(org_id)` / `user_can_manage_organization(org_id)` | boolean | Org membership / manage |
+| `private.has_linked_membership_at_gym(gym_id)` | boolean | Signed-in person has pending/accepted membership at gym (gyms SELECT for members) |
 | `private.person_owned_by_me` / `staff_can_view_person` / `staff_can_manage_person` | boolean | Person access helpers (`staff_can_view_person` includes members at caller’s gyms **and** teammates linked via `gym_roles`) |
 | `private.can_manage_gym_branding_storage(object_name)` | boolean | Storage write checks for `gym-logos` |
 
@@ -282,7 +289,7 @@ Legacy wrappers may exist (`register_organization`, `register_tenant`) for older
 | Function | Behavior |
 | -------- | -------- |
 | `record_check_in(gym_id, qr?, membership_id?, branch_id?, source?)` | Validates membership ACTIVE + not expired; blocks cross-gym active session; inserts check-in with 4h `session_expires_at` |
-| `create_gym_membership(gym_id, full_name, expires_at, …)` | Creates **new** `persons` row + membership (staff); does not yet merge/claim existing persons by email |
+| `create_gym_membership(gym_id, full_name, expires_at, …)` | Creates membership; **reuses** existing `persons` by email when present (multi-gym), else inserts a new person |
 | `update_gym_branding(gym_id, theme_light?, theme_dark?, logo_url_light?, logo_url_dark?, clear_logo_light?, clear_logo_dark?)` | Owner/provisional: set gym logos and/or light/dark theme jsonb |
 | `update_my_nav_visibility(gym_id, nav_visibility)` | Authenticated user: update **their own** `gym_roles.nav_visibility` for that gym (`{ "hidden": string[] }`) |
 | `plan_member_counts(gym_id)` | Grouped membership counts per `plan_id` for Plans page |
@@ -303,11 +310,11 @@ All listed `public` tables have RLS enabled. Pattern summary:
 | Table | Typical access |
 | ----- | -------------- |
 | `persons` | Self (`user_id`); staff at gyms where person has a **membership**; staff who share a gym via **`gym_roles`** (teammates); platform admin |
-| `organizations` | Creator / members of org’s gyms / platform admin |
-| `gyms` / `branches` / `plans` / `payments` | Users with roles on that gym; platform admin |
+| `organizations` | Creator / gym roles / members with membership at org gym / platform admin |
+| `gyms` / `branches` / `plans` / `payments` | Gym roles (accepted); **members** may `SELECT` gyms they have a pending/accepted membership at; platform admin |
 | `gym_roles` | Select peers at same gyms; manage if can manage gym / owner |
 | `memberships` / `check_ins` | Gym managers; member may see own via person link (per policies) |
-| `feedback_messages` | Select for gym managers; insert rules for authors |
+| `feedback_messages` | Select: platform admin or gym OWNER/provisional (`target=gym`); insert for authors |
 | `platform_admins` | Select self / admins only |
 
 Exact predicates live in `001_initial.sql` (and `002` for org select). Always re-read policies when changing access rules.

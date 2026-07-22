@@ -113,6 +113,11 @@ export function canUseCustomDomain(tier: OrgPlanTier): boolean {
 	return tier === 'GROWTH' || tier === 'PRO';
 }
 
+/** Footer “Powered by AMRAP” — hidden on Growth / Pro. */
+export function showAmrapWatermark(tier: OrgPlanTier): boolean {
+	return tier !== 'GROWTH' && tier !== 'PRO';
+}
+
 export const ORG_DELETION_RETENTION_DAYS = 30;
 
 export type AmrapPlanOption = {

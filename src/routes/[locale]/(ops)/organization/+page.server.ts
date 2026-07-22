@@ -28,12 +28,19 @@ export const load: PageServerLoad = async ({ parent, url }) => {
 			planTier: workspace.planTier,
 			hasStripeCustomer: false,
 			billingFlash: null as 'success' | 'cancel' | null,
-			gyms: []
+			gyms: [],
+			feedback: [] as {
+				id: string;
+				body: string;
+				createdAt: string;
+				authorName: string | null;
+			}[],
+			activeGymName: workspace.gymName
 		};
 	}
 
 	const supabase = createClient();
-	const [{ data: gymRows }, { data: orgBilling }] = await Promise.all([
+	const [{ data: gymRows }, { data: orgBilling }, { data: feedbackRows }] = await Promise.all([
 		supabase
 			.from('gyms')
 			.select('id, name, deleted_at, created_at')
@@ -43,7 +50,14 @@ export const load: PageServerLoad = async ({ parent, url }) => {
 			.from('organizations')
 			.select('stripe_customer_id')
 			.eq('id', workspace.organizationId)
-			.maybeSingle()
+			.maybeSingle(),
+		supabase
+			.from('feedback_messages')
+			.select('id, body, created_at, author_person_id, persons ( full_name )')
+			.eq('gym_id', workspace.gymId)
+			.eq('target', 'gym')
+			.order('created_at', { ascending: false })
+			.limit(50)
 	]);
 
 	const gyms = (gymRows ?? []).map((g) => ({
@@ -52,6 +66,17 @@ export const load: PageServerLoad = async ({ parent, url }) => {
 		deleted_at: g.deleted_at,
 		isCurrent: g.id === workspace.gymId
 	}));
+
+	const feedback = (feedbackRows ?? []).map((row) => {
+		const person = row.persons;
+		const personRow = Array.isArray(person) ? person[0] : person;
+		return {
+			id: row.id as string,
+			body: row.body as string,
+			createdAt: row.created_at as string,
+			authorName: (personRow as { full_name?: string | null } | null)?.full_name?.trim() || null
+		};
+	});
 
 	const billingParam = url.searchParams.get('billing');
 	const billingFlash: 'success' | 'cancel' | null =
@@ -65,7 +90,9 @@ export const load: PageServerLoad = async ({ parent, url }) => {
 		planTier: workspace.planTier,
 		hasStripeCustomer: Boolean(orgBilling?.stripe_customer_id),
 		billingFlash,
-		gyms
+		gyms,
+		feedback,
+		activeGymName: workspace.gymName
 	};
 };
 

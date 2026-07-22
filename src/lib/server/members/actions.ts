@@ -23,9 +23,9 @@ import {
 	maxActiveMembers
 } from '$lib/plans/limits';
 import { createClient } from '$lib/supabase/server';
-import { personUniqueFieldFromError } from '$lib/supabase/errors';
-import { inviteAuthUserByEmail, linkPersonToUser } from '$lib/team/invite';
-import { z } from 'zod';
+	import { personUniqueFieldFromError, isAlreadyMemberAtGymError } from '$lib/supabase/errors';
+	import { inviteAuthUserByEmail, linkPersonToUser } from '$lib/team/invite';
+	import { z } from 'zod';
 
 function localeFromForm(formData: FormData) {
 	const localeRaw = formString(formData, 'locale') || 'es';
@@ -126,6 +126,9 @@ export async function createMember(formData: FormData): Promise<CreateMemberStat
 
 	if (error || !membershipId) {
 		console.error('createMember', error?.message);
+		if (isAlreadyMemberAtGymError(error)) {
+			return { fieldErrors: { email: d.members.alreadyAtGym } };
+		}
 		const uniqueField = personUniqueFieldFromError(error);
 		if (uniqueField === 'email') {
 			return { fieldErrors: { email: d.members.emailInUse } };

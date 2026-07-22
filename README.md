@@ -204,12 +204,13 @@ Everything in Starter, plus:
 - **Comparative analytics** between gyms / branches
 - Same practical member soft cap **per gym** (~500)
 - **Full white-label** (custom domain / advanced branding) — **Coming soon** / early access
+- No “Powered by AMRAP” footer watermark (ops + member shells)
 
 Flat **$1,499 MXN / org / mo** — not billed per gym on the public price list.
 
 ### Pro (contact)
 
-For **more than 3 gyms**, unlimited staff/members, full customization, priority support, and later advanced modules. No public list price — sales sets terms after the organization contacts AMRAP.
+For **more than 3 gyms**, unlimited staff/members, full customization, priority support, and later advanced modules — including no AMRAP footer watermark. No public list price — sales sets terms after the organization contacts AMRAP.
 
 ### Beta honesty (promise vs product)
 
@@ -304,7 +305,7 @@ Copy your local secrets (never commit them). Required for invites:
 | `RESEND_API_KEY` | Resend API key for invitation emails |
 | `EMAIL_FROM` | Verified from address, e.g. `AMRAP <hello@yourdomain.com>` (falls back to Resend’s onboarding address in dev) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only; used to generate invite links |
-| `NEXT_PUBLIC_APP_URL` | Public app origin used in invite links when request headers are missing |
+| `PUBLIC_APP_URL` | Public app origin used in invite links when request headers are missing |
 
 Without `RESEND_API_KEY`, trainers/staff/members still save but invitation emails are skipped (logged server-side).
 

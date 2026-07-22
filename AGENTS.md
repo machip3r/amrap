@@ -48,8 +48,6 @@ pnpm dev               # http://localhost:5173
 | `PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (optional client use; also accepts `STRIPE_PUBLISHABLE_KEY`) |
 | `STRIPE_WEBHOOK_SECRET` | Signing secret for `POST /api/stripe/webhook` |
 
-Also accepts `NEXT_PUBLIC_*` fallbacks when sharing env with `amrap-next/` (see `src/lib/supabase/env.ts`).
-
 ---
 
 ## Testing / E2E

@@ -1,6 +1,9 @@
 import { error, redirect } from '@sveltejs/kit';
 import { getPendingInvite, invitePath } from '$lib/auth/invite-decision';
+import { userNeedsInvitePassword } from '$lib/auth/invite-password';
+import { resolvePostAuthPath } from '$lib/auth/post-auth-redirect';
 import { getSessionUser } from '$lib/auth/session';
+import { resolveInviteFlowBrand } from '$lib/branding/auth-shell';
 import type { Locale } from '$lib/i18n/config';
 import { isLocale } from '$lib/i18n/config';
 import { getDictionary } from '$lib/i18n/dictionaries';
@@ -20,7 +23,13 @@ export const load: PageServerLoad = async ({ params }) => {
 
 	if (await getPendingInvite()) throw redirect(303, invitePath(locale));
 
-	return { locale, d, hasSession: true };
+	if (!(await userNeedsInvitePassword(user))) {
+		throw redirect(303, await resolvePostAuthPath(locale));
+	}
+
+	const brand = await resolveInviteFlowBrand();
+
+	return { locale, d, hasSession: true, brand };
 };
 
 export const actions = {

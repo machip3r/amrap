@@ -23,6 +23,8 @@
 			hasStripeCustomer={data.hasStripeCustomer}
 			billingFlash={data.billingFlash}
 			gyms={data.gyms}
+			feedback={data.feedback}
+			activeGymName={data.activeGymName}
 		/>
 	</div>
 {/if}

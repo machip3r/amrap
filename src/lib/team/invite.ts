@@ -72,6 +72,10 @@ export async function inviteAuthUserByEmail(opts: {
     });
 
   if (!inviteError && inviteData?.user?.id && inviteData.properties?.hashed_token) {
+    await admin.auth.admin.updateUserById(inviteData.user.id, {
+      app_metadata: { amrap_needs_invite_password: true },
+    });
+
     const acceptUrl = confirmUrl(
       origin,
       inviteData.properties.hashed_token,
@@ -127,6 +131,10 @@ export async function inviteAuthUserByEmail(opts: {
       message: inviteError?.message ?? magicError?.message ?? "Invite failed",
     };
   }
+
+  await admin.auth.admin.updateUserById(magicData.user.id, {
+    app_metadata: { amrap_needs_invite_password: false },
+  });
 
   const hashed = magicData.properties?.hashed_token;
   const acceptUrl = hashed

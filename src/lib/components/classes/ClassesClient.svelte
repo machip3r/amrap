@@ -12,12 +12,14 @@
 	import Pencil from '@lucide/svelte/icons/pencil';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Users from '@lucide/svelte/icons/users';
+	import ClassTrainerPicker from '$lib/components/classes/ClassTrainerPicker.svelte';
 	import WeekdayToggleGroup from '$lib/components/classes/WeekdayToggleGroup.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import Dialog from '$lib/components/ui/Dialog.svelte';
 	import FormField from '$lib/components/ui/FormField.svelte';
 	import Input from '$lib/components/ui/Input.svelte';
+	import PageLoader from '$lib/components/ui/PageLoader.svelte';
 	import { addDays, startOfWeekMonday, type ClassSessionRow } from '$lib/classes/types';
 	import type { Locale } from '$lib/i18n/config';
 	import type { Dictionary } from '$lib/i18n/dictionaries';
@@ -106,6 +108,8 @@
 	let restorePending = $state<string | null>(null);
 	let withSchedule = $state(false);
 	let createScheduleRecurrence = $state<'none' | 'weekly'>('weekly');
+	let createTrainerIds = $state<string[]>([]);
+	let editTrainerIds = $state<string[]>([]);
 
 	const weekStart = $derived(new Date(weekStartIso));
 	const weekParam = $derived(
@@ -220,8 +224,15 @@
 		createState = null;
 		withSchedule = false;
 		createScheduleRecurrence = 'weekly';
+		createTrainerIds = defaultTrainerIds?.length ? [...defaultTrainerIds] : [];
 		createKey += 1;
 	}
+
+	$effect(() => {
+		if (editing) {
+			editTrainerIds = [...editing.trainerIds];
+		}
+	});
 </script>
 
 <header class="flex items-start justify-between gap-3">
@@ -282,7 +293,7 @@
 
 <div role="tabpanel" aria-labelledby={`classes-view-${view}`} class="min-w-0">
 	{#if pendingNav}
-		<p class="py-10 text-center text-sm text-[var(--color-muted)]">{labels.loading}</p>
+		<PageLoader label={labels.loading} />
 	{:else if view === 'catalog'}
 		{#if classes.length === 0}
 			<section
@@ -339,8 +350,8 @@
 							</div>
 							{#if canManage}
 								{@const actionBtn =
-									'inline-flex h-9 w-full min-w-[9.5rem] items-center justify-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 text-sm transition-colors hover:bg-[var(--color-surface-hover)] sm:w-[9.5rem]'}
-								<div class="flex w-max max-w-full shrink-0 flex-col gap-1 sm:flex-row sm:flex-wrap sm:justify-end">
+									'inline-flex h-9 w-full min-w-[9.5rem] items-center justify-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 text-sm transition-colors hover:bg-[var(--color-surface-hover)]'}
+								<div class="flex w-max max-w-full shrink-0 flex-col items-stretch gap-1">
 									<button
 										type="button"
 										onclick={() => {
@@ -643,11 +654,9 @@
 				</FormField>
 
 				<div>
-					<p class="mb-1.5 text-sm font-medium text-[var(--color-text)]">{labels.trainers}</p>
-					<p class="mb-2 text-xs text-[var(--color-muted)]">
-						{lockTrainersToSelf ? labels.trainersSelfHint : labels.trainersHint}
-					</p>
 					{#if lockTrainersToSelf && currentUserId}
+						<p class="mb-1.5 text-sm font-medium text-[var(--color-text)]">{labels.trainers}</p>
+						<p class="mb-2 text-xs text-[var(--color-muted)]">{labels.trainersSelfHint}</p>
 						<input type="hidden" name="trainer_ids" value={currentUserId} />
 						<p
 							class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] px-3 py-2.5 text-sm font-medium text-[var(--color-text)]"
@@ -655,30 +664,22 @@
 							{selfTrainer?.name ?? labels.youAreTrainer}
 						</p>
 					{:else if trainers.length === 0}
+						<p class="mb-1.5 text-sm font-medium text-[var(--color-text)]">{labels.trainers}</p>
 						<p class="text-sm text-[var(--color-muted)]">{labels.noTrainers}</p>
 					{:else}
-						<ul
-							class="max-h-40 space-y-1 overflow-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] p-2"
-						>
-							{#each trainers as t (t.userId)}
-								<li>
-									<label
-										class="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-[var(--color-text)] hover:bg-[var(--color-surface)]"
-									>
-										<input
-											type="checkbox"
-											name="trainer_ids"
-											value={t.userId}
-											checked={defaultTrainerIds?.includes(t.userId) ?? false}
-											class="h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-ring)]"
-										/>
-										<span class="truncate">{t.name}</span>
-									</label>
-								</li>
-							{/each}
-						</ul>
+						<ClassTrainerPicker
+							{trainers}
+							bind:selectedIds={createTrainerIds}
+							labels={{
+								trainers: labels.trainers,
+								trainersHint: labels.trainersHint,
+								noTrainer: labels.noTrainer,
+								noTrainerHint: labels.noTrainerHint
+							}}
+							error={createState?.fieldErrors?.trainer_ids}
+						/>
 					{/if}
-					{#if createState?.fieldErrors?.trainer_ids}
+					{#if (lockTrainersToSelf || trainers.length === 0) && createState?.fieldErrors?.trainer_ids}
 						<p class="mt-1.5 text-sm font-medium text-[var(--color-primary)]" role="alert">
 							{createState.fieldErrors.trainer_ids}
 						</p>
@@ -955,8 +956,8 @@
 			</FormField>
 
 			<div>
-				<p class="mb-1.5 text-sm font-medium text-[var(--color-text)]">{labels.trainers}</p>
 				{#if lockTrainersToSelf && currentUserId}
+					<p class="mb-1.5 text-sm font-medium text-[var(--color-text)]">{labels.trainers}</p>
 					<input type="hidden" name="trainer_ids" value={currentUserId} />
 					<p
 						class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] px-3 py-2.5 text-sm font-medium"
@@ -964,28 +965,20 @@
 						{selfTrainer?.name ?? labels.youAreTrainer}
 					</p>
 				{:else if trainers.length === 0}
+					<p class="mb-1.5 text-sm font-medium text-[var(--color-text)]">{labels.trainers}</p>
 					<p class="text-sm text-[var(--color-muted)]">{labels.noTrainers}</p>
 				{:else}
-					<ul
-						class="max-h-40 space-y-1 overflow-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] p-2"
-					>
-						{#each trainers as t (t.userId)}
-							<li>
-								<label
-									class="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm hover:bg-[var(--color-surface)]"
-								>
-									<input
-										type="checkbox"
-										name="trainer_ids"
-										value={t.userId}
-										checked={editClass.trainerIds.includes(t.userId)}
-										class="h-4 w-4 rounded border-[var(--color-border)]"
-									/>
-									<span class="truncate">{t.name}</span>
-								</label>
-							</li>
-						{/each}
-					</ul>
+					<ClassTrainerPicker
+						{trainers}
+						bind:selectedIds={editTrainerIds}
+						labels={{
+							trainers: labels.trainers,
+							trainersHint: labels.trainersHint,
+							noTrainer: labels.noTrainer,
+							noTrainerHint: labels.noTrainerHint
+						}}
+						error={editState?.fieldErrors?.trainer_ids}
+					/>
 				{/if}
 			</div>
 

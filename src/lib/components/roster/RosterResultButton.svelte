@@ -31,13 +31,9 @@
 	const existingSecs = existing?.time_seconds != null ? existing.time_seconds % 60 : '';
 </script>
 
-<button
-	type="button"
-	onclick={() => (open = true)}
-	class="rounded-md border border-[var(--color-border)] px-2 py-1 text-xs font-medium text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]"
->
+<Button type="button" variant="toolbarSecondary" class="w-full sm:w-auto" onclick={() => (open = true)}>
 	{labels.recordResult}{existing ? ' ✓' : ''}
-</button>
+</Button>
 
 <Dialog
 	open={open}

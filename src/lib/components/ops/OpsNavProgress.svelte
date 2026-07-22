@@ -4,13 +4,11 @@
 
 {#if $navigating}
 	<div
-		class="pointer-events-none fixed inset-x-0 top-0 z-[100] h-0.5 overflow-hidden bg-[var(--color-border)]/40"
+		class="pointer-events-none fixed inset-x-0 top-[var(--safe-top)] z-[100] h-0.5 overflow-hidden bg-[var(--color-border)]/40"
 		role="progressbar"
 		aria-hidden="true"
 	>
-		<div
-			class="amrap-nav-progress h-full w-1/3 bg-[var(--color-primary)]"
-		></div>
+		<div class="amrap-nav-progress h-full w-1/3 bg-[var(--color-primary)]"></div>
 	</div>
 {/if}
 

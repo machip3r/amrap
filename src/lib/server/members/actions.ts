@@ -16,8 +16,9 @@ import {
 	uuidSchema
 } from '$lib/validation/schemas';
 import { zodFieldErrors } from '$lib/validation/field-errors';
-import { toDbMemberStatus, toDbPaymentMethod } from '$lib/validation/db-enums';
+import { toDbMemberStatus, toDbPaymentKind, toDbPaymentMethod } from '$lib/validation/db-enums';
 import { getDictionary } from '$lib/i18n/dictionaries';
+import { isDayPassPlanValue } from '$lib/members/day-pass';
 import {
 	isHardMemberCap,
 	maxActiveMembers
@@ -42,7 +43,7 @@ const createMemberSchema = z.object({
 	name: personNameSchema,
 	email: emailSchema,
 	phone: optionalPhoneSchema,
-	plan_id: uuidSchema,
+	plan_id: z.string().trim().min(1),
 	method: paymentMethodSchema
 });
 
@@ -77,20 +78,51 @@ export async function createMember(formData: FormData): Promise<CreateMemberStat
 	}
 
 	const supabase = createClient();
+	const dayPass = isDayPassPlanValue(parsed.data.plan_id);
 
-	const { data: plan, error: planErr } = await supabase
-		.from('plans')
-		.select('id, price, duration_days, gym_id, is_active')
-		.eq('id', parsed.data.plan_id)
-		.eq('gym_id', workspace.gymId)
-		.eq('is_active', true)
-		.maybeSingle();
+	let planId: string | null = null;
+	let amount = 0;
+	let durationDays = 1;
+	let paymentKind: 'plan' | 'day_pass' = 'plan';
 
-	if (planErr || !plan) {
-		return { fieldErrors: { plan_id: d.validation.invalid } };
+	if (dayPass) {
+		const { data: gym, error: gymErr } = await supabase
+			.from('gyms')
+			.select('day_pass_price')
+			.eq('id', workspace.gymId)
+			.maybeSingle();
+
+		if (gymErr || gym?.day_pass_price == null) {
+			return { error: d.payments.dayPassNotConfigured };
+		}
+		amount = Number(gym.day_pass_price);
+		durationDays = 1;
+		paymentKind = 'day_pass';
+	} else {
+		const planIdParsed = uuidSchema.safeParse(parsed.data.plan_id);
+		if (!planIdParsed.success) {
+			return { fieldErrors: { plan_id: d.validation.invalid } };
+		}
+
+		const { data: plan, error: planErr } = await supabase
+			.from('plans')
+			.select('id, price, duration_days, gym_id, is_active')
+			.eq('id', planIdParsed.data)
+			.eq('gym_id', workspace.gymId)
+			.eq('is_active', true)
+			.maybeSingle();
+
+		if (planErr || !plan) {
+			return { fieldErrors: { plan_id: d.validation.invalid } };
+		}
+
+		planId = plan.id;
+		amount = Number(plan.price);
+		durationDays = plan.duration_days;
+		paymentKind = 'plan';
 	}
 
-	const expires = computeNewMembershipExpiry(plan.duration_days);
+	const expires = computeNewMembershipExpiry(durationDays);
 
 	const memberCap = maxActiveMembers(workspace.planTier);
 	let softCapWarning: string | undefined;
@@ -121,7 +153,7 @@ export async function createMember(formData: FormData): Promise<CreateMemberStat
 		p_phone: parsed.data.phone,
 		p_email: parsed.data.email,
 		p_branch_id: null,
-		p_plan_id: plan.id
+		p_plan_id: planId
 	});
 
 	if (error || !membershipId) {
@@ -142,8 +174,10 @@ export async function createMember(formData: FormData): Promise<CreateMemberStat
 	const { error: payErr } = await supabase.from('payments').insert({
 		gym_id: workspace.gymId,
 		membership_id: membershipId,
-		amount: plan.price,
+		amount,
 		method: toDbPaymentMethod(parsed.data.method),
+		kind: toDbPaymentKind(paymentKind),
+		plan_id: planId,
 		recorded_by: workspace.userId
 	});
 	if (payErr) {

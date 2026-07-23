@@ -28,6 +28,7 @@ export const load: PageServerLoad = async ({ parent, url, depends }) => {
 			members: [],
 			plans: [],
 			activePlans: [],
+			dayPassPrice: null as number | null,
 			meta: { page: 1, pageSize: 25, total: 0, totalPages: 1, from: 0, to: 0 },
 			filters: { q: '', status: 'all' as const, planId: 'all' },
 			listError: false,
@@ -42,7 +43,7 @@ export const load: PageServerLoad = async ({ parent, url, depends }) => {
 	const listError = url.searchParams.get('error') === '1';
 
 	const supabase = createClient();
-	const [{ members, meta }, { data: planRows }] = await Promise.all([
+	const [{ members, meta }, { data: planRows }, { data: gymRow }] = await Promise.all([
 		listMembershipsPage(supabase, workspace.gymId, {
 			page,
 			q,
@@ -53,7 +54,8 @@ export const load: PageServerLoad = async ({ parent, url, depends }) => {
 			.from('plans')
 			.select('id, name, price, duration_days, is_active')
 			.eq('gym_id', workspace.gymId)
-			.order('created_at', { ascending: false })
+			.order('created_at', { ascending: false }),
+		supabase.from('gyms').select('day_pass_price').eq('id', workspace.gymId).maybeSingle()
 	]);
 
 	const plans = (planRows ?? []).map((p) => ({
@@ -71,6 +73,8 @@ export const load: PageServerLoad = async ({ parent, url, depends }) => {
 			price,
 			duration_days
 		}));
+	const dayPassPrice =
+		gymRow?.day_pass_price != null ? Number(gymRow.day_pass_price) : null;
 
 	return {
 		forbidden: false as const,
@@ -79,6 +83,7 @@ export const load: PageServerLoad = async ({ parent, url, depends }) => {
 		members,
 		plans: plans.map((p) => ({ id: p.id, name: p.name })),
 		activePlans,
+		dayPassPrice,
 		meta,
 		filters: { q, status, planId },
 		listError,

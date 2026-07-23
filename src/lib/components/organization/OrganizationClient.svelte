@@ -10,6 +10,7 @@
 	import Dialog from '$lib/components/ui/Dialog.svelte';
 	import FormField from '$lib/components/ui/FormField.svelte';
 	import Input from '$lib/components/ui/Input.svelte';
+	import EmbeddedCheckoutMount from '$lib/components/organization/EmbeddedCheckoutMount.svelte';
 	import type { Locale } from '$lib/i18n/config';
 	import type { Dictionary } from '$lib/i18n/dictionaries';
 	import { formatMoney } from '$lib/i18n/money';
@@ -17,6 +18,7 @@
 		AMRAP_PLANS,
 		ORG_DELETION_RETENTION_DAYS,
 		canCreateGym,
+		isPlanDowngrade,
 		maxGyms
 	} from '$lib/plans/limits';
 	import type { OrgActionState } from '$lib/server/organization/actions';
@@ -44,6 +46,7 @@
 		planTier: OrgPlanTier;
 		hasStripeCustomer: boolean;
 		billingFlash: 'success' | 'cancel' | null;
+		stripePublishableKey: string | null;
 		gyms: OrgGymRow[];
 		feedback?: OrgFeedbackRow[];
 		activeGymName?: string;
@@ -56,6 +59,7 @@
 		planTier,
 		hasStripeCustomer,
 		billingFlash,
+		stripePublishableKey,
 		gyms,
 		feedback = [],
 		activeGymName = ''
@@ -74,6 +78,7 @@
 	let gymConfirmName = $state('');
 	let upgradeTier = $state<OrgPlanTier | null>(null);
 	let billingInterval = $state<'month' | 'year'>('month');
+	let checkoutClientSecret = $state<string | null>(null);
 
 	let flash = $state<string | undefined>(undefined);
 	let flashError = $state<string | undefined>(undefined);
@@ -106,6 +111,9 @@
 
 	const upgradePlanLabel = $derived(
 		upgradeTier != null ? planLabel(upgradeTier) : ''
+	);
+	const isDowngradeConfirm = $derived(
+		upgradeTier != null && isPlanDowngrade(planTier, upgradeTier)
 	);
 
 	function planLabel(tier: OrgPlanTier) {
@@ -158,10 +166,29 @@
 		if (data.error) {
 			flashError = data.error;
 			flash = undefined;
-		} else if (data.message) {
+			return;
+		}
+		if (data.clientSecret) {
+			checkoutClientSecret = data.clientSecret;
+			upgradeTier = null;
+			flash = undefined;
+			flashError = undefined;
+			return;
+		}
+		if (data.portalUrl) {
+			window.open(data.portalUrl, '_blank', 'noopener,noreferrer');
+			flash = undefined;
+			flashError = undefined;
+			return;
+		}
+		if (data.message) {
 			flash = data.message;
 			flashError = undefined;
 		}
+	}
+
+	function closeEmbeddedCheckout() {
+		checkoutClientSecret = null;
 	}
 </script>
 
@@ -199,8 +226,8 @@
 		id="gyms"
 		class="scroll-mt-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-6"
 	>
-		<div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-			<div>
+		<div class="mb-5 flex flex-row items-start justify-between gap-3">
+			<div class="min-w-0 flex-1">
 				<h2 class="font-title text-xl font-bold text-[var(--color-text)]">{labels.gymsTitle}</h2>
 				<p class="mt-1 text-sm text-[var(--color-muted)]">{labels.gymsHint}</p>
 				{#if gymCap != null}
@@ -215,7 +242,7 @@
 				{/if}
 			</div>
 			{#if !needsUpgradeForGym}
-				<Button type="button" variant="toolbar" class="mt-0" onclick={() => (createOpen = true)}>
+				<Button type="button" variant="toolbar" class="mt-0 shrink-0" onclick={() => (createOpen = true)}>
 					<Plus class="h-4 w-4 shrink-0" aria-hidden="true" />
 					<span class="shrink-0">{labels.addGym}</span>
 				</Button>
@@ -347,8 +374,8 @@
 		id="subscription"
 		class="scroll-mt-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm sm:p-5"
 	>
-		<div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-			<p class="text-xs text-[var(--color-muted)]">
+		<div class="mb-3 flex flex-row flex-wrap items-center justify-between gap-2 sm:gap-3">
+			<p class="min-w-0 text-xs text-[var(--color-muted)]">
 				{labels.currentPlan}:
 				<span class="font-semibold text-[var(--color-text)]">{planLabel(planTier)}</span>
 			</p>
@@ -356,14 +383,11 @@
 				<form
 					method="POST"
 					action="?/billingPortal"
+					class="shrink-0"
 					use:enhance={() => {
 						portalPending = true;
 						return async ({ result, update }) => {
 							portalPending = false;
-							if (result.type === 'redirect') {
-								window.location.href = result.location;
-								return;
-							}
 							await update();
 							if (result.type === 'success') {
 								applyState(result.data as OrgActionState);
@@ -417,6 +441,7 @@
 							</span>
 						</a>
 					{:else if canAct}
+						{@const downgrade = isPlanDowngrade(planTier, plan.tier)}
 						<button
 							type="button"
 							class={rowClass}
@@ -438,7 +463,7 @@
 							<span
 								class="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-[var(--color-primary)] px-3.5 text-xs font-bold text-[var(--color-primary-on)] shadow-sm transition-colors group-hover:bg-[var(--color-primary-hover)]"
 							>
-								{labels.upgrade}
+								{downgrade ? labels.changePlan : labels.upgrade}
 							</span>
 						</button>
 					{:else}
@@ -511,8 +536,11 @@
 		onOpenChange={(open) => {
 			if (!open) upgradeTier = null;
 		}}
-		title={labels.upgradeConfirmTitle}
-		description={labels.upgradeConfirmDescription.replace('{plan}', upgradePlanLabel)}
+		title={isDowngradeConfirm ? labels.changeConfirmTitle : labels.upgradeConfirmTitle}
+		description={(isDowngradeConfirm
+			? labels.changeConfirmDescription
+			: labels.upgradeConfirmDescription
+		).replace('{plan}', upgradePlanLabel)}
 		closeLabel={labels.close}
 		class="max-w-lg"
 	>
@@ -531,14 +559,9 @@
 					checkoutPending = true;
 					return async ({ result, update }) => {
 						checkoutPending = false;
-						if (result.type === 'redirect') {
-							window.location.href = result.location;
-							return;
-						}
 						await update();
 						if (result.type === 'success') {
 							applyState(result.data as OrgActionState);
-							upgradeTier = null;
 						}
 					};
 				}}
@@ -652,10 +675,38 @@
 						{labels.cancel}
 					</Button>
 					<Button type="submit" class="mt-0" disabled={checkoutPending}>
-						{checkoutPending ? labels.save : labels.upgradeConfirmSubmit}
+						{checkoutPending
+							? labels.save
+							: isDowngradeConfirm
+								? labels.changeConfirmSubmit
+								: labels.upgradeConfirmSubmit}
 					</Button>
 				</div>
 			</form>
+		{/if}
+	</Dialog>
+
+	<Dialog
+		open={checkoutClientSecret != null}
+		onOpenChange={(open) => {
+			if (!open) closeEmbeddedCheckout();
+		}}
+		title={labels.checkoutTitle}
+		description={labels.checkoutDescription}
+		closeLabel={labels.close}
+		fullScreen={true}
+		bodyClass="px-3 py-3 sm:px-6 sm:py-4"
+		autoFocus={false}
+	>
+		{#if checkoutClientSecret && stripePublishableKey}
+			<EmbeddedCheckoutMount
+				clientSecret={checkoutClientSecret}
+				publishableKey={stripePublishableKey}
+				mountLabel={labels.checkoutMountLabel}
+				loadError={labels.checkoutFailed}
+			/>
+		{:else if checkoutClientSecret && !stripePublishableKey}
+			<p class="text-sm text-[var(--color-danger)]" role="alert">{labels.checkoutFailed}</p>
 		{/if}
 	</Dialog>
 

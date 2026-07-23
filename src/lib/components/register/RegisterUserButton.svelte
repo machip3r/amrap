@@ -15,6 +15,7 @@
 		canManageMembers: boolean;
 		canManageStaff: boolean;
 		plans?: RegisterPlanOption[];
+		dayPassPrice?: number | null;
 		defaultRole?: RegisterRole;
 		allowedRoles?: RegisterRole[];
 		label?: string;
@@ -31,6 +32,7 @@
 		canManageMembers,
 		canManageStaff,
 		plans = [],
+		dayPassPrice = null,
 		defaultRole = undefined,
 		allowedRoles = undefined,
 		label = undefined,
@@ -94,6 +96,7 @@
 		{canManageMembers}
 		{canManageStaff}
 		{plans}
+		{dayPassPrice}
 		{memberAction}
 		{teamAction}
 		{onSuccess}

@@ -13,6 +13,7 @@
 		canManageMembers: boolean;
 		canManageStaff: boolean;
 		plans: RegisterPlanOption[];
+		dayPassPrice?: number | null;
 		labels: {
 			quickActions: string;
 			quickCheckIn: string;
@@ -22,7 +23,7 @@
 		};
 	};
 
-	let { locale, canCheckIn, canManageMembers, canManageStaff, plans, labels }: Props = $props();
+	let { locale, canCheckIn, canManageMembers, canManageStaff, plans, dayPassPrice = null, labels }: Props = $props();
 
 	const prefix = $derived(`/${locale}`);
 	const actionClass =
@@ -42,6 +43,7 @@
 			canManageMembers
 			canManageStaff={false}
 			{plans}
+			{dayPassPrice}
 			defaultRole="member"
 			allowedRoles={['member']}
 			label={labels.quickNewMember}

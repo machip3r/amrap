@@ -171,7 +171,8 @@ export async function loadOpsDashboard(
 		recentRes,
 		expiredAlertsRes,
 		soonAlertsRes,
-		planRowsRes
+		planRowsRes,
+		gymRes
 	] = await Promise.all([
 		supabase
 			.from('memberships')
@@ -248,7 +249,8 @@ export async function loadOpsDashboard(
 			.select('id, name, price, duration_days')
 			.eq('gym_id', gymId)
 			.eq('is_active', true)
-			.order('created_at', { ascending: false })
+			.order('created_at', { ascending: false }),
+		supabase.from('gyms').select('day_pass_price').eq('id', gymId).maybeSingle()
 	]);
 
 	const registerPlans = (planRowsRes.data ?? []).map((p) => ({
@@ -257,6 +259,8 @@ export async function loadOpsDashboard(
 		price: Number(p.price),
 		duration_days: p.duration_days as number
 	}));
+	const dayPassPrice =
+		gymRes.data?.day_pass_price != null ? Number(gymRes.data.day_pass_price) : null;
 
 	const weekdayFmt = new Intl.DateTimeFormat(locale, { weekday: 'short' });
 	const weeklyDays = weekDayRanges.map(({ day }, i) => ({
@@ -325,6 +329,7 @@ export async function loadOpsDashboard(
 		canCheckIn: canInWorkspace(workspace, 'checkin'),
 		canManageMembers: canInWorkspace(workspace, 'manage_members'),
 		canManageStaff: canInWorkspace(workspace, 'manage_staff'),
-		registerPlans
+		registerPlans,
+		dayPassPrice
 	};
 }

@@ -31,19 +31,24 @@ export const load: PageServerLoad = async ({ parent, depends }) => {
 	const todayCheckIns = await listTodayCheckIns(supabase, workspace.gymId);
 
 	let registerPlans: { id: string; name: string; price: number; duration_days: number }[] = [];
+	let dayPassPrice: number | null = null;
 	if (canManageMembers) {
-		const { data: planRows } = await supabase
-			.from('plans')
-			.select('id, name, price, duration_days')
-			.eq('gym_id', workspace.gymId)
-			.eq('is_active', true)
-			.order('created_at', { ascending: false });
+		const [{ data: planRows }, { data: gymRow }] = await Promise.all([
+			supabase
+				.from('plans')
+				.select('id, name, price, duration_days')
+				.eq('gym_id', workspace.gymId)
+				.eq('is_active', true)
+				.order('created_at', { ascending: false }),
+			supabase.from('gyms').select('day_pass_price').eq('id', workspace.gymId).maybeSingle()
+		]);
 		registerPlans = (planRows ?? []).map((p) => ({
 			id: p.id,
 			name: p.name,
 			price: Number(p.price),
 			duration_days: p.duration_days
 		}));
+		dayPassPrice = gymRow?.day_pass_price != null ? Number(gymRow.day_pass_price) : null;
 	}
 
 	return {
@@ -52,6 +57,7 @@ export const load: PageServerLoad = async ({ parent, depends }) => {
 		canManageMembers,
 		canManageStaff,
 		registerPlans,
+		dayPassPrice,
 		todayCheckIns
 	};
 };

@@ -40,8 +40,8 @@
 	const NAV_COLLAPSED_KEY = 'amrap-member-nav-collapsed';
 	const NAV_COLLAPSED_EVENT = 'amrap-member-nav-collapsed';
 
-	const d = getDictionary(locale);
-	const prefix = `/${locale}/me`;
+	const d = $derived(getDictionary(locale));
+	const prefix = $derived(`/${locale}/me`);
 	const pathname = $derived(page.url.pathname);
 	const items = getSidebarMemberNavItems();
 

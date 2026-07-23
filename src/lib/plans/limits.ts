@@ -118,6 +118,18 @@ export function showAmrapWatermark(tier: OrgPlanTier): boolean {
 	return tier !== 'GROWTH' && tier !== 'PRO';
 }
 
+/** Relative rank for upgrade vs change/downgrade CTAs. */
+export const PLAN_TIER_RANK: Record<OrgPlanTier, number> = {
+	FREEMIUM: 0,
+	STARTER: 1,
+	GROWTH: 2,
+	PRO: 3
+};
+
+export function isPlanDowngrade(from: OrgPlanTier, to: OrgPlanTier): boolean {
+	return PLAN_TIER_RANK[to] < PLAN_TIER_RANK[from];
+}
+
 export const ORG_DELETION_RETENTION_DAYS = 30;
 
 export type AmrapPlanOption = {

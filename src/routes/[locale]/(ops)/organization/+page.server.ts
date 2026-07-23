@@ -11,6 +11,7 @@ import {
 	scheduleOrganizationDeletion,
 	type OrgActionState
 } from '$lib/server/organization/actions';
+import { getStripePublishableKey } from '$lib/stripe/env';
 import { createClient } from '$lib/supabase/server';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -18,6 +19,8 @@ export const load: PageServerLoad = async ({ parent, url }) => {
 	const { locale, workspace } = await parent();
 	const d = getDictionary(locale as Locale);
 	if (!workspace) throw redirect(303, `/${locale}/login`);
+
+	const stripePublishableKey = getStripePublishableKey() ?? null;
 
 	if (!canInWorkspace(workspace, 'manage_billing')) {
 		return {
@@ -28,6 +31,7 @@ export const load: PageServerLoad = async ({ parent, url }) => {
 			planTier: workspace.planTier,
 			hasStripeCustomer: false,
 			billingFlash: null as 'success' | 'cancel' | null,
+			stripePublishableKey,
 			gyms: [],
 			feedback: [] as {
 				id: string;
@@ -90,6 +94,7 @@ export const load: PageServerLoad = async ({ parent, url }) => {
 		planTier: workspace.planTier,
 		hasStripeCustomer: Boolean(orgBilling?.stripe_customer_id),
 		billingFlash,
+		stripePublishableKey,
 		gyms,
 		feedback,
 		activeGymName: workspace.gymName

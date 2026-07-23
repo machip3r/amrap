@@ -298,6 +298,9 @@ export type Dictionary = {
     type: string;
     typeSimple: string;
     typeComplex: string;
+    typeSimpleHint: string;
+    typeComplexHint: string;
+    templateSimpleOnly: string;
     phaseWarmup: string;
     phaseWork: string;
     phaseRest: string;
@@ -812,9 +815,13 @@ export type Dictionary = {
     close: string;
     save: string;
     upgrade: string;
+    changePlan: string;
     upgradeConfirmTitle: string;
     upgradeConfirmDescription: string;
     upgradeConfirmSubmit: string;
+    changeConfirmTitle: string;
+    changeConfirmDescription: string;
+    changeConfirmSubmit: string;
     contactSales: string;
     current: string;
     checkoutComingSoon: string;
@@ -839,6 +846,9 @@ export type Dictionary = {
     billingAnnualHint: string;
     billingAnnualSaveBadge: string;
     manageBilling: string;
+    checkoutTitle: string;
+    checkoutDescription: string;
+    checkoutMountLabel: string;
     checkoutFailed: string;
     upgradeSuccess: string;
     alreadyOnPlan: string;
@@ -1269,6 +1279,9 @@ const es: Dictionary = {
     type: "Tipo",
     typeSimple: "Simple",
     typeComplex: "Complejo",
+    typeSimpleHint: "Un bloque de trabajo/descanso con series.",
+    typeComplexHint: "Varios ciclos, cada uno con sus propias series.",
+    templateSimpleOnly: "Las plantillas pasan a Simple.",
     phaseWarmup: "Calentamiento",
     phaseWork: "Alta intensidad",
     phaseRest: "Baja intensidad",
@@ -1794,10 +1807,15 @@ const es: Dictionary = {
     close: "Cerrar",
     save: "Continuar",
     upgrade: "Mejorar plan",
+    changePlan: "Cambiar",
     upgradeConfirmTitle: "Mejorar suscripción",
     upgradeConfirmDescription:
       "Vas a mejorar al plan {plan}. Confirma para continuar con el cambio de suscripción.",
     upgradeConfirmSubmit: "Confirmar mejora",
+    changeConfirmTitle: "Cambiar suscripción",
+    changeConfirmDescription:
+      "Vas a cambiar al plan {plan}. Confirma para continuar con el cambio de suscripción.",
+    changeConfirmSubmit: "Confirmar cambio",
     contactSales: "Contactar a AMRAP",
     current: "Actual",
     checkoutComingSoon:
@@ -1827,6 +1845,9 @@ const es: Dictionary = {
     billingAnnualHint: "Un pago al año · mejor precio",
     billingAnnualSaveBadge: "Ahorra ~17%",
     manageBilling: "Gestionar facturación",
+    checkoutTitle: "Completar pago",
+    checkoutDescription: "Paga de forma segura sin salir de AMRAP.",
+    checkoutMountLabel: "Formulario de pago Stripe",
     checkoutFailed: "No se pudo iniciar el pago. Inténtalo de nuevo.",
     upgradeSuccess: "Suscripción actualizada.",
     alreadyOnPlan: "Ya estás en este plan.",
@@ -2261,6 +2282,9 @@ const en: Dictionary = {
     type: "Type",
     typeSimple: "Simple",
     typeComplex: "Complex",
+    typeSimpleHint: "One work/rest block with sets.",
+    typeComplexHint: "Multiple cycles, each with its own sets.",
+    templateSimpleOnly: "Templates switch to Simple.",
     phaseWarmup: "Warm Up",
     phaseWork: "High Intensity",
     phaseRest: "Low Intensity",
@@ -2784,10 +2808,15 @@ const en: Dictionary = {
     close: "Close",
     save: "Continue",
     upgrade: "Upgrade",
+    changePlan: "Change",
     upgradeConfirmTitle: "Upgrade subscription",
     upgradeConfirmDescription:
       "You’re about to upgrade to {plan}. Confirm to continue with the subscription change.",
     upgradeConfirmSubmit: "Confirm upgrade",
+    changeConfirmTitle: "Change subscription",
+    changeConfirmDescription:
+      "You’re about to switch to {plan}. Confirm to continue with the subscription change.",
+    changeConfirmSubmit: "Confirm change",
     contactSales: "Contact AMRAP",
     current: "Current",
     checkoutComingSoon:
@@ -2817,6 +2846,9 @@ const en: Dictionary = {
     billingAnnualHint: "One payment a year · best value",
     billingAnnualSaveBadge: "Save ~17%",
     manageBilling: "Manage billing",
+    checkoutTitle: "Complete payment",
+    checkoutDescription: "Pay securely without leaving AMRAP.",
+    checkoutMountLabel: "Stripe payment form",
     checkoutFailed: "Could not start checkout. Try again.",
     upgradeSuccess: "Subscription updated.",
     alreadyOnPlan: "You’re already on this plan.",

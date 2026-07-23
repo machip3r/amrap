@@ -248,6 +248,7 @@
 			canManageMembers={dash.canManageMembers}
 			canManageStaff={dash.canManageStaff}
 			plans={dash.registerPlans}
+			dayPassPrice={dash.dayPassPrice}
 			labels={{
 				quickActions: d.dashboard.quickActions,
 				quickCheckIn: d.dashboard.quickCheckIn,

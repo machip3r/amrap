@@ -48,7 +48,7 @@
 
 	--ops-header-height: 4.5rem;
 	--ops-bottom-nav-height: 3.25rem;
-	/* QR FAB overhang + compact watermark strip (safe-area is added separately) */
+	/* QR FAB overhang + watermark strip (safe-area is added separately) */
 	--ops-bottom-nav-extra: 3.25rem;
 	--ops-bottom-clearance: calc(
 		var(--ops-bottom-nav-height) + var(--ops-bottom-nav-extra) + var(--safe-bottom)
@@ -88,10 +88,12 @@ body {
 		color 0.3s ease;
 }
 
-/* App shells: prefer dynamic viewport so iOS URL chrome does not clip */
+/* App shells: sync to visible viewport (`--app-height` from AppViewport) so iOS
+   keyboard / PWA chrome does not leave a permanent bottom gap under fixed nav. */
 .amrap-app-shell {
-	height: 100svh;
-	height: 100dvh;
+	height: var(--app-height, 100dvh);
+	max-height: var(--app-height, 100dvh);
+	min-height: 0;
 }
 
 h1,

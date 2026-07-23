@@ -1,4 +1,3 @@
-import { isRedirect, redirect } from '@sveltejs/kit';
 import { getSessionUser, getWorkspace } from '$lib/auth/session';
 import { canInWorkspace } from '$lib/auth/permissions';
 import { getDictionary } from '$lib/i18n/dictionaries';
@@ -8,6 +7,7 @@ import {
 	type BillingInterval,
 	type SelfServeTier
 } from '$lib/stripe/catalog';
+import { PLAN_TIER_RANK } from '$lib/plans/limits';
 import { getStripe } from '$lib/stripe/server';
 import { getPublicAppUrl } from '$lib/supabase/env';
 import { createClient } from '$lib/supabase/server';
@@ -18,6 +18,10 @@ export type OrgActionState = {
 	error?: string;
 	success?: boolean;
 	message?: string;
+	/** Stripe Embedded Checkout client secret — mount in-app (PWA-friendly). */
+	clientSecret?: string;
+	/** Customer Portal URL — open in a new tab so the PWA shell stays. */
+	portalUrl?: string;
 } | null;
 
 function localeFromForm(formData: FormData) {
@@ -162,9 +166,13 @@ export async function requestSubscriptionCheckout(formData: FormData): Promise<O
 				return { error: d.organization.checkoutFailed };
 			}
 
+			// create_prorations only queues the delta for the *next* invoice.
+			// always_invoice charges (or credits) immediately — required for upgrades.
+			const isUpgrade = PLAN_TIER_RANK[tier] > PLAN_TIER_RANK[org.plan_tier];
 			await stripe.subscriptions.update(org.stripe_subscription_id, {
 				items: [{ id: itemId, price: priceId }],
-				proration_behavior: 'create_prorations',
+				proration_behavior: 'always_invoice',
+				...(isUpgrade ? { payment_behavior: 'error_if_incomplete' as const } : {}),
 				metadata: {
 					organization_id: org.id,
 					amrap_tier: tier,
@@ -186,16 +194,16 @@ export async function requestSubscriptionCheckout(formData: FormData): Promise<O
 		}
 
 		const customerId = await ensureStripeCustomer(org, user?.email ?? undefined);
-		const successUrl = `${appOrigin()}/${locale}/organization?billing=success`;
-		const cancelUrl = `${appOrigin()}/${locale}/organization?billing=cancel`;
+		const returnUrl = `${appOrigin()}/${locale}/organization?billing=success&session_id={CHECKOUT_SESSION_ID}`;
 
 		const session = await stripe.checkout.sessions.create({
+			ui_mode: 'embedded',
 			mode: 'subscription',
 			customer: customerId,
 			client_reference_id: org.id,
 			line_items: [{ price: priceId, quantity: 1 }],
-			success_url: successUrl,
-			cancel_url: cancelUrl,
+			return_url: returnUrl,
+			redirect_on_completion: 'if_required',
 			subscription_data: {
 				metadata: {
 					organization_id: org.id,
@@ -210,13 +218,12 @@ export async function requestSubscriptionCheckout(formData: FormData): Promise<O
 			}
 		});
 
-		if (!session.url) {
+		if (!session.client_secret) {
 			return { error: d.organization.checkoutFailed };
 		}
 
-		throw redirect(303, session.url);
+		return { success: true, clientSecret: session.client_secret };
 	} catch (err) {
-		if (isRedirect(err)) throw err;
 		console.error('requestSubscriptionCheckout', err);
 		return { error: d.organization.checkoutFailed };
 	}
@@ -243,9 +250,8 @@ export async function requestBillingPortal(formData: FormData): Promise<OrgActio
 		if (!portal.url) {
 			return { error: d.organization.checkoutFailed };
 		}
-		throw redirect(303, portal.url);
+		return { success: true, portalUrl: portal.url };
 	} catch (err) {
-		if (isRedirect(err)) throw err;
 		console.error('requestBillingPortal', err);
 		return { error: d.organization.checkoutFailed };
 	}

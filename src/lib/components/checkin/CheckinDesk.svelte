@@ -100,6 +100,7 @@
 		todayCheckIns: CheckInListItem[];
 		registerLabel?: string;
 		registerPlans?: import('$lib/components/register/RegisterUserDialog.svelte').RegisterPlanOption[];
+		dayPassPrice?: number | null;
 	};
 
 	let {
@@ -109,7 +110,8 @@
 		canManageStaff,
 		todayCheckIns,
 		registerLabel,
-		registerPlans = []
+		registerPlans = [],
+		dayPassPrice = null
 	}: Props = $props();
 
 	let manual = $state('');
@@ -484,6 +486,7 @@
 							{canManageMembers}
 							{canManageStaff}
 							plans={registerPlans}
+							dayPassPrice={dayPassPrice}
 							label={registerLabel}
 							class="w-full sm:w-auto"
 						/>

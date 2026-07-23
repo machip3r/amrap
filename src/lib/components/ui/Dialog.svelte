@@ -25,7 +25,7 @@
 		description = undefined,
 		closeLabel,
 		class: className = undefined,
-		containerClass = 'items-end justify-center p-3 sm:items-center sm:p-6',
+		containerClass = 'items-center justify-center p-3 sm:p-6',
 		bodyClass = 'px-6 py-5',
 		autoFocus = true,
 		fullScreen = false,
@@ -80,8 +80,8 @@
 	const panelClassName = $derived(className ?? (fullScreen ? '' : 'max-w-md'));
 	const panelSize = $derived(
 		fullScreen
-			? 'h-dvh max-h-dvh w-full rounded-none border-0 shadow-none'
-			: 'max-h-[min(96dvh,64rem)] w-full rounded-2xl border border-[var(--color-border)] shadow-2xl'
+			? 'h-[var(--app-height,100dvh)] max-h-[var(--app-height,100dvh)] w-full rounded-none border-0 shadow-none'
+			: 'max-h-[min(calc(var(--app-height,100dvh)-1.5rem),64rem)] w-full rounded-2xl border border-[var(--color-border)] shadow-2xl'
 	);
 </script>
 

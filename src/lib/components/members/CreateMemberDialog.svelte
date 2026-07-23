@@ -9,6 +9,7 @@
 	import Select from '$lib/components/ui/Select.svelte';
 	import type { Locale } from '$lib/i18n/config';
 	import type { Dictionary } from '$lib/i18n/dictionaries';
+	import { DAY_PASS_PLAN_VALUE } from '$lib/members/day-pass';
 	import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
 	import type { CreateMemberState } from '$lib/server/members/actions';
 	import { LIMITS, sanitizeEmailInput, sanitizePersonNameInput } from '$lib/validation/schemas';
@@ -26,6 +27,8 @@
 		locale: Locale;
 		d: Dictionary;
 		plans: ActivePlanOption[];
+		/** Gym day-pass price when configured; enables visit option in plan select. */
+		dayPassPrice?: number | null;
 		formResult: CreateMemberState;
 		/** Form action path (default `?/create` on members page). */
 		action?: string;
@@ -41,6 +44,7 @@
 		locale,
 		d,
 		plans,
+		dayPassPrice = null,
 		formResult,
 		action = '?/create',
 		onSuccess
@@ -58,10 +62,13 @@
 	let softCapWarning = $state<string | undefined>(undefined);
 
 	const fe = $derived(localFieldErrors);
+	const hasDayPass = $derived(dayPassPrice != null);
+	const hasPlanOptions = $derived(plans.length > 0 || hasDayPass);
 	const canSubmit = $derived(
 		name.trim().length > 0 &&
 			email.trim().length > 0 &&
 			planId.length > 0 &&
+			hasPlanOptions &&
 			!pending
 	);
 
@@ -73,11 +80,23 @@
 		return `${plan.name} — ${meta}`;
 	}
 
+	function formatDayPassLabel() {
+		const price = Number(dayPassPrice ?? 0).toFixed(2);
+		const meta = d.registerUser.planPrice.replace('{days}', '1').replace('{price}', price);
+		return `${d.payments.kindDayPass} — ${meta}`;
+	}
+
+	function defaultPlanId() {
+		if (plans[0]) return plans[0].id;
+		if (hasDayPass) return DAY_PASS_PLAN_VALUE;
+		return '';
+	}
+
 	function resetForm() {
 		name = '';
 		email = '';
 		phone = '';
-		planId = plans[0]?.id ?? '';
+		planId = defaultPlanId();
 		method = 'cash';
 		localError = undefined;
 		localFieldErrors = undefined;
@@ -86,8 +105,8 @@
 	}
 
 	$effect(() => {
-		if (open && !planId && plans[0]) {
-			planId = plans[0].id;
+		if (open && !planId) {
+			planId = defaultPlanId();
 		}
 	});
 </script>
@@ -98,10 +117,11 @@
 	title={d.members.createTitle}
 	description={d.registerUser.description}
 	closeLabel={d.registerUser.close}
+	autoFocus={false}
 	class="max-w-2xl sm:max-w-3xl lg:max-w-4xl"
 	bodyClass="px-6 py-5 sm:px-8 sm:py-7"
 >
-	{#if plans.length === 0}
+	{#if !hasPlanOptions}
 		<div class="flex flex-col gap-4">
 			<p
 				class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] p-3 text-sm text-[var(--color-muted)]"
@@ -227,6 +247,9 @@
 							{#each plans as plan (plan.id)}
 								<option value={plan.id}>{formatPlanLabel(plan)}</option>
 							{/each}
+							{#if hasDayPass}
+								<option value={DAY_PASS_PLAN_VALUE}>{formatDayPassLabel()}</option>
+							{/if}
 						</Select>
 					{/snippet}
 				</FormField>

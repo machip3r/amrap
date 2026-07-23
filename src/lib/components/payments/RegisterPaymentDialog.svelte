@@ -715,6 +715,7 @@
 		{locale}
 		{d}
 		{plans}
+		dayPassPrice={dayPassPrice}
 		formResult={null}
 		action="?/createMember"
 		onSuccess={onMemberCreated}

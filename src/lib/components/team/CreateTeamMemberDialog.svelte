@@ -54,6 +54,7 @@
 	{title}
 	description={d.registerUser.description}
 	closeLabel={d.registerUser.close}
+	autoFocus={false}
 	class="max-w-2xl sm:max-w-3xl lg:max-w-4xl"
 	bodyClass="px-6 py-5 sm:px-8 sm:py-7"
 >

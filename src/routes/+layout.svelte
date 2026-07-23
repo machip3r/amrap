@@ -1,5 +1,6 @@
 <script lang="ts">
 	import './layout.css';
+	import AppViewport from '$lib/components/AppViewport.svelte';
 	import { pwaInfo } from 'virtual:pwa-info';
 	import { enableViewTransitions } from '$lib/motion';
 
@@ -34,6 +35,8 @@
 	{/if}
 	{@html `<script>${themeInit}<\/script>`}
 </svelte:head>
+
+<AppViewport />
 
 {@render children()}
 

@@ -6,11 +6,13 @@ function processEnv(name: string): string | undefined {
 	return process.env[name]?.trim() || undefined;
 }
 
-/** Publishable key — safe for browser if ever needed. Prefer PUBLIC_*. */
+/** Publishable key — safe for browser. Prefer PUBLIC_*. */
 export function getStripePublishableKey(): string | undefined {
 	return (
 		publicEnv.PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim() ||
-		processEnv('PUBLIC_STRIPE_PUBLISHABLE_KEY')
+		privateEnv.STRIPE_PUBLISHABLE_KEY?.trim() ||
+		processEnv('PUBLIC_STRIPE_PUBLISHABLE_KEY') ||
+		processEnv('STRIPE_PUBLISHABLE_KEY')
 	);
 }
 

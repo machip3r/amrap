@@ -19,6 +19,7 @@
 		canManageMembers: boolean;
 		canManageStaff: boolean;
 		plans: RegisterPlanOption[];
+		dayPassPrice?: number | null;
 		label: string;
 		class?: string;
 	};
@@ -28,6 +29,7 @@
 		canManageMembers,
 		canManageStaff,
 		plans,
+		dayPassPrice = null,
 		label,
 		class: className = ''
 	}: Props = $props();
@@ -99,6 +101,7 @@
 		title={d.registerUser.pickTitle}
 		description={d.registerUser.pickDescription}
 		closeLabel={d.registerUser.close}
+		autoFocus={false}
 		class="max-w-2xl sm:max-w-3xl"
 		bodyClass="px-6 py-5 sm:px-8 sm:py-7"
 	>
@@ -136,6 +139,7 @@
 			{canManageMembers}
 			{canManageStaff}
 			{plans}
+			{dayPassPrice}
 			memberAction="?/createMember"
 			teamAction="?/createTeam"
 			navigateOnSuccess={false}

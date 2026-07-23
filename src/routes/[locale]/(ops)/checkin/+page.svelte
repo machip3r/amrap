@@ -18,6 +18,7 @@
 		canManageStaff={data.canManageStaff}
 		todayCheckIns={data.todayCheckIns}
 		registerPlans={data.registerPlans}
+		dayPassPrice={data.dayPassPrice}
 		registerLabel={d.registerUser.open}
 		labels={{
 			title: d.checkin.title,

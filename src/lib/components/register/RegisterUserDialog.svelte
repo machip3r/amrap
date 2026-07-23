@@ -12,6 +12,7 @@
 	import Select from '$lib/components/ui/Select.svelte';
 	import type { Locale } from '$lib/i18n/config';
 	import { getDictionary } from '$lib/i18n/dictionaries';
+	import { DAY_PASS_PLAN_VALUE } from '$lib/members/day-pass';
 	import type { CreateMemberState } from '$lib/server/members/actions';
 	import type { CreateTeamMemberState } from '$lib/server/team/actions';
 	import { LIMITS, sanitizeEmailInput, sanitizePersonNameInput } from '$lib/validation/schemas';
@@ -40,6 +41,8 @@
 		canManageMembers: boolean;
 		canManageStaff: boolean;
 		plans?: RegisterPlanOption[];
+		/** Gym day-pass price when configured; enables visit option in plan select. */
+		dayPassPrice?: number | null;
 		/** Form action for member create (default dashboard). */
 		memberAction?: string;
 		/** Form action for trainer/staff create. */
@@ -58,6 +61,7 @@
 		canManageMembers,
 		canManageStaff,
 		plans = [],
+		dayPassPrice = null,
 		memberAction = '?/createMember',
 		teamAction = '?/createTeam',
 		onSuccess,
@@ -65,6 +69,8 @@
 	}: Props = $props();
 
 	const d = $derived(getDictionary(locale));
+	const hasDayPass = $derived(dayPassPrice != null);
+	const hasPlanOptions = $derived(plans.length > 0 || hasDayPass);
 
 	function rolesForPermissions(): RegisterRole[] {
 		const base: RegisterRole[] = [];
@@ -109,16 +115,22 @@
 			? name.trim().length > 0 &&
 					email.trim().length > 0 &&
 					selectedPlan.length > 0 &&
-					plans.length > 0 &&
+					hasPlanOptions &&
 					!pending
 			: name.trim().length > 0 && email.trim().length > 0 && !pending
 	);
+
+	function defaultPlanId() {
+		if (plans[0]) return plans[0].id;
+		if (hasDayPass) return DAY_PASS_PLAN_VALUE;
+		return '';
+	}
 
 	function resetFields() {
 		name = '';
 		phone = '';
 		email = '';
-		selectedPlan = plans[0]?.id ?? '';
+		selectedPlan = defaultPlanId();
 		method = 'cash';
 		pending = false;
 		formError = undefined;
@@ -138,6 +150,12 @@
 			.replace('{days}', String(plan.duration_days))
 			.replace('{price}', price);
 		return `${plan.name} — ${meta}`;
+	}
+
+	function formatDayPassLabel() {
+		const price = Number(dayPassPrice ?? 0).toFixed(2);
+		const meta = d.registerUser.planPrice.replace('{days}', '1').replace('{price}', price);
+		return `${d.payments.kindDayPass} — ${meta}`;
 	}
 
 	function handleMemberResult(data: CreateMemberState) {
@@ -177,6 +195,7 @@
 	title={d.registerUser.title}
 	description={d.registerUser.description}
 	closeLabel={d.registerUser.close}
+	autoFocus={false}
 	class="max-w-2xl sm:max-w-3xl lg:max-w-4xl"
 	bodyClass="px-6 py-5 sm:px-8 sm:py-7"
 >
@@ -247,7 +266,7 @@
 				{/if}
 
 				{#if isMember}
-					{#if plans.length === 0}
+					{#if !hasPlanOptions}
 						<div class="flex flex-col gap-4">
 							<p
 								class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] p-3 text-sm text-[var(--color-muted)]"
@@ -360,6 +379,9 @@
 											{#each plans as p (p.id)}
 												<option value={p.id}>{formatPlanLabel(p)}</option>
 											{/each}
+											{#if hasDayPass}
+												<option value={DAY_PASS_PLAN_VALUE}>{formatDayPassLabel()}</option>
+											{/if}
 										</Select>
 									{/snippet}
 								</FormField>

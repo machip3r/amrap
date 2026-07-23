@@ -22,6 +22,7 @@
 			planTier={data.planTier}
 			hasStripeCustomer={data.hasStripeCustomer}
 			billingFlash={data.billingFlash}
+			stripePublishableKey={data.stripePublishableKey}
 			gyms={data.gyms}
 			feedback={data.feedback}
 			activeGymName={data.activeGymName}

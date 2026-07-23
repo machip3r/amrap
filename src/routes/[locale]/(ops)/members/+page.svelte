@@ -126,6 +126,7 @@
 		locale={data.locale}
 		{d}
 		plans={data.activePlans}
+		dayPassPrice={data.dayPassPrice}
 		{formResult}
 		onSuccess={flashRow}
 	/>

@@ -297,7 +297,7 @@ Member-only users without gym role are redirected to `/me` by `(app)/layout`.
 | Already member at this gym | Field error — already has membership here |
 | Member without account | Profile-only; optional invite |
 | Claim profile later | **Shipped** — invite → accept/decline → password (new users) → welcome |
-| Day-pass / temporary | Same membership flow; short dates / day-pass price on plans |
+| Day-pass / temporary | **Shipped** — register member plan select includes day pass / visit when gym price is set (1-day membership + `DAY_PASS` payment) |
 | Suspend / penalties | **Planned** (phase 2) |
 
 ---
@@ -378,7 +378,7 @@ Hiding a nav item is chrome-only for that user; direct URLs still respect page p
 
 **Who:** `manage_billing` (owner / provisional).
 
-**UI (shipped):** Gym list first · AMRAP subscription below (separator) · plan rows (Freemium / Starter / Growth / Pro) · whole upgradeable row opens confirm (monthly/annual) → Checkout (new) or in-app Subscriptions API upgrade (existing) · **Manage billing** → Customer Portal when Stripe customer exists · Pro / Contact AMRAP goes to landing `#contacto`.
+**UI (shipped):** Gym list first · AMRAP subscription below (separator) · plan rows (Freemium / Starter / Growth / Pro) · whole upgradeable row opens confirm (monthly/annual) → **Embedded Checkout** in a fullscreen in-app dialog (new paid) or Subscriptions API upgrade (existing) · **Manage billing** opens Customer Portal in a **new tab** · Pro / Contact AMRAP goes to landing `#contacto`.
 
 **Hidden for now:** Schedule gym / org deletion (danger zone + delete gym) — flip `showDeletionUi` in `OrganizationClient` when ready.
 
@@ -456,7 +456,7 @@ Data model and cookie support multi-gym roles. **UI:** create gym / switcher / a
 **Shipped**
 
 - Invited via `/trainers`.
-- Ops access: **Mi Día / week home** (next/live class hero · week strip · upcoming) + **Classes** (create/edit with self as coach) + **Timers** (`/timers`: list keeps ops shell; opening run/edit hides header/sidebar/bottom tabs for full-viewport use; localStorage) + **Settings** (personal menu; no gym branding).
+- Ops access: **Mi Día / week home** (next/live class hero · week strip · upcoming) + **Classes** (create/edit with self as coach) + **Timers** (`/timers`: list keeps ops shell; opening run/edit hides header/sidebar/bottom tabs for full-viewport use; Simple templates or Complex multi-cycle editor; localStorage) + **Settings** (personal menu; no gym branding).
 - Session roster: care badges (medical note · first day · birthday) + express score capture (AMRAP / strength / for time).
 - **No** reception check-in page.
 - **No** remote wall-screen timer control.
@@ -492,7 +492,7 @@ No app login. Manual check-in at reception. Optional invite to register / claim 
 | `/me` | Home · memberships list · switch active gym (cookie) · shortcut cards |
 | `/me/qr` | Full-screen platform QR (also center FAB on mobile) |
 | `/me/classes` | Upcoming · book / waitlist / cancel · attendance history |
-| `/me/timers` | Routines list · Simple/Complex create-edit · full-screen run |
+| `/me/timers` | Routines list · Simple (template presets) / Complex (multi-cycle editor) create-edit · full-screen run |
 | `/me/inbox` | Read gym advice (`inbox_messages`); auto-mark read |
 | `/me/profile` | Avatar destination · send feedback to gym or AMRAP (`feedback_messages`) |
 
@@ -533,7 +533,7 @@ See §4.9. Paywalls at blocked actions use plan limits (`lib/plans/limits.ts`).
 | Case | UI status |
 | ---- | --------- |
 | Upgrade for limit (30 members, 2 plans, seats) | Partial — Freemium **hard**-stops at 30 actives; Starter/Growth **soft**-warn at ~500 (no block); staff seats **per gym** (Growth ≈ 5/gym ≤ 15 org) |
-| Self-serve Checkout (Starter / Growth, MXN monthly/annual) | Shipped — hosted Checkout + webhooks |
+| Self-serve Checkout (Starter / Growth, MXN monthly/annual) | Shipped — **Embedded Checkout** in PWA + webhooks |
 | Upgrade / change plan (existing sub) | Shipped — in-app confirm → Subscriptions API proration |
 | Manage payment method / cancel | Shipped — Customer Portal |
 | More than 3 gyms | Pro contact copy shipped; no self-serve checkout |

@@ -48,8 +48,8 @@
 	const NAV_COLLAPSED_KEY = 'amrap-nav-collapsed';
 	const NAV_COLLAPSED_EVENT = 'amrap-nav-collapsed';
 
-	const d = getDictionary(locale);
-	const prefix = `/${locale}`;
+	const d = $derived(getDictionary(locale));
+	const prefix = $derived(`/${locale}`);
 	const pathname = $derived(page.url.pathname);
 	const ctx = $derived<OpsNavContext>({
 		role,
@@ -58,7 +58,7 @@
 		hiddenNavIds
 	});
 	const items = $derived(getSidebarOpsNavItems(ctx));
-	const orgHref = opsNavHref(prefix, '/organization');
+	const orgHref = $derived(opsNavHref(prefix, '/organization'));
 
 	let collapsed = $state(false);
 

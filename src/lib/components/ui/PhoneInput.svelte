@@ -47,12 +47,20 @@
 		class: className = ''
 	}: Props = $props();
 
-	const listId = `phone-countries-${id}`;
+	const listId = $derived.by(() => `phone-countries-${id}`);
 
 	let rootEl: HTMLDivElement | undefined = $state();
 	let triggerEl: HTMLButtonElement | undefined = $state();
 
-	let iso2 = $state(countryByIso2(defaultCountry)?.iso2 ?? DEFAULT_PHONE_COUNTRY);
+	let iso2 = $state(DEFAULT_PHONE_COUNTRY);
+	let countrySeeded = false;
+	$effect.pre(() => {
+		const next = countryByIso2(defaultCountry)?.iso2 ?? DEFAULT_PHONE_COUNTRY;
+		if (!countrySeeded) {
+			countrySeeded = true;
+			iso2 = next;
+		}
+	});
 	let menuOpen = $state(false);
 	let menuPos = $state<{ top: number; left: number; width: number } | null>(null);
 

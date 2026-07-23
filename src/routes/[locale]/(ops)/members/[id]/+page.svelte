@@ -192,11 +192,9 @@
 						alt={d.members.qrCode}
 					/>
 				</div>
-				<p
-					class="mt-3 max-w-full break-all text-center text-[11px] text-[var(--color-muted)]"
-				>
-					{member.qr_code}
-				</p>
+					<p class="mt-3 hidden max-w-full break-all text-center text-[11px] text-[var(--color-muted)] sm:block">
+						{member.qr_code}
+					</p>
 			</section>
 		</div>
 

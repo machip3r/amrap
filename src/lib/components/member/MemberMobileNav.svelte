@@ -12,6 +12,8 @@
 	import LogoutButton from '$lib/components/LogoutButton.svelte';
 	import QrCodeImage from '$lib/components/QrCodeImage.svelte';
 	import Dialog from '$lib/components/ui/Dialog.svelte';
+	import IdentityPickerList from '$lib/components/IdentityPickerList.svelte';
+	import type { UserIdentity } from '$lib/auth/identities';
 	import type { Locale } from '$lib/i18n/config';
 	import { getDictionary } from '$lib/i18n/dictionaries';
 	import {
@@ -30,6 +32,8 @@
 		fullName?: string | null;
 		showWatermark?: boolean;
 		profileHref: string;
+		identities?: UserIdentity[];
+		activeIdentityId?: string;
 	};
 
 	let {
@@ -38,7 +42,9 @@
 		qrCode = null,
 		fullName = null,
 		showWatermark = true,
-		profileHref
+		profileHref,
+		identities = [],
+		activeIdentityId = ''
 	}: Props = $props();
 
 	const d = $derived(getDictionary(locale));
@@ -160,6 +166,15 @@
 	autoFocus={false}
 >
 	<div class="space-y-0.5">
+		{#if identities.length > 1 && activeIdentityId}
+			<IdentityPickerList
+				{locale}
+				{identities}
+				activeId={activeIdentityId}
+				labels={d.shell}
+				onNavigate={() => (moreOpen = false)}
+			/>
+		{/if}
 		{#if gymName}
 			<div class="mb-2 border-b border-[var(--color-border)] px-4 pb-3 pt-1">
 				<p class="truncate text-base font-semibold text-[var(--color-text)]">{gymName}</p>

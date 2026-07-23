@@ -132,29 +132,27 @@
 	</div>
 {:else}
 	<div class="relative flex flex-col gap-5">
-		<div class="flex items-start justify-between gap-4">
-			<div class="min-w-0">
-				<h2 class="font-title text-2xl font-bold text-[var(--color-text)]">
-					{d.settings.personalization}
-				</h2>
-				<p class="mt-1 max-w-xl text-sm text-[var(--color-muted)]">
-					{d.settings.personalizationHint}
-				</p>
-				<p class="mt-2 max-w-xl text-sm text-[var(--color-muted)]">
-					{canUseCustomDomain
-						? d.settings.whitelabelGrowthHint
-						: d.settings.whitelabelStarterHint}
-				</p>
-			</div>
-			{#if flash}
-				<p
-					class="flex shrink-0 items-center gap-1.5 rounded-lg border border-[var(--color-success)]/20 bg-[var(--color-success)]/10 px-3 py-2 text-sm font-medium text-[var(--color-success)]"
-					role="status"
-				>
-					<Check class="h-4 w-4" aria-hidden="true" strokeWidth={2.5} />
-					{flash}
-				</p>
-			{/if}
+		{#if flash}
+			<p
+				class="flex w-full items-center gap-1.5 rounded-lg border border-[var(--color-success)]/20 bg-[var(--color-success)]/10 px-3 py-2 text-sm font-medium text-[var(--color-success)]"
+				role="status"
+			>
+				<Check class="h-4 w-4 shrink-0" aria-hidden="true" strokeWidth={2.5} />
+				{flash}
+			</p>
+		{/if}
+		<div class="min-w-0">
+			<h2 class="font-title text-2xl font-bold text-[var(--color-text)]">
+				{d.settings.personalization}
+			</h2>
+			<p class="mt-1 max-w-xl text-sm text-[var(--color-muted)]">
+				{d.settings.personalizationHint}
+			</p>
+			<p class="mt-2 max-w-xl text-sm text-[var(--color-muted)]">
+				{canUseCustomDomain
+					? d.settings.whitelabelGrowthHint
+					: d.settings.whitelabelStarterHint}
+			</p>
 		</div>
 
 		{#if error}

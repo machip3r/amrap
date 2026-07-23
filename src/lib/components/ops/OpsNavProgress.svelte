@@ -1,8 +1,11 @@
 <script lang="ts">
 	import { navigating } from '$app/stores';
+
+	/** Hide on history back/forward — a top bar during iOS swipe-back feels like a reload. */
+	const show = $derived($navigating != null && $navigating.type !== 'popstate');
 </script>
 
-{#if $navigating}
+{#if show}
 	<div
 		class="pointer-events-none fixed inset-x-0 top-[var(--safe-top)] z-[100] h-0.5 overflow-hidden bg-[var(--color-border)]/40"
 		role="progressbar"

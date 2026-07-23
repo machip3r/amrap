@@ -302,6 +302,133 @@ export async function getOwnerGymId(ownerUserId: string): Promise<string> {
   return data.gym_id as string;
 }
 
+/** Linked `persons.id` for a claimed auth user. */
+export async function getPersonIdForUser(userId: string): Promise<string> {
+  const admin = getServiceRoleClient();
+  const { data, error } = await admin
+    .from("persons")
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error || !data?.id) {
+    throw new Error(
+      `getPersonIdForUser failed: ${error?.message ?? "no person"}`,
+    );
+  }
+  return data.id as string;
+}
+
+/**
+ * ACTIVE accepted membership for an existing person at a gym.
+ * Idempotent when the unique `(gym_id, person_id)` row already exists.
+ */
+export async function seedMembershipForPerson(
+  gymId: string,
+  personId: string,
+): Promise<string> {
+  const admin = getServiceRoleClient();
+  const expiresAt = new Date(
+    Date.now() + 30 * 24 * 60 * 60 * 1000,
+  ).toISOString();
+
+  const { data: existing, error: existingErr } = await admin
+    .from("memberships")
+    .select("id")
+    .eq("gym_id", gymId)
+    .eq("person_id", personId)
+    .maybeSingle();
+
+  if (existingErr) {
+    throw new Error(`lookup membership failed: ${existingErr.message}`);
+  }
+
+  if (existing?.id) {
+    const { error: updErr } = await admin
+      .from("memberships")
+      .update({
+        status: "ACTIVE",
+        invite_status: "accepted",
+        expires_at: expiresAt,
+      })
+      .eq("id", existing.id);
+    if (updErr) {
+      throw new Error(`refresh membership failed: ${updErr.message}`);
+    }
+    return existing.id as string;
+  }
+
+  const { data, error } = await admin
+    .from("memberships")
+    .insert({
+      gym_id: gymId,
+      person_id: personId,
+      status: "ACTIVE",
+      invite_status: "accepted",
+      expires_at: expiresAt,
+    })
+    .select("id")
+    .single();
+
+  if (error || !data?.id) {
+    throw new Error(
+      `seedMembershipForPerson failed: ${error?.message ?? "no id"}`,
+    );
+  }
+  return data.id as string;
+}
+
+/**
+ * Separate E2E org + gym with no `gym_roles` for `createdByUserId`.
+ * Used for cross-gym member identity (cleanup via org `created_by`).
+ */
+export async function seedStandaloneGym(options: {
+  createdByUserId: string;
+  gymName?: string;
+}): Promise<{ gymId: string; gymName: string; orgId: string }> {
+  const admin = getServiceRoleClient();
+  const stamp = Date.now();
+  const orgName = `E2E Identity Org ${stamp}`;
+  const gymName = options.gymName ?? `E2E Cross Gym ${stamp}`;
+
+  const { data: org, error: orgErr } = await admin
+    .from("organizations")
+    .insert({
+      name: orgName,
+      plan_tier: "FREEMIUM",
+      created_by: options.createdByUserId,
+    })
+    .select("id")
+    .single();
+
+  if (orgErr || !org?.id) {
+    throw new Error(
+      `seedStandaloneGym org failed: ${orgErr?.message ?? "no org"}`,
+    );
+  }
+
+  const { data: gym, error: gymErr } = await admin
+    .from("gyms")
+    .insert({
+      organization_id: org.id,
+      name: gymName,
+    })
+    .select("id")
+    .single();
+
+  if (gymErr || !gym?.id) {
+    throw new Error(
+      `seedStandaloneGym gym failed: ${gymErr?.message ?? "no gym"}`,
+    );
+  }
+
+  return {
+    gymId: gym.id as string,
+    gymName,
+    orgId: org.id as string,
+  };
+}
+
 export type SeededGymUser = {
   email: string;
   password: string;

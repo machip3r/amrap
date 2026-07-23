@@ -76,36 +76,72 @@
 		}
 	}
 
-	$effect(() => {
-		if (!running) return;
-		const id = window.setInterval(() => {
-			if (!endAt) return;
-			const left = Math.ceil((endAt - Date.now()) / 1000);
-			if (left > 0) {
-				phaseLeft = left;
-				return;
-			}
+	/**
+	 * Advance through any phases that ended while the tab was backgrounded / screen locked.
+	 * Uses wall-clock `endAt` so a long pause still lands on the correct segment.
+	 */
+	function catchUpClock() {
+		if (!running || !endAt) return;
+		const now = Date.now();
+		const left = Math.ceil((endAt - now) / 1000);
+		if (left > 0) {
+			phaseLeft = left;
+			return;
+		}
 
-			const list = timelineRef;
-			let mutedNow = false;
-			try {
-				mutedNow = localStorage.getItem(MUTE_KEY) === '1';
-			} catch {
-				/* ignore */
-			}
-			const next = indexRef + 1;
+		const list = timelineRef;
+		let mutedNow = false;
+		try {
+			mutedNow = localStorage.getItem(MUTE_KEY) === '1';
+		} catch {
+			/* ignore */
+		}
+
+		let phasesAdvanced = 0;
+		let cursorEnd = endAt;
+		let i = indexRef;
+
+		while (now >= cursorEnd) {
+			const next = i + 1;
 			if (next >= list.length) {
 				playBeep('end', mutedNow);
+				index = list.length - 1;
+				indexRef = index;
 				phaseLeft = 0;
 				running = false;
 				done = true;
 				endAt = null;
 				return;
 			}
-			playBeep(list[next]?.kind === 'rest' ? 'rest' : 'interval', mutedNow);
-			goToIndex(next, true);
-		}, 200);
-		return () => window.clearInterval(id);
+			phasesAdvanced += 1;
+			i = next;
+			cursorEnd += list[i]!.seconds * 1000;
+		}
+
+		// One phase: normal cue. Several skipped while backgrounded: skip intermediate beeps.
+		if (phasesAdvanced === 1) {
+			playBeep(list[i]?.kind === 'rest' ? 'rest' : 'interval', mutedNow);
+		}
+
+		index = i;
+		indexRef = i;
+		endAt = cursorEnd;
+		phaseLeft = Math.max(0, Math.ceil((cursorEnd - now) / 1000));
+		done = false;
+		running = true;
+	}
+
+	$effect(() => {
+		if (!running) return;
+		const id = window.setInterval(() => catchUpClock(), 200);
+		const onVisibility = () => {
+			if (document.visibilityState === 'visible') catchUpClock();
+		};
+		document.addEventListener('visibilitychange', onVisibility);
+		return () => {
+			window.clearInterval(id);
+			document.removeEventListener('visibilitychange', onVisibility);
+		};
 	});
 
 	const current = $derived(timeline[index]);
@@ -179,7 +215,10 @@
 	);
 </script>
 
-<div class="relative flex min-h-0 flex-1 flex-col overflow-hidden text-white" style:background-color={routine.color}>
+<div
+	class="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden text-white"
+	style:background-color={routine.color}
+>
 	<div
 		class="grid grid-cols-[auto_1fr_auto] items-center gap-2 px-3 pb-3 pt-[max(0.5rem,env(safe-area-inset-top))] sm:px-5"
 	>

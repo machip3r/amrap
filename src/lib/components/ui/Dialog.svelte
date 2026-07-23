@@ -2,6 +2,7 @@
 	import X from '@lucide/svelte/icons/x';
 	import type { Snippet } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
+	import { portal } from '$lib/dom/portal';
 	import { uiFade, uiFly } from '$lib/motion';
 
 	type Props = {
@@ -35,16 +36,6 @@
 	const titleId = `dialog-title-${Math.random().toString(36).slice(2, 9)}`;
 	const descId = `${titleId}-desc`;
 	let panelEl: HTMLDivElement | undefined = $state();
-
-	/** Move overlay to `document.body` so `fixed` is not trapped by animated/transformed ancestors. */
-	function portal(node: HTMLElement) {
-		document.body.appendChild(node);
-		return {
-			destroy() {
-				node.remove();
-			}
-		};
-	}
 
 	$effect(() => {
 		if (!open) return;
@@ -111,30 +102,32 @@
 			transition:fly={uiFly(fullScreen ? 220 : 280, fullScreen ? 12 : 18)}
 		>
 			<div
-				class="relative shrink-0 border-b border-[var(--color-border)] px-6 pb-4 pr-14 {fullScreen
+				class="shrink-0 border-b border-[var(--color-border)] px-6 pb-4 {fullScreen
 					? 'pt-[max(1.25rem,var(--safe-top))]'
-					: 'pt-6'}"
+					: 'pt-5'}"
 			>
-				<h2
-					id={titleId}
-					class="font-title text-xl font-bold tracking-tight text-[var(--color-text)] sm:text-2xl"
-				>
-					{title}
-				</h2>
+				<div class="flex items-center gap-3">
+					<h2
+						id={titleId}
+						class="min-w-0 flex-1 font-title text-xl font-bold tracking-tight text-[var(--color-text)] sm:text-2xl"
+					>
+						{title}
+					</h2>
+					<button
+						type="button"
+						data-dialog-close
+						onclick={() => onOpenChange(false)}
+						class="inline-flex h-[var(--touch-target)] w-[var(--touch-target)] shrink-0 items-center justify-center rounded-lg text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]"
+						aria-label={closeLabel}
+					>
+						<X class="h-5 w-5" aria-hidden="true" />
+					</button>
+				</div>
 				{#if description}
 					<p id={descId} class="mt-1.5 text-sm leading-relaxed text-[var(--color-muted)] sm:text-base">
 						{description}
 					</p>
 				{/if}
-				<button
-					type="button"
-					data-dialog-close
-					onclick={() => onOpenChange(false)}
-					class="absolute right-4 top-[max(0.75rem,var(--safe-top))] flex h-[var(--touch-target)] w-[var(--touch-target)] items-center justify-center rounded-lg text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]"
-					aria-label={closeLabel}
-				>
-					<X class="h-5 w-5" aria-hidden="true" />
-				</button>
 			</div>
 			<div class="min-h-0 flex-1 overflow-y-auto {bodyClass}">
 				{@render children()}

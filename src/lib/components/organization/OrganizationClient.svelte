@@ -242,8 +242,13 @@
 				{/if}
 			</div>
 			{#if !needsUpgradeForGym}
-				<Button type="button" variant="toolbar" class="mt-0 shrink-0" onclick={() => (createOpen = true)}>
-					<Plus class="h-4 w-4 shrink-0" aria-hidden="true" />
+				<Button
+					type="button"
+					variant="toolbar"
+					class="mt-0 !h-9 !min-h-9 shrink-0 gap-1 !px-2.5 !text-xs"
+					onclick={() => (createOpen = true)}
+				>
+					<Plus class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
 					<span class="shrink-0">{labels.addGym}</span>
 				</Button>
 			{/if}

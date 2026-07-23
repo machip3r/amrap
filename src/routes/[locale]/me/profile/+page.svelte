@@ -44,7 +44,7 @@
 						alt={d.member.qr}
 						class="rounded-lg border border-[var(--color-border)] bg-white p-1.5 shadow-sm"
 					/>
-					<p class="max-w-[6.5rem] truncate text-center font-mono text-[10px] font-semibold text-[var(--color-muted)] sm:text-right">
+					<p class="hidden max-w-[6.5rem] truncate text-center font-mono text-[10px] font-semibold text-[var(--color-muted)] sm:block sm:text-right">
 						{data.qrCode}
 					</p>
 				</div>

@@ -98,9 +98,6 @@
 		</div>
 	</div>
 	<div class="flex w-full gap-2">
-		<Button type="submit" variant="primary" disabled={pending} class="min-h-11 min-w-0 flex-1">
-			{labels.filterApply}
-		</Button>
 		{#if hasFilter}
 			<button
 				type="button"
@@ -111,5 +108,8 @@
 				{labels.filterClear}
 			</button>
 		{/if}
+		<Button type="submit" variant="primary" disabled={pending} class="min-h-11 min-w-0 flex-1">
+			{labels.filterApply}
+		</Button>
 	</div>
 </form>

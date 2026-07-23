@@ -54,9 +54,9 @@ AMRAP (platform)
            └── Branch ← physical site
 ```
 
-- **Roles are contextual:** same person can be owner at A, staff at B, member at C.
-- **Active gym:** cookie `amrap_gym_id` (set at onboarding / member gym switch). **Planned:** ops gym + branch switchers in chrome.
-- After login / invite confirm: `resolvePostAuthPath` → `/invite` if pending invite → owner `/onboarding` if org creator mid-setup → else `/welcome` if `profile_completed_at` null → else ops `/dashboard` if accepted gym role → else `/me` if accepted active membership → else `/no-access` (message + logout) when no gym/membership.
+- **Roles are contextual:** same person can be owner at A, staff at B, member at C — and can hold an ops role **and** an active membership (same or different gym). Same-gym dual link = **two identities** in the picker (ops vs member). At most one ops role per gym.
+- **Active gym / identity:** cookie `amrap_context` (`ops:<gymId>` \| `member:<gymId>`) plus compat `amrap_gym_id` / `amrap_member_gym_id`. Identity picker in top header (+ More on mobile) when the user has more than one usable identity. **Shipped.**
+- After login / invite confirm: `resolvePostAuthPath` → `/invite` if pending invite → owner `/onboarding` if org creator mid-setup → else `/welcome` if `profile_completed_at` null → else restore last valid **active identity** (fallback: first ops, then member) → else `/no-access`.
 
 ---
 
@@ -134,7 +134,8 @@ Granular `gym_roles.permissions` JSON: **Planned** (unused in UI today).
 | Pending invite (`invite_status = pending`) | `/invite` |
 | Gym workspace + org creator with incomplete onboarding | `/onboarding` |
 | Gym / membership, profile incomplete (`profile_completed_at` null) | `/welcome` |
-| Gym workspace (owner finished, or invited staff/trainer with profile done) | `/dashboard` |
+| Gym workspace (owner finished, or invited staff/trainer with profile done) | `/dashboard` (or `/me` if last active identity was member) |
+| Multiple identities (ops and/or member, any gyms) | Identity picker · `amrap_context` · `/[locale]/context` |
 | No gym role, active membership + profile done | `/me` |
 | Accepted invitee, profile incomplete | `/welcome` (never owner `/onboarding`) |
 | Org creator mid-setup | `/onboarding` |
@@ -250,8 +251,9 @@ Visible for owner / staff / trainer (after completed onboarding + gym workspace)
 | Settings (header gear on `md+` · More on mobile) | All ops roles — sections inside are role-gated | Shipped |
 | Nav visibility (per user) | Temporarily **disabled** in Settings UI (My menu). Backend `gym_roles.nav_visibility` still exists for when re-enabled. | Partial |
 | Theme toggle · logout | Header / sidebar footer / More sheet | Shipped |
+| **Identity picker** | Top header (+ More) when >1 usable identity (ops role and/or membership, any gyms); sets `amrap_context` + gym cookies via `/[locale]/context` | Shipped |
 | Watermark (“powered by”) | Freemium / Starter only (hidden on Growth / Pro); sits above mobile bottom tabs | Shipped |
-| Gym selector | List gyms where user has ops role | **Planned** (cookie only) |
+| Gym selector | Subsumed by identity picker for multi-gym ops | Shipped (picker) |
 | Branch selector | Filter attendance / kiosk | **Planned** |
 | Limit / unpaid banners | Freemium near 30 members · grace · read-only | **Planned** (limits enforced in actions; no persistent chrome banners) |
 | Avatar menu | Profile · my roles · locale | **Planned** (avatar initial only today) |
@@ -456,7 +458,7 @@ Data model and cookie support multi-gym roles. **UI:** create gym / switcher / a
 **Shipped**
 
 - Invited via `/trainers`.
-- Ops access: **Mi Día / week home** (next/live class hero · week strip · upcoming) + **Classes** (create/edit with self as coach) + **Timers** (`/timers`: list keeps ops shell; opening run/edit hides header/sidebar/bottom tabs for full-viewport use; Simple templates or Complex multi-cycle editor; localStorage) + **Settings** (personal menu; no gym branding).
+- Ops access: **Mi Día / week home** (next/live class hero · week strip · upcoming) + **Classes** (create/edit with self as coach) + **Timers** (`/timers`: list keeps ops shell; opening run/edit hides header/sidebar/bottom tabs for full-viewport use; Simple templates or Complex multi-cycle editor; localStorage; **screen wake lock** while on timers; run clock uses wall time and catches up after background/lock) + **Settings** (personal menu; no gym branding).
 - Session roster: care badges (medical note · first day · birthday) + express score capture (AMRAP / strength / for time).
 - **No** reception check-in page.
 - **No** remote wall-screen timer control.
@@ -492,11 +494,14 @@ No app login. Manual check-in at reception. Optional invite to register / claim 
 | `/me` | Home · memberships list · switch active gym (cookie) · shortcut cards |
 | `/me/qr` | Full-screen platform QR (also center FAB on mobile) |
 | `/me/classes` | Upcoming · book / waitlist / cancel · attendance history |
-| `/me/timers` | Routines list · Simple (template presets) / Complex (multi-cycle editor) create-edit · full-screen run |
+| `/me/timers` | Routines list · Simple (template presets) / Complex (multi-cycle editor) create-edit · full-screen run · screen wake lock · wall-clock catch-up after lock |
 | `/me/inbox` | Read gym advice (`inbox_messages`); auto-mark read |
 | `/me/profile` | Avatar destination · send feedback to gym or AMRAP (`feedback_messages`) |
+| Dual-role / multi-gym header | Identity picker when >1 identity (same-gym ops+member or cross-gym) | Shipped |
 
 **Shell:** Ops parity — `md+` sidebar; `<md` bottom tabs (Home · Classes · Timers / Inbox) + center My QR + More; avatar → profile. White-label theme/logo/tab title when active gym plan allows (`canUseWhitelabel`).
+
+**E2E:** Dual identity switch covered in `e2e/owner/identity-switch.spec.ts` (same-gym owner+member and cross-gym owner A + member B).
 
 ### 9.3 Planned member features
 

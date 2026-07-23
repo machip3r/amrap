@@ -49,15 +49,16 @@
 	--ops-header-height: 4.5rem;
 	--ops-bottom-nav-height: 3.25rem;
 	/* QR FAB overhang + watermark strip (safe-area is added separately) */
-	--ops-bottom-nav-extra: 3.25rem;
+	--ops-bottom-nav-extra: 4rem;
+	/* Extra 1rem keeps last content clear of the fixed mobile tabs */
 	--ops-bottom-clearance: calc(
-		var(--ops-bottom-nav-height) + var(--ops-bottom-nav-extra) + var(--safe-bottom)
+		var(--ops-bottom-nav-height) + var(--ops-bottom-nav-extra) + var(--safe-bottom) + 1rem
 	);
 }
 
 /* Growth/Pro: no powered-by strip — less clearance above the mobile tabs */
 .amrap-app-shell.amrap-no-watermark {
-	--ops-bottom-nav-extra: 2rem;
+	--ops-bottom-nav-extra: 2.75rem;
 }
 
 .dark {
@@ -83,6 +84,9 @@ body {
 	background: var(--color-bg);
 	color: var(--color-text);
 	margin: 0;
+	/* Reduce accidental pinch / double-tap zoom on mobile & installed PWA */
+	touch-action: manipulation;
+	overscroll-behavior: none;
 	transition:
 		background-color 0.3s ease,
 		color 0.3s ease;

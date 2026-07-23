@@ -11,6 +11,7 @@ import {
 	getPersonProfileStatus,
 	welcomePath
 } from '$lib/auth/profile-onboarding';
+import { listUserIdentities, pickActiveIdentity } from '$lib/auth/identities';
 import { createClient } from '$lib/supabase/server';
 import { getRequestEvent } from '$app/server';
 
@@ -132,15 +133,14 @@ export async function needsOwnerOnboarding(
  * One parallel Auth/DB round — avoids sequential gate waterfall before redirect.
  */
 export async function resolvePostAuthPath(locale: Locale): Promise<string> {
-	const [invite, onboarding, profile, workspace, invitedOps, invitedMember, member] =
+	const [invite, onboarding, profile, invitedOps, invitedMember, identities] =
 		await Promise.all([
 			getPendingInvite(),
 			getOnboardingState(),
 			getPersonProfileStatus(),
-			getWorkspace(),
 			isInvitedOpsUser(),
 			isInvitedMemberUser(),
-			getMemberContext()
+			listUserIdentities()
 		]);
 
 	if (invite) {
@@ -148,29 +148,31 @@ export async function resolvePostAuthPath(locale: Locale): Promise<string> {
 	}
 
 	const invitee = invitedOps || invitedMember;
+	const hasOps = identities.some((i) => i.kind === 'ops');
+	const hasMember = identities.some((i) => i.kind === 'member');
 
 	if (onboarding?.organizationId && !onboarding.completed && !invitee) {
 		return `/${locale}/onboarding`;
 	}
 
-	if (profile && !profile.profileCompleted && (workspace || member || invitee)) {
+	if (profile && !profile.profileCompleted && (hasOps || hasMember || invitee)) {
 		return welcomePath(locale);
 	}
 
-	if (workspace) {
-		return `/${locale}/dashboard`;
+	const active = pickActiveIdentity(identities);
+	if (active) {
+		return active.kind === 'ops' ? `/${locale}/dashboard` : `/${locale}/me`;
 	}
 
-	if (member) {
-		return `/${locale}/me`;
-	}
+	// Fallback for gates that still use workspace/member helpers (should be rare).
+	const [workspace, member] = await Promise.all([getWorkspace(), getMemberContext()]);
+	if (workspace) return `/${locale}/dashboard`;
+	if (member) return `/${locale}/me`;
 
 	if (onboarding?.organizationId && !onboarding.completed) {
 		return `/${locale}/onboarding`;
 	}
 
-	// Signed in but no gym workspace / active membership (expired member,
-	// cancelled invite, owner with no gym left, etc.).
 	return noAccessPath(locale);
 }
 

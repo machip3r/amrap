@@ -45,6 +45,10 @@ Base roles are fixed. **Granular permissions** sit on top (e.g. staff with near-
 
 A user may hold **different roles in different places** at once — e.g. owner of two gyms, coach at another, member at another, staff at another.
 
+**Same gym, dual link allowed:** one ops role (`gym_roles`: OWNER | STAFF | TRAINER) **and** an active membership at that gym. They appear as **two identities** in the app (desk vs train). At most one ops role per `(user, gym)` — cannot be staff and trainer at the same gym.
+
+**Active identity:** the user picks one context (role + gym + shell) via the identity picker. Ops data scopes to the active ops gym; member data to the active membership gym. Cookie `amrap_context` (`ops:<gymId>` | `member:<gymId>`) plus compat gym cookies (`amrap_gym_id`, `amrap_member_gym_id`).
+
 ### Owner
 
 - Registers and manages **one or more gyms** (each gym has exactly **one** owner).

@@ -10,6 +10,7 @@
 		upsertRoutine
 	} from '$lib/timers/storage';
 	import type { TimerRoutine } from '$lib/timers/types';
+	import { attachTimerWakeLockLifecycle } from '$lib/timers/wake-lock';
 	import PageLoader from '$lib/components/ui/PageLoader.svelte';
 	import TimerEditor from './TimerEditor.svelte';
 	import TimerRoutinesList from './TimerRoutinesList.svelte';
@@ -41,6 +42,9 @@
 		});
 	});
 
+	/** Keep screen awake on any timers surface (list / edit / run). */
+	$effect(() => attachTimerWakeLockLifecycle());
+
 	/** Hide ops chrome only while running or editing — do not clear on every view change. */
 	$effect(() => {
 		setTimersImmersive(view.kind === 'run' || view.kind === 'edit');
@@ -58,7 +62,7 @@
 {#if !hydrated}
 	<PageLoader label={d.common.loading} />
 {:else if view.kind === 'edit'}
-	<div class="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--color-bg)]">
+	<div class="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[var(--color-bg)]">
 		<TimerEditor
 			initial={view.routine}
 			{labels}
@@ -72,7 +76,7 @@
 	</div>
 {:else if view.kind === 'run' && runRoutine}
 	{#key runRoutine.id}
-		<div class="flex min-h-0 flex-1 flex-col overflow-hidden">
+		<div class="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
 			<TimerRunScreen
 				routine={runRoutine}
 				{labels}

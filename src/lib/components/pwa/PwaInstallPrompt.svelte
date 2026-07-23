@@ -91,7 +91,7 @@
 
 {#if show}
 	<div
-		class="fixed inset-x-3 bottom-[calc(var(--safe-bottom,0px)+1rem)] z-[55] mx-auto flex max-w-md flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-lg sm:inset-x-auto sm:right-4 sm:bottom-[calc(var(--ops-bottom-clearance,1rem)+0.75rem)]"
+		class="fixed bottom-[calc(var(--safe-bottom,0px)+1rem)] left-3 right-3 z-[55] mx-auto flex max-w-md flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-lg sm:left-auto sm:right-4 sm:bottom-[calc(var(--ops-bottom-clearance,1rem)+0.75rem)] sm:w-full"
 		role="dialog"
 		aria-label={d.pwa.installTitle}
 	>

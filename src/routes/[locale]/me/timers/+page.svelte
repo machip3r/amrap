@@ -11,6 +11,6 @@
 	<title>{brandedTitle(d.member.timers, data.documentBrand)}</title>
 </svelte:head>
 
-<div class="w-full">
+<div class="flex min-h-0 flex-1 flex-col">
 	<TimerApp locale={data.locale} />
 </div>

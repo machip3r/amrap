@@ -47,7 +47,9 @@ platform_admins → auth.users
 | Access to ops | `gym_roles` | Contextual role at a gym |
 | Access to train | `memberships` | Person ↔ gym (unique pair) |
 
-**Users are global; roles and memberships are contextual.** The same `auth.users` row can own gym A, staff gym B, and be a member (via `persons`) at gym C.
+**Users are global; roles and memberships are contextual.** The same `auth.users` row can own gym A, staff gym B, and be a member (via `persons`) at gym C — and may hold **both** a `gym_roles` row and a `memberships` row at the **same** gym (two identities: ops vs member). At most one `gym_roles` row per `(gym_id, user_id)`.
+
+**Active context:** cookie `amrap_context` = `ops:<gym_id>` or `member:<gym_id>` (also mirrors `amrap_gym_id` / `amrap_member_gym_id` for loaders).
 
 ---
 

@@ -28,6 +28,7 @@
 	import Input from '$lib/components/ui/Input.svelte';
 	import CheckinList from '$lib/components/checkin/CheckinList.svelte';
 	import CheckinRegisterButton from '$lib/components/checkin/CheckinRegisterButton.svelte';
+	import { portal } from '$lib/dom/portal';
 
 	export type CheckinLabels = {
 		title: string;
@@ -130,15 +131,6 @@
 
 	function kioskFields(extra: Record<string, string> = {}) {
 		return kioskMode ? { ...extra, kiosk: '1' } : extra;
-	}
-	/** Keep overlays on `document.body` so they aren't trapped by page transforms. */
-	function portal(node: HTMLElement) {
-		document.body.appendChild(node);
-		return {
-			destroy() {
-				node.remove();
-			}
-		};
 	}
 
 	function initials(name: string) {
@@ -460,27 +452,27 @@
 				{kioskMode ? labels.kioskHint : labels.subtitle}
 			</p>
 		</div>
-		<div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
+		<div class="flex w-full flex-row items-center gap-2 sm:w-auto sm:justify-end">
 			{#if kioskMode}
 				<button
 					type="button"
 					onclick={() => void exitKiosk()}
-					class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm font-semibold text-[var(--color-text)] shadow-sm transition-colors hover:bg-[var(--color-surface-hover)] sm:w-auto"
+					class="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-sm font-semibold text-[var(--color-text)] shadow-sm transition-colors hover:bg-[var(--color-surface-hover)] sm:w-auto sm:flex-none sm:px-4"
 				>
-					<Minimize2 class="h-4 w-4" aria-hidden="true" />
-					{labels.exitKiosk}
+					<Minimize2 class="h-4 w-4 shrink-0" aria-hidden="true" />
+					<span class="truncate">{labels.exitKiosk}</span>
 				</button>
 			{:else}
 				<button
 					type="button"
 					onclick={() => void enterKiosk()}
-					class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-[var(--color-primary)]/40 bg-[var(--color-primary)]/10 px-4 py-2.5 text-sm font-semibold text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-[var(--color-primary-on)] sm:w-auto"
+					class="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-lg border border-[var(--color-primary)]/40 bg-[var(--color-primary)]/10 px-3 py-2.5 text-sm font-semibold text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-[var(--color-primary-on)] sm:w-auto sm:flex-none sm:px-4"
 				>
-					<Maximize2 class="h-4 w-4" aria-hidden="true" />
-					{labels.enterKiosk}
+					<Maximize2 class="h-4 w-4 shrink-0" aria-hidden="true" />
+					<span class="truncate">{labels.enterKiosk}</span>
 				</button>
 				{#if registerLabel && (canManageMembers || canManageStaff)}
-					<div class="shrink-0 self-stretch sm:self-auto">
+					<div class="min-w-0 flex-1 sm:flex-none">
 						<CheckinRegisterButton
 							{locale}
 							{canManageMembers}
@@ -488,7 +480,7 @@
 							plans={registerPlans}
 							dayPassPrice={dayPassPrice}
 							label={registerLabel}
-							class="w-full sm:w-auto"
+							class="w-full"
 						/>
 					</div>
 				{/if}

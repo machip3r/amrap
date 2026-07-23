@@ -8,6 +8,7 @@
 		flagEmoji,
 		formatInternationalPhone
 	} from '$lib/phone/countries';
+	import { portal } from '$lib/dom/portal';
 	import { LIMITS, sanitizePhoneInput } from '$lib/validation/schemas';
 
 	type Props = {
@@ -108,15 +109,6 @@
 			top: openUp ? rect.top - menuHeight - 6 : rect.bottom + 6,
 			left,
 			width
-		};
-	}
-
-	function portal(node: HTMLElement) {
-		document.body.appendChild(node);
-		return {
-			destroy() {
-				node.remove();
-			}
 		};
 	}
 

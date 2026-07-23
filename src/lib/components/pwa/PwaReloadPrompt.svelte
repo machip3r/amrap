@@ -49,7 +49,7 @@
 
 {#if showToast}
 	<div
-		class="fixed inset-x-3 bottom-[calc(var(--safe-bottom,0px)+1rem)] z-[60] mx-auto w-full max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-xl sm:inset-x-auto sm:right-4 sm:bottom-[calc(var(--ops-bottom-clearance,1rem)+5.5rem)] sm:p-5"
+		class="fixed bottom-[calc(var(--safe-bottom,0px)+1rem)] left-3 right-3 z-[60] mx-auto max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-xl sm:left-auto sm:right-4 sm:bottom-[calc(var(--ops-bottom-clearance,1rem)+5.5rem)] sm:w-full sm:p-5"
 		role="dialog"
 		aria-modal="false"
 		aria-labelledby="pwa-reload-title"

@@ -1,4 +1,5 @@
 import { error, redirect } from '@sveltejs/kit';
+import { listUserIdentities, pickActiveIdentity, identityId } from '$lib/auth/identities';
 import { getPendingInvite, invitePath } from '$lib/auth/invite-decision';
 import { noAccessPath } from '$lib/auth/post-auth-redirect';
 import { needsProfileWelcome, welcomePath } from '$lib/auth/profile-onboarding';
@@ -18,7 +19,7 @@ export const load: LayoutServerLoad = async ({ params }) => {
 	if (!isLocale(params.locale)) error(404);
 	const locale = params.locale as Locale;
 
-	const member = await getMemberContext();
+	const [member, identities] = await Promise.all([getMemberContext(), listUserIdentities()]);
 	if (!member) throw redirect(303, noAccessPath(locale));
 
 	if (await getPendingInvite()) throw redirect(303, invitePath(locale));
@@ -73,6 +74,12 @@ export const load: LayoutServerLoad = async ({ params }) => {
 		? shellBrand?.documentBrand || gymName.trim() || organizationName.trim() || null
 		: null;
 
+	const activeIdentity = pickActiveIdentity(identities);
+	const activeIdentityId =
+		activeIdentity?.kind === 'member' && activeIdentity.gymId === member.activeGymId
+			? activeIdentity.id
+			: identityId('member', member.activeGymId);
+
 	return {
 		locale,
 		d,
@@ -87,6 +94,8 @@ export const load: LayoutServerLoad = async ({ params }) => {
 		logoUrlDark,
 		allowBrand,
 		documentBrand,
-		qrCode: member.qrCode
+		qrCode: member.qrCode,
+		identities,
+		activeIdentityId
 	};
 };

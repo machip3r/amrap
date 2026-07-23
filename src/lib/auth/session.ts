@@ -71,6 +71,8 @@ export function setRequestUser(user: import('@supabase/supabase-js').User) {
 	locals.memberContext = undefined;
 	locals.personProfileResolved = false;
 	locals.personProfile = undefined;
+	locals.identitiesResolved = false;
+	locals.identities = undefined;
 }
 
 type GymRoleRow = {

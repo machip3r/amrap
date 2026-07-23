@@ -29,6 +29,15 @@ export type Dictionary = {
     help: string;
     poweredBy: string;
     myQrHint: string;
+    viewOps: string;
+    viewMember: string;
+    switchView: string;
+    identityPicker: string;
+    roleOwner: string;
+    roleStaff: string;
+    roleTrainer: string;
+    roleMember: string;
+    currentIdentity: string;
   };
   pwa: {
     installTitle: string;
@@ -995,6 +1004,15 @@ const es: Dictionary = {
     help: "Ayuda",
     poweredBy: "Powered by",
     myQrHint: "Muestra este código en recepción para registrar tu entrada.",
+    viewOps: "Admin",
+    viewMember: "Miembro",
+    switchView: "Cambiar tipo de vista",
+    identityPicker: "Elegir identidad",
+    roleOwner: "Dueño",
+    roleStaff: "Staff",
+    roleTrainer: "Entrenador",
+    roleMember: "Miembro",
+    currentIdentity: "Identidad actual",
   },
   pwa: {
     installTitle: "Instalar AMRAP",
@@ -1999,6 +2017,15 @@ const en: Dictionary = {
     help: "Help",
     poweredBy: "Powered by",
     myQrHint: "Show this code at the front desk to check in.",
+    viewOps: "Admin",
+    viewMember: "Member",
+    switchView: "Switch app view",
+    identityPicker: "Choose identity",
+    roleOwner: "Owner",
+    roleStaff: "Staff",
+    roleTrainer: "Trainer",
+    roleMember: "Member",
+    currentIdentity: "Current identity",
   },
   pwa: {
     installTitle: "Install AMRAP",

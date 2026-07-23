@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import Loader2 from '@lucide/svelte/icons/loader-2';
+	import { portal } from '$lib/dom/portal';
 	import type { Locale } from '$lib/i18n/config';
 	import { createClient } from '$lib/supabase/client';
 	import type { Snippet } from 'svelte';
@@ -22,15 +23,6 @@
 	}: Props = $props();
 
 	let pending = $state(false);
-
-	function portal(node: HTMLElement) {
-		document.body.appendChild(node);
-		return {
-			destroy() {
-				node.remove();
-			}
-		};
-	}
 
 	async function logout() {
 		if (pending) return;

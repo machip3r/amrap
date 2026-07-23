@@ -4,9 +4,11 @@
 	import MemberAppNav from '$lib/components/member/MemberAppNav.svelte';
 	import MemberMobileNav from '$lib/components/member/MemberMobileNav.svelte';
 	import OpsNavLogo from '$lib/components/ops/OpsNavLogo.svelte';
+	import IdentityPicker from '$lib/components/IdentityPicker.svelte';
 	import { getTimersImmersive } from '$lib/timers/shell.svelte';
 	import { DEFAULT_DOCUMENT_BRAND } from '$lib/seo/document-title';
 	import type { Snippet } from 'svelte';
+	import type { UserIdentity } from '$lib/auth/identities';
 
 	type Props = {
 		data: {
@@ -22,6 +24,8 @@
 			documentBrand?: string | null;
 			qrCode: string | null;
 			member: { fullName: string | null };
+			identities?: UserIdentity[];
+			activeIdentityId?: string;
 		};
 		children: Snippet;
 	};
@@ -102,10 +106,10 @@
 				{profileHref}
 			/>
 		{/if}
-		<div class="flex min-w-0 flex-1 flex-col overflow-hidden">
+		<div class="flex min-h-0 min-w-0 flex-1 flex-col">
 			{#if !immersive}
 				<header
-					class="flex h-[calc(var(--ops-header-height)+var(--safe-top))] shrink-0 items-center gap-2 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-[var(--spacing-page)] pt-[var(--safe-top)] sm:gap-3 sm:px-[var(--spacing-page-md)] lg:px-[var(--spacing-page-x-lg)]"
+					class="relative z-40 flex h-[calc(var(--ops-header-height)+var(--safe-top))] shrink-0 items-center gap-2 overflow-visible border-b border-[var(--color-border)] bg-[var(--color-surface)] px-[var(--spacing-page)] pt-[var(--safe-top)] sm:gap-3 sm:px-[var(--spacing-page-md)] lg:px-[var(--spacing-page-x-lg)]"
 				>
 					<a
 						href={homeHref}
@@ -119,14 +123,24 @@
 							size="sm"
 						/>
 					</a>
-					<div class="ml-auto flex items-center gap-2 sm:gap-3">
+					<div class="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">
+						{#if (data.identities?.length ?? 0) > 1 && data.activeIdentityId}
+							<IdentityPicker
+								locale={data.locale}
+								identities={data.identities ?? []}
+								activeId={data.activeIdentityId}
+								labels={data.d.shell}
+								compact
+								class="max-w-[9.5rem] sm:max-w-[14rem]"
+							/>
+						{/if}
 						<ThemeToggle
 							label={data.d.a11y.toggleTheme}
-							class="h-[var(--touch-target)] w-[var(--touch-target)]"
+							class="h-[var(--touch-target)] w-[var(--touch-target)] shrink-0"
 						/>
 						<a
 							href={profileHref}
-							class="flex h-[var(--touch-target)] w-[var(--touch-target)] items-center justify-center overflow-hidden rounded-full bg-[var(--color-primary)]/20 text-base font-bold text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30 transition-opacity hover:opacity-90"
+							class="flex h-[var(--touch-target)] w-[var(--touch-target)] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--color-primary)]/20 text-base font-bold text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/30 transition-opacity hover:opacity-90"
 							aria-label={data.d.member.profile}
 							title={data.d.member.profile}
 						>
@@ -138,7 +152,7 @@
 			<main
 				class={immersive
 					? 'flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--color-bg)] p-0'
-					: 'flex-1 overflow-y-auto px-[var(--spacing-page)] py-[var(--spacing-page)] pb-[var(--ops-bottom-clearance)] md:px-[var(--spacing-page-md)] md:py-[var(--spacing-page-md)] md:pb-[var(--spacing-page-md)] lg:px-[var(--spacing-page-x-lg)] lg:py-[var(--spacing-page-lg)] lg:pb-[var(--spacing-page-lg)]'}
+					: 'min-h-0 flex-1 overflow-y-auto px-[var(--spacing-page)] py-[var(--spacing-page)] pb-[var(--ops-bottom-clearance)] md:px-[var(--spacing-page-md)] md:py-[var(--spacing-page-md)] md:pb-[var(--spacing-page-md)] lg:px-[var(--spacing-page-x-lg)] lg:py-[var(--spacing-page-lg)] lg:pb-[var(--spacing-page-lg)]'}
 			>
 				{@render children()}
 			</main>
@@ -155,6 +169,8 @@
 			fullName={data.member.fullName}
 			{showWatermark}
 			{profileHref}
+			identities={data.identities ?? []}
+			activeIdentityId={data.activeIdentityId ?? ''}
 		/>
 	{/if}
 </div>

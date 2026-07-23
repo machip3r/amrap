@@ -32,7 +32,7 @@
 	{/if}
 	<QrCodeImage value={member.qrCode} size={220} alt={d.member.qr} class="mx-auto" />
 	<div
-		class="w-full max-w-md rounded-3xl border-2 border-[var(--color-primary)] bg-[var(--color-surface)] px-6 py-6 shadow-sm"
+		class="hidden w-full max-w-md rounded-3xl border-2 border-[var(--color-primary)] bg-[var(--color-surface)] px-6 py-6 shadow-sm sm:block"
 	>
 		<p
 			class="break-all font-mono text-2xl font-bold tracking-wide text-[var(--color-text)] sm:text-3xl"

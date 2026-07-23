@@ -1,6 +1,7 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 import type { Locale } from '$lib/i18n/config';
+import type { UserIdentity } from '$lib/auth/identities';
 import type { PendingInvite } from '$lib/auth/invite-decision';
 import type { MemberContext } from '$lib/auth/member-session';
 import type { PersonProfileStatus } from '$lib/auth/profile-onboarding';
@@ -37,6 +38,8 @@ declare global {
 			memberContextResolved?: boolean;
 			personProfile?: PersonProfileStatus | null;
 			personProfileResolved?: boolean;
+			identitiesResolved?: boolean;
+			identities?: UserIdentity[];
 		}
 	}
 }

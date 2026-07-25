@@ -3,7 +3,9 @@ import { canInWorkspace } from '$lib/auth/permissions';
 import { getDictionary } from '$lib/i18n/dictionaries';
 import {
 	isSelfServeTier,
+	normalizeBillingInterval,
 	priceLookupKey,
+	toStoredSubscriptionStatus,
 	type BillingInterval,
 	type SelfServeTier
 } from '$lib/stripe/catalog';
@@ -31,8 +33,7 @@ function localeFromForm(formData: FormData) {
 }
 
 function intervalFromForm(formData: FormData): BillingInterval {
-	const raw = formString(formData, 'interval');
-	return raw === 'year' ? 'year' : 'month';
+	return normalizeBillingInterval(formString(formData, 'interval')) ?? 'MONTH';
 }
 
 async function requireBillingWorkspace() {
@@ -152,58 +153,72 @@ export async function requestSubscriptionCheckout(formData: FormData): Promise<O
 	}
 
 	const stripe = getStripe();
+	const supabase = createClient();
 
 	try {
-		const hasActiveSub =
-			Boolean(org.stripe_subscription_id) &&
-			org.plan_tier !== 'FREEMIUM' &&
-			['active', 'trialing', 'past_due'].includes(org.stripe_subscription_status ?? '');
+		const liveSubId = org.stripe_subscription_id;
+		if (liveSubId) {
+			const sub = await stripe.subscriptions.retrieve(liveSubId);
+			const liveOk = ['active', 'trialing', 'past_due'].includes(sub.status);
 
-		if (hasActiveSub && org.stripe_subscription_id) {
-			const sub = await stripe.subscriptions.retrieve(org.stripe_subscription_id);
-			const itemId = sub.items.data[0]?.id;
-			if (!itemId) {
-				return { error: d.organization.checkoutFailed };
-			}
-
-			// create_prorations only queues the delta for the *next* invoice.
-			// always_invoice charges (or credits) immediately — required for upgrades.
-			const isUpgrade = PLAN_TIER_RANK[tier] > PLAN_TIER_RANK[org.plan_tier];
-			await stripe.subscriptions.update(org.stripe_subscription_id, {
-				items: [{ id: itemId, price: priceId }],
-				proration_behavior: 'always_invoice',
-				...(isUpgrade ? { payment_behavior: 'error_if_incomplete' as const } : {}),
-				metadata: {
-					organization_id: org.id,
-					amrap_tier: tier,
-					billing_interval: interval
+			if (!liveOk) {
+				// Canceled (or expired) subs cannot change prices — clear stale ids and use Checkout.
+				await supabase
+					.from('organizations')
+					.update({
+						stripe_subscription_id: null,
+						stripe_subscription_status: toStoredSubscriptionStatus(sub.status),
+						plan_tier: 'FREEMIUM',
+						billing_interval: null
+					})
+					.eq('id', org.id);
+			} else {
+				const itemId = sub.items.data[0]?.id;
+				if (!itemId) {
+					return { error: d.organization.checkoutFailed };
 				}
-			});
 
-			const supabase = createClient();
-			await supabase
-				.from('organizations')
-				.update({
-					plan_tier: tier,
-					billing_interval: interval,
-					stripe_subscription_status: 'active'
-				})
-				.eq('id', org.id);
+				// create_prorations only queues the delta for the *next* invoice.
+				// always_invoice charges (or credits) immediately — required for upgrades.
+				const isUpgrade = PLAN_TIER_RANK[tier] > PLAN_TIER_RANK[org.plan_tier];
+				await stripe.subscriptions.update(liveSubId, {
+					items: [{ id: itemId, price: priceId }],
+					proration_behavior: 'always_invoice',
+					...(isUpgrade ? { payment_behavior: 'error_if_incomplete' as const } : {}),
+					metadata: {
+						organization_id: org.id,
+						amrap_tier: tier,
+						billing_interval: interval
+					}
+				});
 
-			return { success: true, message: d.organization.upgradeSuccess };
+				await supabase
+					.from('organizations')
+					.update({
+						plan_tier: tier,
+						billing_interval: interval,
+						stripe_subscription_status: 'ACTIVE'
+					})
+					.eq('id', org.id);
+
+				return { success: true, message: d.organization.upgradeSuccess };
+			}
 		}
 
 		const customerId = await ensureStripeCustomer(org, user?.email ?? undefined);
-		const returnUrl = `${appOrigin()}/${locale}/organization?billing=success&session_id={CHECKOUT_SESSION_ID}`;
+		const returnRaw = (formString(formData, 'return_to') || 'organization').toLowerCase();
+		const returnPath = returnRaw === 'onboarding' ? 'onboarding' : 'organization';
+		const returnUrl = `${appOrigin()}/${locale}/${returnPath}?billing=success&session_id={CHECKOUT_SESSION_ID}`;
 
 		const session = await stripe.checkout.sessions.create({
-			ui_mode: 'embedded',
+			// Stripe renamed `embedded` → `embedded_page` (API still mounts via initEmbeddedCheckout).
+			ui_mode: 'embedded_page',
 			mode: 'subscription',
 			customer: customerId,
 			client_reference_id: org.id,
 			line_items: [{ price: priceId, quantity: 1 }],
 			return_url: returnUrl,
-			redirect_on_completion: 'if_required',
+			redirect_on_completion: 'always',
 			subscription_data: {
 				metadata: {
 					organization_id: org.id,

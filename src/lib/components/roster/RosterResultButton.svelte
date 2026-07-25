@@ -20,8 +20,8 @@
 	let { locale, sessionId, personId, personName, existing, labels }: Props = $props();
 
 	let open = $state(false);
-	let kind = $state<'amrap' | 'strength' | 'for_time'>(
-		existing?.kind === 'strength' || existing?.kind === 'for_time' ? existing.kind : 'amrap'
+	let kind = $state<'AMRAP' | 'STRENGTH' | 'FOR_TIME'>(
+		existing?.kind === 'STRENGTH' || existing?.kind === 'FOR_TIME' ? existing.kind : 'AMRAP'
 	);
 	let pending = $state(false);
 	let error = $state<string | null>(null);
@@ -70,9 +70,9 @@
 
 		<div class="flex flex-wrap gap-1">
 			{#each [
-				['amrap', labels.kindAmrap],
-				['strength', labels.kindStrength],
-				['for_time', labels.kindForTime]
+				['AMRAP', labels.kindAmrap],
+				['STRENGTH', labels.kindStrength],
+				['FOR_TIME', labels.kindForTime]
 			] as [k, label] (k)}
 				<button
 					type="button"
@@ -86,7 +86,7 @@
 			{/each}
 		</div>
 
-		{#if kind === 'amrap'}
+		{#if kind === 'AMRAP'}
 			<div class="grid grid-cols-2 gap-3">
 				<label class="flex flex-col gap-1 text-xs font-medium text-[var(--color-muted)]">
 					{labels.rounds}
@@ -111,7 +111,7 @@
 			</div>
 		{/if}
 
-		{#if kind === 'strength'}
+		{#if kind === 'STRENGTH'}
 			<label class="flex flex-col gap-1 text-xs font-medium text-[var(--color-muted)]">
 				{labels.weightKg}
 				<Input
@@ -125,7 +125,7 @@
 			</label>
 		{/if}
 
-		{#if kind === 'for_time'}
+		{#if kind === 'FOR_TIME'}
 			<div class="grid grid-cols-2 gap-3">
 				<label class="flex flex-col gap-1 text-xs font-medium text-[var(--color-muted)]">
 					{labels.minutes}

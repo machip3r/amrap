@@ -12,8 +12,8 @@ import {
 	dateOfBirthSchema,
 	formString,
 	heightCmSchema,
+	genderSchema,
 	localeSchema,
-	sexSchema,
 	weightKgSchema
 } from '$lib/validation/schemas';
 import { z } from 'zod';
@@ -31,7 +31,7 @@ const teamSchema = z.object({
 const memberSchema = z.object({
 	locale: localeSchema,
 	date_of_birth: dateOfBirthSchema,
-	sex: sexSchema,
+	gender: genderSchema,
 	height_cm: heightCmSchema,
 	weight_kg: weightKgSchema
 });
@@ -58,7 +58,7 @@ export async function completeWelcomeProfileAction(
 		const parsed = memberSchema.safeParse({
 			locale: localeRaw,
 			date_of_birth: formString(formData, 'date_of_birth'),
-			sex: formString(formData, 'sex'),
+			gender: formString(formData, 'gender'),
 			height_cm: formString(formData, 'height_cm'),
 			weight_kg: formString(formData, 'weight_kg')
 		});
@@ -67,7 +67,7 @@ export async function completeWelcomeProfileAction(
 			return {
 				fieldErrors: zodFieldErrors(parsed.error, d.validation, {
 					date_of_birth: 'date',
-					sex: 'required',
+					gender: 'required',
 					height_cm: 'amount',
 					weight_kg: 'amount'
 				})
@@ -79,7 +79,7 @@ export async function completeWelcomeProfileAction(
 			.from('persons')
 			.update({
 				date_of_birth: parsed.data.date_of_birth,
-				sex: parsed.data.sex,
+				gender: parsed.data.gender,
 				height_cm: parsed.data.height_cm,
 				weight_kg: parsed.data.weight_kg,
 				profile_completed_at: new Date().toISOString()

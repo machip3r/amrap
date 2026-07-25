@@ -1,11 +1,22 @@
 <script lang="ts">
 	// import NavCustomizationForm from '$lib/components/settings/NavCustomizationForm.svelte';
 	import PersonalizationForm from '$lib/components/settings/PersonalizationForm.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import { OWNER_TOUR_STORAGE_KEY } from '$lib/tour/constants';
 	import { brandedTitle } from '$lib/seo/document-title';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 	const d = $derived(data.d!);
+
+	function replayTour() {
+		try {
+			localStorage.removeItem(OWNER_TOUR_STORAGE_KEY);
+		} catch {
+			/* ignore */
+		}
+		window.location.href = `/${data.locale}/dashboard?tour=1`;
+	}
 </script>
 
 <svelte:head>
@@ -21,6 +32,18 @@
 			{data.canManageGymBrand ? d.settings.subtitle : d.settings.limitedSubtitle}
 		</p>
 	</header>
+
+	{#if data.canActAsOwner}
+		<section
+			class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-6"
+		>
+			<h2 class="font-title text-lg font-bold text-[var(--color-text)]">{d.tour.replay}</h2>
+			<p class="mt-1 text-sm text-[var(--color-muted)]">{d.tour.stepDashboardBody}</p>
+			<Button type="button" variant="toolbar" class="mt-4" onclick={replayTour}>
+				{d.tour.replay}
+			</Button>
+		</section>
+	{/if}
 
 	<!-- My menu (nav visibility) — temporarily disabled
 	<NavCustomizationForm

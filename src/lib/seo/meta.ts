@@ -53,9 +53,9 @@ export function buildSeo(input: SeoInput) {
 export function organizationJsonLd(opts: {
 	name: string;
 	email: string;
-	telephone: string;
 	addressLocality: string;
 	addressCountry: string;
+	telephone?: string;
 }) {
 	const origin = getSiteOrigin();
 	return {
@@ -65,7 +65,7 @@ export function organizationJsonLd(opts: {
 		alternateName: ['AMRAP Space', 'amrap.space'],
 		url: origin,
 		email: opts.email,
-		telephone: opts.telephone,
+		...(opts.telephone ? { telephone: opts.telephone } : {}),
 		logo: absoluteUrl('/pwa/icon-512.png', origin),
 		address: {
 			'@type': 'PostalAddress',

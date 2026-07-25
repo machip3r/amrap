@@ -3,13 +3,20 @@
 	import Pencil from '@lucide/svelte/icons/pencil';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import type { OnboardingState, OnboardingStep } from '$lib/auth/session';
+	import EmbeddedCheckoutDialog from '$lib/components/billing/EmbeddedCheckoutDialog.svelte';
+	import PlanCompareDialog from '$lib/components/billing/PlanCompareDialog.svelte';
+	import UpgradeConfirmDialog from '$lib/components/billing/UpgradeConfirmDialog.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import FormField from '$lib/components/ui/FormField.svelte';
 	import Input from '$lib/components/ui/Input.svelte';
 	import type { Locale } from '$lib/i18n/config';
 	import { getDictionary } from '$lib/i18n/dictionaries';
+	import { formatMoney } from '$lib/i18n/money';
+	import { AMRAP_PLANS, canCreatePlan } from '$lib/plans/limits';
 	import type { OnboardingActionState } from '$lib/server/onboarding/actions';
+	import type { OrgActionState } from '$lib/server/organization/billing';
+	import type { OrgPlanTier } from '$lib/types';
 	import { LIMITS } from '$lib/validation/schemas';
 
 	type PlanRow = { id: string; name: string; price: number; duration_days: number };
@@ -18,16 +25,35 @@
 		locale: Locale;
 		onboardingState: OnboardingState;
 		plans: PlanRow[];
+		planTier?: OrgPlanTier;
+		planCap?: number | null;
+		stripePublishableKey?: string | null;
+		billingFlash?: boolean;
 		showError?: boolean;
 		form: OnboardingActionState;
 	};
 
-	let { locale, onboardingState, plans, showError = false, form }: Props = $props();
+	let {
+		locale,
+		onboardingState,
+		plans,
+		planTier = 'FREEMIUM',
+		planCap = 2,
+		stripePublishableKey = null,
+		billingFlash = false,
+		showError = false,
+		form
+	}: Props = $props();
 
 	const d = getDictionary(locale);
 	const maxStep = $derived(onboardingState.step);
 	let viewStep = $state(onboardingState.step as OnboardingStep);
 	let prevMaxStep = $state(onboardingState.step);
+
+	let compareOpen = $state(false);
+	let upgradeTier = $state<OrgPlanTier | null>(null);
+	let checkoutClientSecret = $state<string | null>(null);
+	let billingMessage = $state<string | undefined>(undefined);
 
 	$effect(() => {
 		if (maxStep !== prevMaxStep) {
@@ -40,6 +66,84 @@
 		viewStep = viewStep > 1 ? ((viewStep - 1) as OnboardingStep) : viewStep;
 	}
 
+	function stepLabel(n: number) {
+		if (n === 1) return d.onboarding.stepYou;
+		if (n === 2) return d.onboarding.stepGym;
+		if (n === 3) return d.onboarding.stepPlans;
+		if (n === 4) return d.onboarding.stepBilling;
+		return d.onboarding.stepDone;
+	}
+
+	function planDisplayName(tier: OrgPlanTier) {
+		switch (tier) {
+			case 'STARTER':
+				return d.organization.planStarter;
+			case 'GROWTH':
+				return d.organization.planGrowth;
+			case 'PRO':
+				return d.organization.planPro;
+			default:
+				return d.organization.planFreemium;
+		}
+	}
+
+	function priceLine(tier: OrgPlanTier) {
+		const plan = AMRAP_PLANS.find((p) => p.tier === tier)!;
+		if (plan.priceNote === 'free') return formatMoney(0, locale);
+		if (plan.priceNote === 'contact') return d.organization.priceContact;
+		const amount = locale === 'en' ? (plan.priceUsdMonthly ?? 0) : (plan.priceMxnMonthly ?? 0);
+		return `${formatMoney(amount, locale)}${d.organization.perMonth}`;
+	}
+
+	function onCheckoutResult(data: OrgActionState) {
+		if (!data) return;
+		if (data.error) billingMessage = data.error;
+		if (data.message) billingMessage = data.message;
+		if (data.clientSecret) checkoutClientSecret = data.clientSecret;
+	}
+
+	const upgradeLabels = $derived({
+		upgradeConfirmTitle: d.organization.upgradeConfirmTitle,
+		upgradeConfirmDescription: d.organization.upgradeConfirmDescription,
+		changeConfirmTitle: d.organization.changeConfirmTitle,
+		changeConfirmDescription: d.organization.changeConfirmDescription,
+		upgradeConfirmSubmit: d.organization.upgradeConfirmSubmit,
+		changeConfirmSubmit: d.organization.changeConfirmSubmit,
+		billingIntervalLabel: d.organization.billingIntervalLabel,
+		billingMonthly: d.organization.billingMonthly,
+		billingMonthlyHint: d.organization.billingMonthlyHint,
+		billingAnnual: d.organization.billingAnnual,
+		billingAnnualHint: d.organization.billingAnnualHint,
+		billingAnnualSaveBadge: d.organization.billingAnnualSaveBadge,
+		perMonth: d.organization.perMonth,
+		perYear: d.organization.perYear,
+		cancel: d.organization.cancel,
+		close: d.organization.close,
+		save: d.organization.save
+	});
+
+	const compareLabels = $derived({
+		title: d.planCompare.title,
+		description: d.planCompare.description,
+		close: d.organization.close,
+		tierFreemium: d.organization.planFreemium,
+		tierStarter: d.organization.planStarter,
+		tierGrowth: d.organization.planGrowth,
+		tierPro: d.organization.planPro,
+		featureGyms: d.planCompare.featureGyms,
+		featureMembers: d.planCompare.featureMembers,
+		featureStaff: d.planCompare.featureStaff,
+		featurePackages: d.planCompare.featurePackages,
+		featureBranding: d.planCompare.featureBranding,
+		featureWatermark: d.planCompare.featureWatermark,
+		featureMultiGym: d.planCompare.featureMultiGym,
+		featureOnlineBilling: d.planCompare.featureOnlineBilling,
+		valueYes: d.planCompare.valueYes,
+		valueNo: d.planCompare.valueNo,
+		valueLimited: d.planCompare.valueLimited,
+		valueSoon: d.planCompare.valueSoon
+	});
+
 	let profilePending = $state(false);
 	let gymPending = $state(false);
 	let addPlanPending = $state(false);
@@ -49,8 +153,8 @@
 </script>
 
 <div class="flex w-full flex-col gap-8">
-	<nav aria-label={d.onboarding.stepsLabel} class="flex gap-2">
-		{#each [1, 2, 3, 4] as n (n)}
+	<nav aria-label={d.onboarding.stepsLabel} class="flex gap-1.5 sm:gap-2">
+		{#each [1, 2, 3, 4, 5] as n (n)}
 			{@const active = viewStep === n}
 			{@const reached = maxStep >= n}
 			<button
@@ -68,14 +172,8 @@
 						? 'bg-[var(--color-primary)]'
 						: 'bg-[var(--color-muted)]/30'}"
 				></div>
-				<span class="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-					{n === 1
-						? d.onboarding.stepYou
-						: n === 2
-							? d.onboarding.stepGym
-							: n === 3
-								? d.onboarding.stepPlans
-								: d.onboarding.stepDone}
+				<span class="text-[9px] font-semibold uppercase tracking-wider text-[var(--color-muted)] sm:text-[10px]">
+					{stepLabel(n)}
 				</span>
 			</button>
 		{/each}
@@ -296,7 +394,7 @@
 				</form>
 			</section>
 		{:else if viewStep === 3}
-			{@const atLimit = plans.length >= 2}
+			{@const atLimit = !canCreatePlan(planTier, plans.length)}
 			<section class="flex flex-col gap-4">
 				<div>
 					<h2 class="text-xl font-bold text-[var(--color-text)]">{d.onboarding.plansTitle}</h2>
@@ -536,6 +634,21 @@
 					</form>
 				{:else}
 					<p class="text-sm text-[var(--color-muted)]">{d.onboarding.planLimit}</p>
+					{#if planTier === 'FREEMIUM'}
+						<div class="flex flex-col gap-2">
+							<Button type="button" variant="primaryBlock" onclick={() => (upgradeTier = 'STARTER')}>
+								{d.onboarding.planLimitUpgrade}
+							</Button>
+							<Button
+								type="button"
+								variant="ghost"
+								class="w-full py-2 text-sm"
+								onclick={() => (compareOpen = true)}
+							>
+								{d.onboarding.comparePlans}
+							</Button>
+						</div>
+					{/if}
 				{/if}
 
 				<form method="POST" action="?/skipPlans">
@@ -550,6 +663,78 @@
 				</form>
 			</section>
 		{:else if viewStep === 4}
+			<section class="flex flex-col gap-4">
+				<div>
+					<h2 class="text-xl font-bold text-[var(--color-text)]">{d.onboarding.billingTitle}</h2>
+					<p class="mt-1 text-sm text-[var(--color-muted)]">{d.onboarding.billingSubtitle}</p>
+				</div>
+
+				{#if billingFlash}
+					<p
+						class="rounded-lg border border-[var(--color-success)]/20 bg-[var(--color-success)]/10 px-3 py-2 text-sm font-medium text-[var(--color-success)]"
+						role="status"
+					>
+						{d.onboarding.billingFlashSuccess}
+					</p>
+				{/if}
+				{#if billingMessage}
+					<p
+						class="rounded-lg border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 px-3 py-2 text-sm font-medium text-[var(--color-primary)]"
+						role="status"
+					>
+						{billingMessage}
+					</p>
+				{/if}
+
+				<ul class="flex flex-col gap-2">
+					{#each AMRAP_PLANS as plan (plan.tier)}
+						<li
+							class="flex flex-col gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+						>
+							<div class="min-w-0">
+								<p class="font-semibold text-[var(--color-text)]">{planDisplayName(plan.tier)}</p>
+								<p class="text-sm tabular-nums text-[var(--color-muted)]">{priceLine(plan.tier)}</p>
+							</div>
+							{#if plan.tier === 'FREEMIUM'}
+								<span class="text-xs font-medium text-[var(--color-muted)]">
+									{planTier === 'FREEMIUM' ? d.onboarding.billingStayFreemium : ''}
+								</span>
+							{:else if plan.tier === 'PRO'}
+								<a
+									href="/{locale}#contacto"
+									class="inline-flex min-h-11 items-center justify-center rounded-lg border border-[var(--color-border)] px-3 text-sm font-semibold text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]"
+								>
+									{d.onboarding.billingContactPro}
+								</a>
+							{:else}
+								<Button
+									type="button"
+									variant="toolbar"
+									class="!h-11"
+									onclick={() => (upgradeTier = plan.tier)}
+									disabled={planTier === plan.tier}
+								>
+									{plan.tier === 'STARTER'
+										? d.onboarding.billingChooseStarter
+										: d.onboarding.billingChooseGrowth}
+								</Button>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+
+				<Button type="button" variant="ghost" class="w-full py-2 text-sm" onclick={() => (compareOpen = true)}>
+					{d.onboarding.comparePlans}
+				</Button>
+
+				<form method="POST" action="?/skipBilling">
+					<input type="hidden" name="locale" value={locale} />
+					<Button type="submit" variant="primaryBlock">
+						{d.onboarding.billingSkip}
+					</Button>
+				</form>
+			</section>
+		{:else if viewStep === 5}
 			<section class="flex flex-col gap-4 text-center">
 				<div>
 					<h2 class="text-xl font-bold text-[var(--color-text)]">{d.onboarding.doneTitle}</h2>
@@ -579,3 +764,31 @@
 		{/if}
 	</div>
 </div>
+
+<PlanCompareDialog open={compareOpen} onOpenChange={(o) => (compareOpen = o)} labels={compareLabels} />
+
+<UpgradeConfirmDialog
+	{locale}
+	open={upgradeTier != null}
+	tier={upgradeTier}
+	currentTier={planTier}
+	planName={upgradeTier ? planDisplayName(upgradeTier) : ''}
+	labels={upgradeLabels}
+	action="?/checkout"
+	returnTo="onboarding"
+	onOpenChange={(open) => {
+		if (!open) upgradeTier = null;
+	}}
+	onResult={onCheckoutResult}
+/>
+
+<EmbeddedCheckoutDialog
+	clientSecret={checkoutClientSecret}
+	publishableKey={stripePublishableKey}
+	title={d.organization.checkoutTitle}
+	description={d.organization.checkoutDescription}
+	mountLabel={d.organization.checkoutMountLabel}
+	loadError={d.organization.checkoutFailed}
+	closeLabel={d.organization.close}
+	onClose={() => (checkoutClientSecret = null)}
+/>

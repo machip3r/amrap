@@ -18,7 +18,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 			getAll: () => event.cookies.getAll(),
 			setAll: (cookiesToSet) => {
 				cookiesToSet.forEach(({ name, value, options }) => {
-					event.cookies.set(name, value, { ...options, path: '/' });
+					// Preserve Supabase maxAge / httpOnly so the session survives PWA cold starts.
+					event.cookies.set(name, value, {
+						...options,
+						path: '/',
+						sameSite: options?.sameSite ?? 'lax'
+					});
 				});
 			}
 		}
@@ -29,8 +34,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 	} = await event.locals.supabase.auth.getUser();
 	event.locals.user = user;
 
-	// Auth callbacks + public HTTP APIs (e.g. Stripe webhooks) — no locale prefix / session gate.
-	if (pathname.startsWith('/auth/') || pathname.startsWith('/api/')) {
+	// Auth callbacks + public HTTP APIs + PWA cold-start entry — no locale prefix.
+	if (pathname.startsWith('/auth/') || pathname.startsWith('/api/') || pathname === '/app') {
 		return resolve(event);
 	}
 
@@ -46,6 +51,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const locale = first;
 	const firstSegment = segments[1] ?? '';
 	event.locals.locale = locale as Locale;
+
+	// Remember last locale for PWA `/app` cold starts.
+	event.cookies.set('amrap_locale', locale, {
+		path: '/',
+		maxAge: 60 * 60 * 24 * 365,
+		sameSite: 'lax',
+		httpOnly: false
+	});
 
 	const isPublic = publicPathRoots.has(firstSegment);
 	const isMarketingHome = segments.length === 1;

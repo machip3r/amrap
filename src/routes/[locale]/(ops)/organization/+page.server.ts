@@ -59,7 +59,7 @@ export const load: PageServerLoad = async ({ parent, url }) => {
 			.from('feedback_messages')
 			.select('id, body, created_at, author_person_id, persons ( full_name )')
 			.eq('gym_id', workspace.gymId)
-			.eq('target', 'gym')
+			.eq('target', 'GYM')
 			.order('created_at', { ascending: false })
 			.limit(50)
 	]);

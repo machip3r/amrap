@@ -5,6 +5,7 @@ import type { Locale } from '$lib/i18n/config';
 import { getDictionary } from '$lib/i18n/dictionaries';
 import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
 import { listPaymentsPage } from '$lib/payments/queries';
+import { paymentPricingBadge } from '$lib/payments/pricing';
 import {
 	listRecentPaymentMembers,
 	searchPaymentMembers
@@ -139,8 +140,8 @@ export const load: PageServerLoad = async ({ parent, url, depends }) => {
 
 	function methodLabel(rawMethod: string) {
 		const m = paymentMethodFromDb(rawMethod);
-		if (m === 'cash') return d.payments.cash;
-		if (m === 'transfer') return d.payments.transfer;
+		if (m === 'CASH') return d.payments.cash;
+		if (m === 'TRANSFER') return d.payments.transfer;
 		return rawMethod;
 	}
 
@@ -162,11 +163,13 @@ export const load: PageServerLoad = async ({ parent, url, depends }) => {
 				id: p.id,
 				memberName: p.member_name ?? p.membership_id,
 				amount: p.amount,
+				listAmount: p.list_amount,
+				pricingBadge: paymentPricingBadge(p.amount, p.list_amount),
 				methodLabel: methodLabel(p.method),
 				createdAt: p.created_at,
 				kind,
-				kindLabel: kind === 'day_pass' ? d.payments.kindDayPass : d.payments.kindPlan,
-				planName: kind === 'plan' ? p.plan_name : null
+				kindLabel: kind === 'DAY_PASS' ? d.payments.kindDayPass : d.payments.kindPlan,
+				planName: kind === 'PLAN' ? p.plan_name : null
 			};
 		})
 	};

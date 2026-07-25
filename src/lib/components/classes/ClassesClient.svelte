@@ -97,7 +97,7 @@
 	let archiving = $state<ClassesPageClass | null>(null);
 	let scheduling = $state<ClassesPageClass | null>(null);
 	let duplicating = $state<ClassesPageClass | null>(null);
-	let scheduleRecurrence = $state<'none' | 'weekly'>('weekly');
+	let scheduleRecurrence = $state<'NONE' | 'WEEKLY'>('WEEKLY');
 
 	let createPending = $state(false);
 	let createState = $state<ClassFormState>(null);
@@ -107,7 +107,7 @@
 	let scheduleState = $state<ScheduleFormState>(null);
 	let restorePending = $state<string | null>(null);
 	let withSchedule = $state(false);
-	let createScheduleRecurrence = $state<'none' | 'weekly'>('weekly');
+	let createScheduleRecurrence = $state<'NONE' | 'WEEKLY'>('WEEKLY');
 	let createTrainerIds = $state<string[]>([]);
 	let editTrainerIds = $state<string[]>([]);
 
@@ -223,7 +223,7 @@
 	function resetCreate() {
 		createState = null;
 		withSchedule = false;
-		createScheduleRecurrence = 'weekly';
+		createScheduleRecurrence = 'WEEKLY';
 		createTrainerIds = defaultTrainerIds?.length ? [...defaultTrainerIds] : [];
 		createKey += 1;
 	}
@@ -355,7 +355,7 @@
 									<button
 										type="button"
 										onclick={() => {
-											scheduleRecurrence = 'weekly';
+											scheduleRecurrence = 'WEEKLY';
 											scheduling = c;
 										}}
 										class="{actionBtn} text-[var(--color-text)]"
@@ -526,7 +526,7 @@
 										<a
 											href={`/${locale}/classes/${s.id}`}
 											class="flex min-h-11 items-center justify-between gap-3 rounded-lg border px-3 py-2.5 transition-colors hover:bg-[var(--color-surface-hover)] md:block md:min-h-0 md:px-2 md:py-1.5 {s.status ===
-											'cancelled'
+											'CANCELLED'
 												? 'border-[var(--color-border)] opacity-55'
 												: 'border-[var(--color-border)]'}"
 											title={`${s.class_name} · ${seats}`}
@@ -772,12 +772,12 @@
 												class="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-sm"
 												bind:value={createScheduleRecurrence}
 											>
-												<option value="weekly">{labels.recurrenceWeekly}</option>
-												<option value="none">{labels.recurrenceNone}</option>
+												<option value="WEEKLY">{labels.recurrenceWeekly}</option>
+												<option value="NONE">{labels.recurrenceNone}</option>
 											</select>
 										{/snippet}
 									</FormField>
-									{#if createScheduleRecurrence === 'weekly'}
+									{#if createScheduleRecurrence === 'WEEKLY'}
 										<WeekdayToggleGroup
 											legend={labels.days}
 											labels={[
@@ -1082,12 +1082,12 @@
 						class="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-sm"
 						bind:value={scheduleRecurrence}
 					>
-						<option value="weekly">{labels.recurrenceWeekly}</option>
-						<option value="none">{labels.recurrenceNone}</option>
+						<option value="WEEKLY">{labels.recurrenceWeekly}</option>
+						<option value="NONE">{labels.recurrenceNone}</option>
 					</select>
 				{/snippet}
 			</FormField>
-			{#if scheduleRecurrence === 'weekly'}
+			{#if scheduleRecurrence === 'WEEKLY'}
 				<WeekdayToggleGroup
 					legend={labels.days}
 					labels={[

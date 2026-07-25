@@ -7,7 +7,7 @@ import type { BrandThemeTokens, OrgPlanTier, Role, Workspace } from '$lib/types'
 
 export const ACTIVE_GYM_COOKIE = 'amrap_gym_id';
 
-export type OnboardingStep = 1 | 2 | 3 | 4;
+export type OnboardingStep = 1 | 2 | 3 | 4 | 5;
 
 export type OnboardingState = {
 	userId: string;
@@ -20,7 +20,7 @@ export type OnboardingState = {
 	gymId: string | null;
 	gymName: string | null;
 	completed: boolean;
-	/** Next step the user should see (1–4). */
+	/** Next step the user should see (1–5). */
 	step: OnboardingStep;
 };
 
@@ -216,7 +216,7 @@ export async function getWorkspace(): Promise<Workspace | null> {
     `
 				)
 				.eq('user_id', user.id)
-				.or('invite_status.eq.accepted,role.eq.OWNER')
+				.or('invite_status.eq.ACCEPTED,role.eq.OWNER')
 		]);
 
 		const person = personResult.data;
@@ -286,7 +286,7 @@ export async function getOnboardingState(): Promise<OnboardingState | null> {
 		supabase
 			.from('organizations')
 			.select(
-				'id, name, pending_as_provisional, onboarding_plans_done, onboarding_completed_at'
+				'id, name, pending_as_provisional, onboarding_plans_done, onboarding_billing_done, onboarding_completed_at'
 			)
 			.eq('created_by', user.id)
 			.is('deleted_at', null)
@@ -319,6 +319,7 @@ export async function getOnboardingState(): Promise<OnboardingState | null> {
 	const hasGym = Boolean(role?.gym_id);
 	const fullName = person?.full_name?.trim() || null;
 	const plansDone = Boolean(org?.onboarding_plans_done);
+	const billingDone = Boolean(org?.onboarding_billing_done);
 	const completed = Boolean(org?.onboarding_completed_at);
 
 	let step: OnboardingStep = 1;
@@ -328,10 +329,12 @@ export async function getOnboardingState(): Promise<OnboardingState | null> {
 		step = 2;
 	} else if (!plansDone) {
 		step = 3;
+	} else if (!billingDone) {
+		step = 4;
 	} else if (!completed) {
-		step = 4;
+		step = 5;
 	} else {
-		step = 4;
+		step = 5;
 	}
 
 	const state: OnboardingState = {

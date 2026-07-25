@@ -1,0 +1,23 @@
+---
+description: Keep Playwright E2E in sync with features, fixes, and breaking changes
+alwaysApply: true
+---
+
+# E2E coverage with product changes
+
+When you implement a **new feature**, **fix**, or **breaking change** that affects user-facing flows, update Playwright coverage under `e2e/` in the **same change**.
+
+## Required
+
+- **New feature** → add/extend specs for every affected role (`e2e/<role>/`); add setup/fixtures if a new actor is needed
+- **Fix** → update assertions/helpers to match fixed behavior; add a regression case when the bug was user-visible
+- **Breaking change** (routes, copy used in tests, auth/onboarding, roles/guards, enums, redirects) → update **all** affected specs, setups, and `e2e/helpers/` — do not leave tests encoding the old contract
+- Keep [`docs/product-flows.md`](docs/product-flows.md) in sync (**shipped · partial · planned**)
+- Deferred coverage: explicit note in the change + planned/partial in product-flows — never silent skip
+
+## Do not
+
+- Ship UI/flow changes with stale or missing E2E for the touched roles
+- Run several `pnpm test:e2e:*` scripts in parallel (shared `e2e/.auth/` + port 5173)
+
+Full detail: `AGENTS.md` → **Testing / E2E** · `e2e/README.md`.

@@ -7,10 +7,12 @@
 	import Input from '$lib/components/ui/Input.svelte';
 	import PhoneInput from '$lib/components/ui/PhoneInput.svelte';
 	import Select from '$lib/components/ui/Select.svelte';
+	import PaymentPricingFields from '$lib/components/payments/PaymentPricingFields.svelte';
 	import type { Locale } from '$lib/i18n/config';
 	import type { Dictionary } from '$lib/i18n/dictionaries';
 	import { DAY_PASS_PLAN_VALUE } from '$lib/members/day-pass';
 	import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
+	import type { PaymentPricingMode } from '$lib/payments/pricing';
 	import type { CreateMemberState } from '$lib/server/members/actions';
 	import { LIMITS, sanitizeEmailInput, sanitizePersonNameInput } from '$lib/validation/schemas';
 
@@ -54,7 +56,9 @@
 	let email = $state('');
 	let phone = $state('');
 	let planId = $state('');
-	let method = $state('cash');
+	let pricingMode = $state<PaymentPricingMode>('FULL');
+	let amount = $state('');
+	let method = $state('CASH');
 	let pending = $state(false);
 	let localError = $state<string | undefined>(undefined);
 	let localFieldErrors = $state<Record<string, string> | undefined>(undefined);
@@ -64,13 +68,35 @@
 	const fe = $derived(localFieldErrors);
 	const hasDayPass = $derived(dayPassPrice != null);
 	const hasPlanOptions = $derived(plans.length > 0 || hasDayPass);
+	const listAmount = $derived.by(() => {
+		if (planId === DAY_PASS_PLAN_VALUE) return Number(dayPassPrice ?? 0);
+		const plan = plans.find((p) => p.id === planId);
+		return plan?.price ?? plans[0]?.price ?? 0;
+	});
 	const canSubmit = $derived(
 		name.trim().length > 0 &&
 			email.trim().length > 0 &&
 			planId.length > 0 &&
 			hasPlanOptions &&
+			(pricingMode !== 'DISCOUNT' ||
+				(amount !== '' &&
+					Number.isFinite(Number(amount)) &&
+					Number(amount) >= 0 &&
+					Number(amount) < listAmount)) &&
 			!pending
 	);
+
+	const pricingLabels = $derived({
+		pricingLabel: d.payments.pricingLabel,
+		pricingFull: d.payments.pricingFull,
+		pricingDiscount: d.payments.pricingDiscount,
+		pricingTrial: d.payments.pricingTrial,
+		pricingHint: d.payments.pricingHint,
+		trialHint: d.payments.trialHint,
+		discountHint: d.payments.discountHint,
+		amount: d.payments.amount,
+		listPrice: d.payments.listPrice
+	});
 
 	function formatPlanLabel(plan: ActivePlanOption) {
 		const price = plan.price.toFixed(2);
@@ -97,16 +123,34 @@
 		email = '';
 		phone = '';
 		planId = defaultPlanId();
-		method = 'cash';
+		pricingMode = 'FULL';
+		amount = String(listAmount || plans[0]?.price || dayPassPrice || '');
+		method = 'CASH';
 		localError = undefined;
 		localFieldErrors = undefined;
 		emailWarning = undefined;
 		softCapWarning = undefined;
 	}
 
+	function onPlanChange(nextId: string) {
+		planId = nextId;
+		pricingMode = 'FULL';
+		if (nextId === DAY_PASS_PLAN_VALUE) {
+			amount = String(dayPassPrice ?? 0);
+			return;
+		}
+		const plan = plans.find((p) => p.id === nextId);
+		amount = plan != null ? String(plan.price) : '';
+	}
+
 	$effect(() => {
 		if (open && !planId) {
 			planId = defaultPlanId();
+			amount = String(
+				planId === DAY_PASS_PLAN_VALUE
+					? (dayPassPrice ?? 0)
+					: (plans.find((p) => p.id === planId)?.price ?? plans[0]?.price ?? 0)
+			);
 		}
 	});
 </script>
@@ -243,6 +287,7 @@
 							bind:value={planId}
 							{invalid}
 							{describedBy}
+							onchange={(e) => onPlanChange((e.currentTarget as HTMLSelectElement).value)}
 						>
 							{#each plans as plan (plan.id)}
 								<option value={plan.id}>{formatPlanLabel(plan)}</option>
@@ -262,12 +307,22 @@
 							{invalid}
 							{describedBy}
 						>
-							<option value="cash">{d.members.cash}</option>
-							<option value="transfer">{d.members.transfer}</option>
+							<option value="CASH">{d.members.cash}</option>
+							<option value="TRANSFER">{d.members.transfer}</option>
 						</Select>
 					{/snippet}
 				</FormField>
 			</div>
+
+			<PaymentPricingFields
+				{locale}
+				listAmount={listAmount}
+				labels={pricingLabels}
+				bind:mode={pricingMode}
+				bind:amount
+				amountError={fe?.amount}
+				idPrefix="create-member-pricing"
+			/>
 
 			{#if localError || formResult?.error}
 				<p

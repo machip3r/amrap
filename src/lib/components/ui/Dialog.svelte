@@ -3,6 +3,7 @@
 	import type { Snippet } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
 	import { portal } from '$lib/dom/portal';
+	import { lockBodyScroll } from '$lib/dom/scroll-lock';
 	import { uiFade, uiFly } from '$lib/motion';
 
 	type Props = {
@@ -26,7 +27,7 @@
 		description = undefined,
 		closeLabel,
 		class: className = undefined,
-		containerClass = 'items-center justify-center p-3 sm:p-6',
+		containerClass = 'items-start justify-center p-3 pt-[max(0.75rem,var(--safe-top))] sm:items-center sm:p-6 sm:pt-6',
 		bodyClass = 'px-6 py-5',
 		autoFocus = true,
 		fullScreen = false,
@@ -36,17 +37,102 @@
 	const titleId = `dialog-title-${Math.random().toString(36).slice(2, 9)}`;
 	const descId = `${titleId}-desc`;
 	let panelEl: HTMLDivElement | undefined = $state();
+	let overlayEl: HTMLDivElement | undefined = $state();
+	let bodyScrollEl: HTMLDivElement | undefined = $state();
+
+	/** Pin the overlay to the visual viewport so iOS keyboard resize doesn't expose the app chrome. */
+	function syncOverlayToVisualViewport() {
+		const el = overlayEl;
+		if (!el) return;
+		const vv = window.visualViewport;
+		if (!vv) {
+			el.style.top = '0';
+			el.style.left = '0';
+			el.style.width = '100%';
+			el.style.height = 'var(--app-height, 100dvh)';
+			return;
+		}
+		el.style.top = `${vv.offsetTop}px`;
+		el.style.left = `${vv.offsetLeft}px`;
+		el.style.width = `${vv.width}px`;
+		el.style.height = `${vv.height}px`;
+	}
 
 	$effect(() => {
 		if (!open) return;
 
-		const prevOverflow = document.body.style.overflow;
-		document.body.style.overflow = 'hidden';
+		const unlock = lockBodyScroll();
 
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key === 'Escape') onOpenChange(false);
 		};
 		window.addEventListener('keydown', onKey);
+
+		syncOverlayToVisualViewport();
+		const vv = window.visualViewport;
+		vv?.addEventListener('resize', syncOverlayToVisualViewport);
+		vv?.addEventListener('scroll', syncOverlayToVisualViewport);
+		window.addEventListener('resize', syncOverlayToVisualViewport);
+
+		/**
+		 * Block touch scroll chaining to the document. Allow pan only inside
+		 * the dialog body (and portaled lists like PhoneInput country picker).
+		 */
+		function allowsTouchScroll(target: Node): HTMLElement | null {
+			if (bodyScrollEl?.contains(target)) return bodyScrollEl;
+			if (target instanceof Element) {
+				const portaled = target.closest(
+					'[role="listbox"], [role="menu"], [data-dialog-scroll]'
+				);
+				if (portaled instanceof HTMLElement) return portaled;
+			}
+			return null;
+		}
+
+		function onTouchMove(e: TouchEvent) {
+			const target = e.target;
+			if (!(target instanceof Node)) {
+				e.preventDefault();
+				return;
+			}
+			const scroller = allowsTouchScroll(target);
+			if (!scroller) {
+				e.preventDefault();
+				return;
+			}
+			const canScroll = scroller.scrollHeight > scroller.clientHeight + 1;
+			if (!canScroll) {
+				e.preventDefault();
+				return;
+			}
+			// At edges, prevent bounce from scrolling the page behind.
+			const atTop = scroller.scrollTop <= 0;
+			const atBottom = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1;
+			const touch = e.touches[0];
+			const prevY = (scroller as HTMLElement & { __dialogTouchY?: number }).__dialogTouchY;
+			if (touch && prevY != null) {
+				const dy = touch.clientY - prevY;
+				if ((atTop && dy > 0) || (atBottom && dy < 0)) {
+					e.preventDefault();
+				}
+			}
+			if (touch) {
+				(scroller as HTMLElement & { __dialogTouchY?: number }).__dialogTouchY = touch.clientY;
+			}
+		}
+
+		function onTouchStart(e: TouchEvent) {
+			const target = e.target;
+			const touch = e.touches[0];
+			if (!(target instanceof Node) || !touch) return;
+			const scroller = allowsTouchScroll(target);
+			if (scroller) {
+				(scroller as HTMLElement & { __dialogTouchY?: number }).__dialogTouchY = touch.clientY;
+			}
+		}
+
+		document.addEventListener('touchstart', onTouchStart, { passive: true, capture: true });
+		document.addEventListener('touchmove', onTouchMove, { passive: false, capture: true });
 
 		if (autoFocus) {
 			queueMicrotask(() => {
@@ -63,30 +149,37 @@
 		}
 
 		return () => {
-			document.body.style.overflow = prevOverflow;
+			unlock();
 			window.removeEventListener('keydown', onKey);
+			vv?.removeEventListener('resize', syncOverlayToVisualViewport);
+			vv?.removeEventListener('scroll', syncOverlayToVisualViewport);
+			window.removeEventListener('resize', syncOverlayToVisualViewport);
+			document.removeEventListener('touchstart', onTouchStart, true);
+			document.removeEventListener('touchmove', onTouchMove, true);
 		};
 	});
 
 	const panelClassName = $derived(className ?? (fullScreen ? '' : 'max-w-md'));
 	const panelSize = $derived(
 		fullScreen
-			? 'h-[var(--app-height,100dvh)] max-h-[var(--app-height,100dvh)] w-full rounded-none border-0 shadow-none'
-			: 'max-h-[min(calc(var(--app-height,100dvh)-1.5rem),64rem)] w-full rounded-2xl border border-[var(--color-border)] shadow-2xl'
+			? 'h-full max-h-full w-full rounded-none border-0 shadow-none'
+			: 'max-h-[min(100%,calc(100%-0.5rem))] w-full rounded-2xl border border-[var(--color-border)] shadow-2xl'
 	);
 </script>
 
 {#if open}
 	<div
 		use:portal
-		class="fixed inset-0 z-50 flex {fullScreen
+		bind:this={overlayEl}
+		class="fixed z-50 flex overscroll-none {fullScreen
 			? 'items-stretch justify-stretch p-0'
 			: containerClass}"
+		style="top:0;left:0;width:100%;height:var(--app-height,100dvh)"
 	>
 		{#if !fullScreen}
 			<button
 				type="button"
-				class="absolute inset-0 bg-[var(--color-text)]/40 backdrop-blur-[2px]"
+				class="absolute inset-0 touch-none bg-[var(--color-text)]/40 backdrop-blur-[2px]"
 				aria-label={closeLabel}
 				onclick={() => onOpenChange(false)}
 				transition:fade={uiFade(160)}
@@ -98,7 +191,7 @@
 			aria-modal="true"
 			aria-labelledby={titleId}
 			aria-describedby={description ? descId : undefined}
-			class="relative z-10 flex flex-col overflow-hidden bg-[var(--color-surface)] {panelSize} {panelClassName}"
+			class="relative z-10 flex min-h-0 w-full flex-col overflow-hidden overscroll-contain bg-[var(--color-surface)] {panelSize} {panelClassName}"
 			transition:fly={uiFly(fullScreen ? 220 : 280, fullScreen ? 12 : 18)}
 		>
 			<div
@@ -129,7 +222,11 @@
 					</p>
 				{/if}
 			</div>
-			<div class="min-h-0 flex-1 overflow-y-auto {bodyClass}">
+			<div
+				bind:this={bodyScrollEl}
+				data-dialog-scroll
+				class="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] {bodyClass}"
+			>
 				{@render children()}
 			</div>
 		</div>

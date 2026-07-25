@@ -164,7 +164,7 @@ async function loadMemberFromCheckIn(
     `
 		)
 		.eq('person_id', personId)
-		.eq('status', 'attended')
+		.eq('status', 'ATTENDED')
 		.gte('class_sessions.starts_at', new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString())
 		.order('booked_at', { ascending: false })
 		.limit(1)

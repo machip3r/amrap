@@ -52,13 +52,13 @@ function pickHero(
 	todayKey: string
 ): ClassSessionRow | null {
 	const active = sessions.find(
-		(s) => s.status !== 'cancelled' && s.starts_at <= nowIso && s.ends_at > nowIso
+		(s) => s.status !== 'CANCELLED' && s.starts_at <= nowIso && s.ends_at > nowIso
 	);
 	if (active) return active;
 
 	const upcomingToday = sessions
 		.filter((s) => {
-			if (s.status === 'cancelled' || s.starts_at <= nowIso) return false;
+			if (s.status === 'CANCELLED' || s.starts_at <= nowIso) return false;
 			const local = new Date(s.starts_at);
 			const key = `${local.getFullYear()}-${String(local.getMonth() + 1).padStart(2, '0')}-${String(local.getDate()).padStart(2, '0')}`;
 			return key === todayKey;
@@ -67,7 +67,7 @@ function pickHero(
 	if (upcomingToday[0]) return upcomingToday[0];
 
 	const upcomingWeek = sessions
-		.filter((s) => s.status !== 'cancelled' && s.starts_at > nowIso)
+		.filter((s) => s.status !== 'CANCELLED' && s.starts_at > nowIso)
 		.sort((a, b) => a.starts_at.localeCompare(b.starts_at));
 	return upcomingWeek[0] ?? null;
 }
@@ -105,7 +105,7 @@ export async function loadTrainerDashboard(
 	const upcoming = sessions
 		.filter(
 			(s) =>
-				s.status !== 'cancelled' && s.starts_at >= nowIso && (!hero || s.id !== hero.id)
+				s.status !== 'CANCELLED' && s.starts_at >= nowIso && (!hero || s.id !== hero.id)
 		)
 		.slice(0, 6)
 		.map((s) => ({
@@ -113,7 +113,7 @@ export async function loadTrainerDashboard(
 			timeLabel: formatSessionTime(s.starts_at, locale)
 		}));
 
-	const sessionsThisWeek = sessions.filter((s) => s.status !== 'cancelled').length;
+	const sessionsThisWeek = sessions.filter((s) => s.status !== 'CANCELLED').length;
 	const bookedThisWeek = sessions.reduce((sum, s) => sum + (s.confirmed_count ?? 0), 0);
 
 	const todayDate = new Intl.DateTimeFormat(locale, {

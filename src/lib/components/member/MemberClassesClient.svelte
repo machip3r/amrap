@@ -102,15 +102,15 @@
 
 	function statusLabel(status: string) {
 		switch (status) {
-			case 'confirmed':
+			case 'CONFIRMED':
 				return labels.statusConfirmed;
-			case 'waitlisted':
+			case 'WAITLISTED':
 				return labels.statusWaitlisted;
-			case 'cancelled':
+			case 'CANCELLED':
 				return labels.statusCancelled;
-			case 'attended':
+			case 'ATTENDED':
 				return labels.statusAttended;
-			case 'no_show':
+			case 'NO_SHOW':
 				return labels.statusNoShow;
 			default:
 				return status;
@@ -197,7 +197,7 @@
 	{@const full = s.capacity != null && s.confirmedCount >= s.capacity}
 	{@const seats = s.capacity == null ? '∞' : `${s.confirmedCount}/${s.capacity}`}
 	{@const reserved = Boolean(
-		s.myBookingId && (s.myStatus === 'confirmed' || s.myStatus === 'waitlisted')
+		s.myBookingId && (s.myStatus === 'CONFIRMED' || s.myStatus === 'WAITLISTED')
 	)}
 	<li
 		class="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm {reserved
@@ -246,7 +246,7 @@
 
 {#snippet calendarAction(s: MemberSessionCard)}
 	{@const full = s.capacity != null && s.confirmedCount >= s.capacity}
-	{#if s.myBookingId && (s.myStatus === 'confirmed' || s.myStatus === 'waitlisted')}
+	{#if s.myBookingId && (s.myStatus === 'CONFIRMED' || s.myStatus === 'WAITLISTED')}
 		<form method="POST" action="?/cancel" use:enhance={enhanceBooking}>
 			<input type="hidden" name="locale" value={locale} />
 			<input type="hidden" name="booking_id" value={s.myBookingId} />

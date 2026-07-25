@@ -89,12 +89,12 @@ async function loadSessionsForWeekDirect(
 			.from('class_bookings')
 			.select('session_id, status')
 			.in('session_id', sessionIds)
-			.neq('status', 'cancelled');
+			.neq('status', 'CANCELLED');
 
 		for (const b of bookings ?? []) {
 			const sid = b.session_id as string;
 			const st = b.status as string;
-			if (st === 'waitlisted') {
+			if (st === 'WAITLISTED') {
 				waitlistBySession.set(sid, (waitlistBySession.get(sid) ?? 0) + 1);
 			} else {
 				confirmedBySession.set(sid, (confirmedBySession.get(sid) ?? 0) + 1);
@@ -148,7 +148,7 @@ export async function loadSessionsForWeek(
 	return mapRpcRows((data ?? []) as WeekSessionRpcRow[]);
 }
 
-type SessionResultKind = 'amrap' | 'strength' | 'for_time' | 'other';
+type SessionResultKind = 'AMRAP' | 'STRENGTH' | 'FOR_TIME' | 'OTHER';
 
 export type SessionRosterResult = {
 	id: string;
@@ -161,11 +161,11 @@ export type SessionRosterResult = {
 };
 
 type ClassBookingStatus =
-	| 'confirmed'
-	| 'waitlisted'
-	| 'cancelled'
-	| 'attended'
-	| 'no_show';
+	| 'CONFIRMED'
+	| 'WAITLISTED'
+	| 'CANCELLED'
+	| 'ATTENDED'
+	| 'NO_SHOW';
 
 export type SessionRosterBooking = {
 	id: string;
@@ -235,7 +235,7 @@ export async function loadSessionRoster(supabase: SupabaseClient, sessionId: str
     `
 		)
 		.eq('session_id', sessionId)
-		.neq('status', 'cancelled')
+		.neq('status', 'CANCELLED')
 		.order('waitlist_position', { ascending: true, nullsFirst: false })
 		.order('booked_at', { ascending: true });
 
@@ -268,7 +268,7 @@ export async function loadSessionRoster(supabase: SupabaseClient, sessionId: str
 				.from('class_bookings')
 				.select('person_id, class_sessions!inner ( gym_id, starts_at )')
 				.in('person_id', personIds)
-				.in('status', ['attended', 'confirmed'])
+				.in('status', ['ATTENDED', 'CONFIRMED'])
 				.neq('session_id', sessionId)
 				.eq('class_sessions.gym_id', gymId)
 				.lt('class_sessions.starts_at', startsAt),

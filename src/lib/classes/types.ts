@@ -1,6 +1,6 @@
 import type { Locale } from '$lib/i18n/config';
 
-type ClassSessionStatus = 'scheduled' | 'cancelled';
+type ClassSessionStatus = 'SCHEDULED' | 'CANCELLED';
 
 export type ClassSessionRow = {
 	id: string;

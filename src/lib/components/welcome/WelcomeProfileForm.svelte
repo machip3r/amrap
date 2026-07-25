@@ -15,7 +15,7 @@
 		d: Dictionary;
 		role: WelcomeRole;
 		defaultDateOfBirth?: string | null;
-		defaultSex?: string | null;
+		defaultGender?: string | null;
 		defaultHeightCm?: number | null;
 		defaultWeightKg?: number | null;
 		form: WelcomeActionState;
@@ -26,7 +26,7 @@
 		d,
 		role,
 		defaultDateOfBirth = '',
-		defaultSex = '',
+		defaultGender = '',
 		defaultHeightCm = null,
 		defaultWeightKg = null,
 		form
@@ -37,7 +37,7 @@
 	const dobMin = minDateOfBirthIso();
 
 	let dob = $state(defaultDateOfBirth ?? '');
-	let sex = $state(defaultSex ?? '');
+	let gender = $state(defaultGender ?? '');
 	let height = $state(defaultHeightCm != null ? String(defaultHeightCm) : '');
 	let weight = $state(defaultWeightKg != null ? String(defaultWeightKg) : '');
 	let pending = $state(false);
@@ -70,7 +70,7 @@
 	const canSubmit = $derived(
 		isMember
 			? dob.trim().length > 0 &&
-					sex.trim().length > 0 &&
+					gender.trim().length > 0 &&
 					height.trim().length > 0 &&
 					Number.isFinite(Number(height)) &&
 					weight.trim().length > 0 &&
@@ -114,14 +114,14 @@
 	</FormField>
 
 	{#if isMember}
-		<FormField label={d.welcome.sex} htmlFor="sex" error={form?.fieldErrors?.sex}>
+		<FormField label={d.welcome.gender} htmlFor="gender" error={form?.fieldErrors?.gender}>
 			{#snippet children({ invalid, describedBy })}
-				<Select id="sex" name="sex" required bind:value={sex} {invalid} {describedBy}>
-					<option value="" disabled>{d.welcome.sex}</option>
-					<option value="male">{d.welcome.sexMale}</option>
-					<option value="female">{d.welcome.sexFemale}</option>
-					<option value="other">{d.welcome.sexOther}</option>
-					<option value="prefer_not">{d.welcome.sexPreferNot}</option>
+				<Select id="gender" name="gender" required bind:value={gender} {invalid} {describedBy}>
+					<option value="" disabled>{d.welcome.gender}</option>
+					<option value="MALE">{d.welcome.genderMale}</option>
+					<option value="FEMALE">{d.welcome.genderFemale}</option>
+					<option value="OTHER">{d.welcome.genderOther}</option>
+					<option value="PREFER_NOT">{d.welcome.genderPreferNot}</option>
 				</Select>
 			{/snippet}
 		</FormField>

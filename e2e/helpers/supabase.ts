@@ -121,6 +121,129 @@ export async function bootstrapOrganizationAccount(
   return org.id as string;
 }
 
+/**
+ * Finish owner (or provisional) onboarding via service role so E2E setup
+ * can login straight to the dashboard without flaky UI form actions.
+ */
+export async function completeOwnerOnboardingSeed(options: {
+  userId: string;
+  organizationId: string;
+  fullName: string;
+  gymName: string;
+  provisional: boolean;
+  planName?: string;
+  branchName?: string;
+}): Promise<{ gymId: string }> {
+  const admin = getServiceRoleClient();
+  const now = new Date().toISOString();
+  const branchName = options.branchName?.trim() || "Principal";
+
+  const { data: authUser } = await admin.auth.admin.getUserById(options.userId);
+  const userEmail = authUser.user?.email ?? null;
+
+  const { error: personErr } = await admin.from("persons").upsert(
+    {
+      user_id: options.userId,
+      full_name: options.fullName,
+      email: userEmail,
+      profile_completed_at: now,
+    },
+    { onConflict: "user_id" },
+  );
+  if (personErr) {
+    throw new Error(`completeOwnerOnboardingSeed person: ${personErr.message}`);
+  }
+
+  const { error: orgErr } = await admin
+    .from("organizations")
+    .update({
+      pending_as_provisional: options.provisional,
+      onboarding_plans_done: true,
+      onboarding_billing_done: true,
+      onboarding_completed_at: now,
+    })
+    .eq("id", options.organizationId);
+  if (orgErr) {
+    throw new Error(`completeOwnerOnboardingSeed org: ${orgErr.message}`);
+  }
+
+  const { data: existingRole } = await admin
+    .from("gym_roles")
+    .select("gym_id")
+    .eq("user_id", options.userId)
+    .limit(1)
+    .maybeSingle();
+
+  if (existingRole?.gym_id) {
+    return { gymId: existingRole.gym_id as string };
+  }
+
+  const { data: gym, error: gymErr } = await admin
+    .from("gyms")
+    .insert({
+      organization_id: options.organizationId,
+      name: options.gymName,
+      owner_user_id: options.provisional ? null : options.userId,
+    })
+    .select("id")
+    .single();
+  if (gymErr || !gym?.id) {
+    throw new Error(
+      `completeOwnerOnboardingSeed gym: ${gymErr?.message ?? "no gym"}`,
+    );
+  }
+
+  const { data: branch, error: branchErr } = await admin
+    .from("branches")
+    .insert({
+      gym_id: gym.id,
+      name: branchName,
+    })
+    .select("id")
+    .single();
+  if (branchErr || !branch?.id) {
+    throw new Error(
+      `completeOwnerOnboardingSeed branch: ${branchErr?.message ?? "no branch"}`,
+    );
+  }
+
+  const { error: roleErr } = await admin.from("gym_roles").insert({
+    gym_id: gym.id,
+    user_id: options.userId,
+    role: options.provisional ? "STAFF" : "OWNER",
+    is_provisional_owner: options.provisional,
+    invite_status: "ACCEPTED",
+  });
+  if (roleErr) {
+    throw new Error(`completeOwnerOnboardingSeed role: ${roleErr.message}`);
+  }
+
+  const { error: assignErr } = await admin.from("branch_assignments").insert({
+    branch_id: branch.id,
+    user_id: options.userId,
+  });
+  if (assignErr) {
+    throw new Error(
+      `completeOwnerOnboardingSeed branch_assignments: ${assignErr.message}`,
+    );
+  }
+
+  if (options.planName?.trim()) {
+    const { error: planErr } = await admin.from("plans").insert({
+      gym_id: gym.id,
+      name: options.planName.trim(),
+      price: 500,
+      duration_days: 30,
+      is_active: true,
+    });
+    if (planErr) {
+      throw new Error(`completeOwnerOnboardingSeed plan: ${planErr.message}`);
+    }
+  }
+
+  return { gymId: gym.id as string };
+}
+
 export async function deleteAuthUserByEmail(email: string): Promise<void> {
   const userId = await findAuthUserIdByEmail(email);
   if (!userId) return;
@@ -291,15 +414,47 @@ export async function getOwnerGymId(ownerUserId: string): Promise<string> {
     .select("gym_id")
     .eq("user_id", ownerUserId)
     .eq("role", "OWNER")
+    .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
 
-  if (error || !data?.gym_id) {
+  if (error) {
+    throw new Error(`getOwnerGymId failed: ${error.message}`);
+  }
+
+  if (data?.gym_id) {
+    return data.gym_id as string;
+  }
+
+  // Provisional owners are STAFF + is_provisional_owner; also accept that seat.
+  const { data: provisional, error: pErr } = await admin
+    .from("gym_roles")
+    .select("gym_id")
+    .eq("user_id", ownerUserId)
+    .eq("is_provisional_owner", true)
+    .limit(1)
+    .maybeSingle();
+
+  if (pErr || !provisional?.gym_id) {
     throw new Error(
-      `getOwnerGymId failed: ${error?.message ?? "no OWNER gym_role"}`,
+      `getOwnerGymId failed: ${pErr?.message ?? "no OWNER gym_role"}`,
     );
   }
-  return data.gym_id as string;
+  return provisional.gym_id as string;
+}
+
+/**
+ * Prefer `gymId` persisted on owner-creds (survives parallel teardown races
+ * better than re-querying a userId that may already have been cleaned up).
+ */
+export async function resolveOwnerGymId(owner: {
+  userId: string;
+  gymId?: string;
+}): Promise<string> {
+  if (owner.gymId?.trim()) {
+    return owner.gymId.trim();
+  }
+  return getOwnerGymId(owner.userId);
 }
 
 /** Linked `persons.id` for a claimed auth user. */
@@ -348,7 +503,7 @@ export async function seedMembershipForPerson(
       .from("memberships")
       .update({
         status: "ACTIVE",
-        invite_status: "accepted",
+        invite_status: "ACCEPTED",
         expires_at: expiresAt,
       })
       .eq("id", existing.id);
@@ -364,7 +519,7 @@ export async function seedMembershipForPerson(
       gym_id: gymId,
       person_id: personId,
       status: "ACTIVE",
-      invite_status: "accepted",
+      invite_status: "ACCEPTED",
       expires_at: expiresAt,
     })
     .select("id")
@@ -471,7 +626,7 @@ export async function seedAcceptedGymRoleUser(
     gym_id: gymId,
     user_id: user.id,
     role,
-    invite_status: "accepted",
+    invite_status: "ACCEPTED",
   });
 
   if (roleErr) {
@@ -518,12 +673,121 @@ export async function seedAcceptedMemberUser(
     gym_id: gymId,
     person_id: person.id,
     status: "ACTIVE",
-    invite_status: "accepted",
+    invite_status: "ACCEPTED",
     expires_at: expiresAt,
   });
 
   if (memErr) {
     throw new Error(`seed membership failed: ${memErr.message}`);
+  }
+
+  return {
+    email,
+    password: E2E_PASSWORD,
+    userId: user.id,
+    fullName,
+    personId: person.id as string,
+  };
+}
+
+/**
+ * Confirmed auth user + person (profile incomplete) + PENDING STAFF/TRAINER
+ * at gym — for invite accept/decline UI flows (no inbox).
+ */
+export async function seedPendingGymRoleUser(
+  gymId: string,
+  role: "STAFF" | "TRAINER" = "STAFF",
+): Promise<SeededGymUser> {
+  const admin = getServiceRoleClient();
+  const email = uniqueEmail(
+    role === "TRAINER" ? "e2e.trainer.pending" : "e2e.staff.pending",
+  );
+  const fullName = uniquePersonLabel(
+    role === "TRAINER" ? "TrainerPend" : "StaffPend",
+  );
+  const user = await createConfirmedAuthUser(email, E2E_PASSWORD);
+
+  const { data: person, error: personErr } = await admin
+    .from("persons")
+    .upsert(
+      {
+        user_id: user.id,
+        full_name: fullName,
+        email,
+        profile_completed_at: null,
+      },
+      { onConflict: "user_id" },
+    )
+    .select("id")
+    .single();
+
+  if (personErr || !person?.id) {
+    throw new Error(
+      `seed pending team person failed: ${personErr?.message ?? "no person"}`,
+    );
+  }
+
+  const { error: roleErr } = await admin.from("gym_roles").insert({
+    gym_id: gymId,
+    user_id: user.id,
+    role,
+    invite_status: "PENDING",
+  });
+
+  if (roleErr) {
+    throw new Error(`seed pending gym_roles failed: ${roleErr.message}`);
+  }
+
+  return {
+    email,
+    password: E2E_PASSWORD,
+    userId: user.id,
+    fullName,
+    personId: person.id as string,
+  };
+}
+
+/**
+ * Confirmed auth user + person (profile incomplete) + PENDING membership.
+ */
+export async function seedPendingMemberInvite(
+  gymId: string,
+): Promise<SeededGymUser> {
+  const admin = getServiceRoleClient();
+  const email = uniqueEmail("e2e.member.pending");
+  const fullName = uniquePersonLabel("MiembroPend");
+  const user = await createConfirmedAuthUser(email, E2E_PASSWORD);
+
+  const { data: person, error: personErr } = await admin
+    .from("persons")
+    .insert({
+      user_id: user.id,
+      full_name: fullName,
+      email,
+      profile_completed_at: null,
+    })
+    .select("id")
+    .single();
+
+  if (personErr || !person?.id) {
+    throw new Error(
+      `seed pending member person failed: ${personErr?.message ?? "no person"}`,
+    );
+  }
+
+  const expiresAt = new Date(
+    Date.now() + 30 * 24 * 60 * 60 * 1000,
+  ).toISOString();
+  const { error: memErr } = await admin.from("memberships").insert({
+    gym_id: gymId,
+    person_id: person.id,
+    status: "ACTIVE",
+    invite_status: "PENDING",
+    expires_at: expiresAt,
+  });
+
+  if (memErr) {
+    throw new Error(`seed pending membership failed: ${memErr.message}`);
   }
 
   return {

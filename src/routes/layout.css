@@ -48,17 +48,17 @@
 
 	--ops-header-height: 4.5rem;
 	--ops-bottom-nav-height: 3.25rem;
-	/* QR FAB overhang + watermark strip (safe-area is added separately) */
-	--ops-bottom-nav-extra: 4rem;
-	/* Extra 1rem keeps last content clear of the fixed mobile tabs */
+	/* QR FAB overhang + “My QR” label row under the raised button */
+	--ops-bottom-nav-extra: 4.5rem;
+	/* Extra 1.25rem keeps last content clear of the fixed mobile tabs */
 	--ops-bottom-clearance: calc(
-		var(--ops-bottom-nav-height) + var(--ops-bottom-nav-extra) + var(--safe-bottom) + 1rem
+		var(--ops-bottom-nav-height) + var(--ops-bottom-nav-extra) + var(--safe-bottom) + 1.25rem
 	);
 }
 
 /* Growth/Pro: no powered-by strip — less clearance above the mobile tabs */
 .amrap-app-shell.amrap-no-watermark {
-	--ops-bottom-nav-extra: 2.75rem;
+	--ops-bottom-nav-extra: 3.5rem;
 }
 
 .dark {

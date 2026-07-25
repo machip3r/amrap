@@ -16,17 +16,17 @@ import {
 	uuidSchema
 } from '$lib/validation/schemas';
 import { zodFieldErrors } from '$lib/validation/field-errors';
-import { toDbMemberStatus, toDbPaymentKind, toDbPaymentMethod } from '$lib/validation/db-enums';
 import { getDictionary } from '$lib/i18n/dictionaries';
 import { isDayPassPlanValue } from '$lib/members/day-pass';
+import { parseDeskPricing } from '$lib/payments/pricing';
 import {
 	isHardMemberCap,
 	maxActiveMembers
 } from '$lib/plans/limits';
 import { createClient } from '$lib/supabase/server';
-	import { personUniqueFieldFromError, isAlreadyMemberAtGymError } from '$lib/supabase/errors';
-	import { inviteAuthUserByEmail, linkPersonToUser } from '$lib/team/invite';
-	import { z } from 'zod';
+import { personUniqueFieldFromError, isAlreadyMemberAtGymError } from '$lib/supabase/errors';
+import { inviteAuthUserByEmail, linkPersonToUser } from '$lib/team/invite';
+import { z } from 'zod';
 
 function localeFromForm(formData: FormData) {
 	const localeRaw = formString(formData, 'locale') || 'es';
@@ -71,7 +71,7 @@ export async function createMember(formData: FormData): Promise<CreateMemberStat
 		email: formString(formData, 'email'),
 		phone: formString(formData, 'phone'),
 		plan_id: formString(formData, 'plan_id'),
-		method: formString(formData, 'method') || 'cash'
+		method: formString(formData, 'method') || 'CASH'
 	});
 	if (!parsed.success) {
 		return { fieldErrors: zodFieldErrors(parsed.error, d.validation) };
@@ -81,9 +81,9 @@ export async function createMember(formData: FormData): Promise<CreateMemberStat
 	const dayPass = isDayPassPlanValue(parsed.data.plan_id);
 
 	let planId: string | null = null;
-	let amount = 0;
+	let listAmount = 0;
 	let durationDays = 1;
-	let paymentKind: 'plan' | 'day_pass' = 'plan';
+	let paymentKind: 'PLAN' | 'DAY_PASS' = 'PLAN';
 
 	if (dayPass) {
 		const { data: gym, error: gymErr } = await supabase
@@ -95,9 +95,9 @@ export async function createMember(formData: FormData): Promise<CreateMemberStat
 		if (gymErr || gym?.day_pass_price == null) {
 			return { error: d.payments.dayPassNotConfigured };
 		}
-		amount = Number(gym.day_pass_price);
+		listAmount = Number(gym.day_pass_price);
 		durationDays = 1;
-		paymentKind = 'day_pass';
+		paymentKind = 'DAY_PASS';
 	} else {
 		const planIdParsed = uuidSchema.safeParse(parsed.data.plan_id);
 		if (!planIdParsed.success) {
@@ -117,9 +117,17 @@ export async function createMember(formData: FormData): Promise<CreateMemberStat
 		}
 
 		planId = plan.id;
-		amount = Number(plan.price);
+		listAmount = Number(plan.price);
 		durationDays = plan.duration_days;
-		paymentKind = 'plan';
+		paymentKind = 'PLAN';
+	}
+
+	const pricing = parseDeskPricing(formData, listAmount);
+	if (!pricing.ok) {
+		if (pricing.reason === 'discount_too_high') {
+			return { fieldErrors: { amount: d.payments.discountTooHigh } };
+		}
+		return { fieldErrors: { amount: d.validation.amount } };
 	}
 
 	const expires = computeNewMembershipExpiry(durationDays);
@@ -174,9 +182,10 @@ export async function createMember(formData: FormData): Promise<CreateMemberStat
 	const { error: payErr } = await supabase.from('payments').insert({
 		gym_id: workspace.gymId,
 		membership_id: membershipId,
-		amount,
-		method: toDbPaymentMethod(parsed.data.method),
-		kind: toDbPaymentKind(paymentKind),
+		amount: pricing.amounts.amount,
+		list_amount: pricing.amounts.listAmount,
+		method: parsed.data.method,
+		kind: paymentKind,
 		plan_id: planId,
 		recorded_by: workspace.userId
 	});
@@ -210,7 +219,7 @@ export async function createMember(formData: FormData): Promise<CreateMemberStat
 				});
 				const { error: inviteStatusErr } = await supabase
 					.from('memberships')
-					.update({ invite_status: 'pending' })
+					.update({ invite_status: 'PENDING' })
 					.eq('id', membershipId)
 					.eq('gym_id', workspace.gymId);
 				if (inviteStatusErr) {
@@ -293,7 +302,7 @@ export async function renewMember(formData: FormData): Promise<void> {
 		locale: formString(formData, 'locale') || 'es',
 		member_id: memberId,
 		plan_id: formString(formData, 'plan_id'),
-		method: formString(formData, 'method') || 'cash'
+		method: formString(formData, 'method') || 'CASH'
 	});
 	if (!parsed.success) fail(back);
 
@@ -309,6 +318,10 @@ export async function renewMember(formData: FormData): Promise<void> {
 
 	if (planErr || !plan) fail(back);
 
+	const listAmount = Number(plan.price);
+	const pricing = parseDeskPricing(formData, listAmount);
+	if (!pricing.ok) fail(back);
+
 	const { data: membership, error: memErr } = await supabase
 		.from('memberships')
 		.select('id, expires_at, gym_id')
@@ -323,8 +336,11 @@ export async function renewMember(formData: FormData): Promise<void> {
 	const { error: payErr } = await supabase.from('payments').insert({
 		gym_id: workspace.gymId,
 		membership_id: membership.id,
-		amount: plan.price,
-		method: toDbPaymentMethod(parsed.data.method),
+		amount: pricing.amounts.amount,
+		list_amount: pricing.amounts.listAmount,
+		method: parsed.data.method,
+		kind: 'PLAN',
+		plan_id: plan.id,
 		recorded_by: workspace.userId
 	});
 	if (payErr) {
@@ -336,7 +352,7 @@ export async function renewMember(formData: FormData): Promise<void> {
 		.from('memberships')
 		.update({
 			expires_at: newExpires.toISOString(),
-			status: toDbMemberStatus(memberStatusFromExpires(newExpires)),
+			status: memberStatusFromExpires(newExpires),
 			plan_id: plan.id,
 			updated_at: new Date().toISOString()
 		})

@@ -44,7 +44,7 @@
 	};
 
 	type PlanFilterOption = { id: string; name: string };
-	type StatusFilter = 'all' | 'active' | 'expired';
+	type StatusFilter = 'all' | 'ACTIVE' | 'EXPIRED';
 
 	type Props = {
 		locale: Locale;
@@ -179,18 +179,18 @@
 	}
 
 	function inviteBadgeClass(status: Member['invite_status']) {
-		if (status === 'pending') {
+		if (status === 'PENDING') {
 			return 'bg-[var(--color-primary)]/15 text-[var(--color-primary)]';
 		}
-		if (status === 'cancelled') {
+		if (status === 'CANCELLED') {
 			return 'bg-[var(--color-muted)]/20 text-[var(--color-muted)]';
 		}
 		return 'bg-[var(--color-success)]/15 text-[var(--color-success)]';
 	}
 
 	function inviteBadgeLabel(status: Member['invite_status']) {
-		if (status === 'pending') return labels.invitePending;
-		if (status === 'cancelled') return labels.inviteCancelled;
+		if (status === 'PENDING') return labels.invitePending;
+		if (status === 'CANCELLED') return labels.inviteCancelled;
 		return labels.inviteAccepted;
 	}
 
@@ -207,8 +207,8 @@
 
 	const statusChips = $derived([
 		['all', labels.filterAll],
-		['active', labels.filterActive],
-		['expired', labels.filterExpired]
+		['ACTIVE', labels.filterActive],
+		['EXPIRED', labels.filterExpired]
 	] as const);
 </script>
 
@@ -297,7 +297,7 @@
 			<!-- Mobile cards: name → email → badges (same rhythm as trainers) -->
 			<ul class="flex flex-col divide-y divide-[var(--color-border)]/70 sm:hidden">
 				{#each members as m (m.id)}
-					{@const active = m.status === 'active'}
+					{@const active = m.status === 'ACTIVE'}
 					{@const isNew = highlightId === m.id}
 					<li id="member-row-{m.id}" class={isNew ? 'amrap-row-shine' : ''}>
 						<button
@@ -323,7 +323,7 @@
 									{m.email ?? m.phone ?? '—'}
 								</span>
 								<span class="mt-1.5 flex flex-wrap items-center gap-1.5">
-									{#if m.invite_status === 'pending' || m.invite_status === 'cancelled'}
+									{#if m.invite_status === 'PENDING' || m.invite_status === 'CANCELLED'}
 										<span
 											class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide {inviteBadgeClass(
 												m.invite_status
@@ -375,7 +375,7 @@
 					</thead>
 					<tbody>
 						{#each members as m (m.id)}
-							{@const active = m.status === 'active'}
+							{@const active = m.status === 'ACTIVE'}
 							{@const isNew = highlightId === m.id}
 							<tr
 								id="member-row-desk-{m.id}"
@@ -409,7 +409,7 @@
 												{/if}
 											</p>
 											<div class="mt-0.5 flex flex-wrap items-center gap-1.5">
-												{#if m.invite_status === 'pending' || m.invite_status === 'cancelled'}
+												{#if m.invite_status === 'PENDING' || m.invite_status === 'CANCELLED'}
 													<span
 														class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide {inviteBadgeClass(
 															m.invite_status

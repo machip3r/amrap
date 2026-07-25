@@ -46,7 +46,7 @@ export async function isInvitedOpsUser(): Promise<boolean> {
 		.select('id')
 		.eq('user_id', user.id)
 		.in('role', ['STAFF', 'TRAINER'])
-		.in('invite_status', ['pending', 'accepted'])
+		.in('invite_status', ['PENDING', 'ACCEPTED'])
 		// Provisional org creators are STAFF + is_provisional_owner; they must
 		// finish owner onboarding, not the invitee /welcome path.
 		.eq('is_provisional_owner', false)
@@ -100,7 +100,7 @@ export async function isInvitedMemberUser(): Promise<boolean> {
 		.from('memberships')
 		.select('id')
 		.eq('person_id', person.id)
-		.in('invite_status', ['pending', 'accepted'])
+		.in('invite_status', ['PENDING', 'ACCEPTED'])
 		.limit(1)
 		.maybeSingle();
 

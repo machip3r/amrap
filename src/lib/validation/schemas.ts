@@ -249,9 +249,9 @@ export const dateOfBirthSchema = isoDateSchema
     message: "date",
   });
 
-const SEX_VALUES = ["male", "female", "other", "prefer_not"] as const;
+const GENDER_VALUES = ["MALE", "FEMALE", "OTHER", "PREFER_NOT"] as const;
 
-export const sexSchema = z.enum(SEX_VALUES);
+export const genderSchema = z.enum(GENDER_VALUES);
 
 export const heightCmSchema = z.coerce
   .number()
@@ -280,7 +280,7 @@ export const checkInCodeSchema = z
 
 export const uuidSchema = z.uuid();
 
-export const paymentMethodSchema = z.enum(["cash", "transfer"]);
+export const paymentMethodSchema = z.enum(["CASH", "TRANSFER"]);
 
 export const amountSchema = z.coerce.number().finite().min(0).max(1_000_000);
 

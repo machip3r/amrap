@@ -145,6 +145,7 @@
 			<a
 				class={navLinkClass(active)}
 				{href}
+				data-tour="nav-{item.id}"
 				aria-current={active ? 'page' : undefined}
 				title={collapsed ? label : undefined}
 			>
@@ -158,6 +159,7 @@
 		{#if canManageSettings}
 			<a
 				href={orgHref}
+				data-tour="nav-organization"
 				class={collapsed
 					? navLinkClass(isOpsNavActive(pathname, orgHref))
 					: `flex items-center gap-2 rounded-md px-3 py-2 transition-colors hover:bg-[var(--color-surface-hover)] ${

@@ -22,9 +22,10 @@ Locales: `es` (default) · `en`.
 
 | Surface | Who | Typical route | Status | Notes |
 | ------- | --- | ------------- | ------ | ----- |
-| Marketing | Public | `/[locale]` | Shipped | Landing, pricing, contact · **SEO:** intent-led titles (`software para gimnasios` / gym management), descriptions with `amrap.space`, single `<title>` (no brand-only shell title), www canonicals, OG, hreflang, FAQ/org/SoftwareApplication JSON-LD, `/sitemap.xml`, `robots.txt`; private app routes `noindex` |
+| Marketing | Public | `/[locale]` | Shipped | Landing, pricing, contact · **SEO:** intent-led titles, descriptions, www canonicals, OG, hreflang, JSON-LD, `/sitemap.xml`, `robots.txt`; private app routes `noindex`. **PWA:** installed apps open `/app` (not marketing); standalone visits to landing bounce to `/app` |
+| PWA entry | Installed app | `/app` | Shipped | Manifest `start_url`; signed-in → dashboard/me/onboarding via `resolvePostAuthPath`; signed-out → login |
 | Auth | Public / pending | `/login`, `/register` | Shipped | OTP on same routes; no public “confirm email” nav link |
-| Onboarding | Owner / provisional | `/onboarding` | Shipped | After register or login without completed setup |
+| Onboarding | Owner / provisional | `/onboarding` | Shipped | Steps 1–5; optional AMRAP plan + compare; finish starts owner tour |
 | Profile welcome | Invited staff / trainer / member | `/welcome` | Shipped | After accept (+ password only if new Auth user); blocking until `persons.profile_completed_at` |
 | Invite decision | Invited staff / trainer / member | `/invite` | Shipped | Accept or decline; decline → `cancelled` + sign out |
 | Invite password | After accept (new Auth users only) | `/invite/password` | Shipped | Required password for new accounts; skipped when the email already had an AMRAP login |
@@ -32,7 +33,7 @@ Locales: `es` (default) · `en`.
 | Ops app | Owner, staff, trainer | `/dashboard`, `/timers`, members, plans, … | Shipped | Scoped to active gym (`amrap_gym_id` cookie); dashboard quick actions open unified register dialog |
 | Member app | Member | `/me`, `/me/qr`, `/me/classes`, `/me/timers`, `/me/inbox`, `/me/profile` | Shipped | Ops-parity shell; active membership; gym white-label when plan allows |
 | Ops profile | Staff / trainer / owner | `/profile` | Shipped | Avatar → profile; compose for staff/trainer |
-| Organization / billing | Owner / provisional | `/organization` | Partial | Checkout + Portal + webhooks shipped (MXN); Feedback section; create gym & unpaid grace UX still coming |
+| Organization / billing | Owner / provisional | `/organization` | Partial | Checkout + Portal + webhooks shipped (MXN); **E2E hybrid local** (`pnpm test:e2e:billing`); create gym & unpaid grace UX still coming |
 | Gym settings | All ops roles | `/settings` | Partial | Everyone: personal nav menu. Owner/provisional: + gym branding |
 | Team | — | `/team` | Planned | Stub “coming soon”; real UI is `/staff` + `/trainers` |
 | Ownership transfer | Provisional → owner | — | Planned | Provisional flag + powers exist; invite/accept UI does not |
@@ -173,16 +174,30 @@ Clear session + pending cookies. Redirect marketing (or login).
 
 ### Step 3 — Packages / memberships (optional)
 
-- What you charge members (e.g. Monthly $500 / 30 days) · or **Skip**.
-- Up to **2** packages on Freemium.
-- Fields: package name, price, duration in days.
+- What you charge members (e.g. Monthly $500 / 30 days) · or **Skip** / **Continue**.
+- Up to **2** packages on Freemium (`maxActivePlans`); paid tiers unlock more without leaving onboarding.
+- At Freemium limit: **Upgrade** CTA (Embedded Checkout) + **Compare plans** table dialog.
 
-### Step 4 — Done
+### Step 4 — AMRAP plan (optional)
+
+- Plan cards (Freemium / Starter / Growth / Pro contact) · monthly/annual confirm · Embedded Checkout.
+- **Compare all plans** table · **Continue on Free** (`onboarding_billing_done`) skips.
+- Successful paid checkout syncs `plan_tier` and advances past this step.
+
+### Step 5 — Done
 
 - Short summary · CTA to dashboard.
-- Marks onboarding complete → stamps `persons.profile_completed_at` → `/dashboard`.
+- Marks onboarding complete → stamps `persons.profile_completed_at` → `/dashboard?tour=1` (starts owner quickstart).
 
-**Cases:** Mid-flow abandon (resume saved step) · RPC fail (safe message) · Freemium plan limits.
+**Cases:** Mid-flow abandon (resume saved step) · RPC fail (safe message) · Freemium plan limits · Stripe checkout return.
+
+---
+
+## 2.0 Owner quickstart tour — Shipped
+
+**Who:** Owner / provisional (`canActAsOwner`) only.
+
+**What:** Coachmark tour after first onboarding finish (or Settings → Replay). Spotlights dashboard quick actions + primary nav (check-in, members, classes, payments, plans, organization). Dismiss stored in `localStorage` (`amrap-owner-tour-v1`).
 
 ---
 
@@ -214,7 +229,7 @@ Clear session + pending cookies. Redirect marketing (or login).
 | Role | Fields |
 | ---- | ------ |
 | Staff / Trainer | Date of birth (required; min age **13**) |
-| Member | Date of birth (min age **13**) · sex · height (cm) · weight (kg) |
+| Member | Date of birth (min age **13**) · gender · height (cm) · weight (kg) |
 
 **Happy path:** Save → `profile_completed_at` → `resolvePostAuthPath` → `/dashboard` or `/me`.
 
@@ -300,6 +315,7 @@ Member-only users without gym role are redirected to `/me` by `(app)/layout`.
 | Member without account | Profile-only; optional invite |
 | Claim profile later | **Shipped** — invite → accept/decline → password (new users) → welcome |
 | Day-pass / temporary | **Shipped** — register member plan select includes day pass / visit when gym price is set (1-day membership + `DAY_PASS` payment) |
+| Trial / discount on create or renew | **Shipped** — pricing mode Full / Discount / Trial; trial = `$0` payment + full duration; discount stores catalog `list_amount` |
 | Suspend / penalties | **Planned** (phase 2) |
 
 ---
@@ -312,7 +328,9 @@ CRUD membership plans at gym level. Price, duration, active/archived. Day-pass p
 
 ### 4.4 Payments (`/payments`) — Shipped (manual)
 
-Register manual payment (cash / transfer, amount, period). Recent list. Member picker seeds a recent subset and searches the server as you type (does not load every membership up front). Top option in the member search: **Register new member** (when `manage_members`) → create-member dialog → new membership is selected in the payment form.
+Register manual payment (cash / transfer). **Pricing modes:** full list price · **discount** (charge less than catalog; stores `list_amount`) · **trial / courtesy** (charge `$0`, still grants plan/day-pass duration). Recent list shows trial / discount badges. Member picker seeds a recent subset and searches the server as you type. Top option in the member search: **Register new member** (when `manage_members`) → create-member dialog → new membership is selected in the payment form.
+
+Same pricing modes on **create member** and **renew**.
 
 **Planned:** Gateway (Mercado Pago / etc.), recurring, failure handling, member portal, CSV export (Starter+).
 
@@ -482,7 +500,7 @@ No app login. Manual check-in at reception. Optional invite to register / claim 
 **Invite email (member)** — Shipped
 
 1. Staff creates membership → Auth invite; membership `invite_status=pending`; `next=/[locale]/invite`.
-2. Link → `/auth/confirm` → `/invite` → Accept → password **only for new Auth users** → `/welcome` (DOB, sex, height, weight) → `/me` when membership is active and invite accepted. Existing accounts skip password.
+2. Link → `/auth/confirm` → `/invite` → Accept → password **only for new Auth users** → `/welcome` (DOB, gender, height, weight) → `/me` when membership is active and invite accepted. Existing accounts skip password.
 3. Decline → `cancelled` (still listed in members) · sign out · marketing home.
 
 ### 9.2 With account — Shipped
@@ -538,12 +556,12 @@ See §4.9. Paywalls at blocked actions use plan limits (`lib/plans/limits.ts`).
 | Case | UI status |
 | ---- | --------- |
 | Upgrade for limit (30 members, 2 plans, seats) | Partial — Freemium **hard**-stops at 30 actives; Starter/Growth **soft**-warn at ~500 (no block); staff seats **per gym** (Growth ≈ 5/gym ≤ 15 org) |
-| Self-serve Checkout (Starter / Growth, MXN monthly/annual) | Shipped — **Embedded Checkout** in PWA + webhooks |
-| Upgrade / change plan (existing sub) | Shipped — in-app confirm → Subscriptions API proration |
-| Manage payment method / cancel | Shipped — Customer Portal |
+| Self-serve Checkout (Starter / Growth, MXN monthly/annual) | Shipped — **Embedded Checkout** in PWA + webhooks · **E2E** `pnpm test:e2e:billing` (hybrid local / Stripe test) |
+| Upgrade / change plan (existing sub) | Shipped — in-app confirm → Subscriptions API proration · covered in billing E2E |
+| Manage payment method / cancel | Shipped — Customer Portal · portal open + cancel→Freemium webhook covered in billing E2E |
+| Downgrade confirm | Shipped — in-app change confirm → Subscriptions API · covered in billing E2E |
 | More than 3 gyms | Pro contact copy shipped; no self-serve checkout |
-| Unpaid | Partial — `past_due` synced; 3-day grace → Freemium UX Planned |
-| Downgrade confirm | Partial — via Portal / API sync |
+| Unpaid | Partial — `PAST_DUE` synced; 3-day grace → Freemium UX Planned |
 | Member payment gateway | Partial — marketed as **Beta**; manual cash/SPEI/terminal logging is the shipped path |
 | WhatsApp notifications | Planned — expiry + class booking (Twilio / Meta Cloud / Evolution) |
 

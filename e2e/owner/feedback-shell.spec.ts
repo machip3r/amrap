@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { loginViaUi } from "../helpers/auth-ui";
 import {
-  getOwnerGymId,
+  resolveOwnerGymId,
   seedAcceptedGymRoleUser,
   seedAcceptedMemberUser,
   seedGymFeedbackMessage,
@@ -12,7 +12,7 @@ import { ownerCredsPath, readCreds } from "../fixtures/owner";
 test.describe("owner gym feedback list", () => {
   test("owner sees seeded gym feedback on organization", async ({ page }) => {
     const creds = readCreds(ownerCredsPath());
-    const gymId = await getOwnerGymId(creds.userId);
+    const gymId = await resolveOwnerGymId(creds);
     const body = `E2E gym feedback ${uniquePersonLabel("fb")}`;
 
     await seedGymFeedbackMessage({ gymId, body });
@@ -29,7 +29,7 @@ test.describe("staff and member feedback compose", () => {
 
   test("staff can compose feedback on ops profile", async ({ page }) => {
     const creds = readCreds(ownerCredsPath());
-    const gymId = await getOwnerGymId(creds.userId);
+    const gymId = await resolveOwnerGymId(creds);
     const staff = await seedAcceptedGymRoleUser(gymId, "STAFF");
 
     await loginViaUi(page, staff.email, staff.password);
@@ -47,7 +47,7 @@ test.describe("staff and member feedback compose", () => {
 
   test("member profile compose and inbox load", async ({ page }) => {
     const creds = readCreds(ownerCredsPath());
-    const gymId = await getOwnerGymId(creds.userId);
+    const gymId = await resolveOwnerGymId(creds);
     const member = await seedAcceptedMemberUser(gymId);
 
     await loginViaUi(page, member.email, member.password);

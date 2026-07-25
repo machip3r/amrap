@@ -7,7 +7,9 @@ import {
 	getSessionUser
 } from '$lib/auth/session';
 import { getDictionary } from '$lib/i18n/dictionaries';
+import { canCreatePlan } from '$lib/plans/limits';
 import { createClient } from '$lib/supabase/server';
+import type { OrgPlanTier } from '$lib/types';
 import { zodFieldErrors } from '$lib/validation/field-errors';
 import {
 	amountSchema,
@@ -21,6 +23,10 @@ import {
 	uuidSchema
 } from '$lib/validation/schemas';
 import { z } from 'zod';
+import { START_OWNER_TOUR_COOKIE } from '$lib/tour/constants';
+import { requestSubscriptionCheckout } from '$lib/server/organization/billing';
+
+export { requestSubscriptionCheckout };
 
 export type OnboardingActionState = {
 	error?: string;
@@ -156,13 +162,23 @@ export async function addOnboardingPlanAction(formData: FormData): Promise<Onboa
 	}
 
 	const supabase = createClient();
+	let planTier: OrgPlanTier = 'FREEMIUM';
+	if (state.organizationId) {
+		const { data: org } = await supabase
+			.from('organizations')
+			.select('plan_tier')
+			.eq('id', state.organizationId)
+			.maybeSingle();
+		if (org?.plan_tier) planTier = org.plan_tier as OrgPlanTier;
+	}
+
 	const { count } = await supabase
 		.from('plans')
 		.select('id', { count: 'exact', head: true })
 		.eq('gym_id', state.gymId)
 		.eq('is_active', true);
 
-	if ((count ?? 0) >= 2) {
+	if (!canCreatePlan(planTier, count ?? 0)) {
 		return { error: d.onboarding.planLimit };
 	}
 
@@ -264,6 +280,21 @@ export async function skipOnboardingPlansAction(formData: FormData): Promise<voi
 	throw redirect(303, `/${locale}/onboarding`);
 }
 
+export async function skipOnboardingBillingAction(formData: FormData): Promise<void> {
+	const locale = localeFrom(formData);
+	const user = await getSessionUser();
+	if (!user) throw redirect(303, `/${locale}/login`);
+
+	const supabase = createClient();
+	const { error } = await supabase.rpc('onboarding_mark_billing_done');
+	if (error) {
+		console.error('skipOnboardingBillingAction', error.message);
+		throw redirect(303, `/${locale}/onboarding?error=1`);
+	}
+
+	throw redirect(303, `/${locale}/onboarding`);
+}
+
 export async function finishOnboardingAction(formData: FormData): Promise<void> {
 	const locale = localeFrom(formData);
 	const user = await getSessionUser();
@@ -272,5 +303,13 @@ export async function finishOnboardingAction(formData: FormData): Promise<void> 
 	const supabase = createClient();
 	await supabase.rpc('onboarding_complete');
 
-	throw redirect(303, `/${locale}/dashboard`);
+	getRequestEvent().cookies.set(START_OWNER_TOUR_COOKIE, '1', {
+		path: '/',
+		sameSite: 'lax',
+		httpOnly: false,
+		secure: !dev,
+		maxAge: 60 * 30
+	});
+
+	throw redirect(303, `/${locale}/dashboard?tour=1`);
 }

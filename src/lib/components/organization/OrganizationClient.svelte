@@ -393,10 +393,14 @@
 						portalPending = true;
 						return async ({ result, update }) => {
 							portalPending = false;
-							await update();
-							if (result.type === 'success') {
-								applyState(result.data as OrgActionState);
+							if (result.type === 'success' && result.data) {
+								const data = result.data as OrgActionState;
+								applyState(data);
+								if (data.portalUrl) {
+									return;
+								}
 							}
+							await update();
 						};
 					}}
 				>
@@ -564,10 +568,16 @@
 					checkoutPending = true;
 					return async ({ result, update }) => {
 						checkoutPending = false;
-						await update();
-						if (result.type === 'success') {
-							applyState(result.data as OrgActionState);
+						if (result.type === 'success' && result.data) {
+							const data = result.data as OrgActionState;
+							applyState(data);
+							// Opening Checkout/Portal is client-only — invalidateAll remounts and
+							// drops clientSecret / portalUrl before the UI can show them.
+							if (data.clientSecret || data.portalUrl) {
+								return;
+							}
 						}
+						await update();
 					};
 				}}
 			>

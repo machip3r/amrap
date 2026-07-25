@@ -1,5 +1,6 @@
 import { test as setup, expect } from "@playwright/test";
-import { completeOnboardingViaUi, loginViaUi } from "../helpers/auth-ui";
+import { loginViaUi, setActiveGymCookie } from "../helpers/auth-ui";
+import { resolveOwnerGymId } from "../helpers/supabase";
 import {
   ensureAuthDir,
   ownerCredsPath,
@@ -8,19 +9,18 @@ import {
   writeCreds,
 } from "../fixtures/owner";
 
-setup("seed owner and save storage state", async ({ page }) => {
+setup("seed owner and save storage state", async ({ page, baseURL }) => {
   ensureAuthDir();
   const creds = await seedOwnerAccount(false);
   writeCreds(ownerCredsPath(), creds);
 
   await loginViaUi(page, creds.email, creds.password);
-  await completeOnboardingViaUi(page, {
-    fullName: creds.fullName,
-    roleIntent: "owner",
-    gymName: creds.gymName,
-    planName: creds.planName,
-  });
 
+  const gymId = await resolveOwnerGymId(creds);
+  await setActiveGymCookie(page, gymId, baseURL);
+
+  await page.goto("/es/dashboard");
+  await expect(page).toHaveURL(/\/es\/dashboard/, { timeout: 30_000 });
   await expect(page.getByRole("heading", { name: "Resumen diario" })).toBeVisible();
   await page.context().storageState({ path: ownerStoragePath() });
 });

@@ -7,7 +7,7 @@ export function memberStatusFromExpires(
 		typeof membershipExpiresAt === 'string'
 			? new Date(membershipExpiresAt)
 			: membershipExpiresAt;
-	return t > new Date() ? 'active' : 'expired';
+	return t > new Date() ? 'ACTIVE' : 'EXPIRED';
 }
 
 function addDays(base: Date, days: number): Date {

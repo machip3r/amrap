@@ -2,23 +2,26 @@
 .landing-root {
   --landing-nav-h: 100px;
   --landing-nav-h-scrolled: 80px;
-  --landing-nav-bg: color-mix(in srgb, var(--color-surface) 28%, transparent);
-  --landing-nav-bg-scrolled: color-mix(in srgb, var(--color-surface) 22%, transparent);
-  --landing-nav-blur: blur(18px) saturate(160%);
+  /* Frosted fill must stay translucent enough for blur to read as glass */
+  --landing-nav-bg: color-mix(in srgb, var(--color-surface) 55%, transparent);
+  --landing-nav-bg-scrolled: color-mix(in srgb, var(--color-surface) 48%, transparent);
+  --landing-nav-blur: blur(28px) saturate(180%);
   --landing-nav-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.12);
   color: var(--color-text);
   background: var(--color-bg);
 }
 
 .dark .landing-root {
-  --landing-nav-bg: color-mix(in srgb, var(--color-surface) 32%, transparent);
-  --landing-nav-bg-scrolled: color-mix(in srgb, var(--color-surface) 24%, transparent);
-  --landing-nav-blur: blur(18px) saturate(150%);
+  --landing-nav-bg: color-mix(in srgb, var(--color-surface) 58%, transparent);
+  --landing-nav-bg-scrolled: color-mix(in srgb, var(--color-surface) 50%, transparent);
+  --landing-nav-blur: blur(28px) saturate(160%);
   --landing-nav-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .landing-container {
@@ -83,16 +86,22 @@
   left: 0.65rem;
   right: 0.65rem;
   background: var(--landing-nav-bg-scrolled);
+  /* Do NOT set overflow:hidden here — it disables backdrop-filter in Chromium. */
   backdrop-filter: var(--landing-nav-blur);
   -webkit-backdrop-filter: var(--landing-nav-blur);
-  border: 1px solid color-mix(in srgb, #fff 42%, var(--color-border));
+  border: 1px solid color-mix(in srgb, #fff 48%, var(--color-border));
   border-radius: 9999px;
   box-shadow: var(--landing-nav-shadow);
-  overflow: hidden;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .landing-nav--scrolled {
+    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  }
 }
 
 .dark .landing-nav--scrolled {
-  border-color: color-mix(in srgb, #fff 14%, var(--color-border));
+  border-color: color-mix(in srgb, #fff 16%, var(--color-border));
 }
 
 @media (min-width: 1024px) {

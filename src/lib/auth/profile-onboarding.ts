@@ -12,7 +12,7 @@ export type PersonProfileStatus = {
   fullName: string | null;
   profileCompleted: boolean;
   dateOfBirth: string | null;
-  sex: string | null;
+  gender: string | null;
   heightCm: number | null;
   weightKg: number | null;
 };
@@ -50,7 +50,7 @@ export async function getPersonProfileStatus(): Promise<PersonProfileStatus | nu
   const { data, error } = await supabase
     .from("persons")
     .select(
-      "id, full_name, profile_completed_at, date_of_birth, sex, height_cm, weight_kg",
+      "id, full_name, profile_completed_at, date_of_birth, gender, height_cm, weight_kg",
     )
     .eq("user_id", user.id)
     .maybeSingle();
@@ -66,7 +66,7 @@ export async function getPersonProfileStatus(): Promise<PersonProfileStatus | nu
     fullName: (data.full_name as string | null)?.trim() || null,
     profileCompleted: Boolean(data.profile_completed_at),
     dateOfBirth: (data.date_of_birth as string | null) ?? null,
-    sex: (data.sex as string | null) ?? null,
+    gender: (data.gender as string | null) ?? null,
     heightCm:
       data.height_cm != null ? Number(data.height_cm) : null,
     weightKg:
@@ -102,7 +102,7 @@ export async function resolveWelcomeRole(): Promise<WelcomeRole | null> {
     .select("role")
     .eq("user_id", user.id)
     .in("role", ["STAFF", "TRAINER", "OWNER"])
-    .or("invite_status.eq.accepted,role.eq.OWNER")
+    .or("invite_status.eq.ACCEPTED,role.eq.OWNER")
     .limit(1)
     .maybeSingle();
 
@@ -124,7 +124,7 @@ export async function resolveWelcomeRole(): Promise<WelcomeRole | null> {
       .from("memberships")
       .select("id")
       .eq("person_id", person.id)
-      .in("invite_status", ["pending", "accepted"])
+      .in("invite_status", ["PENDING", "ACCEPTED"])
       .limit(1)
       .maybeSingle();
     if (membership) return "member";

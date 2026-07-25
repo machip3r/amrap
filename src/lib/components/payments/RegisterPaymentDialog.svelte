@@ -6,14 +6,15 @@
 	import UserPlus from '@lucide/svelte/icons/user-plus';
 	import X from '@lucide/svelte/icons/x';
 	import CreateMemberDialog from '$lib/components/members/CreateMemberDialog.svelte';
+	import PaymentPricingFields from '$lib/components/payments/PaymentPricingFields.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Dialog from '$lib/components/ui/Dialog.svelte';
 	import FormField from '$lib/components/ui/FormField.svelte';
-	import Input from '$lib/components/ui/Input.svelte';
 	import Select from '$lib/components/ui/Select.svelte';
 	import type { Locale } from '$lib/i18n/config';
 	import type { Dictionary } from '$lib/i18n/dictionaries';
 	import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
+	import type { PaymentPricingMode } from '$lib/payments/pricing';
 	import type { CreatePaymentState } from '$lib/server/payments/actions';
 
 	export type PaymentMemberOption = {
@@ -29,7 +30,7 @@
 		duration_days: number;
 	};
 
-	type PaymentKind = 'plan' | 'day_pass';
+	type PaymentKind = 'PLAN' | 'DAY_PASS';
 
 	type Props = {
 		locale: Locale;
@@ -56,10 +57,11 @@
 	let formKey = $state(0);
 
 	let memberId = $state('');
-	let kind = $state<PaymentKind>('plan');
+	let kind = $state<PaymentKind>('PLAN');
 	let planId = $state('');
+	let pricingMode = $state<PaymentPricingMode>('FULL');
 	let amount = $state('');
-	let method = $state('cash');
+	let method = $state('CASH');
 	let pending = $state(false);
 	let localError = $state<string | undefined>(undefined);
 	let localFieldErrors = $state<Record<string, string> | undefined>(undefined);
@@ -162,11 +164,34 @@
 		optionCount === 0 ? 0 : Math.min(activeIndex, optionCount - 1)
 	);
 
+	const listAmount = $derived.by(() => {
+		if (kind === 'DAY_PASS') return dayPassPrice ?? 0;
+		const plan = plans.find((p) => p.id === planId) ?? plans[0] ?? null;
+		return plan?.price ?? 0;
+	});
+
 	const canSubmit = $derived(
 		Boolean(memberId) &&
-			(kind === 'day_pass' ? dayPassPrice != null : Boolean(planId) && plans.length > 0) &&
+			(kind === 'DAY_PASS' ? dayPassPrice != null : Boolean(planId) && plans.length > 0) &&
+			(pricingMode !== 'DISCOUNT' ||
+				(amount !== '' &&
+					Number.isFinite(Number(amount)) &&
+					Number(amount) >= 0 &&
+					Number(amount) < listAmount)) &&
 			!pending
 	);
+
+	const pricingLabels = $derived({
+		pricingLabel: d.payments.pricingLabel,
+		pricingFull: d.payments.pricingFull,
+		pricingDiscount: d.payments.pricingDiscount,
+		pricingTrial: d.payments.pricingTrial,
+		pricingHint: d.payments.pricingHint,
+		trialHint: d.payments.trialHint,
+		discountHint: d.payments.discountHint,
+		amount: d.payments.amount,
+		listPrice: d.payments.listPrice
+	});
 
 	const canOpenPayment = $derived(members.length > 0 || canManageMembers);
 
@@ -198,18 +223,19 @@
 	function resetForm() {
 		cancelMemberSearch();
 		const nextKind: PaymentKind =
-			plans.length > 0 ? 'plan' : dayPassPrice != null ? 'day_pass' : 'plan';
+			plans.length > 0 ? 'PLAN' : dayPassPrice != null ? 'DAY_PASS' : 'PLAN';
 		memberId = '';
 		memberQuery = '';
 		kind = nextKind;
 		planId = plans[0]?.id ?? '';
+		pricingMode = 'FULL';
 		amount =
-			nextKind === 'day_pass' && dayPassPrice != null
+			nextKind === 'DAY_PASS' && dayPassPrice != null
 				? String(dayPassPrice)
 				: plans[0] != null
 					? String(plans[0].price)
 					: '';
-		method = 'cash';
+		method = 'CASH';
 		localError = undefined;
 		localFieldErrors = undefined;
 		memberListOpen = false;
@@ -262,7 +288,8 @@
 
 	function applyKind(next: PaymentKind) {
 		kind = next;
-		if (next === 'day_pass') {
+		pricingMode = 'FULL';
+		if (next === 'DAY_PASS') {
 			amount = dayPassPrice != null ? String(dayPassPrice) : '';
 			return;
 		}
@@ -274,7 +301,11 @@
 	function applyPlan(nextId: string) {
 		planId = nextId;
 		const plan = plans.find((p) => p.id === nextId);
-		if (plan) amount = String(plan.price);
+		if (plan) {
+			amount = String(plan.price);
+			if (pricingMode === 'FULL') amount = String(plan.price);
+			if (pricingMode === 'TRIAL') amount = '0';
+		}
 	}
 
 	function onMemberKeyDown(e: KeyboardEvent) {
@@ -576,11 +607,11 @@
 							<button
 								type="button"
 								role="radio"
-								aria-checked={kind === 'plan'}
-								onclick={() => applyKind('plan')}
+								aria-checked={kind === 'PLAN'}
+								onclick={() => applyKind('PLAN')}
 								disabled={plans.length === 0}
 								class="rounded-lg border px-3 py-2.5 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 {kind ===
-								'plan'
+								'PLAN'
 									? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)] text-[var(--color-text)]'
 									: 'border-[var(--color-border)] bg-[var(--color-surface-hover)] text-[var(--color-muted)] hover:border-[var(--color-ring)]'}"
 							>
@@ -589,12 +620,12 @@
 							<button
 								type="button"
 								role="radio"
-								aria-checked={kind === 'day_pass'}
-								onclick={() => applyKind('day_pass')}
+								aria-checked={kind === 'DAY_PASS'}
+								onclick={() => applyKind('DAY_PASS')}
 								disabled={dayPassPrice == null}
 								title={dayPassPrice == null ? d.payments.dayPassNotConfigured : undefined}
 								class="rounded-lg border px-3 py-2.5 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 {kind ===
-								'day_pass'
+								'DAY_PASS'
 									? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)] text-[var(--color-text)]'
 									: 'border-[var(--color-border)] bg-[var(--color-surface-hover)] text-[var(--color-muted)] hover:border-[var(--color-ring)]'}"
 							>
@@ -610,7 +641,7 @@
 						</div>
 					</div>
 
-					{#if kind === 'plan'}
+					{#if kind === 'PLAN'}
 						<FormField
 							label={d.payments.selectPlan}
 							htmlFor="payment-plan"
@@ -639,42 +670,30 @@
 						</FormField>
 					{/if}
 
-					<div class="grid items-start gap-4 sm:grid-cols-2">
-						<FormField label={d.payments.amount} htmlFor="payment-amount" error={fe?.amount}>
-							{#snippet children({ invalid, describedBy })}
-								<Input
-									id="payment-amount"
-									name="amount"
-									type="number"
-									min={0}
-									max={1_000_000}
-									step="0.01"
-									inputmode="decimal"
-									required
-									placeholder="0.00"
-									bind:value={amount}
-									{invalid}
-									{describedBy}
-								/>
-							{/snippet}
-						</FormField>
-						<FormField label={d.payments.method} htmlFor="payment-method" error={fe?.method}>
-							{#snippet children({ invalid, describedBy })}
-								<Select
-									id="payment-method"
-									name="method"
-									bind:value={method}
-									{invalid}
-									{describedBy}
-								>
-									<option value="cash">{d.payments.cash}</option>
-									<option value="transfer">{d.payments.transfer}</option>
-								</Select>
-							{/snippet}
-						</FormField>
-					</div>
+					<PaymentPricingFields
+						{locale}
+						listAmount={listAmount}
+						labels={pricingLabels}
+						bind:mode={pricingMode}
+						bind:amount
+						amountError={fe?.amount}
+						idPrefix="payment-pricing"
+					/>
 
-					<p class="text-xs leading-snug text-[var(--color-muted)]">{d.payments.amountHint}</p>
+					<FormField label={d.payments.method} htmlFor="payment-method" error={fe?.method}>
+						{#snippet children({ invalid, describedBy })}
+							<Select
+								id="payment-method"
+								name="method"
+								bind:value={method}
+								{invalid}
+								{describedBy}
+							>
+								<option value="CASH">{d.payments.cash}</option>
+								<option value="TRANSFER">{d.payments.transfer}</option>
+							</Select>
+						{/snippet}
+					</FormField>
 
 					{#if localError}
 						<p

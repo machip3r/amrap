@@ -24,6 +24,7 @@ export default defineConfig({
 	timeout: 120_000,
 	expect: { timeout: 20_000 },
 	reporter: [['list'], ['html', { open: 'never' }]],
+	globalSetup: './e2e/global-setup.ts',
 	globalTeardown: './e2e/global-teardown.ts',
 	use: {
 		baseURL,
@@ -57,6 +58,21 @@ export default defineConfig({
 			testMatch: /setup\/provisional\.setup\.ts/
 		},
 		{
+			name: 'staff-setup',
+			dependencies: ['owner-setup'],
+			testMatch: /setup\/staff\.setup\.ts/
+		},
+		{
+			name: 'trainer-setup',
+			dependencies: ['staff-setup'],
+			testMatch: /setup\/trainer\.setup\.ts/
+		},
+		{
+			name: 'member-setup',
+			dependencies: ['trainer-setup'],
+			testMatch: /setup\/member\.setup\.ts/
+		},
+		{
 			name: 'owner',
 			dependencies: ['owner-setup'],
 			testMatch: /owner\/.*\.spec\.ts/,
@@ -79,6 +95,35 @@ export default defineConfig({
 			use: {
 				storageState: path.join(__dirname, 'e2e/.auth/provisional.json')
 			}
+		},
+		{
+			name: 'staff',
+			dependencies: ['staff-setup'],
+			testMatch: /staff\/.*\.spec\.ts/,
+			use: {
+				storageState: path.join(__dirname, 'e2e/.auth/staff.json')
+			}
+		},
+		{
+			name: 'trainer',
+			dependencies: ['trainer-setup'],
+			testMatch: /trainer\/.*\.spec\.ts/,
+			use: {
+				storageState: path.join(__dirname, 'e2e/.auth/trainer.json')
+			}
+		},
+		{
+			name: 'member',
+			dependencies: ['member-setup'],
+			testMatch: /member\/.*\.spec\.ts/,
+			use: {
+				storageState: path.join(__dirname, 'e2e/.auth/member.json')
+			}
+		},
+		{
+			name: 'multi-user',
+			dependencies: ['owner-setup'],
+			testMatch: /multi-user\/.*\.spec\.ts/
 		}
 	]
 });

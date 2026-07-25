@@ -125,7 +125,7 @@ export async function createStaffOrTrainer(
 			user_id: invite.userId,
 			role: dbRole,
 			is_provisional_owner: false,
-			invite_status: 'pending'
+			invite_status: 'PENDING'
 		})
 		.select('id')
 		.single();

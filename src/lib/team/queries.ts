@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { InviteStatus, Role } from '$lib/types';
+import { inviteStatusFromDb } from '$lib/validation/db-enums';
 import {
 	buildPageMeta,
 	ilikeContains,
@@ -40,7 +41,7 @@ export async function loadTeamMembers(
 	role: RoleFilter,
 	opts: { inviteStatuses?: InviteStatus[] } = {}
 ): Promise<TeamMember[]> {
-	const statuses = opts.inviteStatuses ?? ['accepted'];
+	const statuses = opts.inviteStatuses ?? ['ACCEPTED'];
 	const { data: rows, error } = await supabase
 		.from('gym_roles')
 		.select('id, user_id, role, created_at, invite_status')
@@ -138,11 +139,6 @@ export async function loadTeamMemberById(
 	return list[0] ?? null;
 }
 
-function normalizeInviteStatus(raw: string | null | undefined): InviteStatus {
-	if (raw === 'pending' || raw === 'cancelled' || raw === 'accepted') return raw;
-	return 'accepted';
-}
-
 async function enrichTeamRows(
 	supabase: SupabaseClient,
 	list: GymRoleListRow[]
@@ -174,7 +170,7 @@ async function enrichTeamRows(
 				email: person?.email ?? null,
 				phone: person?.phone ?? null,
 				role: r.role as RoleFilter,
-				inviteStatus: normalizeInviteStatus(r.invite_status),
+				inviteStatus: inviteStatusFromDb(r.invite_status),
 				createdAt: r.created_at
 			};
 		});
@@ -189,7 +185,7 @@ export async function countStaffAndTrainers(
 		.select('id', { count: 'exact', head: true })
 		.eq('gym_id', gymId)
 		.in('role', ['STAFF', 'TRAINER'])
-		.in('invite_status', ['pending', 'accepted']);
+		.in('invite_status', ['PENDING', 'ACCEPTED']);
 
 	if (error) {
 		console.error('countStaffAndTrainers', error.message);

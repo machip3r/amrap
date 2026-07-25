@@ -18,7 +18,7 @@
 		d={data.d}
 		role={data.role}
 		defaultDateOfBirth={data.defaultDateOfBirth}
-		defaultSex={data.defaultSex}
+		defaultGender={data.defaultGender}
 		defaultHeightCm={data.defaultHeightCm}
 		defaultWeightKg={data.defaultWeightKg}
 		form={(form as WelcomeActionState) ?? null}

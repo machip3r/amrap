@@ -14,17 +14,24 @@ import {
 import type { Locale } from '$lib/i18n/config';
 import { isLocale } from '$lib/i18n/config';
 import { getDictionary } from '$lib/i18n/dictionaries';
+import { maxActivePlans } from '$lib/plans/limits';
 import {
 	addOnboardingPlanAction,
 	deleteOnboardingPlanAction,
 	finishOnboardingAction,
+	requestSubscriptionCheckout,
 	saveOnboardingGymAction,
 	saveOnboardingProfileAction,
+	skipOnboardingBillingAction,
 	skipOnboardingPlansAction,
 	updateOnboardingPlanAction,
 	type OnboardingActionState
 } from '$lib/server/onboarding/actions';
+import type { OrgActionState } from '$lib/server/organization/billing';
+import { syncOrgFromCheckoutSessionId } from '$lib/server/stripe/sync';
+import { getStripePublishableKey } from '$lib/stripe/env';
 import { createClient } from '$lib/supabase/server';
+import type { OrgPlanTier } from '$lib/types';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, url }) => {
@@ -35,7 +42,6 @@ export const load: PageServerLoad = async ({ params, url }) => {
 	const user = await getSessionUser();
 	if (!user) throw redirect(303, `/${locale}/login`);
 
-	// Register / OTP land here — fetch gates in one round instead of a waterfall.
 	const [invite, invitee, state, workspace] = await Promise.all([
 		getPendingInvite(),
 		isNonOwnerInvitee(),
@@ -73,16 +79,41 @@ export const load: PageServerLoad = async ({ params, url }) => {
 		throw redirect(303, `/${locale}/dashboard`);
 	}
 
+	const sessionId = url.searchParams.get('session_id');
+	if (url.searchParams.get('billing') === 'success' && sessionId) {
+		await syncOrgFromCheckoutSessionId(sessionId);
+	}
+
+	const supabase = createClient();
+	const { data: orgRow } = await supabase
+		.from('organizations')
+		.select('plan_tier, onboarding_billing_done')
+		.eq('id', state.organizationId)
+		.maybeSingle();
+
+	const planTier = (orgRow?.plan_tier as OrgPlanTier | undefined) ?? 'FREEMIUM';
+
+	// After paid checkout during onboarding, advance past the optional billing step.
+	if (
+		url.searchParams.get('billing') === 'success' &&
+		planTier !== 'FREEMIUM' &&
+		!orgRow?.onboarding_billing_done
+	) {
+		await supabase.rpc('onboarding_mark_billing_done');
+		throw redirect(303, `/${locale}/onboarding?billing=success`);
+	}
+	const planCap = maxActivePlans(planTier);
+
 	let plans: { id: string; name: string; price: number; duration_days: number }[] = [];
 	if (state.gymId) {
-		const supabase = createClient();
+		const limit = planCap ?? 50;
 		const { data } = await supabase
 			.from('plans')
 			.select('id, name, price, duration_days')
 			.eq('gym_id', state.gymId)
 			.eq('is_active', true)
 			.order('created_at', { ascending: true })
-			.limit(2);
+			.limit(limit);
 		plans = (data ?? []).map((p) => ({
 			id: p.id,
 			name: p.name,
@@ -91,7 +122,17 @@ export const load: PageServerLoad = async ({ params, url }) => {
 		}));
 	}
 
-	return { locale, d, state, plans, showError: url.searchParams.has('error') };
+	return {
+		locale,
+		d,
+		state,
+		plans,
+		planTier,
+		planCap,
+		stripePublishableKey: getStripePublishableKey() ?? null,
+		billingFlash: url.searchParams.get('billing') === 'success',
+		showError: url.searchParams.has('error')
+	};
 };
 
 export const actions = {
@@ -105,5 +146,8 @@ export const actions = {
 		updateOnboardingPlanAction(await request.formData()) as OnboardingActionState,
 	deletePlan: async ({ request }) => deleteOnboardingPlanAction(await request.formData()),
 	skipPlans: async ({ request }) => skipOnboardingPlansAction(await request.formData()),
+	skipBilling: async ({ request }) => skipOnboardingBillingAction(await request.formData()),
+	checkout: async ({ request }) =>
+		requestSubscriptionCheckout(await request.formData()) as OrgActionState,
 	finish: async ({ request }) => finishOnboardingAction(await request.formData())
 } satisfies Actions;

@@ -10,9 +10,11 @@
 	import Input from '$lib/components/ui/Input.svelte';
 	import PhoneInput from '$lib/components/ui/PhoneInput.svelte';
 	import Select from '$lib/components/ui/Select.svelte';
+	import PaymentPricingFields from '$lib/components/payments/PaymentPricingFields.svelte';
 	import type { Locale } from '$lib/i18n/config';
 	import { getDictionary } from '$lib/i18n/dictionaries';
 	import { DAY_PASS_PLAN_VALUE } from '$lib/members/day-pass';
+	import type { PaymentPricingMode } from '$lib/payments/pricing';
 	import type { CreateMemberState } from '$lib/server/members/actions';
 	import type { CreateTeamMemberState } from '$lib/server/team/actions';
 	import { LIMITS, sanitizeEmailInput, sanitizePersonNameInput } from '$lib/validation/schemas';
@@ -94,7 +96,9 @@
 	let phone = $state('');
 	let email = $state('');
 	let selectedPlan = $state('');
-	let method = $state<'cash' | 'transfer'>('cash');
+	let pricingMode = $state<PaymentPricingMode>('FULL');
+	let amount = $state('');
+	let method = $state<'CASH' | 'TRANSFER'>('CASH');
 	let pending = $state(false);
 	let formError = $state<string | undefined>(undefined);
 	let fieldErrors = $state<Record<string, string> | undefined>(undefined);
@@ -109,6 +113,24 @@
 		wasOpen = open;
 	});
 
+	const listAmount = $derived.by(() => {
+		if (selectedPlan === DAY_PASS_PLAN_VALUE) return Number(dayPassPrice ?? 0);
+		const plan = plans.find((p) => p.id === selectedPlan);
+		return plan?.price ?? plans[0]?.price ?? 0;
+	});
+
+	const pricingLabels = $derived({
+		pricingLabel: d.payments.pricingLabel,
+		pricingFull: d.payments.pricingFull,
+		pricingDiscount: d.payments.pricingDiscount,
+		pricingTrial: d.payments.pricingTrial,
+		pricingHint: d.payments.pricingHint,
+		trialHint: d.payments.trialHint,
+		discountHint: d.payments.discountHint,
+		amount: d.payments.amount,
+		listPrice: d.payments.listPrice
+	});
+
 	const isMember = $derived(role === 'member');
 	const canSubmit = $derived(
 		isMember
@@ -116,6 +138,11 @@
 					email.trim().length > 0 &&
 					selectedPlan.length > 0 &&
 					hasPlanOptions &&
+					(pricingMode !== 'DISCOUNT' ||
+						(amount !== '' &&
+							Number.isFinite(Number(amount)) &&
+							Number(amount) >= 0 &&
+							Number(amount) < listAmount)) &&
 					!pending
 			: name.trim().length > 0 && email.trim().length > 0 && !pending
 	);
@@ -131,11 +158,28 @@
 		phone = '';
 		email = '';
 		selectedPlan = defaultPlanId();
-		method = 'cash';
+		pricingMode = 'FULL';
+		amount = String(
+			selectedPlan === DAY_PASS_PLAN_VALUE
+				? (dayPassPrice ?? 0)
+				: (plans.find((p) => p.id === selectedPlan)?.price ?? plans[0]?.price ?? 0)
+		);
+		method = 'CASH';
 		pending = false;
 		formError = undefined;
 		fieldErrors = undefined;
 		emailWarning = undefined;
+	}
+
+	function onPlanChange(nextId: string) {
+		selectedPlan = nextId;
+		pricingMode = 'FULL';
+		if (nextId === DAY_PASS_PLAN_VALUE) {
+			amount = String(dayPassPrice ?? 0);
+			return;
+		}
+		const plan = plans.find((p) => p.id === nextId);
+		amount = plan != null ? String(plan.price) : '';
 	}
 
 	function roleLabel(r: RegisterRole) {
@@ -375,6 +419,8 @@
 											bind:value={selectedPlan}
 											{invalid}
 											{describedBy}
+											onchange={(e) =>
+												onPlanChange((e.currentTarget as HTMLSelectElement).value)}
 										>
 											{#each plans as p (p.id)}
 												<option value={p.id}>{formatPlanLabel(p)}</option>
@@ -392,12 +438,21 @@
 								>
 									{#snippet children({ invalid, describedBy })}
 										<Select id="reg-method" name="method" bind:value={method} {invalid} {describedBy}>
-											<option value="cash">{d.members.cash}</option>
-											<option value="transfer">{d.members.transfer}</option>
+											<option value="CASH">{d.members.cash}</option>
+											<option value="TRANSFER">{d.members.transfer}</option>
 										</Select>
 									{/snippet}
 								</FormField>
 							</div>
+							<PaymentPricingFields
+								{locale}
+								listAmount={listAmount}
+								labels={pricingLabels}
+								bind:mode={pricingMode}
+								bind:amount
+								amountError={fieldErrors?.amount}
+								idPrefix="reg-pricing"
+							/>
 							{#if formError}
 								<p
 									class="rounded-lg border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 p-3 text-sm font-medium text-[var(--color-primary)]"

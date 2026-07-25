@@ -1,9 +1,12 @@
+import { getStripe } from '$lib/stripe/server';
 import type Stripe from 'stripe';
 import { createServiceRoleClient } from '$lib/supabase/admin';
 import {
 	intervalFromLookupKey,
+	normalizeBillingInterval,
 	tierFromLookupKey,
 	tierFromStripeMetadata,
+	toStoredSubscriptionStatus,
 	type BillingInterval
 } from '$lib/stripe/catalog';
 import type { OrgPlanTier } from '$lib/types';
@@ -104,7 +107,7 @@ export async function syncOrganizationFromSubscription(sub: Stripe.Subscription)
 	const patch: OrgBillingPatch = {
 		stripe_customer_id: customerId ?? undefined,
 		stripe_subscription_id: isEntitled ? sub.id : null,
-		stripe_subscription_status: status,
+		stripe_subscription_status: toStoredSubscriptionStatus(status),
 		billing_interval: isEntitled ? interval : null
 	};
 
@@ -143,15 +146,36 @@ export async function syncOrganizationFromCheckoutSession(session: Stripe.Checko
 	const patch: OrgBillingPatch = {
 		stripe_customer_id: customerId ?? undefined,
 		stripe_subscription_id: subscriptionId ?? undefined,
-		stripe_subscription_status: 'active'
+		stripe_subscription_status: 'ACTIVE'
 	};
 	if (tierMeta === 'STARTER' || tierMeta === 'GROWTH') {
 		patch.plan_tier = tierMeta;
 	}
-	const intervalRaw = session.metadata?.billing_interval;
-	if (intervalRaw === 'month' || intervalRaw === 'year') {
-		patch.billing_interval = intervalRaw;
+	const interval = normalizeBillingInterval(session.metadata?.billing_interval);
+	if (interval) {
+		patch.billing_interval = interval;
 	}
 
 	await updateOrgById(resolvedOrgId, patch);
+}
+
+/** Sync org tier after Embedded Checkout return (`session_id` query). */
+export async function syncOrgFromCheckoutSessionId(sessionId: string): Promise<boolean> {
+	try {
+		const stripe = getStripe();
+		const session = await stripe.checkout.sessions.retrieve(sessionId, {
+			expand: ['subscription']
+		});
+		await syncOrganizationFromCheckoutSession(session);
+		if (session.subscription && typeof session.subscription !== 'string') {
+			await syncOrganizationFromSubscription(session.subscription);
+		} else if (typeof session.subscription === 'string') {
+			const sub = await stripe.subscriptions.retrieve(session.subscription);
+			await syncOrganizationFromSubscription(sub);
+		}
+		return true;
+	} catch (err) {
+		console.error('syncOrgFromCheckoutSessionId', err);
+		return false;
+	}
 }

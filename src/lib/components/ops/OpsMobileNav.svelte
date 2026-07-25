@@ -101,6 +101,7 @@
 	<a
 		{href}
 		class={tabClass(active)}
+		data-tour="nav-{item.id}"
 		aria-current={active ? "page" : undefined}
 	>
 		<Icon class="h-6 w-6 shrink-0" aria-hidden="true" />
@@ -243,6 +244,7 @@
 			<a
 				{href}
 				class={moreLinkClass(active)}
+				data-tour="nav-{item.id}"
 				aria-current={active ? "page" : undefined}
 				onclick={() => (moreOpen = false)}
 			>

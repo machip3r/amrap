@@ -30,7 +30,11 @@
 		'inline-flex min-h-14 w-full items-center justify-center gap-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3.5 text-base font-semibold text-[var(--color-text)] shadow-sm transition-colors hover:border-[var(--color-primary)]/40 hover:bg-[var(--color-surface-hover)] sm:min-h-16 sm:py-4';
 </script>
 
-<section aria-label={labels.quickActions} class="grid w-full grid-cols-2 gap-3 lg:grid-cols-4">
+<section
+	aria-label={labels.quickActions}
+	class="grid w-full grid-cols-2 gap-3 lg:grid-cols-4"
+	data-tour="dashboard-actions"
+>
 	{#if canCheckIn}
 		<a href="{prefix}/checkin" class={actionClass}>
 			<QrCode class="h-5 w-5 shrink-0 text-[var(--color-primary)]" aria-hidden="true" />

@@ -39,7 +39,7 @@ const FIELD_KIND: Record<string, keyof ValidationMessages> = {
   duration_days: "duration",
   membership_expires_at: "date",
   date_of_birth: "date",
-  sex: "required",
+  gender: "required",
   height_cm: "amount",
   weight_kg: "amount",
   plan_id: "required",

@@ -34,7 +34,8 @@ export const load: PageServerLoad = async ({ parent, depends }) => {
 		logoUrlLight: workspace.logoUrlLight,
 		logoUrlDark: workspace.logoUrlDark,
 		canCustomizeBrand: canUseWhitelabel(workspace.planTier),
-		canUseCustomDomain: canUseCustomDomain(workspace.planTier)
+		canUseCustomDomain: canUseCustomDomain(workspace.planTier),
+		canActAsOwner: workspace.canActAsOwner
 	};
 };
 

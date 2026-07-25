@@ -7,6 +7,7 @@
 	import OpsMobileNav from '$lib/components/ops/OpsMobileNav.svelte';
 	import OpsNavLogo from '$lib/components/ops/OpsNavLogo.svelte';
 	import OpsNavProgress from '$lib/components/ops/OpsNavProgress.svelte';
+	import OwnerTour from '$lib/components/tour/OwnerTour.svelte';
 	import type { UserIdentity } from '$lib/auth/identities';
 	import { getCheckinKiosk } from '$lib/checkin/kiosk-shell.svelte';
 	import { getDictionary } from '$lib/i18n/dictionaries';
@@ -196,5 +197,9 @@
 			identities={data.identities ?? []}
 			activeIdentityId={data.activeIdentityId ?? `ops:${data.workspace.gymId}`}
 		/>
+	{/if}
+
+	{#if !immersive && data.workspace.canActAsOwner}
+		<OwnerTour locale={data.locale} {d} enabled={true} />
 	{/if}
 </div>

@@ -10,6 +10,8 @@
 	import ConfirmDialog from "$lib/components/ui/ConfirmDialog.svelte";
 	import FormField from "$lib/components/ui/FormField.svelte";
 	import Select from "$lib/components/ui/Select.svelte";
+	import PaymentPricingFields from "$lib/components/payments/PaymentPricingFields.svelte";
+	import type { PaymentPricingMode } from "$lib/payments/pricing";
 	import type { PageProps } from "./$types";
 	import { brandedTitle } from '$lib/seo/document-title';
 
@@ -20,18 +22,46 @@
 
 	let deleteOpen = $state(false);
 	let renewPlanId = $state("");
-	let renewMethod = $state("cash");
+	let renewMethod = $state("CASH");
+	let renewPricingMode = $state<PaymentPricingMode>("FULL");
+	let renewAmount = $state("");
 	let careNote = $state("");
 	let carePending = $state(false);
 	let renewPending = $state(false);
 
+	const renewListAmount = $derived(
+		data.plans.find((p) => p.id === renewPlanId)?.price ?? data.plans[0]?.price ?? 0
+	);
+
+	const renewPricingLabels = $derived({
+		pricingLabel: d.payments.pricingLabel,
+		pricingFull: d.payments.pricingFull,
+		pricingDiscount: d.payments.pricingDiscount,
+		pricingTrial: d.payments.pricingTrial,
+		pricingHint: d.payments.pricingHint,
+		trialHint: d.payments.trialHint,
+		discountHint: d.payments.discountHint,
+		amount: d.payments.amount,
+		listPrice: d.payments.listPrice
+	});
+
 	$effect(() => {
-		if (data.plans[0] && !renewPlanId) renewPlanId = data.plans[0].id;
+		if (data.plans[0] && !renewPlanId) {
+			renewPlanId = data.plans[0].id;
+			renewAmount = String(data.plans[0].price);
+		}
 	});
 
 	$effect(() => {
 		careNote = data.careNote ?? "";
 	});
+
+	function onRenewPlanChange(nextId: string) {
+		renewPlanId = nextId;
+		renewPricingMode = "FULL";
+		const plan = data.plans.find((p) => p.id === nextId);
+		renewAmount = plan != null ? String(plan.price) : "";
+	}
 
 	function initials(name: string) {
 		const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -48,7 +78,7 @@
 {#if data.forbidden || !member}
 	<p class="text-[var(--color-muted)]">{d.common.forbidden}</p>
 {:else}
-	{@const active = member.status === "active"}
+	{@const active = member.status === "ACTIVE"}
 	<div class="flex w-full animate-fade-in-up flex-col gap-5">
 		<div>
 			<a
@@ -83,14 +113,14 @@
 						>
 							{active ? d.members.active : d.members.expired}
 						</span>
-						{#if member.invite_status === "pending" || member.invite_status === "cancelled"}
+						{#if member.invite_status === "PENDING" || member.invite_status === "CANCELLED"}
 							<span
 								class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold {member.invite_status ===
-								'pending'
+								'PENDING'
 									? 'bg-[var(--color-primary)]/15 text-[var(--color-primary)]'
 									: 'bg-[var(--color-muted)]/20 text-[var(--color-muted)]'}"
 							>
-								{member.invite_status === "pending"
+								{member.invite_status === "PENDING"
 									? d.inviteStatus.pending
 									: d.inviteStatus.cancelled}
 							</span>
@@ -290,6 +320,8 @@
 									bind:value={renewPlanId}
 									{invalid}
 									{describedBy}
+									onchange={(e) =>
+										onRenewPlanChange((e.currentTarget as HTMLSelectElement).value)}
 								>
 									{#each data.plans as plan (plan.id)}
 										<option value={plan.id}>
@@ -300,6 +332,14 @@
 								</Select>
 							{/snippet}
 						</FormField>
+						<PaymentPricingFields
+							{locale}
+							listAmount={renewListAmount}
+							labels={renewPricingLabels}
+							bind:mode={renewPricingMode}
+							bind:amount={renewAmount}
+							idPrefix="renew-pricing"
+						/>
 						<FormField
 							label={d.members.paymentMethod}
 							htmlFor="renew-method"
@@ -312,10 +352,10 @@
 									{invalid}
 									{describedBy}
 								>
-									<option value="cash"
+									<option value="CASH"
 										>{d.members.cash}</option
 									>
-									<option value="transfer"
+									<option value="TRANSFER"
 										>{d.members.transfer}</option
 									>
 								</Select>

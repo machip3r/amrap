@@ -10,7 +10,11 @@ function cookieAdapter(cookies: Cookies) {
 		},
 		setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
 			cookiesToSet.forEach(({ name, value, options }) => {
-				cookies.set(name, value, { ...(options as object), path: '/' });
+				cookies.set(name, value, {
+					...(options as object),
+					path: '/',
+					sameSite: (options?.sameSite as 'lax' | 'strict' | 'none' | undefined) ?? 'lax'
+				});
 			});
 		}
 	};

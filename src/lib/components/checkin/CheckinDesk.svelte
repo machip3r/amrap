@@ -354,11 +354,11 @@
 						classBooking: {
 							className,
 							startsAt,
-							status: 'attended'
+							status: 'ATTENDED'
 						},
 						openSessions: resultView.member.openSessions?.map((o) =>
 							o.sessionId === sessionId
-								? { ...o, hasBooking: true, bookingStatus: 'attended' }
+								? { ...o, hasBooking: true, bookingStatus: 'ATTENDED' }
 								: o
 						)
 					},
@@ -390,7 +390,7 @@
 </script>
 
 <div
-	class="flex w-full min-w-0 flex-col gap-5 overflow-x-hidden {kioskMode
+	class="flex w-full min-w-0 flex-col gap-5 overflow-x-clip {kioskMode
 		? 'h-full min-h-0 gap-3 overflow-y-auto p-[var(--spacing-page)] pb-[max(1rem,var(--safe-bottom))] sm:p-[var(--spacing-page-md)]'
 		: ''}"
 >

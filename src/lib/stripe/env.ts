@@ -10,9 +10,7 @@ function processEnv(name: string): string | undefined {
 export function getStripePublishableKey(): string | undefined {
 	return (
 		publicEnv.PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim() ||
-		privateEnv.STRIPE_PUBLISHABLE_KEY?.trim() ||
-		processEnv('PUBLIC_STRIPE_PUBLISHABLE_KEY') ||
-		processEnv('STRIPE_PUBLISHABLE_KEY')
+		processEnv('PUBLIC_STRIPE_PUBLISHABLE_KEY')
 	);
 }
 

@@ -22,7 +22,7 @@ function mapSessionsWithBookings(
 
 	for (const b of allBookings) {
 		const sid = b.session_id;
-		if (b.status === 'waitlisted') {
+		if (b.status === 'WAITLISTED') {
 			waitlistBySession.set(sid, (waitlistBySession.get(sid) ?? 0) + 1);
 		} else {
 			confirmedBySession.set(sid, (confirmedBySession.get(sid) ?? 0) + 1);
@@ -57,7 +57,7 @@ async function loadBookingsForSessions(
 		.from('class_bookings')
 		.select('id, session_id, person_id, status')
 		.in('session_id', sessionIds)
-		.neq('status', 'cancelled');
+		.neq('status', 'CANCELLED');
 	return (data ?? []) as BookingRow[];
 }
 
@@ -89,7 +89,7 @@ export const load: PageServerLoad = async ({ parent, url }) => {
     `
 			)
 			.eq('gym_id', member.activeGymId)
-			.eq('status', 'scheduled')
+			.eq('status', 'SCHEDULED')
 			.gt('starts_at', now.toISOString())
 			.lte('starts_at', until.toISOString())
 			.order('starts_at', { ascending: true }),
@@ -104,7 +104,7 @@ export const load: PageServerLoad = async ({ parent, url }) => {
 	}));
 
 	const weekRows = weekRpcRows
-		.filter((s) => s.status === 'scheduled' && new Date(s.starts_at) > now)
+		.filter((s) => s.status === 'SCHEDULED' && new Date(s.starts_at) > now)
 		.map((s) => ({
 			id: s.id,
 			starts_at: s.starts_at,
@@ -152,7 +152,7 @@ export const load: PageServerLoad = async ({ parent, url }) => {
 			className: cls?.name ?? '',
 			startsAt,
 			status: b.status as string,
-			upcoming: startsAt > now.toISOString() && b.status !== 'cancelled'
+			upcoming: startsAt > now.toISOString() && b.status !== 'CANCELLED'
 		};
 	});
 

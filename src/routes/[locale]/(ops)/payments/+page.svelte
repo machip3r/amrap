@@ -195,7 +195,10 @@
 				showing: d.payments.showing,
 				newBadge: d.payments.newBadge,
 				previous: d.common.previous,
-				next: d.common.next
+				next: d.common.next,
+				badgeTrial: d.payments.badgeTrial,
+				badgeDiscount: d.payments.badgeDiscount,
+				listPrice: d.payments.listPrice
 			}}
 		/>
 	</div>

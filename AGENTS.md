@@ -54,18 +54,31 @@ pnpm dev               # http://localhost:5173
 
 Playwright under `e2e/` is the source of truth for **user-flow** coverage (not Vitest). Vitest may be added later for pure `src/lib/` unit tests only.
 
-**Update E2E in the same change** whenever you add, change, or remove a user-facing feature, screen, nav item, flow, or permission guard.
+### When E2E must change (same PR / same change)
 
-Rules:
+**Update or add Playwright coverage for every affected flow** whenever you:
 
-1. Cover every **affected role** under `e2e/<role>/`.
+| Change type | Examples | E2E expectation |
+| ----------- | -------- | --------------- |
+| **New feature** | New screen, nav item, invite path, role capability | New or extended specs under `e2e/<role>/` (and setup/fixtures if a new actor is needed) |
+| **Fix** | Bug that alters UX, redirects, validation, permissions, empty/error states | Adjust assertions / helpers so the suite matches the fixed behavior; add a regression case when the bug was user-visible |
+| **Breaking change** | Route moves, copy/role renames, auth/onboarding steps, enum values, guards, post-login destinations | Update **all** affected specs, setups, and helpers (`e2e/helpers/`, `e2e/setup/`) in the same change — do not leave green tests that encode the old contract |
+
+Also update E2E when you change permission guards, product-flow status (shipped ↔ partial ↔ planned), or dictionary strings that tests assert on.
+
+If coverage is intentionally deferred, say so in the PR / change notes and mark the flow **planned** (or **partial**) in [`docs/product-flows.md`](docs/product-flows.md) — do not silently skip.
+
+### Rules
+
+1. Cover every **affected role** under `e2e/<role>/` (owner, staff, trainer, member, multi-user, public as applicable).
 2. Keep [`docs/product-flows.md`](docs/product-flows.md) and matching `e2e/**/*.spec.ts` in sync.
 3. Use locale routes (`/es/…` by default) and dictionary-backed copy for assertions.
 4. Seed auth via Admin API helpers in `e2e/helpers/` — do not depend on real inbox OTP in CI.
 5. Never commit `SUPABASE_SERVICE_ROLE_KEY` or `e2e/.auth/` storage state.
 6. Mark flows **shipped · partial · planned** in `product-flows.md` for the SvelteKit app (ignore Next parity).
+7. Do **not** run several `pnpm test:e2e:*` scripts in parallel terminals — they share `e2e/.auth/` and port 5173 (see [`e2e/README.md`](e2e/README.md)).
 
-Run: `pnpm test:e2e` · `pnpm test:e2e:owner` · see [`e2e/README.md`](e2e/README.md).
+Run: `pnpm test:e2e` · `pnpm test:e2e:owner` · `pnpm test:e2e:staff` · `pnpm test:e2e:trainer` · `pnpm test:e2e:member` · `pnpm test:e2e:flows` · see [`e2e/README.md`](e2e/README.md).
 
 ---
 
@@ -161,6 +174,19 @@ amrap-next/                     # legacy Next.js — read-only archive (do not e
 - Keep [`docs/database.md`](docs/database.md) in sync in the same change.
 - **Verify the target Supabase project** before `db push`, link, or remote apply.
 
+### Enum / typed status values (UPPERCASE)
+
+**Canonical rule:** closed sets of type/status/kind values — in Postgres check constraints, TypeScript union types, Zod enums, and stored rows — are always **UPPERCASE** (`SNAKE_CASE` when multi-word, e.g. `PREFER_NOT`, `DAY_PASS`, `FOR_TIME`).
+
+- Do **not** store or type lowercase variants (`pending`, `male`, `cash`) for the same concept.
+- UI labels stay localized in dictionaries; form `<option value>` and server payloads use the uppercase token.
+- When adding a new enum-like column, define the check constraint with uppercase literals from day one.
+- When changing an existing lowercase set, ship a **new** migration that `upper()`s rows, replaces the check, and update app comparisons in the same change.
+
+**Already uppercase (keep):** `plan_tier`, `gym_roles.role`, `memberships.status`, `payments.method` / `kind`, `check_ins.source`, platform admin `role`, org `billing_interval` / `stripe_subscription_status`, `persons.gender`, `gym_roles.invite_status` / `memberships.invite_status`, `class_schedules.recurrence`, `class_sessions.status`, `class_bookings.status`, `class_session_results.kind`, `feedback_messages.target`.
+
+App types (`MemberStatus`, `PaymentMethod`, `PaymentKind`, `InviteStatus` in `src/lib/types`) match DB uppercase tokens. Thin `*FromDb` helpers in `src/lib/validation/db-enums.ts` only normalize legacy lowercase reads via `upper()`.
+
 ---
 
 ## Reuse components (no one-off duplicates)
@@ -184,6 +210,7 @@ amrap-next/                     # legacy Next.js — read-only archive (do not e
 
 - **Validate all inputs** at the server boundary (`+page.server.ts` actions, `+server.ts` handlers) before DB or Auth calls. Client checks are UX only.
 - **Zod schemas** in `src/lib/validation/schemas.ts` — regex + length limits on every user-editable field.
+- **Enum / status tokens** are **UPPERCASE** in Zod and TypeScript (same tokens as Postgres checks) — see *Enum / typed status values* under Database migrations.
 - Reuse `emailSchema`, `personNameSchema`, `entityNameSchema`, `passwordSchema`, sanitizers, etc.
 - Map Zod issues via `zodFieldErrors` + dictionary `validation.*`; return `{ fieldErrors?, error? }` from actions.
 - Render per-field errors with `FormField` `error` prop (`aria-invalid`, `role="alert"`).

@@ -19,12 +19,18 @@
 	});
 	const d = $derived(getDictionary(locale));
 
+	/** Marketing home only — keep install CTA for app / auth surfaces. */
+	const isLanding = $derived.by(() => {
+		const path = page.url.pathname.replace(/\/$/, '') || '/';
+		return path === `/${locale}`;
+	});
+
 	let deferredPrompt = $state<BeforeInstallPromptEvent | null>(null);
 	let iosHint = $state(false);
 	let dismissed = $state(false);
 	let installing = $state(false);
 
-	const show = $derived(!dismissed && (deferredPrompt !== null || iosHint));
+	const show = $derived(!isLanding && !dismissed && (deferredPrompt !== null || iosHint));
 
 	$effect(() => {
 		if (!browser) return;

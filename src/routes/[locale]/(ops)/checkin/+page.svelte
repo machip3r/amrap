@@ -11,7 +11,7 @@
 	<title>{brandedTitle(d.checkin.title, data.documentBrand)}</title>
 </svelte:head>
 
-<div class="animate-fade-in-up h-full min-h-0 pb-4">
+<div class="animate-fade-in-up w-full min-w-0">
 	<CheckinDesk
 		{locale}
 		canManageMembers={data.canManageMembers}

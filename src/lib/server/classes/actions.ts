@@ -146,7 +146,7 @@ async function replaceClassTrainers(classId: string, trainerIds: string[]) {
 const scheduleFormSchema = z.object({
 	locale: localeSchema,
 	class_id: uuidSchema,
-	recurrence: z.enum(['none', 'weekly']),
+	recurrence: z.enum(['NONE', 'WEEKLY']),
 	days_of_week: z.array(z.number().int().min(1).max(7)).default([]),
 	local_time: z.string().regex(/^\d{2}:\d{2}$/),
 	timezone: z.string().trim().min(1).max(64).default('America/Mexico_City'),
@@ -234,12 +234,12 @@ export async function createClass(formData: FormData): Promise<ClassFormState> {
 
 	const withSchedule = formString(formData, 'with_schedule') === 'on';
 	if (withSchedule) {
-		const recurrenceRaw = formString(formData, 'recurrence') || 'weekly';
+		const recurrenceRaw = formString(formData, 'recurrence') || 'WEEKLY';
 		const scheduleParsed = scheduleFormSchema.safeParse({
 			locale: formString(formData, 'locale') || 'es',
 			class_id: inserted.id,
 			recurrence: recurrenceRaw,
-			days_of_week: recurrenceRaw === 'weekly' ? daysFromForm(formData) : [],
+			days_of_week: recurrenceRaw === 'WEEKLY' ? daysFromForm(formData) : [],
 			local_time: formString(formData, 'local_time'),
 			timezone: formString(formData, 'timezone') || 'America/Mexico_City',
 			valid_from: formString(formData, 'valid_from'),
@@ -254,7 +254,7 @@ export async function createClass(formData: FormData): Promise<ClassFormState> {
 			};
 		}
 		if (
-			scheduleParsed.data.recurrence === 'weekly' &&
+			scheduleParsed.data.recurrence === 'WEEKLY' &&
 			scheduleParsed.data.days_of_week.length === 0
 		) {
 			return {
@@ -392,12 +392,12 @@ export async function createClassSchedule(formData: FormData): Promise<ScheduleF
 		return { error: d.common.forbidden };
 	}
 
-	const recurrenceRaw = formString(formData, 'recurrence') || 'weekly';
+	const recurrenceRaw = formString(formData, 'recurrence') || 'WEEKLY';
 	const parsed = scheduleFormSchema.safeParse({
 		locale: formString(formData, 'locale') || 'es',
 		class_id: formString(formData, 'class_id'),
 		recurrence: recurrenceRaw,
-		days_of_week: recurrenceRaw === 'weekly' ? daysFromForm(formData) : [],
+		days_of_week: recurrenceRaw === 'WEEKLY' ? daysFromForm(formData) : [],
 		local_time: formString(formData, 'local_time'),
 		timezone: formString(formData, 'timezone') || 'America/Mexico_City',
 		valid_from: formString(formData, 'valid_from'),
@@ -408,7 +408,7 @@ export async function createClassSchedule(formData: FormData): Promise<ScheduleF
 	if (!parsed.success) {
 		return { fieldErrors: zodFieldErrors(parsed.error, d.validation) };
 	}
-	if (parsed.data.recurrence === 'weekly' && parsed.data.days_of_week.length === 0) {
+	if (parsed.data.recurrence === 'WEEKLY' && parsed.data.days_of_week.length === 0) {
 		return { fieldErrors: { days_of_week: d.validation.invalid } };
 	}
 
@@ -467,7 +467,7 @@ export async function cancelClassSession(formData: FormData): Promise<void> {
 	const supabase = createClient();
 	await supabase
 		.from('class_sessions')
-		.update({ status: 'cancelled', updated_at: new Date().toISOString() })
+		.update({ status: 'CANCELLED', updated_at: new Date().toISOString() })
 		.eq('id', idParsed.data)
 		.eq('gym_id', workspace.gymId);
 }
@@ -535,7 +535,7 @@ export async function setBookingStatusStaff(formData: FormData): Promise<void> {
 	const bookingId = uuidSchema.safeParse(formString(formData, 'booking_id'));
 	const status = formString(formData, 'status');
 	if (!bookingId.success) return;
-	if (!['attended', 'no_show', 'confirmed'].includes(status)) return;
+	if (!['ATTENDED', 'NO_SHOW', 'CONFIRMED'].includes(status)) return;
 
 	const supabase = createClient();
 	await supabase.rpc('set_class_booking_status', {
@@ -589,7 +589,7 @@ export async function upsertSessionResult(
 	if (!sessionId.success || !personId.success) {
 		return { error: d.validation.invalid };
 	}
-	if (!['amrap', 'strength', 'for_time', 'other'].includes(kindRaw)) {
+	if (!['AMRAP', 'STRENGTH', 'FOR_TIME', 'OTHER'].includes(kindRaw)) {
 		return { error: d.validation.invalid };
 	}
 
@@ -617,7 +617,7 @@ export async function upsertSessionResult(
 	let weightKg: number | null = null;
 	let timeSeconds: number | null = null;
 
-	if (kindRaw === 'amrap') {
+	if (kindRaw === 'AMRAP') {
 		const r = parseOptionalInt(roundsRaw);
 		const rp = parseOptionalInt(repsRaw);
 		if (r === undefined || rp === undefined) {
@@ -625,11 +625,11 @@ export async function upsertSessionResult(
 		}
 		rounds = r;
 		reps = rp;
-	} else if (kindRaw === 'strength') {
+	} else if (kindRaw === 'STRENGTH') {
 		const w = parseOptionalNum(weightRaw);
 		if (w === undefined) return { error: d.validation.invalid };
 		weightKg = w;
-	} else if (kindRaw === 'for_time') {
+	} else if (kindRaw === 'FOR_TIME') {
 		const mins = parseOptionalInt(minsRaw);
 		const secs = parseOptionalInt(secsPartRaw);
 		if (mins === undefined || secs === undefined) {

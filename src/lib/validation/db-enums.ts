@@ -1,41 +1,26 @@
-import type { MemberStatus, PaymentKind, PaymentMethod } from "$lib/types";
+import type { InviteStatus, MemberStatus, PaymentKind, PaymentMethod } from "$lib/types";
 
-/** DB CHECK: method in ('CASH','TRANSFER') */
-export type DbPaymentMethod = "CASH" | "TRANSFER";
-
-/** DB CHECK: kind in ('PLAN','DAY_PASS') */
-export type DbPaymentKind = "PLAN" | "DAY_PASS";
-
-/** DB CHECK: status in ('ACTIVE','INACTIVE','EXPIRED','CANCELLED') */
-export type DbMemberStatus = "ACTIVE" | "INACTIVE" | "EXPIRED" | "CANCELLED";
-
-export function toDbPaymentMethod(method: PaymentMethod): DbPaymentMethod {
-  return method === "cash" ? "CASH" : "TRANSFER";
-}
-
-export function toDbPaymentKind(kind: PaymentKind): DbPaymentKind {
-  return kind === "day_pass" ? "DAY_PASS" : "PLAN";
-}
-
-function parsePaymentMethod(raw: string): PaymentMethod | null {
-  const v = raw.trim().toLowerCase();
-  if (v === "cash") return "cash";
-  if (v === "transfer") return "transfer";
-  return null;
+/** Normalize legacy lowercase DB reads to canonical UPPERCASE. */
+export function upperEnum(raw: string | null | undefined): string {
+  return (raw ?? "").trim().toUpperCase();
 }
 
 export function paymentMethodFromDb(raw: string): PaymentMethod | null {
-  const u = raw.trim().toUpperCase();
-  if (u === "CASH") return "cash";
-  if (u === "TRANSFER") return "transfer";
-  return parsePaymentMethod(raw);
+  const u = upperEnum(raw);
+  if (u === "CASH" || u === "TRANSFER") return u;
+  return null;
 }
 
 export function paymentKindFromDb(raw: string | null | undefined): PaymentKind {
-  const u = (raw ?? "PLAN").trim().toUpperCase();
-  return u === "DAY_PASS" ? "day_pass" : "plan";
+  return upperEnum(raw) === "DAY_PASS" ? "DAY_PASS" : "PLAN";
 }
 
-export function toDbMemberStatus(status: MemberStatus): DbMemberStatus {
-  return status === "active" ? "ACTIVE" : "EXPIRED";
+export function memberStatusFromDb(raw: string | null | undefined): MemberStatus {
+  return upperEnum(raw) === "EXPIRED" ? "EXPIRED" : "ACTIVE";
+}
+
+export function inviteStatusFromDb(raw: string | null | undefined): InviteStatus {
+  const u = upperEnum(raw);
+  if (u === "PENDING" || u === "CANCELLED" || u === "ACCEPTED") return u;
+  return "ACCEPTED";
 }

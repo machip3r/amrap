@@ -107,8 +107,8 @@ export function playBeep(kind: TimerBeepKind, muted: boolean): void {
 		// Interval / rest: single strike when the phase changes.
 		playOnce(vol);
 		if (kind === "start" || kind === "end") {
-			// Tight double-strike (was 380ms — felt too spaced for gym cues).
-			window.setTimeout(() => playOnce(vol * 0.95), 160);
+			// Double-strike with a short gap so both bells read clearly.
+			window.setTimeout(() => playOnce(vol * 0.95), 280);
 		}
 	} catch {
 		/* ignore */

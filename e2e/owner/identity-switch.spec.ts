@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { ownerCredsPath, readCreds } from "../fixtures/owner";
 import {
-  getOwnerGymId,
+  resolveOwnerGymId,
   getPersonIdForUser,
   seedMembershipForPerson,
   seedStandaloneGym,
@@ -19,7 +19,7 @@ async function openIdentityList(page: import("@playwright/test").Page) {
 test.describe("identity picker — same-gym dual", () => {
   test("owner + member at same gym can switch shells", async ({ page }) => {
     const creds = readCreds(ownerCredsPath());
-    const gymId = await getOwnerGymId(creds.userId);
+    const gymId = await resolveOwnerGymId(creds);
     const personId = await getPersonIdForUser(creds.userId);
     await seedMembershipForPerson(gymId, personId);
 
@@ -52,7 +52,7 @@ test.describe("identity picker — same-gym dual", () => {
 test.describe("identity picker — cross-gym", () => {
   test("owner at gym A + member at gym B switches contexts", async ({ page }) => {
     const creds = readCreds(ownerCredsPath());
-    const ownerGymId = await getOwnerGymId(creds.userId);
+    const ownerGymId = await resolveOwnerGymId(creds);
     const personId = await getPersonIdForUser(creds.userId);
     const { gymId: memberGymId, gymName: memberGymName } = await seedStandaloneGym({
       createdByUserId: creds.userId,

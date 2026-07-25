@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { applyAction, enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 	import Loader2 from '@lucide/svelte/icons/loader-2';
 	import type { Locale } from '$lib/i18n/config';
 	import type { Dictionary } from '$lib/i18n/dictionaries';
@@ -70,7 +71,8 @@
 			pending = true;
 			return async ({ result, update }) => {
 				if (result.type === 'redirect') {
-					await update();
+					await applyAction(result);
+					await goto(result.location);
 					return;
 				}
 				pending = false;

@@ -16,9 +16,9 @@
 	const bookings = $derived(data.bookings);
 
 	const confirmed = $derived(
-		bookings.filter((b) => ['confirmed', 'attended', 'no_show'].includes(b.status))
+		bookings.filter((b) => ['CONFIRMED', 'ATTENDED', 'NO_SHOW'].includes(b.status))
 	);
-	const waitlisted = $derived(bookings.filter((b) => b.status === 'waitlisted'));
+	const waitlisted = $derived(bookings.filter((b) => b.status === 'WAITLISTED'));
 	const rosterLabels = $derived({ ...d.roster, close: d.registerUser.close });
 
 	const rosterActionClass = 'w-full sm:w-auto';
@@ -31,13 +31,13 @@
 
 	function bookingStatusLabel(status: string) {
 		switch (status) {
-			case 'confirmed':
+			case 'CONFIRMED':
 				return d.classes.statusConfirmed;
-			case 'attended':
+			case 'ATTENDED':
 				return d.classes.statusAttended;
-			case 'no_show':
+			case 'NO_SHOW':
 				return d.classes.statusNoShow;
-			case 'waitlisted':
+			case 'WAITLISTED':
 				return d.classes.statusWaitlisted;
 			default:
 				return status;
@@ -46,11 +46,11 @@
 
 	function bookingStatusClass(status: string) {
 		switch (status) {
-			case 'attended':
+			case 'ATTENDED':
 				return 'bg-[var(--color-success)]/15 text-[var(--color-success)]';
-			case 'no_show':
+			case 'NO_SHOW':
 				return 'bg-[var(--color-danger)]/15 text-[var(--color-danger)]';
-			case 'waitlisted':
+			case 'WAITLISTED':
 				return 'bg-[var(--color-muted)]/20 text-[var(--color-muted)]';
 			default:
 				return 'bg-[var(--color-primary)]/15 text-[var(--color-primary)]';
@@ -89,11 +89,11 @@
 				<div class="mt-3 flex flex-wrap items-center gap-2">
 					<span
 						class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold {session.status ===
-						'cancelled'
+						'CANCELLED'
 							? 'bg-[var(--color-danger)]/15 text-[var(--color-danger)]'
 							: 'bg-[var(--color-success)]/15 text-[var(--color-success)]'}"
 					>
-						{session.status === 'cancelled' ? d.classes.cancelled : d.classes.scheduled}
+						{session.status === 'CANCELLED' ? d.classes.cancelled : d.classes.scheduled}
 					</span>
 					<span
 						class="inline-flex rounded-md bg-[var(--color-primary-soft)] px-2.5 py-0.5 text-xs font-semibold text-[var(--color-text)]"
@@ -109,7 +109,7 @@
 					{/if}
 				</div>
 			</div>
-			{#if data.canManage && session.status === 'scheduled'}
+			{#if data.canManage && session.status === 'SCHEDULED'}
 				<form method="POST" action="?/cancelSession" use:enhance class="shrink-0 sm:pt-1">
 					<input type="hidden" name="locale" value={locale} />
 					<input type="hidden" name="session_id" value={session.id} />
@@ -124,7 +124,7 @@
 			{/if}
 		</header>
 
-		{#if data.canCheckin && session.status === 'scheduled'}
+		{#if data.canCheckin && session.status === 'SCHEDULED'}
 			<ClassSessionBookForm
 				{locale}
 				sessionId={session.id}
@@ -191,12 +191,12 @@
 										labels={rosterLabels}
 									/>
 								{/if}
-								{#if data.canCheckin && b.status === 'confirmed'}
+								{#if data.canCheckin && b.status === 'CONFIRMED'}
 									<form method="POST" action="?/setBookingStatus" use:enhance class="contents">
 										<input type="hidden" name="locale" value={locale} />
 										<input type="hidden" name="booking_id" value={b.id} />
 										<input type="hidden" name="session_id" value={session.id} />
-										<input type="hidden" name="status" value="attended" />
+										<input type="hidden" name="status" value="ATTENDED" />
 										<Button type="submit" variant="toolbarSecondary" class={rosterActionClass}>
 											{d.classes.markAttended}
 										</Button>
@@ -205,13 +205,13 @@
 										<input type="hidden" name="locale" value={locale} />
 										<input type="hidden" name="booking_id" value={b.id} />
 										<input type="hidden" name="session_id" value={session.id} />
-										<input type="hidden" name="status" value="no_show" />
+										<input type="hidden" name="status" value="NO_SHOW" />
 										<Button type="submit" variant="toolbarSecondary" class={rosterActionClass}>
 											{d.classes.markNoShow}
 										</Button>
 									</form>
 								{/if}
-								{#if b.status !== 'attended' && b.status !== 'no_show'}
+								{#if b.status !== 'ATTENDED' && b.status !== 'NO_SHOW'}
 									<form method="POST" action="?/cancelBooking" use:enhance class="contents">
 										<input type="hidden" name="locale" value={locale} />
 										<input type="hidden" name="booking_id" value={b.id} />
@@ -268,10 +268,10 @@
 								</div>
 								<span
 									class="mt-1.5 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold {bookingStatusClass(
-										'waitlisted'
+										'WAITLISTED'
 									)}"
 								>
-									{bookingStatusLabel('waitlisted')}
+									{bookingStatusLabel('WAITLISTED')}
 								</span>
 							</div>
 							<form method="POST" action="?/cancelBooking" use:enhance class="contents">

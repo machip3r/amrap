@@ -10,6 +10,9 @@ English reference for the Postgres schema (Supabase). Source of truth: migration
 | `20260721040252_persons_unique_and_auth_cascade.sql` | Unique `persons.email` / `phone` when set; `persons.user_id` `ON DELETE CASCADE` |
 | `20260722052641_gyms_select_for_members.sql` | Members can `SELECT` gyms they have a pending/accepted membership at |
 | `20260722053822_create_gym_membership_reuse_person.sql` | `create_gym_membership` reuses `persons` by email (multi-gym) |
+| `20260725065726_persons_sex_to_gender_uppercase.sql` | Rename `persons.sex` → `gender`; values `MALE` \| `FEMALE` \| `OTHER` \| `PREFER_NOT` |
+| `20260725065951_enums_uppercase_remaining.sql` | Uppercase remaining status/kind enums (invite, classes, bookings, results, feedback) + recreate RPCs/policies |
+| `20260725070927_enums_uppercase_remaining_apply.sql` | Re-apply enums uppercase (prior version was recorded applied while empty) |
 
 **Rule:** never edit an applied migration. Append a new timestamped migration instead.
 
@@ -66,7 +69,7 @@ Platform-wide person profile. May exist **without** `user_id` (staff-created mem
 | `full_name` | Required |
 | `email`, `phone` | Optional; **unique when present** (`lower(email)`, `phone`); multiple NULLs allowed |
 | `date_of_birth` | Optional; invite profile onboarding (staff/trainer/member) |
-| `sex` | Optional; `male` \| `female` \| `other` \| `prefer_not` (member profile) |
+| `gender` | Optional; `MALE` \| `FEMALE` \| `OTHER` \| `PREFER_NOT` (member profile) |
 | `height_cm` / `weight_kg` | Optional numerics with DB range checks (member profile) |
 | `profile_completed_at` | Set when invite `/welcome` finishes; also stamped by `onboarding_complete()` for owners |
 | `qr_code` | **Unique** credential; default random UUID text |
@@ -95,11 +98,12 @@ Billing account for AMRAP.
 | `plan_tier` | `FREEMIUM` \| `STARTER` \| `GROWTH` \| `PRO` (default Freemium) |
 | `stripe_customer_id` | Stripe Customer (`cus_…`) for AMRAP platform subscription; unique when set |
 | `stripe_subscription_id` | Active Stripe Subscription (`sub_…`) when on a paid plan |
-| `stripe_subscription_status` | Mirror of Stripe `subscription.status` (`active`, `past_due`, `canceled`, …) |
-| `billing_interval` | `month` \| `year` for the current paid price |
+| `stripe_subscription_status` | Uppercase mirror of Stripe `subscription.status` (`ACTIVE`, `PAST_DUE`, `CANCELED`, …) |
+| `billing_interval` | `MONTH` \| `YEAR` for the current paid price |
 | `created_by` | Signup user |
 | `pending_as_provisional` | Signup/onboarding: acting as provisional owner |
 | `onboarding_plans_done` | Step “plans” finished or skipped |
+| `onboarding_billing_done` | Optional AMRAP plan step skipped or finished |
 | `onboarding_completed_at` | Null until onboarding done; app guards on this |
 | `deleted_at` | Soft delete / retention window |
 
@@ -139,7 +143,7 @@ Staff / owner / trainer at a gym. **One row per `(gym_id, user_id)`.**
 | `is_provisional_owner` | Full owner powers until real owner accepts |
 | `permissions` | `jsonb` for granular grants (default `{}`) |
 | `nav_visibility` | Per-user ops chrome prefs: `{ "hidden": ["timers", "plans", …] }` — empty `{}` = show all role-allowed items. Settings always available; Organization only for owners. |
-| `invite_status` | `pending` \| `accepted` \| `cancelled` (team invites; owners are `accepted`) |
+| `invite_status` | `PENDING` \| `ACCEPTED` \| `CANCELLED` (team invites; owners are `ACCEPTED`) |
 | `invite_responded_at` | When invitee accepted or declined |
 
 Constraints:
@@ -180,7 +184,7 @@ Person trains at a gym. **Unique `(gym_id, person_id)`.**
 | `plan_id` | Set null if plan deleted |
 | `status` | `ACTIVE` \| `INACTIVE` \| `EXPIRED` \| `CANCELLED` |
 | `expires_at` | Required |
-| `invite_status` | `pending` \| `accepted` \| `cancelled` (account claim invite) |
+| `invite_status` | `PENDING` \| `ACCEPTED` \| `CANCELLED` (account claim invite) |
 | `invite_responded_at` | When member accepted or declined |
 
 ---
@@ -192,8 +196,13 @@ Ops-recorded payments (cash, transfer, etc.). Gateway / recurring billing is a l
 | Column | Notes |
 | ------ | ----- |
 | `gym_id`, `membership_id` | |
-| `amount`, `method` | `CASH` \| `TRANSFER` \| `CARD` \| `OTHER` |
+| `amount` | Charged amount (`>= 0`). **`0` = trial / courtesy** (same membership duration; UI labels as trial). |
+| `list_amount` | Catalog price (plan or day-pass) at record time; null on legacy rows. When `list_amount > amount` and `amount > 0`, UI shows a discount. |
+| `method` | `CASH` \| `TRANSFER` \| `CARD` \| `OTHER` (app uses cash/transfer today) |
+| `kind` | `PLAN` \| `DAY_PASS` |
+| `plan_id` | Set for plan payments; null for day-pass |
 | `recorded_by` | Staff user |
+| `created_at` | |
 
 ---
 
@@ -214,12 +223,12 @@ Anti-abuse is enforced in `record_check_in`: no new check-in at gym B while pers
 
 ### `feedback_messages`
 
-Internal feedback (MVP: text). Members / staff / trainers compose; gym owners (and provisional) read **gym** target; `amrap` target is for the future AMRAP admin app (`platform_admins`).
+Internal feedback (MVP: text). Members / staff / trainers compose; gym owners (and provisional) read **`GYM`** target; **`AMRAP`** target is for the future AMRAP admin app (`platform_admins`).
 
 | Column | Notes |
 | ------ | ----- |
 | `gym_id` | Active gym context when sent |
-| `target` | `gym` \| `amrap` (default `gym`) |
+| `target` | `GYM` \| `AMRAP` (default `GYM`) |
 | `body` | 1–4000 chars |
 | `author_person_id` | Optional |
 | `created_at` | |
@@ -263,7 +272,7 @@ RLS / storage helpers live in schema **`private`** (not exposed via the Data API
 | Function | Returns | Use |
 | -------- | ------- | --- |
 | `private.is_platform_admin()` | boolean | Current user in `platform_admins` |
-| `private.user_gym_ids()` | set of uuid | Gyms where user has OWNER or `invite_status=accepted` role |
+| `private.user_gym_ids()` | set of uuid | Gyms where user has OWNER or `invite_status=ACCEPTED` role |
 | `private.has_gym_role(gym_id, roles[])` | boolean | Role match (OWNER or accepted invite); provisional counts as allowed |
 | `private.can_manage_gym(gym_id)` | boolean | OWNER or STAFF (or provisional via `has_gym_role`) |
 | `private.is_provisional_owner_of_gym(gym_id)` | boolean | Provisional owner flag |
@@ -282,7 +291,8 @@ Bucket `gym-logos` is **public** for object URL reads; there is **no** broad `SE
 | `onboarding_save_profile(full_name, as_provisional?)` | Updates person name; sets org `pending_as_provisional` |
 | `onboarding_create_gym(name, branch_name?, gym_address?, branch_address?)` | First gym + branch + optional addresses + `gym_roles` OWNER (or provisional) |
 | `onboarding_mark_plans_done()` | Sets `onboarding_plans_done` |
-| `onboarding_complete()` | Sets org `onboarding_completed_at` + stamps caller’s `persons.profile_completed_at` |
+| `onboarding_mark_billing_done()` | Sets `onboarding_plans_done` + `onboarding_billing_done` |
+| `onboarding_complete()` | Sets org `onboarding_completed_at` + billing/plans flags + stamps caller’s `persons.profile_completed_at` |
 
 Legacy wrappers may exist (`register_organization`, `register_tenant`) for older call sites; prefer the onboarding path above.
 
@@ -316,7 +326,7 @@ All listed `public` tables have RLS enabled. Pattern summary:
 | `gyms` / `branches` / `plans` / `payments` | Gym roles (accepted); **members** may `SELECT` gyms they have a pending/accepted membership at; platform admin |
 | `gym_roles` | Select peers at same gyms; manage if can manage gym / owner |
 | `memberships` / `check_ins` | Gym managers; member may see own via person link (per policies) |
-| `feedback_messages` | Select: platform admin or gym OWNER/provisional (`target=gym`); insert for authors |
+| `feedback_messages` | Select: platform admin or gym OWNER/provisional (`target=GYM`); insert for authors |
 | `platform_admins` | Select self / admins only |
 
 Exact predicates live in `001_initial.sql` (and `002` for org select). Always re-read policies when changing access rules.
@@ -354,11 +364,11 @@ Expect future migrations for:
 |--------|---------|
 | `classes` | Catalog per gym (`name`, `description`, `capacity`, `duration_minutes`, `tags`, `is_active`) |
 | `class_trainers` | Trainers assigned to a class |
-| `class_schedules` | Recurrence (`none` \| `weekly`), local time, timezone, validity window |
-| `class_sessions` | Materialised occurrences (`starts_at`/`ends_at`, capacity, status) |
-| `class_bookings` | Reservations (`confirmed` \| `waitlisted` \| `cancelled` \| `attended` \| `no_show`) + waitlist position |
+| `class_schedules` | Recurrence (`NONE` \| `WEEKLY`), local time, timezone, validity window |
+| `class_sessions` | Materialised occurrences (`starts_at`/`ends_at`, capacity, `SCHEDULED` \| `CANCELLED`) |
+| `class_bookings` | Reservations (`CONFIRMED` \| `WAITLISTED` \| `CANCELLED` \| `ATTENDED` \| `NO_SHOW`) + waitlist position |
 | `person_gym_care` | Coach-facing care note per person at a gym (`medical_note`, PK `gym_id`+`person_id`) |
-| `class_session_results` | Express scores per athlete on a session (`amrap` \| `strength` \| `for_time` \| `other`; unique `session_id`+`person_id`) |
+| `class_session_results` | Express scores per athlete on a session (`AMRAP` \| `STRENGTH` \| `FOR_TIME` \| `OTHER`; unique `session_id`+`person_id`) |
 | `inbox_messages` | Internal alerts (e.g. waitlist auto-promote) |
 
 **RPCs:** `generate_class_sessions`, `book_class_session`, `cancel_class_booking` (auto-promote + inbox), `set_class_booking_status`, `walk_in_enroll_class_session`, `list_open_class_sessions_for_check_in`, `list_class_sessions_for_week` (week calendar + SQL booking counts), `duplicate_class_to_gym`. Check-in (`record_check_in`) marks matching class attendance.

@@ -17,7 +17,7 @@ export default defineConfig({
 				description: 'Gym membership admin — check-in, classes, members, timers.',
 				lang: 'es',
 				dir: 'ltr',
-				start_url: '/',
+				start_url: '/app',
 				scope: '/',
 				id: '/',
 				display: 'standalone',
@@ -101,7 +101,7 @@ export default defineConfig({
 				enabled: true,
 				suppressWarnings: true,
 				type: 'module',
-				navigateFallback: '/'
+				navigateFallback: '/app'
 			},
 			kit: {
 				includeVersionFile: true

@@ -14,6 +14,8 @@
 		id: string;
 		memberName: string;
 		amount: number;
+		listAmount: number | null;
+		pricingBadge: 'trial' | 'discount' | 'full';
 		methodLabel: string;
 		createdAt: string;
 		kind: PaymentKind;
@@ -35,6 +37,9 @@
 		newBadge: string;
 		previous: string;
 		next: string;
+		badgeTrial: string;
+		badgeDiscount: string;
+		listPrice: string;
 	};
 
 	type Props = {
@@ -203,7 +208,7 @@
 								</p>
 								<span
 									class="mt-1.5 inline-flex max-w-full flex-col gap-0.5 rounded-md px-2 py-0.5 text-xs font-semibold {p.kind ===
-									'day_pass'
+									'DAY_PASS'
 										? 'bg-[var(--color-muted)]/15 text-[var(--color-text)]'
 										: 'bg-[var(--color-primary-soft)] text-[var(--color-text)]'}"
 								>
@@ -217,6 +222,24 @@
 								<p class="tabular-nums font-semibold text-[var(--color-text)]">
 									{formatAmount(p.amount)}
 								</p>
+								{#if p.pricingBadge === 'trial'}
+									<span
+										class="mt-1 inline-flex rounded-md bg-[var(--color-primary-soft)] px-2 py-0.5 text-xs font-semibold text-[var(--color-primary)]"
+									>
+										{labels.badgeTrial}
+									</span>
+								{:else if p.pricingBadge === 'discount' && p.listAmount != null}
+									<span
+										class="mt-1 inline-flex rounded-md bg-[var(--color-surface-hover)] px-2 py-0.5 text-xs font-semibold text-[var(--color-muted)] line-through"
+									>
+										{formatAmount(p.listAmount)}
+									</span>
+									<span
+										class="mt-1 ml-1 inline-flex rounded-md bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-[var(--color-text)]"
+									>
+										{labels.badgeDiscount}
+									</span>
+								{/if}
 								<span
 									class="mt-1 inline-flex rounded-md bg-[var(--color-surface-hover)] px-2 py-0.5 text-xs font-semibold text-[var(--color-text)]"
 								>
@@ -265,7 +288,7 @@
 								<td class="px-4 py-3.5">
 									<span
 										class="inline-flex max-w-full flex-col gap-0.5 rounded-md px-2 py-0.5 text-xs font-semibold {p.kind ===
-										'day_pass'
+										'DAY_PASS'
 											? 'bg-[var(--color-muted)]/15 text-[var(--color-text)]'
 											: 'bg-[var(--color-primary-soft)] text-[var(--color-text)]'}"
 									>
@@ -276,7 +299,29 @@
 									</span>
 								</td>
 								<td class="px-4 py-3.5 tabular-nums font-semibold text-[var(--color-text)]">
-									{formatAmount(p.amount)}
+									<div class="flex flex-col gap-1">
+										<span>{formatAmount(p.amount)}</span>
+										{#if p.pricingBadge === 'trial'}
+											<span
+												class="inline-flex w-fit rounded-md bg-[var(--color-primary-soft)] px-2 py-0.5 text-xs font-semibold text-[var(--color-primary)]"
+											>
+												{labels.badgeTrial}
+											</span>
+										{:else if p.pricingBadge === 'discount' && p.listAmount != null}
+											<span class="flex flex-wrap items-center gap-1">
+												<span
+													class="text-xs font-medium text-[var(--color-muted)] line-through"
+												>
+													{formatAmount(p.listAmount)}
+												</span>
+												<span
+													class="inline-flex rounded-md bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-[var(--color-text)]"
+												>
+													{labels.badgeDiscount}
+												</span>
+											</span>
+										{/if}
+									</div>
 								</td>
 								<td class="px-4 py-3.5 pr-5">
 									<span

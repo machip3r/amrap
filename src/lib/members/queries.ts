@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Member } from "$lib/types";
 import { memberStatusFromExpires } from "$lib/members/dates";
+import { inviteStatusFromDb } from "$lib/validation/db-enums";
 import {
   buildPageMeta,
   ilikeContains,
@@ -42,13 +43,6 @@ type MembershipPersonRow = {
     | null;
 };
 
-function normalizeInviteStatus(
-  raw: string | null | undefined,
-): "pending" | "accepted" | "cancelled" {
-  if (raw === "pending" || raw === "cancelled" || raw === "accepted") return raw;
-  return "accepted";
-}
-
 function firstEmbed<T>(value: T | T[] | null | undefined): T | null {
   if (!value) return null;
   return Array.isArray(value) ? (value[0] ?? null) : value;
@@ -71,7 +65,7 @@ export function mapMembershipRow(row: MembershipPersonRow): Member | null {
     phone: person.phone,
     email: person.email,
     status: memberStatusFromExpires(row.expires_at),
-    invite_status: normalizeInviteStatus(row.invite_status),
+    invite_status: inviteStatusFromDb(row.invite_status),
     membership_expires_at: row.expires_at,
     qr_code: person.qr_code,
     created_at: row.created_at,
@@ -122,7 +116,7 @@ export type MembershipListFilters = {
   page?: number;
   pageSize?: number;
   q?: string;
-  status?: "all" | "active" | "expired";
+  status?: "all" | "ACTIVE" | "EXPIRED";
   planId?: string;
 };
 
@@ -149,8 +143,8 @@ export async function listMembershipsPage(
     .order("created_at", { ascending: false })
     .range(from, to);
 
-  if (status === "active") query = query.gt("expires_at", nowIso);
-  if (status === "expired") query = query.lte("expires_at", nowIso);
+  if (status === "ACTIVE") query = query.gt("expires_at", nowIso);
+  if (status === "EXPIRED") query = query.lte("expires_at", nowIso);
   if (planId) query = query.eq("plan_id", planId);
   if (q) {
     const pattern = ilikeContains(q);

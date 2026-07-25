@@ -62,7 +62,7 @@ export async function getPendingInvite(): Promise<PendingInvite | null> {
     .select("id, role, gym_id, gyms ( id, name )")
     .eq("user_id", user.id)
     .in("role", ["STAFF", "TRAINER"])
-    .eq("invite_status", "pending")
+    .eq("invite_status", "PENDING")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -94,7 +94,7 @@ export async function getPendingInvite(): Promise<PendingInvite | null> {
     .from("memberships")
     .select("id, gym_id, gyms ( id, name )")
     .eq("person_id", person.id)
-    .eq("invite_status", "pending")
+    .eq("invite_status", "PENDING")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -137,12 +137,12 @@ export async function acceptPendingInvite(
     const { data, error } = await supabase
       .from("gym_roles")
       .update({
-        invite_status: "accepted",
+        invite_status: "ACCEPTED",
         invite_responded_at: now,
       })
       .eq("id", invite.rowId)
       .eq("user_id", user.id)
-      .eq("invite_status", "pending")
+      .eq("invite_status", "PENDING")
       .select("id")
       .maybeSingle();
 
@@ -164,12 +164,12 @@ export async function acceptPendingInvite(
   const { data, error } = await supabase
     .from("memberships")
     .update({
-      invite_status: "accepted",
+      invite_status: "ACCEPTED",
       invite_responded_at: now,
     })
     .eq("id", invite.rowId)
     .eq("person_id", person.id)
-    .eq("invite_status", "pending")
+    .eq("invite_status", "PENDING")
     .select("id")
     .maybeSingle();
 
@@ -194,12 +194,12 @@ export async function declinePendingInvite(
     const { data, error } = await supabase
       .from("gym_roles")
       .update({
-        invite_status: "cancelled",
+        invite_status: "CANCELLED",
         invite_responded_at: now,
       })
       .eq("id", invite.rowId)
       .eq("user_id", user.id)
-      .eq("invite_status", "pending")
+      .eq("invite_status", "PENDING")
       .select("id")
       .maybeSingle();
 
@@ -221,12 +221,12 @@ export async function declinePendingInvite(
   const { data, error } = await supabase
     .from("memberships")
     .update({
-      invite_status: "cancelled",
+      invite_status: "CANCELLED",
       invite_responded_at: now,
     })
     .eq("id", invite.rowId)
     .eq("person_id", person.id)
-    .eq("invite_status", "pending")
+    .eq("invite_status", "PENDING")
     .select("id")
     .maybeSingle();
 

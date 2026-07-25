@@ -7,6 +7,9 @@ Allow: /en/login
 Allow: /es/register
 Allow: /en/register
 
+# PWA cold-start entry (redirect only)
+Allow: /app
+
 # Private app surfaces — prefer noindex in HTML; keep crawl budget on marketing.
 Disallow: /es/dashboard
 Disallow: /en/dashboard

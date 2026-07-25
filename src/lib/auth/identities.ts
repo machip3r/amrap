@@ -133,7 +133,7 @@ export async function listUserIdentities(): Promise<UserIdentity[]> {
 			`
 			)
 			.eq('user_id', user.id)
-			.or('invite_status.eq.accepted,role.eq.OWNER'),
+			.or('invite_status.eq.ACCEPTED,role.eq.OWNER'),
 		getMemberContext()
 	]);
 

@@ -13,6 +13,7 @@ import {
 const PAYMENT_LIST_SELECT = `
   id,
   amount,
+  list_amount,
   method,
   created_at,
   membership_id,
@@ -53,6 +54,7 @@ function memberNameFromJoin(
 export type PaymentListRow = {
 	id: string;
 	amount: number;
+	list_amount: number | null;
 	method: string;
 	created_at: string;
 	membership_id: string;
@@ -114,6 +116,7 @@ export async function listPaymentsPage(
 	const payments: PaymentListRow[] = (data ?? []).map((p) => ({
 		id: p.id as string,
 		amount: Number(p.amount),
+		list_amount: p.list_amount != null ? Number(p.list_amount) : null,
 		method: p.method as string,
 		created_at: p.created_at as string,
 		membership_id: p.membership_id as string,

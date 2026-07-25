@@ -18,6 +18,7 @@ Follow the full project standards in **`AGENTS.md`** (this package root) for eve
 - **Product docs** — if business rules or general AMRAP behavior change, update `README.md` in the same change
 - **Product flows** — if a feature, screen, nav item, role/permission, or user flow changes, update `docs/product-flows.md` in the same change (**shipped · partial · planned**)
 - **Database migrations** — every DB change is a **new** file in **`supabase/migrations/`**; never edit an already-applied migration; update `docs/database.md` in the same change
+- **Enum / typed status values** — always **UPPERCASE** in DB checks, TS unions, Zod enums, and stored rows (see `AGENTS.md` → *Enum / typed status values*)
 - **SvelteKit only** — implement everything under `src/`, `static/`, `e2e/`. **Never** edit or dual-maintain `amrap-next/` unless the user explicitly asks for the legacy Next app
 - **SEO on public surfaces** — when changing landing/public copy or README / `docs/product-flows.md` positioning, improve titles, descriptions, canonical/hreflang, OG, JSON-LD, robots/sitemap in the same change; keep ops/member routes `noindex` (see `AGENTS.md` → *SEO*)
 - **Verify Supabase project before push** — confirm project name + ref before any remote DB command; ask if ambiguous
@@ -25,4 +26,4 @@ Follow the full project standards in **`AGENTS.md`** (this package root) for eve
 - **Backend on the server** — `+page.server.ts` load/actions, `+server.ts` route handlers, `hooks.server.ts`; use `src/lib/supabase/server.ts`; never expose service keys to the client
 - **Design system + responsive + a11y** — CSS variables, labels, focus, icon `aria-label`s; follow **Responsive UI / UX** in `AGENTS.md` and `.cursor/rules/responsive-ux.mdc`
 - **Tenant/RLS/secrets** — session-scoped data; service role server-only
-- **E2E (Playwright)** — every new/changed user-facing feature ships with coverage under `e2e/<role>/` (or an explicit PR note why deferred). Keep `docs/product-flows.md` in sync. See `AGENTS.md` → *Testing / E2E* and `e2e/README.md`.
+- **E2E (Playwright)** — for **new features**, **fixes**, and **breaking changes** that affect user flows: update/add specs under `e2e/<role>/` (and setups/helpers when needed) in the **same change**. Deferred coverage needs an explicit note + `product-flows.md` status. Do not run multiple `pnpm test:e2e:*` in parallel. See `AGENTS.md` → *Testing / E2E* and `e2e/README.md`.

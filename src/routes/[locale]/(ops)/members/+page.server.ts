@@ -9,8 +9,9 @@ import { createMember, type CreateMemberState } from '$lib/server/members/action
 import { createClient } from '$lib/supabase/server';
 import type { Actions, PageServerLoad } from './$types';
 
-function parseStatus(raw: string | null): 'all' | 'active' | 'expired' {
-	if (raw === 'active' || raw === 'expired') return raw;
+function parseStatus(raw: string | null): 'all' | 'ACTIVE' | 'EXPIRED' {
+	const u = (raw ?? '').trim().toUpperCase();
+	if (u === 'ACTIVE' || u === 'EXPIRED') return u;
 	return 'all';
 }
 

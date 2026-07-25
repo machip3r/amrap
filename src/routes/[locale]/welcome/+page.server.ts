@@ -58,7 +58,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		subtitle,
 		brand,
 		defaultDateOfBirth: profile.dateOfBirth,
-		defaultSex: profile.sex,
+		defaultGender: profile.gender,
 		defaultHeightCm: profile.heightCm,
 		defaultWeightKg: profile.weightKg
 	};

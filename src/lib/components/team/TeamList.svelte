@@ -167,18 +167,18 @@
 	}
 
 	function inviteBadgeClass(status: TeamMember['inviteStatus']) {
-		if (status === 'pending') {
+		if (status === 'PENDING') {
 			return 'bg-[var(--color-primary)]/15 text-[var(--color-primary)]';
 		}
-		if (status === 'cancelled') {
+		if (status === 'CANCELLED') {
 			return 'bg-[var(--color-muted)]/20 text-[var(--color-muted)]';
 		}
 		return 'bg-[var(--color-success)]/15 text-[var(--color-success)]';
 	}
 
 	function inviteBadgeLabel(status: TeamMember['inviteStatus']) {
-		if (status === 'pending') return labels.invitePending;
-		if (status === 'cancelled') return labels.inviteCancelled;
+		if (status === 'PENDING') return labels.invitePending;
+		if (status === 'CANCELLED') return labels.inviteCancelled;
 		return labels.inviteAccepted;
 	}
 
@@ -267,7 +267,7 @@
 									<span class="mt-0.5 block truncate text-xs text-[var(--color-muted)]">
 										{m.email ?? m.phone ?? '—'}
 									</span>
-									{#if m.inviteStatus === 'pending' || m.inviteStatus === 'cancelled'}
+									{#if m.inviteStatus === 'PENDING' || m.inviteStatus === 'CANCELLED'}
 										<span
 											class="mt-1.5 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide {inviteBadgeClass(
 												m.inviteStatus
@@ -347,7 +347,7 @@
 												{/if}
 											</p>
 											<div class="mt-0.5 flex flex-wrap items-center gap-1.5">
-												{#if m.inviteStatus === 'pending' || m.inviteStatus === 'cancelled'}
+												{#if m.inviteStatus === 'PENDING' || m.inviteStatus === 'CANCELLED'}
 													<span
 														class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide {inviteBadgeClass(
 															m.inviteStatus

@@ -134,7 +134,7 @@ export async function resolveInviteFlowGymId(): Promise<string | null> {
 		.from('memberships')
 		.select('gym_id')
 		.eq('person_id', person.id)
-		.eq('invite_status', 'accepted')
+		.eq('invite_status', 'ACCEPTED')
 		.order('created_at', { ascending: false })
 		.limit(1)
 		.maybeSingle();

@@ -3,17 +3,18 @@ import type { OrgPlanTier } from '$lib/types';
 /** Self-serve paid tiers only (Pro is contact sales). */
 export type SelfServeTier = 'STARTER' | 'GROWTH';
 
-export type BillingInterval = 'month' | 'year';
+/** Stored on `organizations.billing_interval`. */
+export type BillingInterval = 'MONTH' | 'YEAR';
 
 /** Stripe Price lookup_keys — MXN only for v1. */
 export const PRICE_LOOKUP_KEYS = {
 	STARTER: {
-		month: 'starter_mxn_monthly',
-		year: 'starter_mxn_annual'
+		MONTH: 'starter_mxn_monthly',
+		YEAR: 'starter_mxn_annual'
 	},
 	GROWTH: {
-		month: 'growth_mxn_monthly',
-		year: 'growth_mxn_annual'
+		MONTH: 'growth_mxn_monthly',
+		YEAR: 'growth_mxn_annual'
 	}
 } as const satisfies Record<SelfServeTier, Record<BillingInterval, string>>;
 
@@ -25,10 +26,10 @@ const LOOKUP_TO_TIER: Record<string, SelfServeTier> = {
 };
 
 const LOOKUP_TO_INTERVAL: Record<string, BillingInterval> = {
-	starter_mxn_monthly: 'month',
-	starter_mxn_annual: 'year',
-	growth_mxn_monthly: 'month',
-	growth_mxn_annual: 'year'
+	starter_mxn_monthly: 'MONTH',
+	starter_mxn_annual: 'YEAR',
+	growth_mxn_monthly: 'MONTH',
+	growth_mxn_annual: 'YEAR'
 };
 
 export function isSelfServeTier(tier: string): tier is SelfServeTier {
@@ -49,6 +50,20 @@ export function intervalFromLookupKey(
 ): BillingInterval | null {
 	if (!lookupKey) return null;
 	return LOOKUP_TO_INTERVAL[lookupKey] ?? null;
+}
+
+/** Accepts form/UI (`month`/`year`) or stored (`MONTH`/`YEAR`) values. */
+export function normalizeBillingInterval(
+	raw: string | null | undefined
+): BillingInterval | null {
+	const u = raw?.trim().toUpperCase();
+	if (u === 'MONTH' || u === 'YEAR') return u;
+	return null;
+}
+
+/** Stripe API statuses are lowercase; we persist uppercase on `organizations`. */
+export function toStoredSubscriptionStatus(status: string): string {
+	return status.trim().toUpperCase();
 }
 
 export function tierFromStripeMetadata(

@@ -28,7 +28,17 @@
 				const stripe = await loadStripe(key);
 				if (!stripe || cancelled) return;
 
-				const instance = await stripe.initEmbeddedCheckout({ clientSecret: secret });
+				const instance = await stripe.createEmbeddedCheckoutPage({
+					clientSecret: secret,
+					onComplete: () => {
+						// Fallback when redirect_on_completion does not navigate (e.g. never / if_required).
+						if (!cancelled && !window.location.search.includes('billing=success')) {
+							const url = new URL(window.location.href);
+							url.searchParams.set('billing', 'success');
+							window.location.assign(url.toString());
+						}
+					}
+				});
 				if (cancelled) {
 					instance.destroy();
 					return;

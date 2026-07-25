@@ -3,6 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import {
   bootstrapOrganizationAccount,
+  completeOwnerOnboardingSeed,
   createConfirmedAuthUser,
   E2E_PASSWORD,
   uniqueEmail,
@@ -17,6 +18,8 @@ export type OwnerFixtureCreds = {
   gymName: string;
   planName: string;
   provisional: boolean;
+  /** Set after Admin onboarding seed — prefer over re-querying gym_roles. */
+  gymId?: string;
 };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -57,7 +60,18 @@ export async function seedOwnerAccount(
   const planName = "Mensual E2E";
 
   const user = await createConfirmedAuthUser(email, E2E_PASSWORD);
-  await bootstrapOrganizationAccount(user.id, organizationName);
+  const organizationId = await bootstrapOrganizationAccount(
+    user.id,
+    organizationName,
+  );
+  const { gymId } = await completeOwnerOnboardingSeed({
+    userId: user.id,
+    organizationId,
+    fullName,
+    gymName,
+    provisional,
+    planName,
+  });
 
   return {
     email,
@@ -68,6 +82,7 @@ export async function seedOwnerAccount(
     gymName,
     planName,
     provisional,
+    gymId,
   };
 }
 

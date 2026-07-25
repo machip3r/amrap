@@ -5,9 +5,10 @@ export type Role = "OWNER" | "TRAINER" | "STAFF";
 
 export type OrgPlanTier = "FREEMIUM" | "STARTER" | "GROWTH" | "PRO";
 
-export type MemberStatus = "active" | "expired";
+/** Derived from memberships.expires_at for UI; DB status uses ACTIVE/EXPIRED etc. */
+export type MemberStatus = "ACTIVE" | "EXPIRED";
 
-export type PaymentMethod = "cash" | "transfer";
+export type PaymentMethod = "CASH" | "TRANSFER";
 
 export type CheckInSource = "QR" | "MANUAL" | "KIOSK";
 
@@ -113,7 +114,7 @@ export type Membership = {
   created_at: string;
 };
 
-export type InviteStatus = "pending" | "accepted" | "cancelled";
+export type InviteStatus = "PENDING" | "ACCEPTED" | "CANCELLED";
 
 /** Membership joined with person fields for UI lists. */
 export type Member = {
@@ -144,13 +145,19 @@ export type Plan = {
   created_at?: string;
 };
 
-export type PaymentKind = "plan" | "day_pass";
+export type PaymentKind = "PLAN" | "DAY_PASS";
+
+/** Desk pricing mode when recording a payment (forms / Zod). */
+export type PaymentPricingMode = "FULL" | "DISCOUNT" | "TRIAL";
 
 export type Payment = {
   id: string;
   gym_id: string;
   membership_id: string;
+  /** Charged amount (0 = trial / courtesy). */
   amount: number;
+  /** Catalog price at record time; null on legacy rows. */
+  list_amount: number | null;
   method: PaymentMethod;
   kind: PaymentKind;
   plan_id: string | null;

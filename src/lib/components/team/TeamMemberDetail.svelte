@@ -95,15 +95,15 @@
 					</span>
 					<span
 						class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold {member.inviteStatus ===
-						'pending'
+						'PENDING'
 							? 'bg-[var(--color-primary)]/15 text-[var(--color-primary)]'
-							: member.inviteStatus === 'cancelled'
+							: member.inviteStatus === 'CANCELLED'
 								? 'bg-[var(--color-muted)]/20 text-[var(--color-muted)]'
 								: 'bg-[var(--color-success)]/15 text-[var(--color-success)]'}"
 					>
-						{member.inviteStatus === 'pending'
+						{member.inviteStatus === 'PENDING'
 							? d.inviteStatus.pending
-							: member.inviteStatus === 'cancelled'
+							: member.inviteStatus === 'CANCELLED'
 								? d.inviteStatus.cancelled
 								: d.inviteStatus.accepted}
 					</span>

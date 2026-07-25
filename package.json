@@ -13,6 +13,11 @@
 		"test:e2e": "playwright test",
 		"test:e2e:ui": "playwright test --ui",
 		"test:e2e:owner": "playwright test --project=owner --project=owner-auth --project=provisional --project=owner-setup --project=provisional-setup",
+		"test:e2e:staff": "playwright test --project=owner-setup --project=staff-setup --project=staff",
+		"test:e2e:trainer": "playwright test --project=owner-setup --project=trainer-setup --project=trainer",
+		"test:e2e:member": "playwright test --project=owner-setup --project=member-setup --project=member",
+		"test:e2e:flows": "playwright test --project=owner-setup --project=multi-user",
+		"test:e2e:billing": "playwright test e2e/owner/billing-stripe.spec.ts --project=owner-setup --project=owner",
 		"knip": "knip"
 	},
 	"devDependencies": {

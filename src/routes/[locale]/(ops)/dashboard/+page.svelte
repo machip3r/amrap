@@ -390,7 +390,7 @@
 								<p class="truncate font-medium text-[var(--color-text)]">{row.name}</p>
 								<p class="mt-0.5 text-xs tabular-nums text-[var(--color-muted)]">{row.time}</p>
 								<div class="mt-1.5 flex flex-wrap items-center gap-2">
-									{#if row.status === 'active'}
+									{#if row.status === 'ACTIVE'}
 										<span
 											class="inline-flex rounded-full bg-[var(--color-success)]/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-[var(--color-success)]"
 										>
@@ -406,7 +406,7 @@
 									<span class="truncate text-xs text-[var(--color-muted)]">{row.planName}</span>
 								</div>
 							</div>
-							{#if row.status === 'expired'}
+							{#if row.status === 'EXPIRED'}
 								<a
 									href="/{locale}/members/{row.membershipId}"
 									class="inline-flex min-h-11 shrink-0 items-center rounded-md bg-[var(--color-primary)] px-3 text-xs font-semibold text-[var(--color-primary-on)]"
@@ -455,7 +455,7 @@
 									<td class="px-5 py-3 tabular-nums text-[var(--color-muted)]">{row.time}</td>
 									<td class="px-5 py-3 text-[var(--color-text)]">{row.planName}</td>
 									<td class="px-5 py-3">
-										{#if row.status === 'active'}
+										{#if row.status === 'ACTIVE'}
 											<span
 												class="inline-flex rounded-full bg-[var(--color-success)]/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-[var(--color-success)]"
 											>
@@ -470,7 +470,7 @@
 										{/if}
 									</td>
 									<td class="px-5 py-3 text-right">
-										{#if row.status === 'expired'}
+										{#if row.status === 'EXPIRED'}
 											<a
 												href="/{locale}/members/{row.membershipId}"
 												class="inline-flex rounded-md bg-[var(--color-primary)] px-3 py-1.5 text-xs font-semibold text-[var(--color-primary-on)] transition-colors hover:bg-[var(--color-primary-hover)]"

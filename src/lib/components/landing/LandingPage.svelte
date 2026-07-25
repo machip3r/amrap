@@ -256,7 +256,6 @@
 					class="h-9 w-auto object-contain object-left"
 				/>
 				<ul class="landing-footer-contact">
-					<li>{d.footer.phone}</li>
 					<li><a href="mailto:{d.footer.email}">{d.footer.email}</a></li>
 					<li>{d.footer.address}</li>
 				</ul>

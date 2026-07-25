@@ -78,7 +78,6 @@ export type LandingDictionary = {
   contact: {
     title: string;
     subtitle: string;
-    phoneLabel: string;
     emailLabel: string;
     addressLabel: string;
     name: string;
@@ -106,7 +105,6 @@ export type LandingDictionary = {
     bullets: string[];
   };
   footer: {
-    phone: string;
     email: string;
     address: string;
     legal: string;
@@ -117,7 +115,7 @@ export type LandingDictionary = {
 
 const es: LandingDictionary = {
   meta: {
-    title: "Software para gimnasios | AMRAP — check-in QR y membresías",
+    title: "AMRAP - Gestión de estudios fitness",
     description:
       "AMRAP (amrap.space) es software para gimnasios: check-in con QR, membresías, clases y recepción en un solo panel. Para gyms en México y EE. UU. Empieza gratis.",
   },
@@ -346,7 +344,6 @@ const es: LandingDictionary = {
     title: "Hablemos de tu gym",
     subtitle:
       "Cuéntanos cómo operas hoy. Te orientamos para empezar gratis, con un gym o con varias sedes.",
-    phoneLabel: "Teléfono",
     emailLabel: "Correo",
     addressLabel: "Ubicación",
     name: "Nombre",
@@ -375,7 +372,6 @@ const es: LandingDictionary = {
     bullets: ["Sin tarjeta", "Sin contratos", "Soporte en español"],
   },
   footer: {
-    phone: "+52 (461) 183-3992",
     email: "hello@amrap.space",
     address: "León, Guanajuato, MX",
     legal: "Legal",
@@ -390,7 +386,7 @@ const es: LandingDictionary = {
 
 const en: LandingDictionary = {
   meta: {
-    title: "Gym management software | AMRAP — QR check-in & memberships",
+    title: "AMRAP - Fitness Studio Management",
     description:
       "AMRAP (amrap.space) is gym management software: QR check-in, memberships, classes, and front-desk tools in one panel. Built for gyms in Mexico & the U.S. Start free.",
   },
@@ -619,7 +615,6 @@ const en: LandingDictionary = {
     title: "Let’s talk about your gym",
     subtitle:
       "Tell us how you run things today. We’ll help you start free, with one location, or with a few.",
-    phoneLabel: "Phone",
     emailLabel: "Email",
     addressLabel: "Location",
     name: "Name",
@@ -648,7 +643,6 @@ const en: LandingDictionary = {
     bullets: ["No card", "No contracts", "Support in Spanish & English"],
   },
   footer: {
-    phone: "+52 (461) 183-3992",
     email: "hello@amrap.space",
     address: "León, Guanajuato, MX",
     legal: "Legal",

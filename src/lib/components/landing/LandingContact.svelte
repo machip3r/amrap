@@ -113,12 +113,6 @@
 		<div class="landing-contact-grid">
 			<aside class="landing-contact-details">
 				<div class="landing-contact-detail">
-					<span class="landing-contact-detail-label">{c.phoneLabel}</span>
-					<a href="tel:{d.footer.phone.replace(/\s+/g, '')}" class="landing-contact-detail-value">
-						{d.footer.phone}
-					</a>
-				</div>
-				<div class="landing-contact-detail">
 					<span class="landing-contact-detail-label">{c.emailLabel}</span>
 					<a href="mailto:{d.footer.email}" class="landing-contact-detail-value">
 						{d.footer.email}

@@ -17,7 +17,7 @@ export type FeedbackFormState = {
 
 const feedbackSchema = z.object({
 	locale: localeSchema,
-	target: z.enum(['gym', 'amrap']),
+	target: z.enum(['GYM', 'AMRAP']),
 	body: z.string().trim().min(1).max(4000)
 });
 
@@ -50,7 +50,7 @@ export async function submitFeedbackAction(formData: FormData): Promise<Feedback
 
 	const parsed = feedbackSchema.safeParse({
 		locale: localeRaw,
-		target: formString(formData, 'target') || 'gym',
+		target: formString(formData, 'target') || 'GYM',
 		body: formString(formData, 'body')
 	});
 

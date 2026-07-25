@@ -130,6 +130,7 @@ export type Dictionary = {
     stepYou: string;
     stepGym: string;
     stepPlans: string;
+    stepBilling: string;
     stepDone: string;
     profileTitle: string;
     profileSubtitle: string;
@@ -166,6 +167,16 @@ export type Dictionary = {
     addPlan: string;
     skipPlans: string;
     planLimit: string;
+    planLimitUpgrade: string;
+    comparePlans: string;
+    billingTitle: string;
+    billingSubtitle: string;
+    billingSkip: string;
+    billingStayFreemium: string;
+    billingChooseStarter: string;
+    billingChooseGrowth: string;
+    billingContactPro: string;
+    billingFlashSuccess: string;
     doneTitle: string;
     doneSubtitle: string;
     goDashboard: string;
@@ -182,11 +193,11 @@ export type Dictionary = {
     subtitleTrainer: string;
     subtitleMember: string;
     dateOfBirth: string;
-    sex: string;
-    sexMale: string;
-    sexFemale: string;
-    sexOther: string;
-    sexPreferNot: string;
+    gender: string;
+    genderMale: string;
+    genderFemale: string;
+    genderOther: string;
+    genderPreferNot: string;
     heightCm: string;
     weightKg: string;
     submit: string;
@@ -223,6 +234,43 @@ export type Dictionary = {
     description: string;
     submit: string;
     error: string;
+  };
+  planCompare: {
+    title: string;
+    description: string;
+    featureGyms: string;
+    featureMembers: string;
+    featureStaff: string;
+    featurePackages: string;
+    featureBranding: string;
+    featureWatermark: string;
+    featureMultiGym: string;
+    featureOnlineBilling: string;
+    valueYes: string;
+    valueNo: string;
+    valueLimited: string;
+    valueSoon: string;
+  };
+  tour: {
+    skip: string;
+    next: string;
+    back: string;
+    done: string;
+    replay: string;
+    stepDashboardTitle: string;
+    stepDashboardBody: string;
+    stepCheckInTitle: string;
+    stepCheckInBody: string;
+    stepMembersTitle: string;
+    stepMembersBody: string;
+    stepClassesTitle: string;
+    stepClassesBody: string;
+    stepPaymentsTitle: string;
+    stepPaymentsBody: string;
+    stepPlansTitle: string;
+    stepPlansBody: string;
+    stepOrganizationTitle: string;
+    stepOrganizationBody: string;
   };
   noAccess: {
     title: string;
@@ -501,6 +549,17 @@ export type Dictionary = {
     noActivePlans: string;
     dayPassNotConfigured: string;
     amountHint: string;
+    pricingLabel: string;
+    pricingFull: string;
+    pricingDiscount: string;
+    pricingTrial: string;
+    pricingHint: string;
+    trialHint: string;
+    discountHint: string;
+    discountTooHigh: string;
+    listPrice: string;
+    badgeTrial: string;
+    badgeDiscount: string;
     statMonth: string;
     statMonthHint: string;
     statToday: string;
@@ -973,7 +1032,7 @@ export type Dictionary = {
 
 const es: Dictionary = {
   meta: {
-    title: "Software para gimnasios | AMRAP — check-in QR y membresías",
+    title: "AMRAP - Gestión de estudios fitness",
     description:
       "AMRAP (amrap.space) es software para gimnasios: check-in con QR, membresías, clases y recepción. Empieza gratis.",
   },
@@ -1111,6 +1170,7 @@ const es: Dictionary = {
     stepYou: "Tú",
     stepGym: "Gimnasio",
     stepPlans: "Membresías",
+    stepBilling: "Plan AMRAP",
     stepDone: "Listo",
     profileTitle: "Sobre ti",
     profileSubtitle: "Así te reconoceremos en el equipo",
@@ -1153,6 +1213,17 @@ const es: Dictionary = {
     addPlan: "Agregar paquete",
     skipPlans: "Saltar por ahora",
     planLimit: "En el plan gratuito puedes crear hasta 2 paquetes en este paso",
+    planLimitUpgrade: "Mejorar plan para paquetes ilimitados",
+    comparePlans: "Comparar planes",
+    billingTitle: "Elige tu plan AMRAP",
+    billingSubtitle:
+      "Puedes quedarte en el plan gratuito o mejorar ahora. Siempre puedes cambiarlo después en Organización.",
+    billingSkip: "Continuar con plan gratuito",
+    billingStayFreemium: "Plan gratuito",
+    billingChooseStarter: "Elegir Starter",
+    billingChooseGrowth: "Elegir Growth",
+    billingContactPro: "Hablar de Pro",
+    billingFlashSuccess: "Suscripción actualizada. Ya puedes seguir con más paquetes si lo necesitas.",
     doneTitle: "Todo listo",
     doneSubtitle: "Tu espacio ya está creado. Entra al panel para empezar.",
     goDashboard: "Ir al panel",
@@ -1170,11 +1241,11 @@ const es: Dictionary = {
     subtitleMember:
       "Cuéntanos un poco sobre ti para personalizar tu experiencia.",
     dateOfBirth: "Fecha de nacimiento",
-    sex: "Género",
-    sexMale: "Masculino",
-    sexFemale: "Femenino",
-    sexOther: "Otro",
-    sexPreferNot: "Prefiero no decir",
+    gender: "Género",
+    genderMale: "Masculino",
+    genderFemale: "Femenino",
+    genderOther: "Otro",
+    genderPreferNot: "Prefiero no decir",
     heightCm: "Estatura (cm)",
     weightKg: "Peso (kg)",
     submit: "Continuar",
@@ -1213,6 +1284,50 @@ const es: Dictionary = {
     description: "Completa la configuración de tu organización",
     submit: "Continuar",
     error: "No se pudo continuar",
+  },
+  planCompare: {
+    title: "Comparar planes AMRAP",
+    description: "Qué incluye cada plan para tu organización.",
+    featureGyms: "Gimnasios",
+    featureMembers: "Miembros activos",
+    featureStaff: "Staff por gym",
+    featurePackages: "Paquetes de membresía",
+    featureBranding: "Marca (logo / colores)",
+    featureWatermark: "Marca de agua AMRAP",
+    featureMultiGym: "Multi-gym",
+    featureOnlineBilling: "Cobros en línea (miembros)",
+    valueYes: "Sí",
+    valueNo: "No",
+    valueLimited: "Logo y colores",
+    valueSoon: "Próximamente",
+  },
+  tour: {
+    skip: "Saltar guía",
+    next: "Siguiente",
+    back: "Atrás",
+    done: "Listo",
+    replay: "Ver guía rápida",
+    stepDashboardTitle: "Tu día a día",
+    stepDashboardBody:
+      "Desde aquí registras miembros, entrenadores y abres el check-in sin buscar en el menú.",
+    stepCheckInTitle: "Check-in",
+    stepCheckInBody:
+      "Escanea el QR del miembro o búscale por nombre. Es la acción más usada en el piso.",
+    stepMembersTitle: "Miembros",
+    stepMembersBody:
+      "Alta, renovación, QR y detalle de cada membresía viven aquí.",
+    stepClassesTitle: "Clases",
+    stepClassesBody:
+      "Catálogo, calendario de la semana y lista de asistencia por sesión.",
+    stepPaymentsTitle: "Pagos",
+    stepPaymentsBody:
+      "Registra efectivo o transferencia, con precio completo, descuento o prueba.",
+    stepPlansTitle: "Planes",
+    stepPlansBody:
+      "Define los paquetes que vendes (precio y días) y el pase del día.",
+    stepOrganizationTitle: "Organización",
+    stepOrganizationBody:
+      "Suscripción AMRAP, sedes y facturación de tu cuenta. Solo dueños / provisionales.",
   },
   noAccess: {
     title: "Sin gimnasio activo",
@@ -1494,6 +1609,18 @@ const es: Dictionary = {
     noActivePlans: "No hay planes activos. Crea uno en Planes.",
     dayPassNotConfigured: "Configura el precio del pase del día en Planes.",
     amountHint: "Se rellena con el precio del plan o pase; puedes cambiarlo.",
+    pricingLabel: "Cobro",
+    pricingFull: "Precio completo",
+    pricingDiscount: "Descuento",
+    pricingTrial: "Prueba / cortesía",
+    pricingHint: "El plan o pase se aplica igual; solo cambia lo cobrado.",
+    trialHint:
+      "Se registra un pago de $0. El miembro recibe la duración del plan o pase sin cobro.",
+    discountHint: "Precio de lista {list}. Cobra menos (mayor a $0 y menor al precio).",
+    discountTooHigh: "El descuento debe ser menor al precio de lista",
+    listPrice: "Lista {amount}",
+    badgeTrial: "Prueba",
+    badgeDiscount: "Descuento",
     statMonth: "Este mes",
     statMonthHint: "{count} pagos registrados",
     statToday: "Hoy",
@@ -1986,7 +2113,7 @@ const es: Dictionary = {
 
 const en: Dictionary = {
   meta: {
-    title: "Gym management software | AMRAP — QR check-in & memberships",
+    title: "AMRAP - Fitness Studio Management",
     description:
       "AMRAP (amrap.space) is gym management software: QR check-in, memberships, classes, and front desk. Start free.",
   },
@@ -2124,6 +2251,7 @@ const en: Dictionary = {
     stepYou: "You",
     stepGym: "Gym",
     stepPlans: "Memberships",
+    stepBilling: "AMRAP plan",
     stepDone: "Done",
     profileTitle: "About you",
     profileSubtitle: "How your team will recognize you",
@@ -2166,6 +2294,17 @@ const en: Dictionary = {
     addPlan: "Add package",
     skipPlans: "Skip for now",
     planLimit: "On free plan you can create up to 2 packages in this step",
+    planLimitUpgrade: "Upgrade for unlimited packages",
+    comparePlans: "Compare plans",
+    billingTitle: "Choose your AMRAP plan",
+    billingSubtitle:
+      "Stay on Free or upgrade now. You can always change this later under Organization.",
+    billingSkip: "Continue on Free plan",
+    billingStayFreemium: "Free plan",
+    billingChooseStarter: "Choose Starter",
+    billingChooseGrowth: "Choose Growth",
+    billingContactPro: "Talk about Pro",
+    billingFlashSuccess: "Subscription updated. You can add more packages if you need them.",
     doneTitle: "You're all set",
     doneSubtitle: "Your space is ready. Head to the dashboard to get started.",
     goDashboard: "Go to dashboard",
@@ -2183,11 +2322,11 @@ const en: Dictionary = {
     subtitleMember:
       "Tell us a bit about you so we can personalize your experience.",
     dateOfBirth: "Date of birth",
-    sex: "Gender",
-    sexMale: "Male",
-    sexFemale: "Female",
-    sexOther: "Other",
-    sexPreferNot: "Prefer not to say",
+    gender: "Gender",
+    genderMale: "Male",
+    genderFemale: "Female",
+    genderOther: "Other",
+    genderPreferNot: "Prefer not to say",
     heightCm: "Height (cm)",
     weightKg: "Weight (kg)",
     submit: "Continue",
@@ -2225,6 +2364,50 @@ const en: Dictionary = {
     description: "Complete your organization setup",
     submit: "Continue",
     error: "Could not continue",
+  },
+  planCompare: {
+    title: "Compare AMRAP plans",
+    description: "What each organization plan includes.",
+    featureGyms: "Gyms",
+    featureMembers: "Active members",
+    featureStaff: "Staff per gym",
+    featurePackages: "Membership packages",
+    featureBranding: "Branding (logo / colors)",
+    featureWatermark: "AMRAP watermark",
+    featureMultiGym: "Multi-gym",
+    featureOnlineBilling: "Online member billing",
+    valueYes: "Yes",
+    valueNo: "No",
+    valueLimited: "Logo & colors",
+    valueSoon: "Coming soon",
+  },
+  tour: {
+    skip: "Skip guide",
+    next: "Next",
+    back: "Back",
+    done: "Done",
+    replay: "Replay quickstart",
+    stepDashboardTitle: "Your day-to-day",
+    stepDashboardBody:
+      "Register members and coaches, and open check-in from here without hunting the menu.",
+    stepCheckInTitle: "Check-in",
+    stepCheckInBody:
+      "Scan a member QR or search by name — the floor’s most used action.",
+    stepMembersTitle: "Members",
+    stepMembersBody:
+      "Sign-ups, renewals, QR, and membership detail all live here.",
+    stepClassesTitle: "Classes",
+    stepClassesBody:
+      "Catalog, week calendar, and per-session attendance.",
+    stepPaymentsTitle: "Payments",
+    stepPaymentsBody:
+      "Log cash or transfer — full price, discount, or trial.",
+    stepPlansTitle: "Plans",
+    stepPlansBody:
+      "Define packages you sell (price and days) and the day-pass price.",
+    stepOrganizationTitle: "Organization",
+    stepOrganizationBody:
+      "AMRAP subscription, locations, and billing. Owners / provisional only.",
   },
   noAccess: {
     title: "No active gym",
@@ -2505,6 +2688,18 @@ const en: Dictionary = {
     noActivePlans: "No active plans. Create one under Plans.",
     dayPassNotConfigured: "Set the day-pass price on the Plans page.",
     amountHint: "Filled from the plan or pass price; you can change it.",
+    pricingLabel: "Charge",
+    pricingFull: "Full price",
+    pricingDiscount: "Discount",
+    pricingTrial: "Trial / courtesy",
+    pricingHint: "The plan or pass still applies; only the charged amount changes.",
+    trialHint:
+      "Records a $0 payment. The member still gets the plan or pass duration with no charge.",
+    discountHint: "List price {list}. Charge less (above $0 and below list).",
+    discountTooHigh: "Discount must be less than the list price",
+    listPrice: "List {amount}",
+    badgeTrial: "Trial",
+    badgeDiscount: "Discount",
     statMonth: "This month",
     statMonthHint: "{count} payments recorded",
     statToday: "Today",

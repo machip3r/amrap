@@ -34,7 +34,7 @@
 	</div>
 {:else}
 	<div class="auth-container flex min-h-dvh flex-col items-center justify-center px-[var(--spacing-page)] py-4 sm:px-6 sm:py-6">
-		<div class="glass-panel animate-fade-in-up flex w-full max-w-lg flex-col rounded-2xl p-8 shadow-2xl sm:p-10">
+		<div class="glass-panel animate-fade-in-up flex w-full max-w-lg flex-col rounded-2xl p-8 shadow-2xl sm:max-w-xl sm:p-10">
 			<div class="mb-8 flex flex-col items-center text-center">
 				<div class="mb-5 flex w-full justify-center">
 					<a href="/{data.locale}" aria-label="AMRAP">
@@ -51,6 +51,10 @@
 				locale={data.locale}
 				onboardingState={data.state}
 				plans={data.plans}
+				planTier={data.planTier}
+				planCap={data.planCap}
+				stripePublishableKey={data.stripePublishableKey}
+				billingFlash={data.billingFlash}
 				showError={data.showError}
 				form={(form as OnboardingActionState) ?? null}
 			/>

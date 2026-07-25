@@ -16,7 +16,7 @@
 
 	let { locale, d, gymName, action = '?/feedback', form = null }: Props = $props();
 
-	let target = $state<'gym' | 'amrap'>('gym');
+	let target = $state<'GYM' | 'AMRAP'>('GYM');
 	let body = $state('');
 	let pending = $state(false);
 	let localForm = $state<FeedbackFormState>(form);
@@ -45,7 +45,7 @@
 				localForm = result.data as FeedbackFormState;
 				if ((result.data as FeedbackFormState)?.success) {
 					body = '';
-					target = 'gym';
+					target = 'GYM';
 				}
 			}
 			await update({ reset: false });
@@ -68,7 +68,7 @@
 			aria-label={labels.feedbackTargetLegend}
 		>
 			<label class={targetCardClass}>
-				<input type="radio" name="target" value="gym" bind:group={target} class="sr-only" />
+				<input type="radio" name="target" value="GYM" bind:group={target} class="sr-only" />
 				<span class="flex items-start gap-2.5">
 					<span
 						class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-[var(--color-border)] group-has-[:checked]:border-[var(--color-primary)]"
@@ -91,7 +91,7 @@
 				</span>
 			</label>
 			<label class={targetCardClass}>
-				<input type="radio" name="target" value="amrap" bind:group={target} class="sr-only" />
+				<input type="radio" name="target" value="AMRAP" bind:group={target} class="sr-only" />
 				<span class="flex items-start gap-2.5">
 					<span
 						class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-[var(--color-border)] group-has-[:checked]:border-[var(--color-primary)]"

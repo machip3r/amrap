@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "src/routes/landing.css"
+        ],
+        "createdAt": "2026-07-25T17:41:21.412Z",
+        "reason": "Incumbent nav shrink animates bar min-height and logo height; user asked to restore after polish transform experiment"
+      }
+    ]
+  }
+}

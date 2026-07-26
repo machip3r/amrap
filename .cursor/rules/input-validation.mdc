@@ -1,0 +1,23 @@
+---
+description: Strict client+server input limits and regex for every user-editable field
+alwaysApply: true
+---
+
+# Input validation (strict)
+
+Follow **`AGENTS.md` → Validation, schemas / DTOs, sanitization**. Every user-editable control must be bounded.
+
+## Non-negotiables
+
+1. **Server:** Zod in `src/lib/validation/schemas.ts` (or reuse schemas there) before DB/Auth — length + regex/enum on every field.
+2. **Client:** `maxlength` / digit caps + sanitize on input (`sanitize*Input` helpers). UX only; never trust the client alone.
+3. **No unbounded `type="number"`** for integers — prefer `DigitInput` / `sanitizeDigitsInput` + `LIMITS.planDurationDays` (etc.) so `e`, `-`, `.`, and huge values cannot be typed.
+4. **Decimals** (money): `inputmode="decimal"` + `sanitizeDecimalInput` / `parseClampedAmount` + `LIMITS.amount` / `LIMITS.amountInputMaxLen`.
+5. **Reuse** `LIMITS`, schemas, and sanitizers — do not invent one-off max lengths or patterns in components.
+6. Map failures with `zodFieldErrors` + `FormField` `error` (dictionary copy, `es` + `en`).
+
+## When adding a field
+
+- Add/extend `LIMITS` + schema (+ sanitizer if free-text).
+- Wire `maxlength` / digit max on the control.
+- Validate again in `+page.server.ts` / `+server.ts`.

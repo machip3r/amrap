@@ -10,11 +10,12 @@ import {
 	type SelfServeTier
 } from '$lib/stripe/catalog';
 import { PLAN_TIER_RANK } from '$lib/plans/limits';
+import { getRequestOrigin } from '$lib/http/origin';
 import { getStripe } from '$lib/stripe/server';
-import { getPublicAppUrl } from '$lib/supabase/env';
 import { createClient } from '$lib/supabase/server';
 import { formString, localeSchema } from '$lib/validation/schemas';
 import type { OrgPlanTier } from '$lib/types';
+import type Stripe from 'stripe';
 
 export type OrgActionState = {
 	error?: string;
@@ -85,10 +86,49 @@ async function resolvePriceId(tier: SelfServeTier, interval: BillingInterval): P
 	return price.id;
 }
 
+function isMissingStripeCustomerError(err: unknown): boolean {
+	if (!err || typeof err !== 'object') return false;
+	const e = err as Stripe.errors.StripeError;
+	return (
+		e.code === 'resource_missing' ||
+		/no such customer/i.test(e.message ?? '') ||
+		/customer.*does not exist/i.test(e.message ?? '')
+	);
+}
+
+/**
+ * Reuse stored customer when it exists in the current Stripe mode/account.
+ * If the id is stale (test↔live mix, or wrong account), clear it and create a new one.
+ */
 async function ensureStripeCustomer(org: OrgBillingRow, email: string | undefined): Promise<string> {
 	const stripe = getStripe();
+	const supabase = createClient();
+
 	if (org.stripe_customer_id) {
-		return org.stripe_customer_id;
+		try {
+			const existing = await stripe.customers.retrieve(org.stripe_customer_id);
+			if (!('deleted' in existing && existing.deleted)) {
+				return org.stripe_customer_id;
+			}
+			console.warn(
+				'ensureStripeCustomer: clearing deleted stripe_customer_id',
+				org.stripe_customer_id
+			);
+		} catch (err) {
+			if (!isMissingStripeCustomerError(err)) throw err;
+			console.warn(
+				'ensureStripeCustomer: clearing stale stripe_customer_id',
+				org.stripe_customer_id
+			);
+		}
+		await supabase
+			.from('organizations')
+			.update({
+				stripe_customer_id: null,
+				stripe_subscription_id: null,
+				stripe_subscription_status: null
+			})
+			.eq('id', org.id);
 	}
 
 	const customer = await stripe.customers.create({
@@ -100,7 +140,6 @@ async function ensureStripeCustomer(org: OrgBillingRow, email: string | undefine
 		}
 	});
 
-	const supabase = createClient();
 	const { error } = await supabase
 		.from('organizations')
 		.update({ stripe_customer_id: customer.id })
@@ -113,7 +152,7 @@ async function ensureStripeCustomer(org: OrgBillingRow, email: string | undefine
 }
 
 function appOrigin(): string {
-	return getPublicAppUrl() || 'http://localhost:5173';
+	return getRequestOrigin();
 }
 
 /**
@@ -240,6 +279,14 @@ export async function requestSubscriptionCheckout(formData: FormData): Promise<O
 		return { success: true, clientSecret: session.client_secret };
 	} catch (err) {
 		console.error('requestSubscriptionCheckout', err);
+		if (err && typeof err === 'object' && 'message' in err) {
+			console.error(
+				'requestSubscriptionCheckout detail',
+				(err as { type?: string; code?: string; message?: string }).type,
+				(err as { code?: string }).code,
+				(err as { message?: string }).message
+			);
+		}
 		return { error: d.organization.checkoutFailed };
 	}
 }

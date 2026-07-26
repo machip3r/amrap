@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { inputControlClass, inputInvalidClass } from './input-styles';
+
 	type Props = {
 		id: string;
 		name: string;
@@ -20,6 +22,7 @@
 		class?: string;
 		oninput?: (event: Event) => void;
 		onkeydown?: (event: KeyboardEvent) => void;
+		onblur?: (event: FocusEvent) => void;
 	};
 
 	let {
@@ -42,11 +45,9 @@
 		disabled = false,
 		class: className = '',
 		oninput,
-		onkeydown
+		onkeydown,
+		onblur
 	}: Props = $props();
-
-	const baseClass =
-		'box-border min-h-[var(--control-height)] w-full min-w-0 max-w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] px-4 py-2.5 text-base text-[var(--color-text)] placeholder-[var(--color-muted)] transition-colors focus:border-[var(--color-ring)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)] disabled:cursor-not-allowed disabled:opacity-60';
 </script>
 
 <input
@@ -67,9 +68,8 @@
 	{spellcheck}
 	aria-invalid={invalid || undefined}
 	aria-describedby={describedBy}
-	class="{baseClass} {invalid
-		? 'border-[var(--color-primary)] focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]'
-		: ''} {className}"
+	class="{inputControlClass} {inputInvalidClass(invalid)} {className}"
 	oninput={oninput}
 	{onkeydown}
+	{onblur}
 />

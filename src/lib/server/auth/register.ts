@@ -94,14 +94,21 @@ export async function registerAction(formData: FormData): Promise<RegisterState>
 	});
 
 	if (error) {
-		console.error('registerAction signUp', error.message);
-		if (looksLikeEmailAlreadyRegistered(error.message)) {
+		const authDetail = {
+			message: error.message,
+			code: 'code' in error ? error.code : undefined,
+			status: 'status' in error ? error.status : undefined,
+			name: error.name
+		};
+		console.error('registerAction signUp', authDetail);
+		const msg = error.message || String(authDetail.code ?? '');
+		if (looksLikeEmailAlreadyRegistered(msg)) {
 			return { error: d.register.emailInUse };
 		}
-		if (looksLikeEmailRateLimited(error.message)) {
+		if (looksLikeEmailRateLimited(msg)) {
 			return { error: d.register.emailRateLimited };
 		}
-		if (looksLikeEmailAddressInvalid(error.message)) {
+		if (looksLikeEmailAddressInvalid(msg)) {
 			return { error: d.register.emailInvalid };
 		}
 		return { error: d.register.error };

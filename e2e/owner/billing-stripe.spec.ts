@@ -263,7 +263,7 @@ test.describe('owner Stripe billing (hybrid)', () => {
 
 		const contact = page.getByRole('link', { name: /Contactar a AMRAP/i });
 		await expect(contact).toBeVisible();
-		await expect(contact).toHaveAttribute('href', /\/es#contacto$/);
+		await expect(contact).toHaveAttribute('href', /\/es#contact$/);
 		await expect(page.locator('#subscription iframe')).toHaveCount(0);
 	});
 

@@ -289,7 +289,7 @@ Bucket `gym-logos` is **public** for object URL reads; there is **no** broad `SE
 | -------- | -------- |
 | `register_organization_account(name)` | Creates Freemium org + ensures `persons` row for caller; idempotent if org already exists for `created_by` |
 | `onboarding_save_profile(full_name, as_provisional?)` | Updates person name; sets org `pending_as_provisional` |
-| `onboarding_create_gym(name, branch_name?, gym_address?, branch_address?)` | First gym + branch + optional addresses + `gym_roles` OWNER (or provisional) |
+| `onboarding_create_gym(name, branch_name?, gym_address?, branch_address?)` | First gym + branch + optional addresses + `gym_roles` OWNER (or provisional). Onboarding UI collects **one** address and passes it to both address params. |
 | `onboarding_mark_plans_done()` | Sets `onboarding_plans_done` |
 | `onboarding_mark_billing_done()` | Sets `onboarding_plans_done` + `onboarding_billing_done` |
 | `onboarding_complete()` | Sets org `onboarding_completed_at` + billing/plans flags + stamps caller’s `persons.profile_completed_at` |

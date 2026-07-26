@@ -190,9 +190,9 @@ Prove QR speed, stability, and the ops UI with **no risk**. Tight enough to push
 | Staff seats | **5 per gym** |
 | Membership plans | Unlimited (practical) |
 | Attendance history | Full |
-| Online member billing (gateway) | **Yes — Beta** (Stripe / Mercado Pago early access) |
+| Online member billing (gateway) | **Yes** |
 | Manual payments (cash / SPEI / terminal) | **Yes** — no AMRAP platform fee (primary MX path today) |
-| Branding | **Logo + colors** (not custom domain) |
+| Branding | **Yes** — logo + colors |
 | Multi-gym | **No** |
 
 Positioning: much lower monthly than typical competitors (often **$2,000+ MXN**/mo) while giving predictable cash per single-gym customer.
@@ -202,11 +202,12 @@ Positioning: much lower monthly than typical competitors (often **$2,000+ MXN**/
 Everything in Starter, plus:
 
 - **2–3 gyms** under the same organization (one invoice)
-- **~5 staff seats per gym** (≈ **15** across 3 locations — not a shared org pool of 5)
+- **~10 staff seats per gym** (≈ **30** across 3 locations — not a shared org pool)
 - **Consolidated dashboard** (“bird’s-eye” across locations)
 - **Passport-style** member profiles across sites
 - **Comparative analytics** between gyms / branches
-- Same practical member soft cap **per gym** (~500)
+- Soft member cap **~1000 per gym** (warn, never block)
+- **Branding** (logo + colors) and **online member billing** included
 - **Full white-label** (custom domain / advanced branding) — **Coming soon** / early access
 - No “Powered by AMRAP” footer watermark (ops + member shells)
 
@@ -220,8 +221,8 @@ For **more than 3 gyms**, unlimited staff/members, full customization, priority 
 
 During Beta, mark unfinished money features clearly:
 
-- **Online member billing** and **AMRAP subscription checkout**: label **Beta** / early access on marketing and in-app.
-- Lean on **manual payment logging** (cash, SPEI, Clip/MP terminal) as the default strength for small MX gyms — no platform commission.
+- **AMRAP subscription checkout**: label **Beta** / early access on marketing and in-app where the flow is still maturing.
+- **Online member billing** ships on **Starter+** (compare table / pricing). Lean on **manual payment logging** (cash, SPEI, Clip/MP terminal) as the default strength for small MX gyms — no platform commission.
 
 ### Planned competitive wedge: WhatsApp
 

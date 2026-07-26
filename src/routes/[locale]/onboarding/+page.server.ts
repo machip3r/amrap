@@ -20,6 +20,7 @@ import {
 	deleteOnboardingPlanAction,
 	finishOnboardingAction,
 	requestSubscriptionCheckout,
+	saveOnboardingDayPassAction,
 	saveOnboardingGymAction,
 	saveOnboardingProfileAction,
 	skipOnboardingBillingAction,
@@ -105,21 +106,27 @@ export const load: PageServerLoad = async ({ params, url }) => {
 	const planCap = maxActivePlans(planTier);
 
 	let plans: { id: string; name: string; price: number; duration_days: number }[] = [];
+	let dayPassPrice: number | null = null;
 	if (state.gymId) {
 		const limit = planCap ?? 50;
-		const { data } = await supabase
-			.from('plans')
-			.select('id, name, price, duration_days')
-			.eq('gym_id', state.gymId)
-			.eq('is_active', true)
-			.order('created_at', { ascending: true })
-			.limit(limit);
+		const [{ data }, gymRes] = await Promise.all([
+			supabase
+				.from('plans')
+				.select('id, name, price, duration_days')
+				.eq('gym_id', state.gymId)
+				.eq('is_active', true)
+				.order('created_at', { ascending: true })
+				.limit(limit),
+			supabase.from('gyms').select('day_pass_price').eq('id', state.gymId).maybeSingle()
+		]);
 		plans = (data ?? []).map((p) => ({
 			id: p.id,
 			name: p.name,
 			price: Number(p.price),
 			duration_days: p.duration_days
 		}));
+		dayPassPrice =
+			gymRes.data?.day_pass_price != null ? Number(gymRes.data.day_pass_price) : null;
 	}
 
 	return {
@@ -127,6 +134,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 		d,
 		state,
 		plans,
+		dayPassPrice,
 		planTier,
 		planCap,
 		stripePublishableKey: getStripePublishableKey() ?? null,
@@ -145,6 +153,8 @@ export const actions = {
 	updatePlan: async ({ request }) =>
 		updateOnboardingPlanAction(await request.formData()) as OnboardingActionState,
 	deletePlan: async ({ request }) => deleteOnboardingPlanAction(await request.formData()),
+	dayPass: async ({ request }) =>
+		saveOnboardingDayPassAction(await request.formData()) as OnboardingActionState,
 	skipPlans: async ({ request }) => skipOnboardingPlansAction(await request.formData()),
 	skipBilling: async ({ request }) => skipOnboardingBillingAction(await request.formData()),
 	checkout: async ({ request }) =>

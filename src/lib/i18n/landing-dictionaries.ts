@@ -56,6 +56,7 @@ export type LandingDictionary = {
     annualSave: string;
     select: string;
     contactCta: string;
+    comparePlans: string;
     taxNote: string;
     plans: {
       name: string;
@@ -233,6 +234,7 @@ const es: LandingDictionary = {
     annualSave: "Ahorra ~17%",
     select: "Empezar",
     contactCta: "Hablar con nosotros",
+    comparePlans: "Comparar planes",
     taxNote: "Precios en listado público. Impuestos no incluidos.",
     plans: [
       {
@@ -266,9 +268,9 @@ const es: LandingDictionary = {
           "Hasta ~500 miembros activos (aviso suave; no bloquea acceso)",
           "5 cuentas de staff por sede",
           "Planes de membresía ilimitados",
-          "Cobros en línea · Beta (Stripe / Mercado Pago)",
+          "Cobros en línea para miembros",
           "Pagos manuales sin comisión de plataforma (efectivo, SPEI, Clip)",
-          "Personalización de marca (logo y colores)",
+          "Marca propia (logo y colores)",
           "1 gym · 1 sucursal",
         ],
       },
@@ -282,9 +284,10 @@ const es: LandingDictionary = {
         cta: "register",
         features: [
           "Todo lo de Starter",
-          "Hasta 3 sedes · ~5 staff por sede (hasta 15 en la org)",
+          "Hasta ~1000 miembros activos por sede (aviso suave)",
+          "Hasta 3 sedes · ~10 staff por sede (hasta 30 en la org)",
           "Vista multi-gym / pasaporte entre sedes",
-          "White-label completo (dominio propio) · Próximamente",
+          "Marca propia · cobros en línea",
           "El tercer gym no sube el software",
         ],
       },
@@ -320,11 +323,11 @@ const es: LandingDictionary = {
       },
       {
         q: "¿AMRAP se queda con comisión de mis membresías?",
-        a: "No. Hoy registras pagos en efectivo, SPEI o terminal (Clip/MP) sin comisión de plataforma. La pasarela en línea para miembros está en acceso anticipado (Beta) en planes de pago; las comisiones de tarjeta las cobra el proveedor.",
+        a: "No. Hoy registras pagos en efectivo, SPEI o terminal (Clip/MP) sin comisión de plataforma. En planes de pago también puedes cobrar membresías en línea; las comisiones de tarjeta las cobra el proveedor.",
       },
       {
         q: "¿Puedo manejar varios gyms?",
-        a: "Sí. Growth cubre 2–3 gyms con una factura fija y hasta ~5 staff por sede. Si necesitas 4 o más, el plan Pro se cotiza contigo.",
+        a: "Sí. Growth cubre 2–3 gyms con una factura fija y hasta ~10 staff por sede. Si necesitas 4 o más, el plan Pro se cotiza contigo.",
       },
       {
         q: "¿Qué pasa con el QR si alguien entrena en varios lugares?",
@@ -504,6 +507,7 @@ const en: LandingDictionary = {
     annualSave: "Save ~17%",
     select: "Get started",
     contactCta: "Talk to us",
+    comparePlans: "Compare plans",
     taxNote: "Public list prices. Taxes not included.",
     plans: [
       {
@@ -537,9 +541,9 @@ const en: LandingDictionary = {
           "Up to ~500 active members (soft notice; access never blocked)",
           "5 staff accounts per location",
           "Unlimited membership plans",
-          "Online member billing · Beta (Stripe / Mercado Pago)",
+          "Online member billing",
           "Manual payments with no platform fee (cash, transfer, terminal)",
-          "Brand customization (logo and colors)",
+          "Own branding (logo and colors)",
           "1 gym · 1 branch",
         ],
       },
@@ -553,9 +557,10 @@ const en: LandingDictionary = {
         cta: "register",
         features: [
           "Everything in Starter",
-          "Up to 3 locations · ~5 staff per gym (up to 15 in the org)",
+          "Up to ~1000 active members per location (soft notice)",
+          "Up to 3 locations · ~10 staff per gym (up to 30 in the org)",
           "Multi-gym rollup / passport across sites",
-          "Full white-label (custom domain) · Coming soon",
+          "Own branding · online member billing",
           "A third gym doesn’t raise the software bill",
         ],
       },
@@ -591,11 +596,11 @@ const en: LandingDictionary = {
       },
       {
         q: "Does AMRAP take a cut of my memberships?",
-        a: "No. Today you log cash, SPEI, or terminal (Clip/MP) payments with no platform fee. Online member billing is early access (Beta) on paid plans; card fees stay with the provider.",
+        a: "No. Today you log cash, SPEI, or terminal (Clip/MP) payments with no platform fee. Paid plans also include online member billing; card fees stay with the provider.",
       },
       {
         q: "Can I run multiple gyms?",
-        a: "Yes. Growth covers 2–3 gyms on one flat invoice with ~5 staff per location. Need 4 or more? Pro is quoted with you.",
+        a: "Yes. Growth covers 2–3 gyms on one flat invoice with ~10 staff per location. Need 4 or more? Pro is quoted with you.",
       },
       {
         q: "What about QR if someone trains in several places?",
@@ -661,21 +666,21 @@ export function getLandingDictionary(locale: Locale): LandingDictionary {
 
 export type LandingSectionId =
   | "start"
-  | "producto"
-  | "proceso"
-  | "precios"
-  | "preguntas"
-  | "contacto";
+  | "product"
+  | "process"
+  | "pricing"
+  | "faq"
+  | "contact";
 
 export function sectionIdForNav(
   key: "home" | "product" | "pricing" | "faq" | "contact",
 ): LandingSectionId {
   const map = {
     home: "start",
-    product: "producto",
-    pricing: "precios",
-    faq: "preguntas",
-    contact: "contacto",
+    product: "product",
+    pricing: "pricing",
+    faq: "faq",
+    contact: "contact",
   } as const;
   return map[key];
 }

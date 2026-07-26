@@ -22,6 +22,17 @@ export const LIMITS = {
   search: 100,
   checkInCode: 200,
   address: 240,
+  /** Timer editor: minutes 0–99, seconds 0–59, sets 1–99. */
+  timerMinutes: 99,
+  timerSeconds: 59,
+  timerSets: 99,
+  timerName: 80,
+  /** Membership plan length in days (≈10 years). */
+  planDurationDays: 3650,
+  /** Money / day-pass / plan price upper bound. */
+  amount: 1_000_000,
+  /** Max characters while typing a decimal amount (e.g. 1000000.00). */
+  amountInputMaxLen: 12,
 } as const;
 
 /** Lowercase email local+domain shape (after trim + lowercasing). */
@@ -270,6 +281,75 @@ export function sanitizeSearchInput(raw: string): string {
   return raw.replace(/[^\p{L}\p{M}\p{N}\s.@+\-_]/gu, "").slice(0, LIMITS.search);
 }
 
+
+/** Digits only, capped — use for integer fields instead of unbounded `type="number"`. */
+export function sanitizeDigitsInput(raw: string, maxDigits: number): string {
+  return raw.replace(/\D/g, "").slice(0, Math.max(0, maxDigits));
+}
+
+/** Parse digits to an int clamped to [min, max]; empty → fallback. */
+export function parseClampedInt(
+  raw: string,
+  min: number,
+  max: number,
+  fallback: number,
+): number {
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return fallback;
+  const n = Number.parseInt(digits, 10);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, n));
+}
+
+/** Money / decimal: optional digits + one dot, capped length. */
+export function sanitizeDecimalInput(
+  raw: string,
+  maxLen = LIMITS.amountInputMaxLen,
+): string {
+  const cleaned = raw.replace(/[^\d.]/g, "").slice(0, maxLen);
+  const firstDot = cleaned.indexOf(".");
+  if (firstDot === -1) return cleaned;
+  const whole = cleaned.slice(0, firstDot);
+  const frac = cleaned.slice(firstDot + 1).replace(/\./g, "").slice(0, 2);
+  return `${whole}.${frac}`;
+}
+
+/** Parse decimal money clamped to [0, max]; empty → fallback. */
+export function parseClampedAmount(
+  raw: string,
+  max = LIMITS.amount,
+  fallback = 0,
+): number {
+  const cleaned = sanitizeDecimalInput(raw);
+  if (!cleaned || cleaned === ".") return fallback;
+  const n = Number.parseFloat(cleaned);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(0, n));
+}
+
+/** Timer routine display name. */
+export function sanitizeTimerNameInput(raw: string): string {
+  return sanitizeEntityNameInput(raw).slice(0, LIMITS.timerName);
+}
+
+export const timerMinutesSchema = z.coerce
+  .number()
+  .int()
+  .min(0)
+  .max(LIMITS.timerMinutes);
+
+export const timerSecondsSchema = z.coerce
+  .number()
+  .int()
+  .min(0)
+  .max(LIMITS.timerSeconds);
+
+export const timerSetsSchema = z.coerce
+  .number()
+  .int()
+  .min(1)
+  .max(LIMITS.timerSets);
+
 /** QR payload or membership UUID typed at the desk. */
 export const checkInCodeSchema = z
   .string()
@@ -282,9 +362,17 @@ export const uuidSchema = z.uuid();
 
 export const paymentMethodSchema = z.enum(["CASH", "TRANSFER"]);
 
-export const amountSchema = z.coerce.number().finite().min(0).max(1_000_000);
+export const amountSchema = z.coerce
+  .number()
+  .finite()
+  .min(0)
+  .max(LIMITS.amount);
 
-export const durationDaysSchema = z.coerce.number().int().min(1).max(3650);
+export const durationDaysSchema = z.coerce
+  .number()
+  .int()
+  .min(1)
+  .max(LIMITS.planDurationDays);
 
 export function formString(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "");

@@ -110,8 +110,26 @@
 							{featureLabel(feature.id)}
 						</th>
 						{#each PLAN_COMPARE_TIERS as tier (tier)}
-							<td class="px-2 py-3 text-center tabular-nums text-[var(--color-muted)] sm:px-3">
-								{valueLabel(feature.values[tier])}
+							{@const cell = feature.values[tier]}
+							{@const preferNo = feature.id === 'watermark'}
+							<td class="px-2 py-3 text-center tabular-nums sm:px-3">
+								{#if cell === 'yes' && !preferNo}
+									<span
+										class="inline-flex min-h-7 items-center justify-center rounded-md bg-[var(--color-success)]/15 px-2.5 py-0.5 text-sm font-bold text-[var(--color-success)]"
+									>
+										{labels.valueYes}
+									</span>
+								{:else if cell === 'no' && preferNo}
+									<span
+										class="inline-flex min-h-7 items-center justify-center rounded-md bg-[var(--color-success)]/15 px-2.5 py-0.5 text-sm font-bold text-[var(--color-success)]"
+									>
+										{labels.valueNo}
+									</span>
+								{:else if cell === 'yes' || cell === 'no'}
+									<span class="text-[var(--color-muted)]">{valueLabel(cell)}</span>
+								{:else}
+									<span class="text-[var(--color-muted)]">{valueLabel(cell)}</span>
+								{/if}
 							</td>
 						{/each}
 					</tr>

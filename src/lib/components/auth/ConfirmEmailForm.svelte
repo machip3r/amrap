@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { applyAction, enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+	import Loader2 from '@lucide/svelte/icons/loader-2';
 	import type { Locale } from '$lib/i18n/config';
 	import type { Dictionary } from '$lib/i18n/dictionaries';
 	import type { ConfirmEmailState } from '$lib/server/auth/confirm-email';
@@ -27,9 +29,19 @@
 	const otpError = $derived(form?.fieldErrors?.otp);
 	const success = $derived(form?.success ?? lastSuccess);
 	const canVerify = $derived(otp.length === 6);
+	const busy = $derived(verifyPending || resendPending);
+
+	function portal(node: HTMLElement) {
+		document.body.appendChild(node);
+		return {
+			destroy() {
+				node.remove();
+			}
+		};
+	}
 
 	function submitIfComplete(code: string) {
-		if (code.length !== 6 || verifyPending || !verifyFormEl) return;
+		if (code.length !== 6 || busy || !verifyFormEl) return;
 		otp = code;
 		requestAnimationFrame(() => verifyFormEl?.requestSubmit());
 	}
@@ -44,7 +56,26 @@
 	});
 </script>
 
-<div class="flex w-full flex-col gap-5">
+<div class="relative flex w-full flex-col gap-5" aria-busy={busy}>
+	{#if verifyPending}
+		<div
+			use:portal
+			class="fixed inset-0 z-[60] flex items-center justify-center bg-[var(--color-text)]/40 px-6 backdrop-blur-[2px]"
+			role="status"
+			aria-live="polite"
+		>
+			<div
+				class="flex flex-col items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-8 py-6 shadow-xl"
+			>
+				<Loader2
+					class="h-8 w-8 animate-spin text-[var(--color-primary)]"
+					aria-hidden="true"
+				/>
+				<p class="text-sm font-semibold text-[var(--color-text)]">{d.confirmEmail.verifying}</p>
+			</div>
+		</div>
+	{/if}
+
 	<div
 		class="rounded-lg border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/10 p-4 text-sm text-[var(--color-text)]"
 	>
@@ -63,9 +94,14 @@
 		novalidate
 		use:enhance={() => {
 			verifyPending = true;
-			return async ({ update }) => {
+			return async ({ result, update }) => {
+				if (result.type === 'redirect') {
+					await applyAction(result);
+					await goto(result.location);
+					return;
+				}
 				verifyPending = false;
-				await update();
+				await update({ reset: false });
 			};
 		}}
 	>
@@ -77,7 +113,7 @@
 			label={d.confirmEmail.otpLabel}
 			bind:value={otp}
 			oncomplete={submitIfComplete}
-			disabled={verifyPending}
+			disabled={busy}
 			error={otpError}
 		/>
 
@@ -88,7 +124,7 @@
 			<p class="text-sm font-medium text-[var(--color-success)]" role="status">{success}</p>
 		{/if}
 
-		<Button type="submit" variant="primaryBlock" disabled={verifyPending || !canVerify}>
+		<Button type="submit" variant="primaryBlock" disabled={busy || !canVerify}>
 			{verifyPending ? d.confirmEmail.verifying : d.confirmEmail.verify}
 		</Button>
 	</form>
@@ -99,15 +135,19 @@
 		class="flex flex-col gap-2"
 		use:enhance={() => {
 			resendPending = true;
-			return async ({ update }) => {
+			return async ({ result, update }) => {
+				if (result.type === 'redirect') {
+					await update();
+					return;
+				}
 				resendPending = false;
-				await update();
+				await update({ reset: false });
 			};
 		}}
 	>
 		<input type="hidden" name="locale" value={locale} />
 		<input type="hidden" name="email" value={displayEmail} />
-		<Button type="submit" variant="ghost" class="w-full py-2 text-sm" disabled={resendPending}>
+		<Button type="submit" variant="ghost" class="w-full py-2 text-sm" disabled={busy}>
 			{resendPending ? d.confirmEmail.resending : d.confirmEmail.resend}
 		</Button>
 	</form>
@@ -117,7 +157,7 @@
 		<input type="hidden" name="from" value={from} />
 		<p class="text-sm text-[var(--color-muted)]">
 			{d.confirmEmail.backToLoginPrompt}
-			<Button type="submit" variant="link" class="inline p-0 align-baseline">
+			<Button type="submit" variant="link" class="inline p-0 align-baseline" disabled={busy}>
 				{d.confirmEmail.backToLoginLink}
 			</Button>
 		</p>

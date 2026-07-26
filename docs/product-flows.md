@@ -85,7 +85,7 @@ Granular `gym_roles.permissions` JSON: **Planned** (unused in UI today).
 
 ### 1.1 Landing (`/[locale]`) — Shipped
 
-**UI:** Hero (brand-first, gym-floor value) → audience strip → differentiators + daily product → how-it-works (4 steps) → pricing (monthly/annual) → FAQ → contact → final CTA band → footer.
+**UI:** Hero (brand-first, gym-floor value) → audience strip → differentiators + daily product → how-it-works (4 steps) → pricing (monthly/annual + **Compare plans** dialog) → FAQ → contact → final CTA band → footer.
 
 **Positioning:** Ops software for gyms (boxes, functional, strength, combat, boutique) — one QR / many roles, org-pays billing, honest freemium. Not boutique CRM / FitCoins / fiscal-invoice marketing.
 
@@ -164,18 +164,22 @@ Clear session + pending cookies. Redirect marketing (or login).
 
 - Full name.
 - Starting role: **Owner** vs **Provisional manager** (full powers until a real owner accepts — transfer UI still **Planned**).
-- Continue.
+- Sticky **Continue** (and **Back** from later steps); **Logout** fixed in the footer below those actions.
 
 ### Step 2 — First gym
 
-- Gym/brand name · optional gym address.
-- Short location name (branch; default “Principal”) · optional physical address.
+- Gym/brand name · optional address (saved on gym + first branch).
+- Short location name (branch; default “Principal”).
+- Sticky **Back** / **Continue** actions; **Logout** in the fixed footer.
 - Freemium: 1 gym / 1 branch — UI does not offer more here. Sets `amrap_gym_id`.
 
-### Step 3 — Packages / memberships (optional)
+### Step 3 — Memberships (optional)
 
-- What you charge members (e.g. Monthly $500 / 30 days) · or **Skip** / **Continue**.
-- Up to **2** packages on Freemium (`maxActivePlans`); paid tiers unlock more without leaving onboarding.
+- Text link **Agregar costo de día/visita** / **Set day pass/visit cost** above the list (when unset); form opens under it.
+- Saved day pass appears **first** in the list like a membership (edit only) — edit smoothly scrolls to the form and focuses the price input.
+- Sticky **Continue** / **Back** / **Logout** in the fixed footer.
+- Sticky **Continue** / **Back** / **Logout** in the fixed footer.
+- Up to **2** on Freemium (`maxActivePlans`); paid tiers unlock more without leaving onboarding.
 - At Freemium limit: **Upgrade** CTA (Embedded Checkout) + **Compare plans** table dialog.
 
 ### Step 4 — AMRAP plan (optional)
@@ -398,7 +402,7 @@ Hiding a nav item is chrome-only for that user; direct URLs still respect page p
 
 **Who:** `manage_billing` (owner / provisional).
 
-**UI (shipped):** Gym list first · AMRAP subscription below (separator) · plan rows (Freemium / Starter / Growth / Pro) · whole upgradeable row opens confirm (monthly/annual) → **Embedded Checkout** in a fullscreen in-app dialog (new paid) or Subscriptions API upgrade (existing) · **Manage billing** opens Customer Portal in a **new tab** · Pro / Contact AMRAP goes to landing `#contacto`.
+**UI (shipped):** Gym list first · AMRAP subscription below (separator) · plan rows (Freemium / Starter / Growth / Pro) · whole upgradeable row opens confirm (monthly/annual) → **Embedded Checkout** in a fullscreen in-app dialog (new paid) or Subscriptions API upgrade (existing) · **Manage billing** opens Customer Portal in a **new tab** · Pro / Contact AMRAP goes to landing `#contact`.
 
 **Hidden for now:** Schedule gym / org deletion (danger zone + delete gym) — flip `showDeletionUi` in `OrganizationClient` when ready.
 
@@ -555,7 +559,7 @@ See §4.9. Paywalls at blocked actions use plan limits (`lib/plans/limits.ts`).
 
 | Case | UI status |
 | ---- | --------- |
-| Upgrade for limit (30 members, 2 plans, seats) | Partial — Freemium **hard**-stops at 30 actives; Starter/Growth **soft**-warn at ~500 (no block); staff seats **per gym** (Growth ≈ 5/gym ≤ 15 org) |
+| Upgrade for limit (30 members, 2 plans, seats) | Partial — Freemium **hard**-stops at 30 actives; Starter soft-warn at ~500, Growth at ~1000 (no block); staff seats **per gym** (Starter 5 · Growth 10/gym ≤ 30 org) |
 | Self-serve Checkout (Starter / Growth, MXN monthly/annual) | Shipped — **Embedded Checkout** in PWA + webhooks · **E2E** `pnpm test:e2e:billing` (hybrid local / Stripe test) |
 | Upgrade / change plan (existing sub) | Shipped — in-app confirm → Subscriptions API proration · covered in billing E2E |
 | Manage payment method / cancel | Shipped — Customer Portal · portal open + cancel→Freemium webhook covered in billing E2E |

@@ -11,6 +11,7 @@
 	} from '$lib/timers/storage';
 	import type { TimerRoutine } from '$lib/timers/types';
 	import { attachTimerWakeLockLifecycle } from '$lib/timers/wake-lock';
+	import { lockBodyScroll } from '$lib/dom/scroll-lock';
 	import PageLoader from '$lib/components/ui/PageLoader.svelte';
 	import TimerEditor from './TimerEditor.svelte';
 	import TimerRoutinesList from './TimerRoutinesList.svelte';
@@ -48,6 +49,12 @@
 	/** Hide ops chrome only while running or editing — do not clear on every view change. */
 	$effect(() => {
 		setTimersImmersive(view.kind === 'run' || view.kind === 'edit');
+	});
+
+	/** Pin document scroll while editing/running so iOS keyboard cannot open a gap below the shell. */
+	$effect(() => {
+		if (view.kind !== 'run' && view.kind !== 'edit') return;
+		return lockBodyScroll();
 	});
 
 	onDestroy(() => setTimersImmersive(false));

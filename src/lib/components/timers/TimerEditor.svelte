@@ -2,6 +2,7 @@
 	import Plus from '@lucide/svelte/icons/plus';
 	import X from '@lucide/svelte/icons/x';
 	import Button from '$lib/components/ui/Button.svelte';
+	import DigitInput from '$lib/components/ui/DigitInput.svelte';
 	import Input from '$lib/components/ui/Input.svelte';
 	import type { Dictionary } from '$lib/i18n/dictionaries';
 	import {
@@ -20,6 +21,7 @@
 		type TimerPhase,
 		type TimerRoutine
 	} from '$lib/timers/types';
+	import { LIMITS, sanitizeTimerNameInput } from '$lib/validation/schemas';
 
 	type Labels = Dictionary['timers'];
 
@@ -186,39 +188,56 @@
 	</header>
 
 	<div
-		class="mx-auto flex w-full max-w-lg min-h-0 flex-1 flex-col sm:px-[var(--spacing-page-md)]"
+		class="mx-auto flex w-full max-w-lg min-h-0 flex-1 flex-col overflow-hidden sm:px-[var(--spacing-page-md)]"
 	>
 		<div
-			class="min-h-0 flex-1 space-y-3 overflow-y-auto px-[var(--spacing-page)] py-3 sm:px-0"
+			class="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-[var(--spacing-page)] py-3 sm:px-0 [-webkit-overflow-scrolling:touch]"
+			onfocusin={(e) => {
+				const t = e.target;
+				if (!(t instanceof HTMLElement)) return;
+				if (t.tagName !== 'INPUT' && t.tagName !== 'TEXTAREA') return;
+				// Keep focus inside this scroller — avoid document/visualViewport pan gaps.
+				requestAnimationFrame(() => {
+					t.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+					window.scrollTo(0, 0);
+				});
+			}}
 		>
 			<section class="space-y-2">
 				<p class="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
 					{labels.namePlaceholder}
 				</p>
-				<div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-					<div class="flex flex-wrap gap-2">
-						{#each TIMER_COLORS as c (c)}
-							<button
-								type="button"
-								onclick={() => (draft = { ...draft, color: c, templateId: undefined })}
-								class="h-10 w-10 rounded-lg border-2 {draft.color === c
-									? 'border-[var(--color-text)]'
-									: 'border-transparent opacity-80'}"
-								style:background-color={c}
-								aria-label={c}
-								aria-pressed={draft.color === c}
-							></button>
-						{/each}
-					</div>
-					<Input
-						id="timer-name"
-						name="name"
-						bind:value={draft.name}
-						placeholder={labels.namePlaceholder}
-						class="min-h-11 flex-1"
-						oninput={() => (draft = { ...draft, templateId: undefined })}
-					/>
+				<div
+					class="grid w-full grid-cols-6 gap-2"
+					role="group"
+					aria-label={labels.namePlaceholder}
+				>
+					{#each TIMER_COLORS as c (c)}
+						<button
+							type="button"
+							onclick={() => (draft = { ...draft, color: c, templateId: undefined })}
+							class="h-11 w-full min-h-[var(--touch-target)] rounded-lg border-2 {draft.color === c
+								? 'border-[var(--color-text)]'
+								: 'border-transparent opacity-80'}"
+							style:background-color={c}
+							aria-label={c}
+							aria-pressed={draft.color === c}
+						></button>
+					{/each}
 				</div>
+				<Input
+					id="timer-name"
+					name="name"
+					bind:value={draft.name}
+					placeholder={labels.namePlaceholder}
+					maxlength={LIMITS.timerName}
+					class="min-h-11 w-full mt-2"
+					oninput={(e) => {
+						const next = sanitizeTimerNameInput((e.currentTarget as HTMLInputElement).value);
+						draft = { ...draft, name: next, templateId: undefined };
+						(e.currentTarget as HTMLInputElement).value = next;
+					}}
+				/>
 			</section>
 
 			<section class="space-y-1.5">
@@ -291,19 +310,19 @@
 							>
 							<label class="flex items-center gap-2 text-xs font-medium text-[var(--color-muted)]">
 								{labels.sets}
-								<input
-									type="number"
-									inputmode="numeric"
-									min={1}
-									max={99}
+								<DigitInput
 									value={draft.repeatSets ?? 1}
-									onchange={(e) =>
+									min={1}
+									max={LIMITS.timerSets}
+									fallback={1}
+									aria-label={labels.sets}
+									class="min-h-10 w-16 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-2 text-center text-base font-semibold tabular-nums text-[var(--color-text)]"
+									onChange={(sets) =>
 										(draft = {
 											...draft,
 											templateId: undefined,
-											repeatSets: Math.max(1, Number(e.currentTarget.value) || 1)
+											repeatSets: sets
 										})}
-									class="min-h-10 w-16 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-2 text-center text-base font-semibold tabular-nums text-[var(--color-text)]"
 								/>
 							</label>
 						</li>
@@ -350,17 +369,14 @@
 										class="flex items-center gap-2 text-xs font-medium text-[var(--color-muted)]"
 									>
 										{labels.sets}
-										<input
-											type="number"
-											inputmode="numeric"
-											min={1}
-											max={99}
+										<DigitInput
 											value={cycle.sets}
-											onchange={(e) =>
-												updateCycle(cycle.id, {
-													sets: Math.max(1, Number(e.currentTarget.value) || 1)
-												})}
+											min={1}
+											max={LIMITS.timerSets}
+											fallback={1}
+											aria-label={labels.sets}
 											class="min-h-10 w-16 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-2 text-center text-base font-semibold tabular-nums text-[var(--color-text)]"
+											onChange={(sets) => updateCycle(cycle.id, { sets })}
 										/>
 									</label>
 									{#if cycles.length > 1}
@@ -441,32 +457,24 @@
 {#snippet timePill(seconds: number, colorClass: string, onChange: (sec: number) => void)}
 	{@const parts = timeParts(seconds)}
 	<div class="inline-flex min-h-11 items-center gap-1 rounded-full px-3 py-1.5 {colorClass}">
-		<input
-			type="number"
-			inputmode="numeric"
-			min={0}
-			max={99}
+		<DigitInput
 			value={parts.mins}
-			onchange={(e) => {
-				const m = Math.max(0, Number(e.currentTarget.value) || 0);
-				onChange(m * 60 + parts.secs);
-			}}
-			class="w-9 bg-transparent text-center text-base font-bold tabular-nums text-white outline-none"
+			min={0}
+			max={LIMITS.timerMinutes}
+			fallback={0}
 			aria-label={labels.minutes}
+			class="w-9 bg-transparent text-center text-base font-bold tabular-nums text-white outline-none"
+			onChange={(m) => onChange(m * 60 + parts.secs)}
 		/>
 		<span class="text-base font-bold text-white/85">:</span>
-		<input
-			type="number"
-			inputmode="numeric"
-			min={0}
-			max={59}
+		<DigitInput
 			value={parts.secs}
-			onchange={(e) => {
-				const s = Math.min(59, Math.max(0, Number(e.currentTarget.value) || 0));
-				onChange(parts.mins * 60 + s);
-			}}
-			class="w-9 bg-transparent text-center text-base font-bold tabular-nums text-white outline-none"
+			min={0}
+			max={LIMITS.timerSeconds}
+			fallback={0}
 			aria-label={labels.seconds}
+			class="w-9 bg-transparent text-center text-base font-bold tabular-nums text-white outline-none"
+			onChange={(s) => onChange(parts.mins * 60 + s)}
 		/>
 	</div>
 {/snippet}

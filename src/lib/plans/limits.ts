@@ -26,8 +26,9 @@ export function maxActiveMembers(tier: OrgPlanTier): number | null {
 		case 'FREEMIUM':
 			return 30;
 		case 'STARTER':
-		case 'GROWTH':
 			return 500;
+		case 'GROWTH':
+			return 1000;
 		case 'PRO':
 			return null;
 		default:
@@ -66,15 +67,16 @@ export function canCreateGym(tier: OrgPlanTier, gymCount: number): boolean {
 
 /**
  * Max STAFF + TRAINER seats **per gym** (OWNER does not count).
- * Growth ≈ 5/gym → up to 15 across 3 gyms. `null` = unlimited (Pro).
+ * Growth ≈ 10/gym → up to 30 across 3 gyms. `null` = unlimited (Pro).
  */
 export function maxStaffSeats(tier: OrgPlanTier): number | null {
 	switch (tier) {
 		case 'FREEMIUM':
 			return 2;
 		case 'STARTER':
-		case 'GROWTH':
 			return 5;
+		case 'GROWTH':
+			return 10;
 		case 'PRO':
 			return null;
 		default:

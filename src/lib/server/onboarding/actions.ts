@@ -81,8 +81,7 @@ const gymSchema = z.object({
 	locale: localeSchema,
 	gymName: entityNameSchema,
 	gymAddress: optionalAddressSchema,
-	branchName: optionalEntityNameSchema,
-	branchAddress: optionalAddressSchema
+	branchName: optionalEntityNameSchema
 });
 
 export async function saveOnboardingGymAction(formData: FormData): Promise<OnboardingActionState> {
@@ -96,19 +95,20 @@ export async function saveOnboardingGymAction(formData: FormData): Promise<Onboa
 		locale: formString(formData, 'locale') || 'es',
 		gymName: formString(formData, 'gymName'),
 		gymAddress: formString(formData, 'gymAddress'),
-		branchName: formString(formData, 'branchName'),
-		branchAddress: formString(formData, 'branchAddress')
+		branchName: formString(formData, 'branchName')
 	});
 	if (!parsed.success) {
 		return { fieldErrors: zodFieldErrors(parsed.error, d.validation) };
 	}
 
+	const address = parsed.data.gymAddress;
 	const supabase = createClient();
 	const { data: gymId, error } = await supabase.rpc('onboarding_create_gym', {
 		p_gym_name: parsed.data.gymName,
 		p_branch_name: parsed.data.branchName || null,
-		p_gym_address: parsed.data.gymAddress,
-		p_branch_address: parsed.data.branchAddress
+		// One onboarding address → gym + first branch (same physical site).
+		p_gym_address: address,
+		p_branch_address: address
 	});
 
 	if (error) {
@@ -192,6 +192,42 @@ export async function addOnboardingPlanAction(formData: FormData): Promise<Onboa
 
 	if (error) {
 		console.error('addOnboardingPlanAction', error.message);
+		return { error: d.onboarding.errorSave };
+	}
+
+	throw redirect(303, `/${locale}/onboarding`);
+}
+
+const dayPassSchema = z.object({
+	locale: localeSchema,
+	day_pass_price: amountSchema
+});
+
+export async function saveOnboardingDayPassAction(
+	formData: FormData
+): Promise<OnboardingActionState> {
+	const locale = localeFrom(formData);
+	const d = getDictionary(locale);
+
+	const state = await getOnboardingState();
+	if (!state?.gymId) return { error: d.onboarding.errorSave };
+
+	const parsed = dayPassSchema.safeParse({
+		locale: formString(formData, 'locale') || 'es',
+		day_pass_price: formString(formData, 'day_pass_price')
+	});
+	if (!parsed.success) {
+		return { fieldErrors: zodFieldErrors(parsed.error, d.validation) };
+	}
+
+	const supabase = createClient();
+	const { error } = await supabase
+		.from('gyms')
+		.update({ day_pass_price: parsed.data.day_pass_price })
+		.eq('id', state.gymId);
+
+	if (error) {
+		console.error('saveOnboardingDayPassAction', error.message);
 		return { error: d.onboarding.errorSave };
 	}
 

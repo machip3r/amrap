@@ -47,10 +47,16 @@
 		class="flex flex-col gap-4"
 		use:enhance={() => {
 			pending = true;
-			return async ({ update }) => {
-				pending = false;
+			return async ({ result, update }) => {
+				if (result.type === 'redirect') {
+					await update();
+					onclose();
+					pending = false;
+					return;
+				}
+				await update({ reset: false });
 				onclose();
-				await update();
+				pending = false;
 			};
 		}}
 	>

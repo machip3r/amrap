@@ -103,7 +103,7 @@
 	}
 </script>
 
-<section id="contacto" class="landing-section landing-contact">
+<section id="contact" class="landing-section landing-contact">
 	<div class="landing-container">
 		<div class="landing-contact-intro">
 			<h2 class="font-title landing-section-title landing-contact-title">{c.title}</h2>

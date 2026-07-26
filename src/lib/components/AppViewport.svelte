@@ -1,14 +1,16 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
+	import { layoutViewportHeight } from '$lib/dom/safe-area';
 
 	/**
-	 * Keeps `--app-height` in sync with the visible viewport.
-	 * iOS PWA/Safari often leaves a permanent bottom gap after the keyboard
-	 * (or an external Stripe redirect) if the shell only uses `100dvh`.
+	 * Keeps `--app-height` in sync with the layout viewport.
 	 *
-	 * Scroll reset runs only after keyboard dismiss / pageshow — never on
-	 * every visualViewport scroll (that fights the iOS back-swipe gesture).
+	 * Do not shrink to `visualViewport.height` while the keyboard is open —
+	 * iOS pans `visualViewport.offsetTop` and a short shell leaves a giant
+	 * empty/white gap below the app (timer editor, dialogs, etc.).
+	 *
+	 * After keyboard dismiss, reset scroll so a stuck offset cannot linger.
 	 */
 	onMount(() => {
 		if (!browser) return;
@@ -17,25 +19,29 @@
 		let keyboardWasOpen = false;
 
 		function measure() {
-			const vv = window.visualViewport;
-			const layoutH = window.innerHeight;
-			const visualH = vv?.height ?? layoutH;
-			const keyboardOpen = vv != null && layoutH - visualH > 40;
-			const h = Math.round(keyboardOpen ? visualH : layoutH);
+			const h = layoutViewportHeight();
 			root.style.setProperty('--app-height', `${h}px`);
-			return keyboardOpen;
+		}
+
+		function keyboardOpenNow() {
+			const vv = window.visualViewport;
+			if (!vv) return false;
+			return window.innerHeight - vv.height > 40;
 		}
 
 		function syncHeight() {
-			const keyboardOpen = measure();
-			if (keyboardOpen) keyboardWasOpen = true;
+			measure();
+			if (keyboardOpenNow()) keyboardWasOpen = true;
 		}
 
 		/** After keyboard / external return — recover stuck scroll offset. */
 		function recoverScrollIfNeeded() {
-			const keyboardOpen = measure();
-			if (keyboardOpen) {
+			const open = keyboardOpenNow();
+			measure();
+			if (open) {
 				keyboardWasOpen = true;
+				// Keep layout pinned while the keyboard is up.
+				if (window.scrollY !== 0) window.scrollTo(0, 0);
 				return;
 			}
 			if (!keyboardWasOpen) return;
@@ -45,28 +51,46 @@
 			if (window.scrollY !== 0 || (vv && vv.offsetTop !== 0)) {
 				window.scrollTo(0, 0);
 			}
+			requestAnimationFrame(() => {
+				measure();
+				requestAnimationFrame(measure);
+			});
 		}
 
 		syncHeight();
 
 		const vv = window.visualViewport;
 		vv?.addEventListener('resize', syncHeight);
-		vv?.addEventListener('scroll', syncHeight);
+		vv?.addEventListener('scroll', onVisualScroll);
 		window.addEventListener('resize', syncHeight);
 		window.addEventListener('orientationchange', recoverScrollIfNeeded);
-		window.addEventListener('focusin', syncHeight);
+		window.addEventListener('focusin', onFocusIn);
 		window.addEventListener('focusout', onFocusOut);
 		document.addEventListener('visibilitychange', syncHeight);
 		window.addEventListener('pageshow', recoverScrollIfNeeded);
-		// iOS Safari / PWA: block pinch-zoom gestures that break the app shell layout
 		document.addEventListener('gesturestart', preventGesture, { passive: false });
 		document.addEventListener('gesturechange', preventGesture, { passive: false });
 
 		let focusOutTimer: ReturnType<typeof setTimeout> | undefined;
+
+		function onFocusIn() {
+			measure();
+			if (keyboardOpenNow()) keyboardWasOpen = true;
+			// Pin document; let the nearest overflow container scroll the field.
+			window.scrollTo(0, 0);
+		}
+
 		function onFocusOut() {
 			clearTimeout(focusOutTimer);
-			// iOS fires focusout before the keyboard finishes closing.
 			focusOutTimer = setTimeout(recoverScrollIfNeeded, 100);
+		}
+
+		function onVisualScroll() {
+			// While keyboard is open, iOS may pan the visual viewport — pin window scroll.
+			if (keyboardOpenNow() && window.scrollY !== 0) {
+				window.scrollTo(0, 0);
+			}
+			syncHeight();
 		}
 
 		function preventGesture(e: Event) {
@@ -76,10 +100,10 @@
 		return () => {
 			clearTimeout(focusOutTimer);
 			vv?.removeEventListener('resize', syncHeight);
-			vv?.removeEventListener('scroll', syncHeight);
+			vv?.removeEventListener('scroll', onVisualScroll);
 			window.removeEventListener('resize', syncHeight);
 			window.removeEventListener('orientationchange', recoverScrollIfNeeded);
-			window.removeEventListener('focusin', syncHeight);
+			window.removeEventListener('focusin', onFocusIn);
 			window.removeEventListener('focusout', onFocusOut);
 			document.removeEventListener('visibilitychange', syncHeight);
 			window.removeEventListener('pageshow', recoverScrollIfNeeded);

@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
+	import PlanCompareDialog from '$lib/components/billing/PlanCompareDialog.svelte';
 	import type { Locale } from '$lib/i18n/config';
 	import type { LandingDictionary } from '$lib/i18n/landing-dictionaries';
+	import { getDictionary } from '$lib/i18n/dictionaries';
 	import { reveal, uiFade } from '$lib/motion';
 	import LandingNav from './LandingNav.svelte';
 	import LandingContact from './LandingContact.svelte';
@@ -15,8 +17,10 @@
 	let { locale, d }: Props = $props();
 
 	let billing = $state<'monthly' | 'annual'>('monthly');
+	let compareOpen = $state(false);
 
 	const prefix = $derived(`/${locale}`);
+	const appDict = $derived(getDictionary(locale));
 	const navLabels = $derived({
 		home: d.nav.home,
 		product: d.nav.product,
@@ -24,15 +28,36 @@
 		faq: d.nav.faq,
 		contact: d.nav.contact
 	});
+	const compareLabels = $derived({
+		title: appDict.planCompare.title,
+		description: appDict.planCompare.description,
+		close: appDict.organization.close,
+		tierFreemium: appDict.organization.planFreemium,
+		tierStarter: appDict.organization.planStarter,
+		tierGrowth: appDict.organization.planGrowth,
+		tierPro: appDict.organization.planPro,
+		featureGyms: appDict.planCompare.featureGyms,
+		featureMembers: appDict.planCompare.featureMembers,
+		featureStaff: appDict.planCompare.featureStaff,
+		featurePackages: appDict.planCompare.featurePackages,
+		featureBranding: appDict.planCompare.featureBranding,
+		featureWatermark: appDict.planCompare.featureWatermark,
+		featureMultiGym: appDict.planCompare.featureMultiGym,
+		featureOnlineBilling: appDict.planCompare.featureOnlineBilling,
+		valueYes: appDict.planCompare.valueYes,
+		valueNo: appDict.planCompare.valueNo,
+		valueLimited: appDict.planCompare.valueLimited,
+		valueSoon: appDict.planCompare.valueSoon
+	});
 	const year = new Date().getFullYear();
 
 	function scrollToProcess() {
-		document.getElementById('proceso')?.scrollIntoView({ behavior: 'smooth' });
+		document.getElementById('process')?.scrollIntoView({ behavior: 'smooth' });
 	}
 
 	function scrollToContact(e: MouseEvent) {
 		e.preventDefault();
-		document.getElementById('contacto')?.scrollIntoView({ behavior: 'smooth' });
+		document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
 	}
 </script>
 
@@ -89,7 +114,7 @@
 		</ul>
 	</section>
 
-	<section id="producto" class="landing-section" use:reveal>
+	<section id="product" class="landing-section" use:reveal>
 		<div class="landing-container">
 			<p class="landing-eyebrow">{d.difference.eyebrow}</p>
 			<h2 class="font-title landing-section-title landing-section-title--left">
@@ -129,7 +154,7 @@
 		</div>
 	</section>
 
-	<section id="proceso" class="landing-section landing-section--muted landing-process" use:reveal>
+	<section id="process" class="landing-section landing-section--muted landing-process" use:reveal>
 		<div class="landing-container">
 			<p class="landing-eyebrow">{d.process.eyebrow}</p>
 			<h2 class="font-title landing-section-title">{d.process.title}</h2>
@@ -149,7 +174,7 @@
 		</div>
 	</section>
 
-	<section id="precios" class="landing-section" use:reveal>
+	<section id="pricing" class="landing-section" use:reveal>
 		<div class="landing-container">
 			<h2 class="font-title landing-section-title">{d.pricing.title}</h2>
 			<p class="landing-pricing-subtitle">{d.pricing.subtitle}</p>
@@ -210,7 +235,7 @@
 							{/each}
 						</ul>
 						{#if plan.cta === 'contact'}
-							<a href="#contacto" class="landing-price-cta" onclick={scrollToContact}>
+							<a href="#contact" class="landing-price-cta" onclick={scrollToContact}>
 								{d.pricing.contactCta}
 							</a>
 						{:else}
@@ -219,9 +244,24 @@
 					</article>
 				{/each}
 			</div>
+			<div class="mt-6 flex justify-center">
+				<button
+					type="button"
+					class="landing-pricing-compare"
+					onclick={() => (compareOpen = true)}
+				>
+					{d.pricing.comparePlans}
+				</button>
+			</div>
 			<p class="landing-pricing-tax">{d.pricing.taxNote}</p>
 		</div>
 	</section>
+
+	<PlanCompareDialog
+		open={compareOpen}
+		onOpenChange={(open) => (compareOpen = open)}
+		labels={compareLabels}
+	/>
 
 	<LandingFaq {d} />
 	<div use:reveal>

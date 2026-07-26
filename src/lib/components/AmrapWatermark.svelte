@@ -12,7 +12,7 @@
 </script>
 
 <div
-	class="flex items-center justify-center gap-1.5 border-t border-[var(--color-border)] px-4 py-2 {className}"
+	class="flex items-center justify-center gap-1.5 border-t border-[var(--color-border)] px-4 py-1.5 {className}"
 >
 	<a
 		href="/{locale}"

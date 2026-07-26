@@ -3,6 +3,7 @@
 	import type { Snippet } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
 	import { portal } from '$lib/dom/portal';
+	import { layoutViewportHeight } from '$lib/dom/safe-area';
 	import { lockBodyScroll } from '$lib/dom/scroll-lock';
 	import { uiFade, uiFly } from '$lib/motion';
 
@@ -40,11 +41,14 @@
 	let overlayEl: HTMLDivElement | undefined = $state();
 	let bodyScrollEl: HTMLDivElement | undefined = $state();
 
-	/** Pin the overlay to the visual viewport so iOS keyboard resize doesn't expose the app chrome. */
+	/** Pin overlay to the visible viewport. Prefer full layout coverage unless the keyboard is open — iOS PWA often reports a short visualViewport.height and leaves a white strip under the dialog until the next scroll/resize. */
 	function syncOverlayToVisualViewport() {
 		const el = overlayEl;
 		if (!el) return;
 		const vv = window.visualViewport;
+		const layoutH = window.innerHeight;
+		const layoutW = window.innerWidth;
+
 		if (!vv) {
 			el.style.top = '0';
 			el.style.left = '0';
@@ -52,10 +56,20 @@
 			el.style.height = 'var(--app-height, 100dvh)';
 			return;
 		}
-		el.style.top = `${vv.offsetTop}px`;
-		el.style.left = `${vv.offsetLeft}px`;
-		el.style.width = `${vv.width}px`;
-		el.style.height = `${vv.height}px`;
+
+		const keyboardOpen = layoutH - vv.height > 40;
+		if (keyboardOpen) {
+			el.style.top = `${vv.offsetTop}px`;
+			el.style.left = `${vv.offsetLeft}px`;
+			el.style.width = `${vv.width}px`;
+			el.style.height = `${vv.height}px`;
+			return;
+		}
+
+		el.style.top = '0';
+		el.style.left = '0';
+		el.style.width = `${Math.max(layoutW, vv.width)}px`;
+		el.style.height = `${layoutViewportHeight()}px`;
 	}
 
 	$effect(() => {
@@ -69,6 +83,12 @@
 		window.addEventListener('keydown', onKey);
 
 		syncOverlayToVisualViewport();
+		// Portal + bind:this can lag one frame; remeasure after paint.
+		const raf1 = requestAnimationFrame(() => {
+			syncOverlayToVisualViewport();
+			requestAnimationFrame(syncOverlayToVisualViewport);
+		});
+
 		const vv = window.visualViewport;
 		vv?.addEventListener('resize', syncOverlayToVisualViewport);
 		vv?.addEventListener('scroll', syncOverlayToVisualViewport);
@@ -149,6 +169,7 @@
 		}
 
 		return () => {
+			cancelAnimationFrame(raf1);
 			unlock();
 			window.removeEventListener('keydown', onKey);
 			vv?.removeEventListener('resize', syncOverlayToVisualViewport);
@@ -174,7 +195,7 @@
 		class="fixed z-50 flex overscroll-none {fullScreen
 			? 'items-stretch justify-stretch p-0'
 			: containerClass}"
-		style="top:0;left:0;width:100%;height:var(--app-height,100dvh)"
+		style="top:0;left:0;width:100%;height:var(--app-height,100dvh);min-height:100%;min-height:100dvh"
 	>
 		{#if !fullScreen}
 			<button

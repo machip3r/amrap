@@ -98,14 +98,22 @@ export async function completeOnboardingViaUi(
   await page.getByRole("button", { name: "Continuar" }).click();
 
   await expect(
-    page.getByRole("heading", { name: "Qué le cobras a tus miembros" }),
+    page.getByRole("heading", { name: "Membresías" }),
   ).toBeVisible({ timeout: 30_000 });
 
   if (options.planName) {
+    await page.getByRole("button", { name: "Agregar costo de día/visita" }).click();
+    await page.locator('input[name="day_pass_price"]').fill("80");
+    await page.getByRole("button", { name: "Guardar precio" }).click();
+    await expect(page.getByText("Pase del día / visita")).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByText("$80 · 1d")).toBeVisible();
+
     await page.locator('input[name="name"]').fill(options.planName);
     await page.locator('input[name="price"]').fill("500");
     await page.locator('input[name="duration_days"]').fill("30");
-    await page.getByRole("button", { name: "Agregar paquete" }).click();
+    await page.getByRole("button", { name: "Agregar membresía" }).click();
     await expect(page.getByText(options.planName)).toBeVisible({
       timeout: 20_000,
     });

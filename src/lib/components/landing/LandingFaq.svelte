@@ -14,7 +14,7 @@
 	const baseId = 'landing-faq';
 </script>
 
-<section id="preguntas" class="landing-section landing-section--muted" use:reveal>
+<section id="faq" class="landing-section landing-section--muted" use:reveal>
 	<div class="landing-container">
 		<h2 class="font-title landing-section-title">{d.faq.title}</h2>
 		<p class="landing-section-subtitle">{d.faq.subtitle}</p>

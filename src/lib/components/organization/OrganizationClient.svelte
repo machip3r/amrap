@@ -66,7 +66,7 @@
 	}: Props = $props();
 
 	const labels = $derived(d.organization);
-	const contactHref = $derived(`/${locale}#contacto`);
+	const contactHref = $derived(`/${locale}#contact`);
 
 	/** Soft-delete gym / org UI — re-enable when product is ready. */
 	const showDeletionUi = false;

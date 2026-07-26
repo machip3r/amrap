@@ -209,12 +209,15 @@ App types (`MemberStatus`, `PaymentMethod`, `PaymentKind`, `InviteStatus` in `sr
 ## Validation, schemas / DTOs, sanitization
 
 - **Validate all inputs** at the server boundary (`+page.server.ts` actions, `+server.ts` handlers) before DB or Auth calls. Client checks are UX only.
-- **Zod schemas** in `src/lib/validation/schemas.ts` — regex + length limits on every user-editable field.
+- **Zod schemas** in `src/lib/validation/schemas.ts` — **regex + length limits on every user-editable field** (names, emails, addresses, messages, search, codes, **and numeric fields**: durations, sets, money, height/weight, timer minutes/seconds).
+- **Client controls must match:** every input gets `maxlength` and/or a digit/decimal cap; free-text uses `sanitize*Input` on change; integer fields must **not** accept letters or unbounded values (prefer `DigitInput` / `sanitizeDigitsInput` over raw `type="number"`).
 - **Enum / status tokens** are **UPPERCASE** in Zod and TypeScript (same tokens as Postgres checks) — see *Enum / typed status values* under Database migrations.
-- Reuse `emailSchema`, `personNameSchema`, `entityNameSchema`, `passwordSchema`, sanitizers, etc.
+- Reuse `emailSchema`, `personNameSchema`, `entityNameSchema`, `passwordSchema`, `amountSchema`, `durationDaysSchema`, sanitizers, `LIMITS`, etc. — do not invent one-off limits in a single component.
 - Map Zod issues via `zodFieldErrors` + dictionary `validation.*`; return `{ fieldErrors?, error? }` from actions.
 - Render per-field errors with `FormField` `error` prop (`aria-invalid`, `role="alert"`).
 - **Sanitize outputs:** Svelte escapes text by default; never use `{@html …}` with user/gym content.
+
+Cursor rule: `.cursor/rules/input-validation.mdc`.
 
 ---
 

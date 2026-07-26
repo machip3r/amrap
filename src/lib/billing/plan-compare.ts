@@ -33,7 +33,7 @@ export const PLAN_COMPARE_FEATURES: {
 		values: {
 			FREEMIUM: '30',
 			STARTER: '~500',
-			GROWTH: '~500',
+			GROWTH: '~1000',
 			PRO: '∞'
 		}
 	},
@@ -42,7 +42,7 @@ export const PLAN_COMPARE_FEATURES: {
 		values: {
 			FREEMIUM: '2',
 			STARTER: '5',
-			GROWTH: '5/gym',
+			GROWTH: '10/gym',
 			PRO: '∞'
 		}
 	},
@@ -59,8 +59,8 @@ export const PLAN_COMPARE_FEATURES: {
 		id: 'branding',
 		values: {
 			FREEMIUM: 'no',
-			STARTER: 'limited',
-			GROWTH: 'soon',
+			STARTER: 'yes',
+			GROWTH: 'yes',
 			PRO: 'yes'
 		}
 	},
@@ -86,8 +86,8 @@ export const PLAN_COMPARE_FEATURES: {
 		id: 'onlineBilling',
 		values: {
 			FREEMIUM: 'no',
-			STARTER: 'soon',
-			GROWTH: 'soon',
+			STARTER: 'yes',
+			GROWTH: 'yes',
 			PRO: 'yes'
 		}
 	}

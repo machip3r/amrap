@@ -11,12 +11,17 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import Dialog from '$lib/components/ui/Dialog.svelte';
+	import DigitInput from '$lib/components/ui/DigitInput.svelte';
 	import FormField from '$lib/components/ui/FormField.svelte';
 	import Input from '$lib/components/ui/Input.svelte';
 	import type { Locale } from '$lib/i18n/config';
 	import type { Dictionary } from '$lib/i18n/dictionaries';
 	import type { DayPassPriceState, PlanFormState } from '$lib/server/plans/actions';
-	import { LIMITS } from '$lib/validation/schemas';
+	import {
+		LIMITS,
+		parseClampedAmount,
+		sanitizeDecimalInput
+	} from '$lib/validation/schemas';
 
 	export type PlansPagePlan = {
 		id: string;
@@ -59,11 +64,11 @@
 
 	let createName = $state('');
 	let createPrice = $state('');
-	let createDuration = $state('30');
+	let createDuration = $state(30);
 
 	let editName = $state('');
 	let editPrice = $state('');
-	let editDuration = $state('30');
+	let editDuration = $state(30);
 
 	const showLimitCard = $derived(maxPlans != null && !canAdd);
 
@@ -75,7 +80,7 @@
 		if (editing) {
 			editName = editing.name;
 			editPrice = String(editing.price);
-			editDuration = String(editing.duration_days);
+			editDuration = editing.duration_days;
 			editError = undefined;
 			editFieldErrors = undefined;
 		}
@@ -108,7 +113,7 @@
 	function resetCreateForm() {
 		createName = '';
 		createPrice = '';
-		createDuration = '30';
+		createDuration = 30;
 		createError = undefined;
 		createFieldErrors = undefined;
 	}
@@ -203,16 +208,26 @@
 					<Input
 						id="day-pass-price"
 						name="day_pass_price"
-						type="number"
-						min={0}
-						max={1_000_000}
-						step="0.01"
+						type="text"
 						inputmode="decimal"
 						required
 						bind:value={dayPassValue}
 						placeholder="0.00"
+						maxlength={LIMITS.amountInputMaxLen}
 						{invalid}
 						{describedBy}
+						oninput={(e) => {
+							dayPassValue = sanitizeDecimalInput(
+								(e.currentTarget as HTMLInputElement).value
+							);
+						}}
+						onblur={() => {
+							if (dayPassValue) {
+								dayPassValue = String(
+									parseClampedAmount(dayPassValue, LIMITS.amount, 0)
+								);
+							}
+						}}
 					/>
 				{/snippet}
 			</FormField>
@@ -326,7 +341,7 @@
 			<p class="mt-2 max-w-xs text-sm text-[var(--color-muted)]">{d.plans.limitReachedHint}</p>
 			<a
 				href="/{locale}/organization#subscription"
-				class="mt-5 inline-flex min-h-11 items-center justify-center rounded-lg bg-[var(--color-primary)] px-3.5 py-2 text-sm font-semibold text-[var(--color-primary-on)] shadow-sm transition-[filter] hover:brightness-[0.92]"
+				class="mt-5 inline-flex h-11 min-h-[var(--touch-target)] items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 text-sm font-semibold text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)]"
 			>
 				{d.plans.upgradePlans}
 			</a>
@@ -390,15 +405,25 @@
 						<Input
 							id="create-plan-price"
 							name="price"
-							type="number"
-							min={0}
-							max={1_000_000}
-							step="0.01"
+							type="text"
 							inputmode="decimal"
 							required
 							bind:value={createPrice}
+							maxlength={LIMITS.amountInputMaxLen}
 							{invalid}
 							{describedBy}
+							oninput={(e) => {
+								createPrice = sanitizeDecimalInput(
+									(e.currentTarget as HTMLInputElement).value
+								);
+							}}
+							onblur={() => {
+								if (createPrice) {
+									createPrice = String(
+										parseClampedAmount(createPrice, LIMITS.amount, 0)
+									);
+								}
+							}}
 						/>
 					{/snippet}
 				</FormField>
@@ -408,18 +433,17 @@
 					error={createFieldErrors?.duration_days}
 				>
 					{#snippet children({ invalid, describedBy })}
-						<Input
+						<DigitInput
 							id="create-plan-duration"
 							name="duration_days"
-							type="number"
-							min={1}
-							max={3650}
-							step={1}
-							inputmode="numeric"
 							required
-							bind:value={createDuration}
+							min={1}
+							max={LIMITS.planDurationDays}
+							fallback={30}
+							value={createDuration}
 							{invalid}
 							{describedBy}
+							onChange={(next) => (createDuration = next)}
 						/>
 					{/snippet}
 				</FormField>
@@ -502,15 +526,25 @@
 							<Input
 								id="edit-plan-price"
 								name="price"
-								type="number"
-								min={0}
-								max={1_000_000}
-								step="0.01"
+								type="text"
 								inputmode="decimal"
 								required
 								bind:value={editPrice}
+								maxlength={LIMITS.amountInputMaxLen}
 								{invalid}
 								{describedBy}
+								oninput={(e) => {
+									editPrice = sanitizeDecimalInput(
+										(e.currentTarget as HTMLInputElement).value
+									);
+								}}
+								onblur={() => {
+									if (editPrice) {
+										editPrice = String(
+											parseClampedAmount(editPrice, LIMITS.amount, 0)
+										);
+									}
+								}}
 							/>
 						{/snippet}
 					</FormField>
@@ -520,18 +554,17 @@
 						error={editFieldErrors?.duration_days}
 					>
 						{#snippet children({ invalid, describedBy })}
-							<Input
+							<DigitInput
 								id="edit-plan-duration"
 								name="duration_days"
-								type="number"
-								min={1}
-								max={3650}
-								step={1}
-								inputmode="numeric"
 								required
-								bind:value={editDuration}
+								min={1}
+								max={LIMITS.planDurationDays}
+								fallback={30}
+								value={editDuration}
 								{invalid}
 								{describedBy}
+								onChange={(next) => (editDuration = next)}
 							/>
 						{/snippet}
 					</FormField>

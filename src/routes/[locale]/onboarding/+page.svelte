@@ -33,9 +33,13 @@
 		</div>
 	</div>
 {:else}
-	<div class="auth-container flex min-h-dvh flex-col items-center justify-center px-[var(--spacing-page)] py-4 sm:px-6 sm:py-6">
-		<div class="glass-panel animate-fade-in-up flex w-full max-w-lg flex-col rounded-2xl p-8 shadow-2xl sm:max-w-xl sm:p-10">
-			<div class="mb-8 flex flex-col items-center text-center">
+	<div
+		class="auth-container flex min-h-dvh flex-col items-center justify-center px-[var(--spacing-page)] py-3 sm:px-6 sm:py-6"
+	>
+		<div
+			class="glass-panel animate-fade-in-up flex max-h-[calc(100dvh-1.5rem)] w-full max-w-lg flex-col overflow-hidden rounded-2xl p-6 shadow-2xl sm:max-h-[calc(100dvh-3rem)] sm:max-w-xl sm:p-10"
+		>
+			<div class="mb-6 flex shrink-0 flex-col items-center text-center sm:mb-8">
 				<div class="mb-5 flex w-full justify-center">
 					<a href="/{data.locale}" aria-label="AMRAP">
 						<AmrapLogo class="h-12 w-auto sm:h-14" />
@@ -51,6 +55,7 @@
 				locale={data.locale}
 				onboardingState={data.state}
 				plans={data.plans}
+				dayPassPrice={data.dayPassPrice}
 				planTier={data.planTier}
 				planCap={data.planCap}
 				stripePublishableKey={data.stripePublishableKey}
@@ -58,16 +63,6 @@
 				showError={data.showError}
 				form={(form as OnboardingActionState) ?? null}
 			/>
-
-			<div class="mt-8 border-t border-[var(--color-border)] pt-5 text-center">
-				<LogoutButton
-					locale={data.locale}
-					pendingLabel={data.d.nav.loggingOut}
-					class="text-sm text-[var(--color-muted)] transition-colors hover:text-[var(--color-text)]"
-				>
-					{data.d.nav.logout}
-				</LogoutButton>
-			</div>
 		</div>
 	</div>
 {/if}

@@ -10,11 +10,11 @@ test.describe("Public marketing landing", () => {
     await expect(page.getByRole("heading", { level: 1, name: d.hero.title })).toBeVisible();
     await expect(page.getByRole("link", { name: d.hero.primaryCta }).first()).toBeVisible();
 
-    await expect(page.locator("#producto")).toContainText(d.difference.title);
-    await expect(page.locator("#proceso")).toContainText(d.process.title);
-    await expect(page.locator("#precios")).toContainText(d.pricing.title);
-    await expect(page.locator("#preguntas")).toContainText(d.faq.title);
-    await expect(page.locator("#contacto")).toContainText(d.contact.title);
+    await expect(page.locator("#product")).toContainText(d.difference.title);
+    await expect(page.locator("#process")).toContainText(d.process.title);
+    await expect(page.locator("#pricing")).toContainText(d.pricing.title);
+    await expect(page.locator("#faq")).toContainText(d.faq.title);
+    await expect(page.locator("#contact")).toContainText(d.contact.title);
 
     await page.getByRole("button", { name: d.pricing.annual }).click();
     await expect(page.getByText(d.pricing.plans[1]!.priceAnnual, { exact: true })).toBeVisible();

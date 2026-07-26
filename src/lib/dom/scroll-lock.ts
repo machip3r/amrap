@@ -2,6 +2,9 @@
  * Lock document scroll while a modal is open.
  * Uses `position: fixed` so iOS Safari / PWA cannot scroll the page behind
  * when the soft keyboard opens (plain `overflow: hidden` is not enough).
+ *
+ * Do not clamp html/body height to `innerHeight` — on iOS PWA that often
+ * leaves a white/dark strip under dialogs and immersive screens.
  */
 export function lockBodyScroll(): () => void {
 	const html = document.documentElement;

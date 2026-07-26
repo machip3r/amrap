@@ -154,17 +154,13 @@ export type Dictionary = {
     branchName: string;
     branchNamePlaceholder: string;
     branchNameHint: string;
-    branchAddress: string;
-    branchAddressPlaceholder: string;
-    branchAddressHint: string;
     plansTitle: string;
     plansSubtitle: string;
-    plansExample: string;
-    planNameHint: string;
     planNamePlaceholder: string;
-    planPriceHint: string;
-    planDurationHint: string;
     addPlan: string;
+    setDayPass: string;
+    hideDayPass: string;
+    dayPassHint: string;
     skipPlans: string;
     planLimit: string;
     planLimitUpgrade: string;
@@ -172,9 +168,8 @@ export type Dictionary = {
     billingTitle: string;
     billingSubtitle: string;
     billingSkip: string;
-    billingStayFreemium: string;
-    billingChooseStarter: string;
-    billingChooseGrowth: string;
+    billingCurrent: string;
+    billingChoose: string;
     billingContactPro: string;
     billingFlashSuccess: string;
     doneTitle: string;
@@ -1192,37 +1187,29 @@ const es: Dictionary = {
     gymNameHint: "Cómo se llama tu gym o brand para miembros y staff.",
     gymAddress: "Dirección del gimnasio (opcional)",
     gymAddressPlaceholder: "Calle, colonia, ciudad",
-    gymAddressHint:
-      "Dirección general o principal de la marca. Si solo tienes un local, puede ser la misma que la sucursal.",
+    gymAddressHint: "La dirección física donde entran los miembros.",
     branchName: "Nombre de esta ubicación",
     branchNamePlaceholder: "Ej. Centro, Norte, Sucursal 1",
     branchNameHint:
       "Un nombre corto para este local. Si dejas vacío, usamos “Principal”.",
-    branchAddress: "Dirección de esta ubicación (opcional)",
-    branchAddressPlaceholder: "Calle y número donde entran los miembros",
-    branchAddressHint: "La dirección física de este local.",
-    plansTitle: "Qué le cobras a tus miembros",
-    plansSubtitle:
-      "Aquí defines los paquetes que vendes en tu gym (por ejemplo Mensual $500 por 30 días). Después los usarás al dar de alta o renovar miembros. Es opcional: puedes saltarlo y crearlos luego.",
-    plansExample:
-      "Ejemplo: “Mensual” · $500 · 30 días. O “Trimestral” · $1,350 · 90 días.",
-    planNameHint: "El nombre que usarás al vender o renovar membresías.",
-    planNamePlaceholder: "Ej. Mensual, Semanal, Trimestral",
-    planPriceHint: "Lo que paga el miembro por ese paquete (MXN).",
-    planDurationHint: "Cuántos días dura la membresía. 30 ≈ un mes.",
-    addPlan: "Agregar paquete",
+    plansTitle: "Membresías",
+    plansSubtitle: "Opcional. Ej. Mensual · $500 · 30 días. También puedes crearlas después.",
+    planNamePlaceholder: "Ej. Mensual, Semanal",
+    addPlan: "Agregar membresía",
+    setDayPass: "Agregar costo de día/visita",
+    hideDayPass: "Ocultar costo de día/visita",
+    dayPassHint: "Precio de una sola visita. Puedes cambiarlo después en Planes.",
     skipPlans: "Saltar por ahora",
-    planLimit: "En el plan gratuito puedes crear hasta 2 paquetes en este paso",
-    planLimitUpgrade: "Mejorar plan para paquetes ilimitados",
+    planLimit: "En el plan gratuito puedes crear hasta 2 membresías aquí",
+    planLimitUpgrade: "Mejorar plan para membresías ilimitadas",
     comparePlans: "Comparar planes",
     billingTitle: "Elige tu plan AMRAP",
     billingSubtitle:
       "Puedes quedarte en el plan gratuito o mejorar ahora. Siempre puedes cambiarlo después en Organización.",
     billingSkip: "Continuar con plan gratuito",
-    billingStayFreemium: "Plan gratuito",
-    billingChooseStarter: "Elegir Starter",
-    billingChooseGrowth: "Elegir Growth",
-    billingContactPro: "Hablar de Pro",
+    billingCurrent: "Actual",
+    billingChoose: "Elegir",
+    billingContactPro: "Contáctanos",
     billingFlashSuccess: "Suscripción actualizada. Ya puedes seguir con más paquetes si lo necesitas.",
     doneTitle: "Todo listo",
     doneSubtitle: "Tu espacio ya está creado. Entra al panel para empezar.",
@@ -1561,7 +1548,7 @@ const es: Dictionary = {
     freemiumMemberLimit:
       "Alcanzaste el máximo de 30 miembros activos del plan gratuito. Mejora a Starter para seguir creciendo.",
     softMemberCapWarning:
-      "Tu gym ya supera ~500 miembros activos. El acceso de tus clientes no se bloquea. Habla con AMRAP sobre Growth/Pro o un excedente si lo necesitas.",
+      "Tu gym ya supera ~{n} miembros activos. El acceso de tus clientes no se bloquea. Habla con AMRAP sobre Growth/Pro o un excedente si lo necesitas.",
     notFound: "Miembro o plan no encontrado",
     searchPlaceholder: "Buscar por nombre, email o teléfono…",
     filterAll: "Todos",
@@ -2273,37 +2260,29 @@ const en: Dictionary = {
     gymNameHint: "What members and staff call your gym or brand.",
     gymAddress: "Gym address (optional)",
     gymAddressPlaceholder: "Street, neighborhood, city",
-    gymAddressHint:
-      "Main or general address for the brand. If you only have one site, it can match the branch.",
+    gymAddressHint: "The physical address where members enter.",
     branchName: "Name for this location",
     branchNamePlaceholder: "e.g. Downtown, North, Location 1",
     branchNameHint:
       "A short label for this site. Leave blank and we'll use \"Main\".",
-    branchAddress: "Address for this location (optional)",
-    branchAddressPlaceholder: "Street and number where members enter",
-    branchAddressHint: "The physical address of this site.",
-    plansTitle: "What members pay you",
-    plansSubtitle:
-      "These are the packages you sell at your gym (for example Monthly $500 for 30 days). You'll pick them when you add or renew members. Optional — you can skip and add them later.",
-    plansExample:
-      "Example: \"Monthly\" · $500 · 30 days. Or \"Quarterly\" · $1,350 · 90 days.",
-    planNameHint: "The name you’ll pick when selling or renewing memberships.",
-    planNamePlaceholder: "e.g. Monthly, Weekly, Quarterly",
-    planPriceHint: "What the member pays for that package.",
-    planDurationHint: "How many days the membership lasts. 30 ≈ one month.",
-    addPlan: "Add package",
+    plansTitle: "Memberships",
+    plansSubtitle: "Optional. E.g. Monthly · $500 · 30 days. You can also add them later.",
+    planNamePlaceholder: "e.g. Monthly, Weekly",
+    addPlan: "Add membership",
+    setDayPass: "Set day pass/visit cost",
+    hideDayPass: "Hide day pass/visit cost",
+    dayPassHint: "Price for a single visit. You can change it later on Plans.",
     skipPlans: "Skip for now",
-    planLimit: "On free plan you can create up to 2 packages in this step",
-    planLimitUpgrade: "Upgrade for unlimited packages",
+    planLimit: "On Free you can create up to 2 memberships here",
+    planLimitUpgrade: "Upgrade for unlimited memberships",
     comparePlans: "Compare plans",
     billingTitle: "Choose your AMRAP plan",
     billingSubtitle:
       "Stay on Free or upgrade now. You can always change this later under Organization.",
     billingSkip: "Continue on Free plan",
-    billingStayFreemium: "Free plan",
-    billingChooseStarter: "Choose Starter",
-    billingChooseGrowth: "Choose Growth",
-    billingContactPro: "Talk about Pro",
+    billingCurrent: "Current",
+    billingChoose: "Choose",
+    billingContactPro: "Contact us",
     billingFlashSuccess: "Subscription updated. You can add more packages if you need them.",
     doneTitle: "You're all set",
     doneSubtitle: "Your space is ready. Head to the dashboard to get started.",
@@ -2640,7 +2619,7 @@ const en: Dictionary = {
     freemiumMemberLimit:
       "You've reached the free plan's 30 active members. Upgrade to Starter to keep growing.",
     softMemberCapWarning:
-      "This gym is past ~500 active members. Member access is not blocked. Talk to AMRAP about Growth/Pro or an overage if you need it.",
+      "This gym is past ~{n} active members. Member access is not blocked. Talk to AMRAP about Growth/Pro or an overage if you need it.",
     notFound: "Member or plan not found",
     searchPlaceholder: "Search by name, email, or phone…",
     filterAll: "All",

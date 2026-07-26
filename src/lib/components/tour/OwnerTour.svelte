@@ -5,6 +5,7 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import type { Locale } from '$lib/i18n/config';
 	import type { Dictionary } from '$lib/i18n/dictionaries';
+	import { getSafeAreaInsets } from '$lib/dom/safe-area';
 	import { OWNER_TOUR_STORAGE_KEY, START_OWNER_TOUR_COOKIE } from '$lib/tour/constants';
 	import { OWNER_TOUR_STEPS, ownerTourHref } from '$lib/tour/owner-tour';
 	import { onMount } from 'svelte';
@@ -23,6 +24,8 @@
 	let index = $state(0);
 	let rect = $state<DOMRect | null>(null);
 	let tipStyle = $state('');
+	let tipEl = $state<HTMLDivElement | undefined>();
+	let highlightStyle = $state('');
 
 	const step = $derived(OWNER_TOUR_STEPS[index] ?? null);
 	const labels = $derived(d.tour);
@@ -68,6 +71,37 @@
 		void ensureStepTarget();
 	}
 
+	function placeTip(r: DOMRect) {
+		const vv = window.visualViewport;
+		const viewW = vv?.width ?? window.innerWidth;
+		const viewH = vv?.height ?? window.innerHeight;
+		const viewTop = vv?.offsetTop ?? 0;
+		const viewLeft = vv?.offsetLeft ?? 0;
+		const insets = getSafeAreaInsets();
+		const margin = 12;
+		const minTop = insets.top + margin;
+		const isMobile = window.matchMedia('(max-width: 767px)').matches;
+		/** Keep tip clear of fixed bottom tabs + home indicator. */
+		const bottomChrome = isMobile ? 72 + insets.bottom : insets.bottom;
+		const usableBottom = viewH - bottomChrome - margin;
+
+		const tipW = Math.min(20 * 16, viewW - margin * 2);
+		const tipH = tipEl?.offsetHeight || 210;
+		const gap = 12;
+
+		const spaceBelow = usableBottom - (r.bottom + gap);
+		const placeAbove = r.top > viewH * 0.4 || spaceBelow < tipH;
+
+		let top = placeAbove ? r.top - tipH - gap : r.bottom + gap;
+		top = Math.max(minTop, Math.min(top, usableBottom - tipH));
+
+		let left = Math.min(Math.max(r.left, margin), viewW - tipW - margin);
+		left = Math.max(margin + insets.left, left);
+
+		tipStyle = `top:${Math.round(top + viewTop)}px;left:${Math.round(left + viewLeft)}px;`;
+		highlightStyle = `top:${Math.round(r.top + viewTop - 6)}px;left:${Math.round(r.left + viewLeft - 6)}px;width:${Math.round(r.width + 12)}px;height:${Math.round(r.height + 12)}px;`;
+	}
+
 	async function ensureStepTarget() {
 		const current = OWNER_TOUR_STEPS[index];
 		if (!current) {
@@ -89,11 +123,17 @@
 			const el = document.querySelector(current.selector) as HTMLElement | null;
 			if (el) {
 				el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+				await new Promise((r) => requestAnimationFrame(() => r(undefined)));
 				const r = el.getBoundingClientRect();
 				rect = r;
-				const tipTop = Math.min(window.innerHeight - 220, r.bottom + 12);
-				const tipLeft = Math.max(12, Math.min(r.left, window.innerWidth - 320));
-				tipStyle = `top:${tipTop}px;left:${tipLeft}px;`;
+				placeTip(r);
+				// Second pass once tip height is known (after bind).
+				queueMicrotask(() => {
+					if (rect) placeTip(rect);
+				});
+				requestAnimationFrame(() => {
+					if (rect) placeTip(rect);
+				});
 				return;
 			}
 			await new Promise((r) => setTimeout(r, 80));
@@ -136,9 +176,13 @@
 		};
 		window.addEventListener('resize', onResize);
 		window.addEventListener('scroll', onResize, true);
+		window.visualViewport?.addEventListener('resize', onResize);
+		window.visualViewport?.addEventListener('scroll', onResize);
 		return () => {
 			window.removeEventListener('resize', onResize);
 			window.removeEventListener('scroll', onResize, true);
+			window.visualViewport?.removeEventListener('resize', onResize);
+			window.visualViewport?.removeEventListener('scroll', onResize);
 		};
 	});
 
@@ -153,11 +197,12 @@
 		<div class="absolute inset-0 bg-black/50"></div>
 		<div
 			class="absolute rounded-xl ring-2 ring-[var(--color-primary)] ring-offset-2 ring-offset-transparent"
-			style="top:{rect.top - 6}px;left:{rect.left - 6}px;width:{rect.width + 12}px;height:{rect.height + 12}px;box-shadow:0 0 0 9999px rgba(0,0,0,0.5);"
+			style="{highlightStyle}box-shadow:0 0 0 9999px rgba(0,0,0,0.5);"
 		></div>
 	</div>
 
 	<div
+		bind:this={tipEl}
 		class="fixed z-[90] w-[min(20rem,calc(100vw-1.5rem))] rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-xl"
 		style={tipStyle}
 		role="dialog"

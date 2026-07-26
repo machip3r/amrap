@@ -53,7 +53,7 @@ test.describe("owner settings and organization", () => {
 
     const contact = page.getByRole("link", { name: /Contactar a AMRAP/i });
     await expect(contact).toBeVisible();
-    await expect(contact).toHaveAttribute("href", /\/es#contacto$/);
+    await expect(contact).toHaveAttribute("href", /\/es#contact$/);
 
     await page.getByRole("button", { name: /Mejorar plan/i }).first().click();
     const confirm = page.getByRole("dialog");

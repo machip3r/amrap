@@ -149,7 +149,7 @@ export async function createMember(formData: FormData): Promise<CreateMemberStat
 				return { error: d.members.freemiumMemberLimit };
 			}
 			if (active >= memberCap && !isHardMemberCap(workspace.planTier)) {
-				softCapWarning = d.members.softMemberCapWarning;
+				softCapWarning = d.members.softMemberCapWarning.replace('{n}', String(memberCap));
 			}
 		}
 	}

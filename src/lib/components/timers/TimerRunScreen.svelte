@@ -213,6 +213,20 @@
 						.replace('{total}', String(current.setTotal))
 				: ''
 	);
+
+	/** Paint html/body so iOS/PWA bottom gaps match the run screen (not --color-bg). */
+	$effect(() => {
+		const html = document.documentElement;
+		const body = document.body;
+		const prevHtml = html.style.backgroundColor;
+		const prevBody = body.style.backgroundColor;
+		html.style.backgroundColor = routine.color;
+		body.style.backgroundColor = routine.color;
+		return () => {
+			html.style.backgroundColor = prevHtml;
+			body.style.backgroundColor = prevBody;
+		};
+	});
 </script>
 
 <div

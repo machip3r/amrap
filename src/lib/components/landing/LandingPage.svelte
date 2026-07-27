@@ -30,7 +30,6 @@
 	});
 	const compareLabels = $derived({
 		title: appDict.planCompare.title,
-		description: appDict.planCompare.description,
 		close: appDict.organization.close,
 		tierFreemium: appDict.organization.planFreemium,
 		tierStarter: appDict.organization.planStarter,
@@ -218,7 +217,7 @@
 						<p class="landing-price-amount">
 							{#key `${plan.name}-${billing}`}
 								<span class="font-title landing-price-value" in:fade={uiFade(160)}>
-									{price}
+									{price}{#if plan.cta !== 'contact' && price !== '$0'}*{/if}
 								</span>
 							{/key}
 							{#if period}
@@ -261,6 +260,7 @@
 		open={compareOpen}
 		onOpenChange={(open) => (compareOpen = open)}
 		labels={compareLabels}
+		autoFocus={false}
 	/>
 
 	<LandingFaq {d} />

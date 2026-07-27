@@ -12,7 +12,7 @@
 	import X from '@lucide/svelte/icons/x';
 	import type { Dictionary } from '$lib/i18n/dictionaries';
 	import { expandRoutine } from '$lib/timers/timeline';
-	import { unlockTimerAudio } from '$lib/timers/sound';
+	import { unlockTimerAudio, playPhaseCue } from '$lib/timers/sound';
 	import { MUTE_KEY, formatClock, playBeep, type TimerRoutine } from '$lib/timers/types';
 
 	type Labels = Dictionary['timers'];
@@ -118,9 +118,9 @@
 			cursorEnd += list[i]!.seconds * 1000;
 		}
 
-		// One phase: normal cue. Several skipped while backgrounded: skip intermediate beeps.
+		// One phase: play that segment's cue. Several skipped while backgrounded: skip intermediate beeps.
 		if (phasesAdvanced === 1) {
-			playBeep(list[i]?.kind === 'rest' ? 'rest' : 'interval', mutedNow);
+			playPhaseCue(list[i]!.cue, mutedNow);
 		}
 
 		index = i;

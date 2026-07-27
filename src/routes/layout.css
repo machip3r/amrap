@@ -153,6 +153,14 @@ textarea:focus {
 	box-shadow: 0 0 0 1px var(--color-ring);
 }
 
+/* Keep native time/date picker glyphs visible on dark surfaces. */
+.dark input[type='time']::-webkit-calendar-picker-indicator,
+.dark input[type='date']::-webkit-calendar-picker-indicator,
+.dark input[type='datetime-local']::-webkit-calendar-picker-indicator {
+	filter: invert(1) brightness(1.15);
+	opacity: 0.9;
+}
+
 .auth-container {
 	background-image: radial-gradient(
 		circle at 50% -20%,

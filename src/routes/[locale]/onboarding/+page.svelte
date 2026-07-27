@@ -58,6 +58,9 @@
 				dayPassPrice={data.dayPassPrice}
 				planTier={data.planTier}
 				planCap={data.planCap}
+				scheduleEnabledDays={'scheduleEnabledDays' in data ? (data.scheduleEnabledDays as string[] | null) : null}
+				scheduleOpenTime={'scheduleOpenTime' in data ? (data.scheduleOpenTime as string | null) : null}
+				scheduleCloseTime={'scheduleCloseTime' in data ? (data.scheduleCloseTime as string | null) : null}
 				stripePublishableKey={data.stripePublishableKey}
 				billingFlash={data.billingFlash}
 				showError={data.showError}

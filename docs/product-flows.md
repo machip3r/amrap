@@ -25,12 +25,14 @@ Locales: `es` (default) · `en`.
 | Marketing | Public | `/[locale]` | Shipped | Landing, pricing, contact · **SEO:** intent-led titles, descriptions, www canonicals, OG, hreflang, JSON-LD, `/sitemap.xml`, `robots.txt`; private app routes `noindex`. **PWA:** installed apps open `/app` (not marketing); standalone visits to landing bounce to `/app` |
 | PWA entry | Installed app | `/app` | Shipped | Manifest `start_url`; signed-in → dashboard/me/onboarding via `resolvePostAuthPath`; signed-out → login |
 | Auth | Public / pending | `/login`, `/register` | Shipped | OTP on same routes; no public “confirm email” nav link |
-| Onboarding | Owner / provisional | `/onboarding` | Shipped | Steps 1–5; optional AMRAP plan + compare; finish starts owner tour |
+| Onboarding | Owner / provisional | `/onboarding` | Shipped | Steps 1–6 (profile → gym → **schedule** → plans → billing → done); optional AMRAP plan + compare; finish starts owner tour |
 | Profile welcome | Invited staff / trainer / member | `/welcome` | Shipped | After accept (+ password only if new Auth user); blocking until `persons.profile_completed_at` |
 | Invite decision | Invited staff / trainer / member | `/invite` | Shipped | Accept or decline; decline → `cancelled` + sign out |
 | Invite password | After accept (new Auth users only) | `/invite/password` | Shipped | Required password for new accounts; skipped when the email already had an AMRAP login |
 | No gym access | Signed-in, no gym/membership | `/no-access` | Shipped | Message + logout; not owner onboarding |
-| Ops app | Owner, staff, trainer | `/dashboard`, `/timers`, members, plans, … | Shipped | Scoped to active gym (`amrap_gym_id` cookie); dashboard quick actions open unified register dialog |
+| Ops app | Owner, staff, trainer | `/dashboard`, `/timers`, members, plans, … | Shipped | Scoped to active gym (`amrap_gym_id` cookie); dashboard quick actions open unified register dialog; **friendly 404** for missing member/trainer/staff/class/check-in history (`EntityNotFound`) |
+| Gym info | Owner / provisional | `/gym-info` | Shipped | Edit gym name, address, branch name, and weekly schedule (open days + open/close time) |
+| Check-in | Staff / kiosk | `/checkin` | Shipped | QR success overlay · **unknown QR** soft overlay + panel (not “access denied”) · history calendar |
 | Member app | Member | `/me`, `/me/qr`, `/me/classes`, `/me/timers`, `/me/inbox`, `/me/profile` | Shipped | Ops-parity shell; active membership; gym white-label when plan allows |
 | Ops profile | Staff / trainer / owner | `/profile` | Shipped | Avatar → profile; compose for staff/trainer |
 | Organization / billing | Owner / provisional | `/organization` | Partial | Checkout + Portal + webhooks shipped (MXN); **E2E hybrid local** (`pnpm test:e2e:billing`); create gym & unpaid grace UX still coming |
@@ -173,22 +175,28 @@ Clear session + pending cookies. Redirect marketing (or login).
 - Sticky **Back** / **Continue** actions; **Logout** in the fixed footer.
 - Freemium: 1 gym / 1 branch — UI does not offer more here. Sets `amrap_gym_id`.
 
-### Step 3 — Memberships (optional)
+### Step 3 — Schedule (required)
+
+- Weekday toggle group (Mon–Sun), defaults Mon–Fri.
+- Open time + close time (`type="time"`), defaults 06:00–22:00.
+- Saves `schedule_enabled_days`, `schedule_open_time`, `schedule_close_time` on `gyms` row.
+- Editable later via **Gym information** page (`/gym-info`).
+
+### Step 4 — Memberships (optional)
 
 - Text link **Agregar costo de día/visita** / **Set day pass/visit cost** above the list (when unset); form opens under it.
 - Saved day pass appears **first** in the list like a membership (edit only) — edit smoothly scrolls to the form and focuses the price input.
 - Sticky **Continue** / **Back** / **Logout** in the fixed footer.
-- Sticky **Continue** / **Back** / **Logout** in the fixed footer.
 - Up to **2** on Freemium (`maxActivePlans`); paid tiers unlock more without leaving onboarding.
 - At Freemium limit: **Upgrade** CTA (Embedded Checkout) + **Compare plans** table dialog.
 
-### Step 4 — AMRAP plan (optional)
+### Step 5 — AMRAP plan (optional)
 
 - Plan cards (Freemium / Starter / Growth / Pro contact) · monthly/annual confirm · Embedded Checkout.
 - **Compare all plans** table · **Continue on Free** (`onboarding_billing_done`) skips.
 - Successful paid checkout syncs `plan_tier` and advances past this step.
 
-### Step 5 — Done
+### Step 6 — Done
 
 - Short summary · CTA to dashboard.
 - Marks onboarding complete → stamps `persons.profile_completed_at` → `/dashboard?tour=1` (starts owner quickstart).
@@ -480,7 +488,7 @@ Data model and cookie support multi-gym roles. **UI:** create gym / switcher / a
 **Shipped**
 
 - Invited via `/trainers`.
-- Ops access: **Mi Día / week home** (next/live class hero · week strip · upcoming) + **Classes** (create/edit with self as coach) + **Timers** (`/timers`: list keeps ops shell; opening run/edit hides header/sidebar/bottom tabs for full-viewport use; Simple templates or Complex multi-cycle editor; localStorage; **screen wake lock** while on timers; run clock uses wall time and catches up after background/lock) + **Settings** (personal menu; no gym branding).
+- Ops access: **Mi Día / week home** (next/live class hero · week strip · upcoming) + **Classes** (create/edit with self as coach) + **Timers** (`/timers`: list keeps ops shell; opening run/edit hides header/sidebar/bottom tabs for full-viewport use; Simple templates or Complex multi-cycle editor; **per-phase fullscreen editor** for duration · color · start cue; Simple **Repeat** toggle for work/rest sets; total bar uses phase colors; localStorage; **screen wake lock** while on timers; run clock uses wall time and catches up after background/lock) + **Settings** (personal menu; no gym branding).
 - Session roster: care badges (medical note · first day · birthday) + express score capture (AMRAP / strength / for time).
 - **No** reception check-in page.
 - **No** remote wall-screen timer control.
@@ -516,7 +524,7 @@ No app login. Manual check-in at reception. Optional invite to register / claim 
 | `/me` | Home · memberships list · switch active gym (cookie) · shortcut cards |
 | `/me/qr` | Full-screen platform QR (also center FAB on mobile) |
 | `/me/classes` | Upcoming · book / waitlist / cancel · attendance history |
-| `/me/timers` | Routines list · Simple (template presets) / Complex (multi-cycle editor) create-edit · full-screen run · screen wake lock · wall-clock catch-up after lock |
+| `/me/timers` | Routines list · Simple (template presets) / Complex (multi-cycle editor) create-edit · per-phase duration/color/cue dialog · Simple Repeat toggle · full-screen run · screen wake lock · wall-clock catch-up after lock |
 | `/me/inbox` | Read gym advice (`inbox_messages`); auto-mark read |
 | `/me/profile` | Avatar destination · send feedback to gym or AMRAP (`feedback_messages`) |
 | Dual-role / multi-gym header | Identity picker when >1 identity (same-gym ops+member or cross-gym) | Shipped |

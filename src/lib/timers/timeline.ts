@@ -1,9 +1,15 @@
 import type {
   PhaseKind,
   TimelineSegment,
+  TimerPhase,
+  TimerPhaseCue,
   TimerRoutine,
 } from "$lib/timers/types";
-import { newId } from "$lib/timers/types";
+import {
+  newId,
+  resolvePhaseColor,
+  resolvePhaseCue,
+} from "$lib/timers/types";
 
 function seg(
   kind: PhaseKind,
@@ -11,6 +17,8 @@ function seg(
   seconds: number,
   setIndex: number,
   setTotal: number,
+  color?: string,
+  cue?: TimerPhaseCue,
 ): TimelineSegment | null {
   if (seconds <= 0) return null;
   return {
@@ -20,7 +28,17 @@ function seg(
     seconds,
     setIndex,
     setTotal,
+    color: resolvePhaseColor(kind, color),
+    cue: resolvePhaseCue(kind, cue),
   };
+}
+
+function segFromPhase(
+  p: TimerPhase,
+  setIndex: number,
+  setTotal: number,
+): TimelineSegment | null {
+  return seg(p.kind, p.label, p.seconds, setIndex, setTotal, p.color, p.cue);
 }
 
 /** Expand a routine into a flat runnable timeline (skips 0-second phases). */
@@ -34,6 +52,8 @@ export function expandRoutine(routine: TimerRoutine): TimelineSegment[] {
       routine.warmupSeconds ?? 0,
       1,
       1,
+      routine.warmupColor,
+      routine.warmupCue,
     );
     if (warm) out.push(warm);
 
@@ -41,7 +61,7 @@ export function expandRoutine(routine: TimerRoutine): TimelineSegment[] {
       const sets = Math.max(1, cycle.sets || 1);
       for (let s = 1; s <= sets; s++) {
         for (const p of cycle.phases) {
-          const item = seg(p.kind, p.label, p.seconds, s, sets);
+          const item = segFromPhase(p, s, sets);
           if (item) out.push(item);
         }
       }
@@ -53,6 +73,8 @@ export function expandRoutine(routine: TimerRoutine): TimelineSegment[] {
       routine.cooldownSeconds ?? 0,
       1,
       1,
+      routine.cooldownColor,
+      routine.cooldownCue,
     );
     if (cool) out.push(cool);
     return out;
@@ -66,7 +88,15 @@ export function expandRoutine(routine: TimerRoutine): TimelineSegment[] {
   const cooldown = phases.find((p) => p.kind === "cooldown");
   const sets = Math.max(1, routine.repeatSets ?? 1);
 
-  const w = seg("warmup", warmup?.label ?? "Warm Up", warmup?.seconds ?? 0, 1, 1);
+  const w = seg(
+    "warmup",
+    warmup?.label ?? "Warm Up",
+    warmup?.seconds ?? 0,
+    1,
+    1,
+    warmup?.color,
+    warmup?.cue,
+  );
   if (w) out.push(w);
 
   for (let s = 1; s <= sets; s++) {
@@ -76,6 +106,8 @@ export function expandRoutine(routine: TimerRoutine): TimelineSegment[] {
       work?.seconds ?? 0,
       s,
       sets,
+      work?.color,
+      work?.cue,
     );
     if (wk) out.push(wk);
     const rs = seg(
@@ -84,6 +116,8 @@ export function expandRoutine(routine: TimerRoutine): TimelineSegment[] {
       rest?.seconds ?? 0,
       s,
       sets,
+      rest?.color,
+      rest?.cue,
     );
     if (rs) out.push(rs);
   }
@@ -94,6 +128,8 @@ export function expandRoutine(routine: TimerRoutine): TimelineSegment[] {
     cooldown?.seconds ?? 0,
     1,
     1,
+    cooldown?.color,
+    cooldown?.cue,
   );
   if (c) out.push(c);
 
@@ -107,15 +143,9 @@ export function totalSeconds(routine: TimerRoutine): number {
 export function segmentBarParts(
   routine: TimerRoutine,
 ): { kind: PhaseKind; seconds: number; color: string }[] {
-  const kindColor: Record<PhaseKind, string> = {
-    warmup: "#eab308",
-    work: "#e11d48",
-    rest: "#16a34a",
-    cooldown: "#2563eb",
-  };
   return expandRoutine(routine).map((s) => ({
     kind: s.kind,
     seconds: s.seconds,
-    color: kindColor[s.kind],
+    color: s.color,
   }));
 }

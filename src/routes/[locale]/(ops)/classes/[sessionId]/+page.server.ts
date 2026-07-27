@@ -39,7 +39,7 @@ export const load: PageServerLoad = async ({ parent, params, depends }) => {
 	const supabase = createClient();
 	const roster = await loadSessionRoster(supabase, params.sessionId);
 	if (!roster || roster.session.gym_id !== workspace.gymId) {
-		throw error(404, 'Not found');
+		throw error(404, d.classes.notFound);
 	}
 
 	const canManage = canInWorkspace(workspace, 'manage_classes');

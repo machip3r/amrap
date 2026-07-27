@@ -16,6 +16,14 @@
 	import FormField from '$lib/components/ui/FormField.svelte';
 	import Input from '$lib/components/ui/Input.svelte';
 	import LogoutButton from '$lib/components/LogoutButton.svelte';
+	import {
+		GYM_WEEKDAYS,
+		DEFAULT_GYM_SCHEDULE_DAYS,
+		DEFAULT_GYM_OPEN_TIME,
+		DEFAULT_GYM_CLOSE_TIME,
+		formatGymTimeInput,
+		type GymWeekday
+	} from '$lib/gym/schedule';
 	import type { Locale } from '$lib/i18n/config';
 	import { getDictionary } from '$lib/i18n/dictionaries';
 	import { formatMoney } from '$lib/i18n/money';
@@ -38,6 +46,9 @@
 		dayPassPrice?: number | null;
 		planTier?: OrgPlanTier;
 		planCap?: number | null;
+		scheduleEnabledDays?: string[] | null;
+		scheduleOpenTime?: string | null;
+		scheduleCloseTime?: string | null;
 		stripePublishableKey?: string | null;
 		billingFlash?: boolean;
 		showError?: boolean;
@@ -51,6 +62,9 @@
 		dayPassPrice = null,
 		planTier = 'FREEMIUM',
 		planCap = 2,
+		scheduleEnabledDays = null,
+		scheduleOpenTime = null,
+		scheduleCloseTime = null,
 		stripePublishableKey = null,
 		billingFlash = false,
 		showError = false,
@@ -58,6 +72,39 @@
 	}: Props = $props();
 
 	const d = getDictionary(locale);
+
+	const scheduleDayTokens = GYM_WEEKDAYS;
+	const scheduleDayLabels = $derived([
+		d.onboarding.scheduleDayMon,
+		d.onboarding.scheduleDayTue,
+		d.onboarding.scheduleDayWed,
+		d.onboarding.scheduleDayThu,
+		d.onboarding.scheduleDayFri,
+		d.onboarding.scheduleDaySat,
+		d.onboarding.scheduleDaySun
+	]);
+
+	let selectedScheduleDays = $state(
+		new Set<GymWeekday>(
+			scheduleEnabledDays && scheduleEnabledDays.length > 0
+				? (scheduleEnabledDays as GymWeekday[])
+				: DEFAULT_GYM_SCHEDULE_DAYS
+		)
+	);
+	let scheduleOpenDraft = $state(
+		formatGymTimeInput(scheduleOpenTime) ?? DEFAULT_GYM_OPEN_TIME
+	);
+	let scheduleCloseDraft = $state(
+		formatGymTimeInput(scheduleCloseTime) ?? DEFAULT_GYM_CLOSE_TIME
+	);
+
+	function toggleScheduleDay(day: GymWeekday) {
+		const next = new Set(selectedScheduleDays);
+		if (next.has(day)) next.delete(day);
+		else next.add(day);
+		selectedScheduleDays = next;
+	}
+
 	const maxStep = $derived(onboardingState.step);
 	let viewStep = $state(onboardingState.step as OnboardingStep);
 	let prevMaxStep = $state(onboardingState.step);
@@ -134,8 +181,9 @@
 	function stepLabel(n: number) {
 		if (n === 1) return d.onboarding.stepYou;
 		if (n === 2) return d.onboarding.stepGym;
-		if (n === 3) return d.onboarding.stepPlans;
-		if (n === 4) return d.onboarding.stepBilling;
+		if (n === 3) return d.onboarding.stepSchedule;
+		if (n === 4) return d.onboarding.stepPlans;
+		if (n === 5) return d.onboarding.stepBilling;
 		return d.onboarding.stepDone;
 	}
 
@@ -211,6 +259,7 @@
 
 	let profilePending = $state(false);
 	let gymPending = $state(false);
+	let schedulePending = $state(false);
 	let addPlanPending = $state(false);
 	let editPlanPending = $state(false);
 	let dayPassPending = $state(false);
@@ -229,6 +278,7 @@
 	const primaryPending = $derived(
 		profilePending ||
 			gymPending ||
+			schedulePending ||
 			skipPlansPending ||
 			skipBillingPending ||
 			finishPending
@@ -277,10 +327,12 @@
 			: viewStep === 2
 				? 'onboarding-gym'
 				: viewStep === 3
-					? 'onboarding-skip-plans'
+					? 'onboarding-schedule'
 					: viewStep === 4
-						? 'onboarding-skip-billing'
-						: 'onboarding-finish'
+						? 'onboarding-skip-plans'
+						: viewStep === 5
+							? 'onboarding-skip-billing'
+							: 'onboarding-finish'
 	);
 
 	const primaryLabel = $derived(
@@ -291,12 +343,14 @@
 				: viewStep === 2
 					? d.onboarding.continue
 					: viewStep === 3
-						? plans.length > 0
-							? d.onboarding.continue
-							: d.onboarding.skipPlans
+						? d.onboarding.continue
 						: viewStep === 4
-							? d.onboarding.billingSkip
-							: d.onboarding.goDashboard
+							? plans.length > 0
+								? d.onboarding.continue
+								: d.onboarding.skipPlans
+							: viewStep === 5
+								? d.onboarding.billingSkip
+								: d.onboarding.goDashboard
 	);
 
 	const dayPassToggleLabel = $derived(
@@ -324,7 +378,7 @@
 		</div>
 	{/if}
 	<nav aria-label={d.onboarding.stepsLabel} class="mb-6 flex shrink-0 gap-1.5 sm:mb-8 sm:gap-2">
-		{#each [1, 2, 3, 4, 5] as n (n)}
+		{#each [1, 2, 3, 4, 5, 6] as n (n)}
 			{@const active = viewStep === n}
 			{@const reached = maxStep >= n}
 			<button
@@ -533,6 +587,96 @@
 				</form>
 			</section>
 		{:else if viewStep === 3}
+			<section class="flex flex-col gap-4">
+				<div>
+					<h2 class="text-xl font-bold text-[var(--color-text)]">{d.onboarding.scheduleTitle}</h2>
+					<p class="mt-1 text-sm text-[var(--color-muted)]">{d.onboarding.scheduleSubtitle}</p>
+				</div>
+
+				<form
+					id="onboarding-schedule"
+					method="POST"
+					action="?/saveSchedule"
+					class="flex flex-col gap-4"
+					novalidate
+					use:enhance={pendingEnhance((v) => (schedulePending = v), {
+						onSuccess: advanceViewStepAfterSave
+					})}
+				>
+					<input type="hidden" name="locale" value={locale} />
+
+					<fieldset>
+						<legend class="mb-2 text-sm font-medium text-[var(--color-text)]">{d.onboarding.scheduleDaysLegend}</legend>
+						<div
+							class="grid grid-cols-7 gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] p-1.5"
+							role="group"
+							aria-label={d.onboarding.scheduleDaysLegend}
+						>
+							{#each scheduleDayTokens as token, i (token)}
+								{@const on = selectedScheduleDays.has(token)}
+								<button
+									type="button"
+									aria-pressed={on}
+									onclick={() => toggleScheduleDay(token)}
+									class="flex min-h-11 items-center justify-center rounded-md px-0.5 text-[11px] font-semibold leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] sm:text-xs {on
+										? 'bg-[var(--color-primary)] text-[var(--color-primary-on)] shadow-sm'
+										: 'text-[var(--color-muted)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text)]'}"
+								>
+									{scheduleDayLabels[i]}
+								</button>
+							{/each}
+						</div>
+						{#each [...selectedScheduleDays] as day (day)}
+							<input type="hidden" name="schedule_days" value={day} />
+						{/each}
+						{#if form?.fieldErrors?.schedule_days}
+							<p class="mt-1.5 text-sm text-[var(--color-primary)]" role="alert">{form.fieldErrors.schedule_days}</p>
+						{/if}
+					</fieldset>
+
+					<div class="grid grid-cols-2 gap-3">
+						<FormField
+							label={d.onboarding.scheduleOpenTime}
+							htmlFor="schedule-open-time"
+							error={form?.fieldErrors?.schedule_open_time}
+						>
+							{#snippet children({ invalid, describedBy })}
+								<Input
+									id="schedule-open-time"
+									name="schedule_open_time"
+									type="time"
+									required
+									value={scheduleOpenDraft}
+									{invalid}
+									{describedBy}
+								/>
+							{/snippet}
+						</FormField>
+						<FormField
+							label={d.onboarding.scheduleCloseTime}
+							htmlFor="schedule-close-time"
+							error={form?.fieldErrors?.schedule_close_time}
+						>
+							{#snippet children({ invalid, describedBy })}
+								<Input
+									id="schedule-close-time"
+									name="schedule_close_time"
+									type="time"
+									required
+									value={scheduleCloseDraft}
+									{invalid}
+									{describedBy}
+								/>
+							{/snippet}
+						</FormField>
+					</div>
+
+					{#if form?.error}
+						<p class="text-sm font-medium text-[var(--color-primary)]">{form.error}</p>
+					{/if}
+				</form>
+			</section>
+		{:else if viewStep === 4}
 			{@const atLimit = !canCreatePlan(planTier, plans.length)}
 			<section class="flex flex-col gap-4">
 				<div>
@@ -914,7 +1058,7 @@
 					<input type="hidden" name="locale" value={locale} />
 				</form>
 			</section>
-		{:else if viewStep === 4}
+		{:else if viewStep === 5}
 			<section class="flex flex-col gap-4">
 				<div>
 					<h2 class="text-xl font-bold text-[var(--color-text)]">{d.onboarding.billingTitle}</h2>
@@ -995,7 +1139,7 @@
 					<input type="hidden" name="locale" value={locale} />
 				</form>
 			</section>
-		{:else if viewStep === 5}
+		{:else if viewStep === 6}
 			<section class="flex flex-col gap-4 text-center">
 				<div>
 					<h2 class="text-xl font-bold text-[var(--color-text)]">{d.onboarding.doneTitle}</h2>

@@ -30,7 +30,7 @@ export const load: PageServerLoad = async ({ parent, params, url, depends }) => 
 	}
 
 	const id = uuidSchema.safeParse(params.membershipId);
-	if (!id.success) error(404);
+	if (!id.success) error(404, d.entityNotFound.titleCheckin);
 
 	const { year, month } = parseMonthParam(url.searchParams.get('month'));
 	const supabase = createClient();
@@ -41,7 +41,7 @@ export const load: PageServerLoad = async ({ parent, params, url, depends }) => 
 		year,
 		month
 	);
-	if (!memberMonth) error(404);
+	if (!memberMonth) error(404, d.entityNotFound.titleCheckin);
 
 	const canOpenMember = canInWorkspace(workspace, 'manage_members');
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import Plus from '@lucide/svelte/icons/plus';
 	import X from '@lucide/svelte/icons/x';
 	import Button from '$lib/components/ui/Button.svelte';
@@ -14,14 +15,23 @@
 	} from '$lib/timers/templates';
 	import { segmentBarParts, totalSeconds } from '$lib/timers/timeline';
 	import {
+		PHASE_KIND_COLOR,
+		PHASE_KIND_CUE,
 		TIMER_COLORS,
 		formatClock,
 		newId,
+		resolvePhaseColor,
+		resolvePhaseCue,
+		type PhaseKind,
 		type TimerCycle,
 		type TimerPhase,
+		type TimerPhaseCue,
 		type TimerRoutine
 	} from '$lib/timers/types';
 	import { LIMITS, sanitizeTimerNameInput } from '$lib/validation/schemas';
+	import TimerPhaseEditDialog, {
+		type PhaseEditValue
+	} from './TimerPhaseEditDialog.svelte';
 
 	type Labels = Dictionary['timers'];
 
@@ -33,14 +43,24 @@
 		onSave: (routine: TimerRoutine) => void;
 	};
 
+	type PhaseEditTarget =
+		| { kind: 'simple'; phaseKind: PhaseKind }
+		| { kind: 'complexEdge'; edge: 'warmup' | 'cooldown' }
+		| { kind: 'cyclePhase'; cycleId: string; phaseId: string };
+
 	let { initial, labels, closeLabel, onCancel, onSave }: Props = $props();
 
 	function ensureSimplePhases(r: TimerRoutine): TimerPhase[] {
-		if (r.phases && r.phases.length >= 4) return r.phases;
 		const base = blankSimpleRoutine().phases!;
 		return base.map((p) => {
 			const existing = r.phases?.find((x) => x.kind === p.kind);
-			return existing ?? p;
+			if (!existing) return p;
+			return {
+				...p,
+				...existing,
+				color: resolvePhaseColor(existing.kind, existing.color),
+				cue: resolvePhaseCue(existing.kind, existing.cue)
+			};
 		});
 	}
 
@@ -54,6 +74,8 @@
 			: blankSimpleRoutine()
 	);
 
+	let editTarget = $state<PhaseEditTarget | null>(null);
+
 	const total = $derived(totalSeconds(draft));
 	const bar = $derived(segmentBarParts(draft));
 	const canSave = $derived(total > 0);
@@ -64,13 +86,78 @@
 	const rest = $derived(phases.find((p) => p.kind === 'rest'));
 	const cooldown = $derived(phases.find((p) => p.kind === 'cooldown'));
 	const cycles = $derived(draft.cycles ?? []);
+	const repeatEnabled = $derived((draft.repeatSets ?? 1) > 1);
 
-	function setPhaseSeconds(kind: TimerPhase['kind'], seconds: number) {
-		const nextPhases = ensureSimplePhases(draft).map((p) =>
-			p.kind === kind ? { ...p, seconds } : p
+	const editOpen = $derived(editTarget != null);
+	const editTitle = $derived.by(() => {
+		const t = editTarget;
+		if (!t) return '';
+		if (t.kind === 'simple') {
+			if (t.phaseKind === 'warmup') return labels.phaseWarmup;
+			if (t.phaseKind === 'work') return labels.phaseWork;
+			if (t.phaseKind === 'rest') return labels.phaseRest;
+			return labels.phaseCooldown;
+		}
+		if (t.kind === 'complexEdge') {
+			return t.edge === 'warmup' ? labels.phaseWarmup : labels.phaseCooldown;
+		}
+		const phase = draft.cycles
+			?.find((c) => c.id === t.cycleId)
+			?.phases.find((p) => p.id === t.phaseId);
+		if (phase?.kind === 'work') return labels.phaseWork;
+		if (phase?.kind === 'rest') return labels.phaseRest;
+		return phase?.label ?? labels.edit;
+	});
+	const editKind = $derived.by((): PhaseKind => {
+		const t = editTarget;
+		if (!t) return 'work';
+		if (t.kind === 'simple') return t.phaseKind;
+		if (t.kind === 'complexEdge') return t.edge;
+		const phase = draft.cycles
+			?.find((c) => c.id === t.cycleId)
+			?.phases.find((p) => p.id === t.phaseId);
+		return phase?.kind ?? 'work';
+	});
+	const editSeconds = $derived.by(() => {
+		const t = editTarget;
+		if (!t) return 0;
+		if (t.kind === 'simple') {
+			return phases.find((p) => p.kind === t.phaseKind)?.seconds ?? 0;
+		}
+		if (t.kind === 'complexEdge') {
+			return t.edge === 'warmup' ? (draft.warmupSeconds ?? 0) : (draft.cooldownSeconds ?? 0);
+		}
+		return (
+			draft.cycles?.find((c) => c.id === t.cycleId)?.phases.find((p) => p.id === t.phaseId)
+				?.seconds ?? 0
 		);
-		draft = { ...draft, phases: nextPhases, templateId: undefined };
-	}
+	});
+	const editColor = $derived.by(() => {
+		const t = editTarget;
+		if (!t) return undefined;
+		if (t.kind === 'simple') {
+			return phases.find((p) => p.kind === t.phaseKind)?.color;
+		}
+		if (t.kind === 'complexEdge') {
+			return t.edge === 'warmup' ? draft.warmupColor : draft.cooldownColor;
+		}
+		return draft.cycles
+			?.find((c) => c.id === t.cycleId)
+			?.phases.find((p) => p.id === t.phaseId)?.color;
+	});
+	const editCue = $derived.by((): TimerPhaseCue | undefined => {
+		const t = editTarget;
+		if (!t) return undefined;
+		if (t.kind === 'simple') {
+			return phases.find((p) => p.kind === t.phaseKind)?.cue;
+		}
+		if (t.kind === 'complexEdge') {
+			return t.edge === 'warmup' ? draft.warmupCue : draft.cooldownCue;
+		}
+		return draft.cycles
+			?.find((c) => c.id === t.cycleId)
+			?.phases.find((p) => p.id === t.phaseId)?.cue;
+	});
 
 	function applyTemplate(id: TemplateId) {
 		const t = createFromTemplate(id);
@@ -115,28 +202,27 @@
 		};
 	}
 
-	function updateCyclePhase(cycleId: string, phaseId: string, seconds: number) {
-		draft = {
-			...draft,
-			templateId: undefined,
-			cycles: (draft.cycles ?? []).map((c) =>
-				c.id !== cycleId
-					? c
-					: {
-							...c,
-							phases: c.phases.map((p) => (p.id === phaseId ? { ...p, seconds } : p))
-						}
-			)
-		};
-	}
-
 	function addCycle() {
 		const cycle: TimerCycle = {
 			id: newId(),
 			sets: 1,
 			phases: [
-				{ id: newId(), kind: 'work', label: 'High Intensity', seconds: 20 },
-				{ id: newId(), kind: 'rest', label: 'Low Intensity', seconds: 10 }
+				{
+					id: newId(),
+					kind: 'work',
+					label: 'High Intensity',
+					seconds: 20,
+					color: PHASE_KIND_COLOR.work,
+					cue: PHASE_KIND_CUE.work
+				},
+				{
+					id: newId(),
+					kind: 'rest',
+					label: 'Low Intensity',
+					seconds: 10,
+					color: PHASE_KIND_COLOR.rest,
+					cue: PHASE_KIND_CUE.rest
+				}
 			]
 		};
 		draft = {
@@ -154,8 +240,69 @@
 		};
 	}
 
-	function timeParts(seconds: number) {
-		return { mins: Math.floor(seconds / 60), secs: seconds % 60 };
+	function setRepeatEnabled(on: boolean) {
+		draft = {
+			...draft,
+			templateId: undefined,
+			repeatSets: on ? Math.max(2, draft.repeatSets ?? 2) : 1
+		};
+	}
+
+	function onPhaseSave(next: PhaseEditValue) {
+		const t = editTarget;
+		if (!t) return;
+		if (t.kind === 'simple') {
+			const nextPhases = ensureSimplePhases(draft).map((p) =>
+				p.kind === t.phaseKind
+					? { ...p, seconds: next.seconds, color: next.color, cue: next.cue }
+					: p
+			);
+			draft = { ...draft, phases: nextPhases, templateId: undefined };
+			return;
+		}
+		if (t.kind === 'complexEdge') {
+			if (t.edge === 'warmup') {
+				draft = {
+					...draft,
+					templateId: undefined,
+					warmupSeconds: next.seconds,
+					warmupColor: next.color,
+					warmupCue: next.cue
+				};
+			} else {
+				draft = {
+					...draft,
+					templateId: undefined,
+					cooldownSeconds: next.seconds,
+					cooldownColor: next.color,
+					cooldownCue: next.cue
+				};
+			}
+			return;
+		}
+		draft = {
+			...draft,
+			templateId: undefined,
+			cycles: (draft.cycles ?? []).map((c) =>
+				c.id !== t.cycleId
+					? c
+					: {
+							...c,
+							phases: c.phases.map((p) =>
+								p.id === t.phaseId
+									? { ...p, seconds: next.seconds, color: next.color, cue: next.cue }
+									: p
+							)
+						}
+			)
+		};
+	}
+
+	function phaseRowLabel(kind: PhaseKind) {
+		if (kind === 'warmup') return labels.phaseWarmup;
+		if (kind === 'work') return labels.phaseWork;
+		if (kind === 'rest') return labels.phaseRest;
+		return labels.phaseCooldown;
 	}
 </script>
 
@@ -196,7 +343,6 @@
 				const t = e.target;
 				if (!(t instanceof HTMLElement)) return;
 				if (t.tagName !== 'INPUT' && t.tagName !== 'TEXTAREA') return;
-				// Keep focus inside this scroller — avoid document/visualViewport pan gaps.
 				requestAnimationFrame(() => {
 					t.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
 					window.scrollTo(0, 0);
@@ -212,7 +358,7 @@
 					role="group"
 					aria-label={labels.namePlaceholder}
 				>
-					{#each TIMER_COLORS as c (c)}
+					{#each TIMER_COLORS.filter((c) => c !== '#eab308') as c (c)}
 						<button
 							type="button"
 							onclick={() => (draft = { ...draft, color: c, templateId: undefined })}
@@ -231,7 +377,7 @@
 					bind:value={draft.name}
 					placeholder={labels.namePlaceholder}
 					maxlength={LIMITS.timerName}
-					class="min-h-11 w-full mt-2"
+					class="min-h-11 w-full"
 					oninput={(e) => {
 						const next = sanitizeTimerNameInput((e.currentTarget as HTMLInputElement).value);
 						draft = { ...draft, name: next, templateId: undefined };
@@ -297,61 +443,100 @@
 					class="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]"
 				>
 					<ul class="divide-y divide-[var(--color-border)]">
-						<li class="flex min-h-14 items-center justify-between gap-3 px-4 py-3">
-							<span class="text-sm font-medium sm:text-base">{labels.phaseWarmup}</span>
-							{@render timePill(warmup?.seconds ?? 0, 'bg-amber-500', (s) =>
-								setPhaseSeconds('warmup', s))}
-						</li>
-						<li
-							class="flex min-h-12 items-center justify-between gap-3 bg-[var(--color-surface-hover)]/50 px-4 py-2.5"
-						>
-							<span class="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]"
-								>{labels.intervalCycle}</span
-							>
-							<label class="flex items-center gap-2 text-xs font-medium text-[var(--color-muted)]">
-								{labels.sets}
-								<DigitInput
-									value={draft.repeatSets ?? 1}
-									min={1}
-									max={LIMITS.timerSets}
-									fallback={1}
-									aria-label={labels.sets}
-									class="min-h-10 w-16 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-2 text-center text-base font-semibold tabular-nums text-[var(--color-text)]"
-									onChange={(sets) =>
-										(draft = {
-											...draft,
-											templateId: undefined,
-											repeatSets: sets
-										})}
-								/>
-							</label>
-						</li>
-						<li class="flex min-h-14 items-center justify-between gap-3 px-4 py-3">
-							<span class="text-sm font-medium sm:text-base">{labels.phaseWork}</span>
-							{@render timePill(work?.seconds ?? 0, 'bg-rose-600', (s) =>
-								setPhaseSeconds('work', s))}
-						</li>
-						<li class="flex min-h-14 items-center justify-between gap-3 px-4 py-3">
-							<span class="text-sm font-medium sm:text-base">{labels.phaseRest}</span>
-							{@render timePill(rest?.seconds ?? 0, 'bg-green-600', (s) =>
-								setPhaseSeconds('rest', s))}
-						</li>
-						<li class="flex min-h-14 items-center justify-between gap-3 px-4 py-3">
-							<span class="text-sm font-medium sm:text-base">{labels.phaseCooldown}</span>
-							{@render timePill(cooldown?.seconds ?? 0, 'bg-blue-600', (s) =>
-								setPhaseSeconds('cooldown', s))}
-						</li>
+						{#each [
+							{ phase: warmup, kind: 'warmup' as const },
+							{ phase: work, kind: 'work' as const },
+							{ phase: rest, kind: 'rest' as const },
+							{ phase: cooldown, kind: 'cooldown' as const }
+						] as row (row.kind)}
+							<li>
+								<button
+									type="button"
+									class="flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--color-surface-hover)]"
+									onclick={() => (editTarget = { kind: 'simple', phaseKind: row.kind })}
+								>
+									<span
+										class="h-3.5 w-3.5 shrink-0 rounded-full"
+										style:background-color={resolvePhaseColor(row.kind, row.phase?.color)}
+										aria-hidden="true"
+									></span>
+									<span class="min-w-0 flex-1 text-sm font-medium text-[var(--color-text)] sm:text-base"
+										>{phaseRowLabel(row.kind)}</span
+									>
+									<span class="tabular-nums text-sm font-semibold text-[var(--color-muted)]">
+										{formatClock(row.phase?.seconds ?? 0)}
+									</span>
+									<ChevronRight class="h-4 w-4 shrink-0 text-[var(--color-muted)]" aria-hidden="true" />
+								</button>
+							</li>
+							{#if row.kind === 'warmup'}
+								<li class="bg-[var(--color-surface-hover)]/50 px-4 py-3">
+									<div class="flex items-center justify-between gap-3">
+										<div class="min-w-0">
+											<p class="text-sm font-semibold text-[var(--color-text)]">{labels.repeat}</p>
+											<p class="mt-0.5 text-xs text-[var(--color-muted)]">{labels.repeatSetsHint}</p>
+										</div>
+										<button
+											type="button"
+											role="switch"
+											aria-checked={repeatEnabled}
+											aria-label={labels.repeat}
+											onclick={() => setRepeatEnabled(!repeatEnabled)}
+											class="relative h-8 w-14 shrink-0 rounded-full transition-colors {repeatEnabled
+												? 'bg-[var(--color-primary)]'
+												: 'bg-[var(--color-border)]'}"
+										>
+											<span
+												class="absolute top-1 left-1 h-6 w-6 rounded-full bg-white shadow transition-transform {repeatEnabled
+													? 'translate-x-6'
+													: 'translate-x-0'}"
+											></span>
+										</button>
+									</div>
+									{#if repeatEnabled}
+										<label
+											class="mt-3 flex items-center justify-between gap-3 text-sm font-medium text-[var(--color-muted)]"
+										>
+											{labels.sets}
+											<DigitInput
+												value={draft.repeatSets ?? 2}
+												min={2}
+												max={LIMITS.timerSets}
+												fallback={2}
+												aria-label={labels.sets}
+												class="min-h-10 w-16 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-2 text-center text-base font-semibold tabular-nums text-[var(--color-text)]"
+												onChange={(sets) =>
+													(draft = {
+														...draft,
+														templateId: undefined,
+														repeatSets: sets
+													})}
+											/>
+										</label>
+									{/if}
+								</li>
+							{/if}
+						{/each}
 					</ul>
 				</div>
 			{:else}
 				<div class="space-y-2.5">
-					<div
-						class="flex min-h-14 items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3"
+					<button
+						type="button"
+						class="flex min-h-14 w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-left transition-colors hover:bg-[var(--color-surface-hover)]"
+						onclick={() => (editTarget = { kind: 'complexEdge', edge: 'warmup' })}
 					>
-						<span class="text-sm font-medium sm:text-base">{labels.phaseWarmup}</span>
-						{@render timePill(draft.warmupSeconds ?? 0, 'bg-amber-500', (s) =>
-							(draft = { ...draft, warmupSeconds: s, templateId: undefined }))}
-					</div>
+						<span
+							class="h-3.5 w-3.5 shrink-0 rounded-full"
+							style:background-color={resolvePhaseColor('warmup', draft.warmupColor)}
+							aria-hidden="true"
+						></span>
+						<span class="min-w-0 flex-1 text-sm font-medium sm:text-base">{labels.phaseWarmup}</span>
+						<span class="tabular-nums text-sm font-semibold text-[var(--color-muted)]">
+							{formatClock(draft.warmupSeconds ?? 0)}
+						</span>
+						<ChevronRight class="h-4 w-4 shrink-0 text-[var(--color-muted)]" aria-hidden="true" />
+					</button>
 
 					{#each cycles as cycle, idx (cycle.id)}
 						<div
@@ -393,15 +578,33 @@
 							</div>
 							<ul class="divide-y divide-[var(--color-border)]">
 								{#each cycle.phases as p (p.id)}
-									<li class="flex min-h-14 items-center justify-between gap-3 px-4 py-3">
-										<span class="text-sm font-medium sm:text-base">
-											{p.kind === 'work' ? labels.phaseWork : labels.phaseRest}
-										</span>
-										{@render timePill(
-											p.seconds,
-											p.kind === 'work' ? 'bg-rose-600' : 'bg-green-600',
-											(s) => updateCyclePhase(cycle.id, p.id, s)
-										)}
+									<li>
+										<button
+											type="button"
+											class="flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[var(--color-surface-hover)]"
+											onclick={() =>
+												(editTarget = {
+													kind: 'cyclePhase',
+													cycleId: cycle.id,
+													phaseId: p.id
+												})}
+										>
+											<span
+												class="h-3.5 w-3.5 shrink-0 rounded-full"
+												style:background-color={resolvePhaseColor(p.kind, p.color)}
+												aria-hidden="true"
+											></span>
+											<span class="min-w-0 flex-1 text-sm font-medium sm:text-base">
+												{p.kind === 'work' ? labels.phaseWork : labels.phaseRest}
+											</span>
+											<span class="tabular-nums text-sm font-semibold text-[var(--color-muted)]">
+												{formatClock(p.seconds)}
+											</span>
+											<ChevronRight
+												class="h-4 w-4 shrink-0 text-[var(--color-muted)]"
+												aria-hidden="true"
+											/>
+										</button>
 									</li>
 								{/each}
 							</ul>
@@ -417,13 +620,22 @@
 						{labels.addCycle}
 					</button>
 
-					<div
-						class="flex min-h-14 items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3"
+					<button
+						type="button"
+						class="flex min-h-14 w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-left transition-colors hover:bg-[var(--color-surface-hover)]"
+						onclick={() => (editTarget = { kind: 'complexEdge', edge: 'cooldown' })}
 					>
-						<span class="text-sm font-medium sm:text-base">{labels.phaseCooldown}</span>
-						{@render timePill(draft.cooldownSeconds ?? 0, 'bg-blue-600', (s) =>
-							(draft = { ...draft, cooldownSeconds: s, templateId: undefined }))}
-					</div>
+						<span
+							class="h-3.5 w-3.5 shrink-0 rounded-full"
+							style:background-color={resolvePhaseColor('cooldown', draft.cooldownColor)}
+							aria-hidden="true"
+						></span>
+						<span class="min-w-0 flex-1 text-sm font-medium sm:text-base">{labels.phaseCooldown}</span>
+						<span class="tabular-nums text-sm font-semibold text-[var(--color-muted)]">
+							{formatClock(draft.cooldownSeconds ?? 0)}
+						</span>
+						<ChevronRight class="h-4 w-4 shrink-0 text-[var(--color-muted)]" aria-hidden="true" />
+					</button>
 				</div>
 			{/if}
 		</div>
@@ -454,27 +666,17 @@
 	</div>
 </div>
 
-{#snippet timePill(seconds: number, colorClass: string, onChange: (sec: number) => void)}
-	{@const parts = timeParts(seconds)}
-	<div class="inline-flex min-h-11 items-center gap-1 rounded-full px-3 py-1.5 {colorClass}">
-		<DigitInput
-			value={parts.mins}
-			min={0}
-			max={LIMITS.timerMinutes}
-			fallback={0}
-			aria-label={labels.minutes}
-			class="w-9 bg-transparent text-center text-base font-bold tabular-nums text-white outline-none"
-			onChange={(m) => onChange(m * 60 + parts.secs)}
-		/>
-		<span class="text-base font-bold text-white/85">:</span>
-		<DigitInput
-			value={parts.secs}
-			min={0}
-			max={LIMITS.timerSeconds}
-			fallback={0}
-			aria-label={labels.seconds}
-			class="w-9 bg-transparent text-center text-base font-bold tabular-nums text-white outline-none"
-			onChange={(s) => onChange(parts.mins * 60 + s)}
-		/>
-	</div>
-{/snippet}
+<TimerPhaseEditDialog
+	open={editOpen}
+	title={editTitle}
+	kind={editKind}
+	seconds={editSeconds}
+	color={editColor}
+	cue={editCue}
+	{labels}
+	{closeLabel}
+	onOpenChange={(open) => {
+		if (!open) editTarget = null;
+	}}
+	onSave={onPhaseSave}
+/>

@@ -1,4 +1,6 @@
 import {
+  PHASE_KIND_COLOR,
+  PHASE_KIND_CUE,
   newId,
   type TimerPhase,
   type TimerRoutine,
@@ -16,7 +18,14 @@ function phase(
   label: string,
   seconds: number,
 ): TimerPhase {
-  return { id: newId(), kind, label, seconds };
+  return {
+    id: newId(),
+    kind,
+    label,
+    seconds,
+    color: PHASE_KIND_COLOR[kind],
+    cue: PHASE_KIND_CUE[kind],
+  };
 }
 
 function simpleRoutine(
@@ -118,6 +127,10 @@ export function blankComplexRoutine(): TimerRoutine {
     templateId: undefined,
     warmupSeconds: 0,
     cooldownSeconds: 0,
+    warmupColor: PHASE_KIND_COLOR.warmup,
+    warmupCue: PHASE_KIND_CUE.warmup,
+    cooldownColor: PHASE_KIND_COLOR.cooldown,
+    cooldownCue: PHASE_KIND_CUE.cooldown,
     cycles: [
       {
         id: newId(),

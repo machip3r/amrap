@@ -235,7 +235,7 @@ const es: LandingDictionary = {
     select: "Empezar",
     contactCta: "Hablar con nosotros",
     comparePlans: "Comparar planes",
-    taxNote: "Precios en listado público. Impuestos no incluidos.",
+    taxNote: "* Precios sin impuestos.",
     plans: [
       {
         name: "Freemium",
@@ -508,7 +508,7 @@ const en: LandingDictionary = {
     select: "Get started",
     contactCta: "Talk to us",
     comparePlans: "Compare plans",
-    taxNote: "Public list prices. Taxes not included.",
+    taxNote: "* Prices do not include taxes.",
     plans: [
       {
         name: "Freemium",

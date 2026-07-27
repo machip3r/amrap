@@ -18,6 +18,9 @@ export type ValidationMessages = {
   dateMinAge: string;
   invalid: string;
   hexColor: string;
+  time: string;
+  scheduleDays: string;
+  scheduleOrder: string;
 };
 
 const FIELD_KIND: Record<string, keyof ValidationMessages> = {
@@ -51,6 +54,9 @@ const FIELD_KIND: Record<string, keyof ValidationMessages> = {
   darkPrimary: "hexColor",
   darkBg: "hexColor",
   darkSurface: "hexColor",
+  schedule_days: "scheduleDays",
+  schedule_open_time: "time",
+  schedule_close_time: "time",
 };
 
 /** Plan / member create both use `name` — pass overrides when needed. */
@@ -76,6 +82,8 @@ function messageForIssue(
 ): string {
   if (issue.message === "mismatch") return messages.passwordMismatch;
   if (issue.message === "date_min_age") return messages.dateMinAge;
+  if (issue.message === "schedule_order") return messages.scheduleOrder;
+  if (issue.message === "weekday") return messages.scheduleDays;
 
   if (issue.code === "too_small" && issue.origin === "string") {
     if (issue.minimum === 1) return messages.required;

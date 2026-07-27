@@ -59,6 +59,7 @@ If billing (or other) runs die with `ERR_CONNECTION_REFUSED` mid-suite, a stale/
 | Staff day-to-day + forbidden | Shipped | Admin-accepted seed; no org/staff/trainers |
 | Trainer shell + denied | Shipped | Trainer dashboard; check-in/members/payments/org denied |
 | Member `/me` shell | Shipped | Home, QR, classes, timers, inbox, profile |
+| Timers phase editor / Repeat toggle | Deferred | Covered in product-flows; UI exercised manually (localStorage, no server fixture) |
 | Invite accept → welcome → destination | Shipped | Admin PENDING seed (no Resend); staff/trainer/member |
 | Invite decline → cancelled in list | Shipped | Decline signs out; owner list shows cancelled badge |
 | Owner UI invite → email link | Deferred | Needs `generateLink` + confirm URL or inbox; Admin PENDING is equivalent post-confirm |

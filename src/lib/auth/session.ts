@@ -7,7 +7,7 @@ import type { BrandThemeTokens, OrgPlanTier, Role, Workspace } from '$lib/types'
 
 export const ACTIVE_GYM_COOKIE = 'amrap_gym_id';
 
-export type OnboardingStep = 1 | 2 | 3 | 4 | 5;
+export type OnboardingStep = 1 | 2 | 3 | 4 | 5 | 6;
 
 export type OnboardingState = {
 	userId: string;
@@ -295,7 +295,7 @@ export async function getOnboardingState(): Promise<OnboardingState | null> {
 		supabase.from('persons').select('id, full_name').eq('user_id', user.id).maybeSingle(),
 		supabase
 			.from('gym_roles')
-			.select('gym_id, gyms ( id, name )')
+			.select('gym_id, gyms ( id, name, schedule_enabled_days, schedule_open_time, schedule_close_time )')
 			.eq('user_id', user.id)
 			.or('role.eq.OWNER,is_provisional_owner.eq.true')
 			.limit(1)
@@ -315,9 +315,21 @@ export async function getOnboardingState(): Promise<OnboardingState | null> {
 	const person = personResult.data;
 	const role = roleResult.data?.[0] ?? null;
 
-	const gyms = role?.gyms as unknown as { id: string; name: string } | null;
+	const gymRow = role?.gyms as unknown as {
+		id: string;
+		name: string;
+		schedule_enabled_days?: string[] | null;
+		schedule_open_time?: string | null;
+		schedule_close_time?: string | null;
+	} | null;
 	const hasGym = Boolean(role?.gym_id);
 	const fullName = person?.full_name?.trim() || null;
+	const hasSchedule =
+		hasGym &&
+		Array.isArray(gymRow?.schedule_enabled_days) &&
+		gymRow!.schedule_enabled_days!.length > 0 &&
+		Boolean(gymRow?.schedule_open_time) &&
+		Boolean(gymRow?.schedule_close_time);
 	const plansDone = Boolean(org?.onboarding_plans_done);
 	const billingDone = Boolean(org?.onboarding_billing_done);
 	const completed = Boolean(org?.onboarding_completed_at);
@@ -327,14 +339,16 @@ export async function getOnboardingState(): Promise<OnboardingState | null> {
 		step = 1;
 	} else if (!hasGym) {
 		step = 2;
-	} else if (!plansDone) {
+	} else if (!hasSchedule) {
 		step = 3;
-	} else if (!billingDone) {
+	} else if (!plansDone) {
 		step = 4;
+	} else if (!billingDone) {
+		step = 5;
 	} else if (!completed) {
-		step = 5;
+		step = 6;
 	} else {
-		step = 5;
+		step = 6;
 	}
 
 	const state: OnboardingState = {
@@ -345,8 +359,8 @@ export async function getOnboardingState(): Promise<OnboardingState | null> {
 		fullName,
 		pendingAsProvisional: org?.pending_as_provisional ?? false,
 		hasGym,
-		gymId: role?.gym_id ?? gyms?.id ?? null,
-		gymName: gyms?.name ?? null,
+		gymId: role?.gym_id ?? gymRow?.id ?? null,
+		gymName: gymRow?.name ?? null,
 		completed,
 		step
 	};

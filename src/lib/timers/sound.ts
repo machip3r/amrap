@@ -1,5 +1,7 @@
 /** Timer cue sound — MP3 + unlock for iOS Safari / PWA autoplay policy. */
 
+import type { TimerPhaseCue } from "$lib/timers/types";
+
 export type TimerBeepKind = "start" | "interval" | "rest" | "end";
 
 const BELL_SRC = "/sounds/hector-bell.mp3";
@@ -115,3 +117,16 @@ export function playBeep(kind: TimerBeepKind, muted: boolean): void {
 	}
 }
 
+/** Play the configured start-of-phase cue (`none` / one / two bells). */
+export function playPhaseCue(cue: TimerPhaseCue, muted: boolean): void {
+	if (muted || cue === "none" || typeof window === "undefined") return;
+	try {
+		const vol = 0.85;
+		playOnce(vol);
+		if (cue === "twice") {
+			window.setTimeout(() => playOnce(vol * 0.95), 280);
+		}
+	} catch {
+		/* ignore */
+	}
+}

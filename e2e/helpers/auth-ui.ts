@@ -97,6 +97,12 @@ export async function completeOnboardingViaUi(
   await page.locator('input[name="branchName"]').fill("Principal");
   await page.getByRole("button", { name: "Continuar" }).click();
 
+  // Step 3 — Schedule (defaults pre-selected; just continue)
+  await expect(
+    page.getByRole("heading", { name: "Horario del gimnasio" }),
+  ).toBeVisible({ timeout: 30_000 });
+  await page.getByRole("button", { name: "Continuar" }).click();
+
   await expect(
     page.getByRole("heading", { name: "Membresías" }),
   ).toBeVisible({ timeout: 30_000 });

@@ -23,6 +23,7 @@ import {
 	saveOnboardingDayPassAction,
 	saveOnboardingGymAction,
 	saveOnboardingProfileAction,
+	saveOnboardingScheduleAction,
 	skipOnboardingBillingAction,
 	skipOnboardingPlansAction,
 	updateOnboardingPlanAction,
@@ -107,6 +108,9 @@ export const load: PageServerLoad = async ({ params, url }) => {
 
 	let plans: { id: string; name: string; price: number; duration_days: number }[] = [];
 	let dayPassPrice: number | null = null;
+	let scheduleEnabledDays: string[] | null = null;
+	let scheduleOpenTime: string | null = null;
+	let scheduleCloseTime: string | null = null;
 	if (state.gymId) {
 		const limit = planCap ?? 50;
 		const [{ data }, gymRes] = await Promise.all([
@@ -117,7 +121,11 @@ export const load: PageServerLoad = async ({ params, url }) => {
 				.eq('is_active', true)
 				.order('created_at', { ascending: true })
 				.limit(limit),
-			supabase.from('gyms').select('day_pass_price').eq('id', state.gymId).maybeSingle()
+			supabase
+				.from('gyms')
+				.select('day_pass_price, schedule_enabled_days, schedule_open_time, schedule_close_time')
+				.eq('id', state.gymId)
+				.maybeSingle()
 		]);
 		plans = (data ?? []).map((p) => ({
 			id: p.id,
@@ -127,6 +135,9 @@ export const load: PageServerLoad = async ({ params, url }) => {
 		}));
 		dayPassPrice =
 			gymRes.data?.day_pass_price != null ? Number(gymRes.data.day_pass_price) : null;
+		scheduleEnabledDays = (gymRes.data?.schedule_enabled_days as string[] | null) ?? null;
+		scheduleOpenTime = (gymRes.data?.schedule_open_time as string | null) ?? null;
+		scheduleCloseTime = (gymRes.data?.schedule_close_time as string | null) ?? null;
 	}
 
 	return {
@@ -137,6 +148,9 @@ export const load: PageServerLoad = async ({ params, url }) => {
 		dayPassPrice,
 		planTier,
 		planCap,
+		scheduleEnabledDays,
+		scheduleOpenTime,
+		scheduleCloseTime,
 		stripePublishableKey: getStripePublishableKey() ?? null,
 		billingFlash: url.searchParams.get('billing') === 'success',
 		showError: url.searchParams.has('error')
@@ -155,6 +169,8 @@ export const actions = {
 	deletePlan: async ({ request }) => deleteOnboardingPlanAction(await request.formData()),
 	dayPass: async ({ request }) =>
 		saveOnboardingDayPassAction(await request.formData()) as OnboardingActionState,
+	saveSchedule: async ({ request }) =>
+		saveOnboardingScheduleAction(await request.formData()) as OnboardingActionState,
 	skipPlans: async ({ request }) => skipOnboardingPlansAction(await request.formData()),
 	skipBilling: async ({ request }) => skipOnboardingBillingAction(await request.formData()),
 	checkout: async ({ request }) =>

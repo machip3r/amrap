@@ -10,7 +10,7 @@
 
 	export type PlanCompareLabels = {
 		title: string;
-		description: string;
+		description?: string;
 		close: string;
 		tierFreemium: string;
 		tierStarter: string;
@@ -34,9 +34,10 @@
 		open: boolean;
 		onOpenChange: (open: boolean) => void;
 		labels: PlanCompareLabels;
+		autoFocus?: boolean;
 	};
 
-	let { open, onOpenChange, labels }: Props = $props();
+	let { open, onOpenChange, labels, autoFocus = true }: Props = $props();
 
 	function tierLabel(tier: OrgPlanTier) {
 		switch (tier) {
@@ -87,6 +88,7 @@
 	title={labels.title}
 	description={labels.description}
 	closeLabel={labels.close}
+	{autoFocus}
 	class="max-w-4xl"
 	bodyClass="overflow-x-auto px-4 py-4 sm:px-6"
 >

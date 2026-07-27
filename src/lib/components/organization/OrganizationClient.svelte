@@ -67,6 +67,7 @@
 
 	const labels = $derived(d.organization);
 	const contactHref = $derived(`/${locale}#contact`);
+	const gymInfoHref = $derived(`/${locale}/gym-info`);
 
 	/** Soft-delete gym / org UI — re-enable when product is ready. */
 	const showDeletionUi = false;
@@ -230,6 +231,13 @@
 			<div class="min-w-0 flex-1">
 				<h2 class="font-title text-xl font-bold text-[var(--color-text)]">{labels.gymsTitle}</h2>
 				<p class="mt-1 text-sm text-[var(--color-muted)]">{labels.gymsHint}</p>
+				<a
+					href={gymInfoHref}
+					class="mt-2 inline-flex min-h-11 items-center gap-1 rounded-lg text-sm font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary-hover)]"
+				>
+					{d.gymInfo.title}
+					<ArrowUpRight class="h-3.5 w-3.5" aria-hidden="true" />
+				</a>
 				{#if gymCap != null}
 					<p class="mt-2 text-xs font-medium text-[var(--color-muted)]">
 						{labels.gymQuota

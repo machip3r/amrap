@@ -119,7 +119,13 @@ Billing account for AMRAP.
 | `logo_url_light` / `logo_url_dark` | Storage object paths in bucket `gym-logos` (e.g. `{gym_id}/logo-light.png`) |
 | `theme_light` / `theme_dark` | `jsonb` hex overrides: `primary`, `bg`, `surface` (`{}` = defaults) |
 | `address` | Optional general / brand address |
+| `day_pass_price` | Optional walk-in / day-pass list price |
+| `schedule_enabled_days` | `text[]` of `MONDAY`…`SUNDAY` — days the gym is open (null until set in onboarding / gym info) |
+| `schedule_open_time` | Daily open time (`time`) shared by all enabled days |
+| `schedule_close_time` | Daily close time (`time`); must be after open when schedule is set |
 | `deleted_at` | Soft delete |
+
+Schedule check: either all schedule columns are null, or days has ≥1 allowed weekday token and open is strictly before close.
 
 ---
 

@@ -37,6 +37,8 @@
 			resultOk: d.checkin.resultOk,
 			resultDenied: d.checkin.resultDenied,
 			memberNotFound: d.checkin.memberNotFound,
+			qrUnknownTitle: d.checkin.qrUnknownTitle,
+			qrUnknownHint: d.checkin.qrUnknownHint,
 			selectMember: d.checkin.selectMember,
 			confirmCheckIn: d.checkin.confirmCheckIn,
 			matchesHint: d.checkin.matchesHint,

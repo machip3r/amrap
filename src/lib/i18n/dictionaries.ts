@@ -154,6 +154,19 @@ export type Dictionary = {
     branchName: string;
     branchNamePlaceholder: string;
     branchNameHint: string;
+    scheduleTitle: string;
+    scheduleSubtitle: string;
+    scheduleDaysLegend: string;
+    scheduleOpenTime: string;
+    scheduleCloseTime: string;
+    scheduleDayMon: string;
+    scheduleDayTue: string;
+    scheduleDayWed: string;
+    scheduleDayThu: string;
+    scheduleDayFri: string;
+    scheduleDaySat: string;
+    scheduleDaySun: string;
+    stepSchedule: string;
     plansTitle: string;
     plansSubtitle: string;
     planNamePlaceholder: string;
@@ -359,6 +372,14 @@ export type Dictionary = {
     phaseCooldown: string;
     intervalCycle: string;
     sets: string;
+    repeat: string;
+    repeatSetsHint: string;
+    phaseDuration: string;
+    phaseColor: string;
+    phaseSound: string;
+    soundNone: string;
+    soundOnce: string;
+    soundTwice: string;
     addCycle: string;
     total: string;
     minutes: string;
@@ -580,6 +601,8 @@ export type Dictionary = {
     resultOk: string;
     resultDenied: string;
     memberNotFound: string;
+    qrUnknownTitle: string;
+    qrUnknownHint: string;
     selectMember: string;
     confirmCheckIn: string;
     matchesHint: string;
@@ -724,6 +747,7 @@ export type Dictionary = {
     active: string;
     archived: string;
     noClasses: string;
+    notFound: string;
     createTitle: string;
     createDescription: string;
     editTitle: string;
@@ -934,6 +958,28 @@ export type Dictionary = {
     previous: string;
     next: string;
   };
+  entityNotFound: {
+    titleMember: string;
+    titleTrainer: string;
+    titleStaff: string;
+    titleClass: string;
+    titleCheckin: string;
+    titleGeneric: string;
+    bodyMember: string;
+    bodyTrainer: string;
+    bodyStaff: string;
+    bodyClass: string;
+    bodyCheckin: string;
+    bodyGeneric: string;
+    goMembers: string;
+    goTrainers: string;
+    goStaff: string;
+    goClasses: string;
+    goCheckin: string;
+    goHome: string;
+    forbiddenTitle: string;
+    forbiddenBody: string;
+  };
   registerUser: {
     open: string;
     title: string;
@@ -977,6 +1023,35 @@ export type Dictionary = {
     dateMinAge: string;
     invalid: string;
     hexColor: string;
+    time: string;
+    scheduleDays: string;
+    scheduleOrder: string;
+  };
+  gymInfo: {
+    title: string;
+    subtitle: string;
+    gymName: string;
+    gymNamePlaceholder: string;
+    gymAddress: string;
+    gymAddressPlaceholder: string;
+    branchName: string;
+    branchNamePlaceholder: string;
+    scheduleSection: string;
+    scheduleHint: string;
+    scheduleDaysLegend: string;
+    scheduleOpenTime: string;
+    scheduleCloseTime: string;
+    scheduleDayMon: string;
+    scheduleDayTue: string;
+    scheduleDayWed: string;
+    scheduleDayThu: string;
+    scheduleDayFri: string;
+    scheduleDaySat: string;
+    scheduleDaySun: string;
+    save: string;
+    saving: string;
+    saved: string;
+    error: string;
   };
   settings: {
     title: string;
@@ -1192,6 +1267,19 @@ const es: Dictionary = {
     branchNamePlaceholder: "Ej. Centro, Norte, Sucursal 1",
     branchNameHint:
       "Un nombre corto para este local. Si dejas vacío, usamos “Principal”.",
+    scheduleTitle: "Horario del gimnasio",
+    scheduleSubtitle: "Define los días y el horario de apertura de tu gimnasio.",
+    scheduleDaysLegend: "Días de apertura",
+    scheduleOpenTime: "Hora de apertura",
+    scheduleCloseTime: "Hora de cierre",
+    scheduleDayMon: "Lun",
+    scheduleDayTue: "Mar",
+    scheduleDayWed: "Mié",
+    scheduleDayThu: "Jue",
+    scheduleDayFri: "Vie",
+    scheduleDaySat: "Sáb",
+    scheduleDaySun: "Dom",
+    stepSchedule: "Horario",
     plansTitle: "Membresías",
     plansSubtitle: "Opcional. Ej. Mensual · $500 · 30 días. También puedes crearlas después.",
     planNamePlaceholder: "Ej. Mensual, Semanal",
@@ -1273,7 +1361,7 @@ const es: Dictionary = {
     error: "No se pudo continuar",
   },
   planCompare: {
-    title: "Comparar planes AMRAP",
+    title: "Planes AMRAP",
     description: "Qué incluye cada plan para tu organización.",
     featureGyms: "Gimnasios",
     featureMembers: "Miembros activos",
@@ -1408,6 +1496,14 @@ const es: Dictionary = {
     phaseCooldown: "Enfriamiento",
     intervalCycle: "Ciclo",
     sets: "Series",
+    repeat: "Repetir",
+    repeatSetsHint: "Cuántas veces se repite el bloque trabajo/descanso.",
+    phaseDuration: "Duración",
+    phaseColor: "Color",
+    phaseSound: "Sonido",
+    soundNone: "Ninguno",
+    soundOnce: "1 campanada",
+    soundTwice: "2 campanadas",
     addCycle: "Añadir ciclo",
     total: "Total",
     minutes: "Minutos",
@@ -1479,7 +1575,7 @@ const es: Dictionary = {
     view: "Ver",
     phone: "Teléfono",
     role: "Rol",
-    notFound: "Entrenador no encontrado",
+    notFound: "No encontramos a este entrenador",
   },
   staffPage: {
     title: "Personal",
@@ -1499,7 +1595,7 @@ const es: Dictionary = {
     view: "Ver",
     phone: "Teléfono",
     role: "Rol",
-    notFound: "Personal no encontrado",
+    notFound: "No encontramos a este staff",
   },
   teamInvites: {
     error: "No se pudo enviar la invitación",
@@ -1549,7 +1645,7 @@ const es: Dictionary = {
       "Alcanzaste el máximo de 30 miembros activos del plan gratuito. Mejora a Starter para seguir creciendo.",
     softMemberCapWarning:
       "Tu gym ya supera ~{n} miembros activos. El acceso de tus clientes no se bloquea. Habla con AMRAP sobre Growth/Pro o un excedente si lo necesitas.",
-    notFound: "Miembro o plan no encontrado",
+    notFound: "No encontramos a este miembro",
     searchPlaceholder: "Buscar por nombre, email o teléfono…",
     filterAll: "Todos",
     filterActive: "Activos",
@@ -1634,6 +1730,9 @@ const es: Dictionary = {
     resultOk: "Órale, todo en orden",
     resultDenied: "No ha pagado. No puede pasar",
     memberNotFound: "Miembro no encontrado",
+    qrUnknownTitle: "QR no reconocido",
+    qrUnknownHint:
+      "Este código no pertenece a un miembro de este gym. Pide el QR de AMRAP o búscalo a mano.",
     selectMember: "Elige al miembro",
     confirmCheckIn: "Registrar entrada",
     matchesHint: "{count} coincidencias — selecciona para confirmar",
@@ -1782,6 +1881,7 @@ const es: Dictionary = {
     active: "Activa",
     archived: "Archivadas",
     noClasses: "Todavía no hay clases. Crea la primera.",
+    notFound: "No encontramos esta clase",
     createTitle: "Nueva clase",
     createDescription: "Define el nombre y, si quieres, asigna entrenadores.",
     editTitle: "Editar clase",
@@ -2047,10 +2147,38 @@ const es: Dictionary = {
     forbidden: "No tienes permiso",
     back: "Volver",
     locale: "Idioma",
-    saveFailed: "No se pudo guardar",
-    invalidInput: "Revisa los datos e inténtalo de nuevo",
+    saveFailed: "No se pudo guardar. Intenta de nuevo.",
+    invalidInput: "Revisa los datos e intenta de nuevo.",
     previous: "Anterior",
     next: "Siguiente",
+  },
+  entityNotFound: {
+    titleMember: "No encontramos a este miembro",
+    titleTrainer: "No encontramos a este entrenador",
+    titleStaff: "No encontramos a este staff",
+    titleClass: "No encontramos esta clase",
+    titleCheckin: "No encontramos este historial",
+    titleGeneric: "No encontramos esta página",
+    bodyMember:
+      "Puede que se haya eliminado, o que el enlace sea viejo. Vuelve a la lista y búscalo otra vez.",
+    bodyTrainer:
+      "Puede que ya no esté en el equipo, o que el enlace sea viejo. Revisa la lista de entrenadores.",
+    bodyStaff:
+      "Puede que ya no esté en el equipo, o que el enlace sea viejo. Revisa la lista de personal.",
+    bodyClass:
+      "La sesión pudo cancelarse o el enlace ya no vale. Vuelve al calendario de clases.",
+    bodyCheckin:
+      "No hay historial para esa membresía en este gym. Vuelve a entradas e inténtalo de nuevo.",
+    bodyGeneric:
+      "Esa ruta no existe o ya no está disponible. Te llevamos de vuelta al panel.",
+    goMembers: "Ir a miembros",
+    goTrainers: "Ir a entrenadores",
+    goStaff: "Ir a personal",
+    goClasses: "Ir a clases",
+    goCheckin: "Ir a entradas",
+    goHome: "Ir al panel",
+    forbiddenTitle: "Sin acceso",
+    forbiddenBody: "No tienes permiso para ver esta sección con tu rol actual.",
   },
   registerUser: {
     open: "Registrar",
@@ -2095,6 +2223,35 @@ const es: Dictionary = {
     dateMinAge: "Debes tener al menos 13 años",
     invalid: "Valor no válido",
     hexColor: "Usa un color hexadecimal (#RRGGBB)",
+    time: "Introduce una hora válida (HH:MM)",
+    scheduleDays: "Selecciona al menos un día",
+    scheduleOrder: "La hora de cierre debe ser posterior a la de apertura",
+  },
+  gymInfo: {
+    title: "Información del gimnasio",
+    subtitle: "Edita los datos y horario de tu gimnasio.",
+    gymName: "Nombre del gimnasio",
+    gymNamePlaceholder: "Ej. Titan Fitness",
+    gymAddress: "Dirección (opcional)",
+    gymAddressPlaceholder: "Calle, colonia, ciudad",
+    branchName: "Nombre de la ubicación",
+    branchNamePlaceholder: "Ej. Centro, Norte",
+    scheduleSection: "Horario semanal",
+    scheduleHint: "Los días y horario en que el gimnasio está abierto.",
+    scheduleDaysLegend: "Días de apertura",
+    scheduleOpenTime: "Hora de apertura",
+    scheduleCloseTime: "Hora de cierre",
+    scheduleDayMon: "Lun",
+    scheduleDayTue: "Mar",
+    scheduleDayWed: "Mié",
+    scheduleDayThu: "Jue",
+    scheduleDayFri: "Vie",
+    scheduleDaySat: "Sáb",
+    scheduleDaySun: "Dom",
+    save: "Guardar",
+    saving: "Guardando…",
+    saved: "Cambios guardados",
+    error: "No se pudo guardar. Intenta de nuevo.",
   },
 };
 
@@ -2265,6 +2422,19 @@ const en: Dictionary = {
     branchNamePlaceholder: "e.g. Downtown, North, Location 1",
     branchNameHint:
       "A short label for this site. Leave blank and we'll use \"Main\".",
+    scheduleTitle: "Gym schedule",
+    scheduleSubtitle: "Set the days and hours your gym is open.",
+    scheduleDaysLegend: "Open days",
+    scheduleOpenTime: "Opening time",
+    scheduleCloseTime: "Closing time",
+    scheduleDayMon: "Mon",
+    scheduleDayTue: "Tue",
+    scheduleDayWed: "Wed",
+    scheduleDayThu: "Thu",
+    scheduleDayFri: "Fri",
+    scheduleDaySat: "Sat",
+    scheduleDaySun: "Sun",
+    stepSchedule: "Schedule",
     plansTitle: "Memberships",
     plansSubtitle: "Optional. E.g. Monthly · $500 · 30 days. You can also add them later.",
     planNamePlaceholder: "e.g. Monthly, Weekly",
@@ -2345,7 +2515,7 @@ const en: Dictionary = {
     error: "Could not continue",
   },
   planCompare: {
-    title: "Compare AMRAP plans",
+    title: "AMRAP Plans",
     description: "What each organization plan includes.",
     featureGyms: "Gyms",
     featureMembers: "Active members",
@@ -2480,6 +2650,14 @@ const en: Dictionary = {
     phaseCooldown: "Cool Down",
     intervalCycle: "Interval Cycle",
     sets: "Sets",
+    repeat: "Repeat",
+    repeatSetsHint: "How many times to repeat the work/rest block.",
+    phaseDuration: "Duration",
+    phaseColor: "Color",
+    phaseSound: "Sound",
+    soundNone: "None",
+    soundOnce: "1 ding",
+    soundTwice: "2 dings",
     addCycle: "Add New Cycle",
     total: "Total",
     minutes: "Minutes",
@@ -2550,7 +2728,7 @@ const en: Dictionary = {
     view: "View",
     phone: "Phone",
     role: "Role",
-    notFound: "Trainer not found",
+    notFound: "We couldn’t find this trainer",
   },
   staffPage: {
     title: "Staff",
@@ -2570,7 +2748,7 @@ const en: Dictionary = {
     view: "View",
     phone: "Phone",
     role: "Role",
-    notFound: "Staff member not found",
+    notFound: "We couldn’t find this staff member",
   },
   teamInvites: {
     error: "Could not send the invitation",
@@ -2620,7 +2798,7 @@ const en: Dictionary = {
       "You've reached the free plan's 30 active members. Upgrade to Starter to keep growing.",
     softMemberCapWarning:
       "This gym is past ~{n} active members. Member access is not blocked. Talk to AMRAP about Growth/Pro or an overage if you need it.",
-    notFound: "Member or plan not found",
+    notFound: "We couldn’t find this member",
     searchPlaceholder: "Search by name, email, or phone…",
     filterAll: "All",
     filterActive: "Active",
@@ -2704,6 +2882,9 @@ const en: Dictionary = {
     resultOk: "You're good to go",
     resultDenied: "Membership expired. Entry denied",
     memberNotFound: "Member not found",
+    qrUnknownTitle: "Unrecognized QR",
+    qrUnknownHint:
+      "This code doesn’t belong to a member at this gym. Ask for their AMRAP QR or look them up manually.",
     selectMember: "Choose the member",
     confirmCheckIn: "Check in",
     matchesHint: "{count} matches — select one to confirm",
@@ -2852,6 +3033,7 @@ const en: Dictionary = {
     active: "Active",
     archived: "Archived",
     noClasses: "No classes yet. Create the first one.",
+    notFound: "We couldn’t find this class",
     createTitle: "New class",
     createDescription: "Set a name and optionally assign trainers.",
     editTitle: "Edit class",
@@ -3122,6 +3304,34 @@ const en: Dictionary = {
     previous: "Previous",
     next: "Next",
   },
+  entityNotFound: {
+    titleMember: "We couldn’t find this member",
+    titleTrainer: "We couldn’t find this trainer",
+    titleStaff: "We couldn’t find this staff member",
+    titleClass: "We couldn’t find this class",
+    titleCheckin: "We couldn’t find this history",
+    titleGeneric: "We couldn’t find this page",
+    bodyMember:
+      "They may have been removed, or this link is outdated. Head back to the list and search again.",
+    bodyTrainer:
+      "They may no longer be on the team, or this link is outdated. Check the trainers list.",
+    bodyStaff:
+      "They may no longer be on the team, or this link is outdated. Check the staff list.",
+    bodyClass:
+      "The session may have been cancelled, or this link no longer works. Back to the class schedule.",
+    bodyCheckin:
+      "There’s no history for that membership at this gym. Return to check-in and try again.",
+    bodyGeneric:
+      "That route doesn’t exist or is no longer available. We’ll take you back to the dashboard.",
+    goMembers: "Go to members",
+    goTrainers: "Go to trainers",
+    goStaff: "Go to staff",
+    goClasses: "Go to classes",
+    goCheckin: "Go to check-in",
+    goHome: "Go to dashboard",
+    forbiddenTitle: "No access",
+    forbiddenBody: "You don’t have permission to view this section with your current role.",
+  },
   registerUser: {
     open: "Register",
     title: "Register user",
@@ -3165,6 +3375,35 @@ const en: Dictionary = {
     dateMinAge: "You must be at least 13 years old",
     invalid: "Invalid value",
     hexColor: "Use a hex color (#RRGGBB)",
+    time: "Enter a valid time (HH:MM)",
+    scheduleDays: "Select at least one day",
+    scheduleOrder: "Closing time must be after opening time",
+  },
+  gymInfo: {
+    title: "Gym information",
+    subtitle: "Edit your gym details and weekly schedule.",
+    gymName: "Gym name",
+    gymNamePlaceholder: "e.g. Titan Fitness",
+    gymAddress: "Address (optional)",
+    gymAddressPlaceholder: "Street, neighborhood, city",
+    branchName: "Location name",
+    branchNamePlaceholder: "e.g. Downtown, North",
+    scheduleSection: "Weekly schedule",
+    scheduleHint: "The days and hours the gym is open.",
+    scheduleDaysLegend: "Open days",
+    scheduleOpenTime: "Opening time",
+    scheduleCloseTime: "Closing time",
+    scheduleDayMon: "Mon",
+    scheduleDayTue: "Tue",
+    scheduleDayWed: "Wed",
+    scheduleDayThu: "Thu",
+    scheduleDayFri: "Fri",
+    scheduleDaySat: "Sat",
+    scheduleDaySun: "Sun",
+    save: "Save",
+    saving: "Saving…",
+    saved: "Changes saved",
+    error: "Could not save. Try again.",
   },
 };
 

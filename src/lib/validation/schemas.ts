@@ -374,6 +374,86 @@ export const durationDaysSchema = z.coerce
   .min(1)
   .max(LIMITS.planDurationDays);
 
+/** 24h clock `HH:MM` for gym opening hours / HTML `type="time"`. */
+const TIME_HH_MM_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+export const timeHhMmSchema = z
+  .string()
+  .trim()
+  .regex(TIME_HH_MM_PATTERN);
+
+export const weekdayEnumSchema = z.enum([
+  "MONDAY",
+  "TUESDAY",
+  "WEDNESDAY",
+  "THURSDAY",
+  "FRIDAY",
+  "SATURDAY",
+  "SUNDAY",
+]);
+
+export type WeekdayEnum = z.infer<typeof weekdayEnumSchema>;
+
+const WEEKDAY_ORDER: WeekdayEnum[] = [
+  "MONDAY",
+  "TUESDAY",
+  "WEDNESDAY",
+  "THURSDAY",
+  "FRIDAY",
+  "SATURDAY",
+  "SUNDAY",
+];
+
+/** Collect weekday tokens from repeated form fields (`schedule_days`). */
+export function formWeekdays(formData: FormData, key = "schedule_days"): string[] {
+  return formData
+    .getAll(key)
+    .map((v) => String(v).trim().toUpperCase())
+    .filter(Boolean);
+}
+
+export const gymScheduleSchema = z
+  .object({
+    schedule_days: z
+      .array(z.string())
+      .min(1)
+      .transform((days, ctx) => {
+        const set = new Set<WeekdayEnum>();
+        for (const raw of days) {
+          const parsed = weekdayEnumSchema.safeParse(raw.trim().toUpperCase());
+          if (!parsed.success) {
+            ctx.addIssue({
+              code: "custom",
+              message: "weekday",
+              path: ["schedule_days"],
+            });
+            return z.NEVER;
+          }
+          set.add(parsed.data);
+        }
+        if (set.size === 0) {
+          ctx.addIssue({
+            code: "custom",
+            message: "required",
+            path: ["schedule_days"],
+          });
+          return z.NEVER;
+        }
+        return WEEKDAY_ORDER.filter((d) => set.has(d));
+      }),
+    schedule_open_time: timeHhMmSchema,
+    schedule_close_time: timeHhMmSchema,
+  })
+  .superRefine((data, ctx) => {
+    if (data.schedule_open_time >= data.schedule_close_time) {
+      ctx.addIssue({
+        code: "custom",
+        message: "schedule_order",
+        path: ["schedule_close_time"],
+      });
+    }
+  });
+
 export function formString(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "");
 }

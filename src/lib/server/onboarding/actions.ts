@@ -16,6 +16,8 @@ import {
 	durationDaysSchema,
 	entityNameSchema,
 	formString,
+	formWeekdays,
+	gymScheduleSchema,
 	localeSchema,
 	optionalAddressSchema,
 	optionalEntityNameSchema,
@@ -124,6 +126,42 @@ export async function saveOnboardingGymAction(formData: FormData): Promise<Onboa
 			secure: !dev,
 			maxAge: 60 * 60 * 24 * 365
 		});
+	}
+
+	throw redirect(303, `/${locale}/onboarding`);
+}
+
+export async function saveOnboardingScheduleAction(
+	formData: FormData
+): Promise<OnboardingActionState> {
+	const locale = localeFrom(formData);
+	const d = getDictionary(locale);
+
+	const state = await getOnboardingState();
+	if (!state?.gymId) return { error: d.onboarding.errorSave };
+
+	const parsed = gymScheduleSchema.safeParse({
+		schedule_days: formWeekdays(formData),
+		schedule_open_time: formString(formData, 'schedule_open_time'),
+		schedule_close_time: formString(formData, 'schedule_close_time')
+	});
+	if (!parsed.success) {
+		return { fieldErrors: zodFieldErrors(parsed.error, d.validation) };
+	}
+
+	const supabase = createClient();
+	const { error } = await supabase
+		.from('gyms')
+		.update({
+			schedule_enabled_days: parsed.data.schedule_days,
+			schedule_open_time: `${parsed.data.schedule_open_time}:00`,
+			schedule_close_time: `${parsed.data.schedule_close_time}:00`
+		})
+		.eq('id', state.gymId);
+
+	if (error) {
+		console.error('saveOnboardingScheduleAction', error.message);
+		return { error: d.onboarding.errorSave };
 	}
 
 	throw redirect(303, `/${locale}/onboarding`);

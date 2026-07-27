@@ -75,9 +75,12 @@
 
 		function onFocusIn() {
 			measure();
-			if (keyboardOpenNow()) keyboardWasOpen = true;
-			// Pin document; let the nearest overflow container scroll the field.
-			window.scrollTo(0, 0);
+			// Only pin when the soft keyboard is open. Unconditional scrollTo(0)
+			// jumps the landing page (and any scrolled surface) when a dialog
+			// autofocuses — compare plans needed a second click after the jump.
+			if (!keyboardOpenNow()) return;
+			keyboardWasOpen = true;
+			if (window.scrollY !== 0) window.scrollTo(0, 0);
 		}
 
 		function onFocusOut() {

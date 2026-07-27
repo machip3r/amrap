@@ -11,6 +11,7 @@
 		Minimize2,
 		QrCode,
 		Search,
+		SearchX,
 		UserRoundCheck,
 		X
 	} from '@lucide/svelte';
@@ -47,6 +48,8 @@
 		resultOk: string;
 		resultDenied: string;
 		memberNotFound: string;
+		qrUnknownTitle: string;
+		qrUnknownHint: string;
 		selectMember: string;
 		confirmCheckIn: string;
 		matchesHint: string;
@@ -91,6 +94,7 @@
 		| { kind: 'idle' }
 		| { kind: 'pick'; matches: CheckinCandidate[] }
 		| { kind: 'ok'; member: CheckinMember | null; message: string }
+		| { kind: 'not_found'; message: string }
 		| { kind: 'error'; title: string; message: string };
 
 	type Props = {
@@ -120,10 +124,12 @@
 	let kioskMode = $state(false);
 	let resultView = $state<ResultView>({ kind: 'idle' });
 	let qrCelebration = $state<{ name: string } | null>(null);
+	let qrUnknown = $state(false);
 	let pending = $state(false);
 	/** True from QR decode until the scan action finishes (shows full-screen loader). */
 	let qrProcessing = $state(false);
 	let celebrationTimer: ReturnType<typeof setTimeout> | null = null;
+	let unknownTimer: ReturnType<typeof setTimeout> | null = null;
 	let resultPanelEl: HTMLElement | undefined = $state();
 
 	let scanner: Html5Qrcode | null = null;
@@ -153,6 +159,14 @@
 		}
 	}
 
+	function dismissQrUnknown() {
+		qrUnknown = false;
+		if (unknownTimer) {
+			clearTimeout(unknownTimer);
+			unknownTimer = null;
+		}
+	}
+
 	function showQrCelebration(name: string) {
 		qrCelebration = { name };
 		if (celebrationTimer) clearTimeout(celebrationTimer);
@@ -160,6 +174,15 @@
 			qrCelebration = null;
 			celebrationTimer = null;
 		}, 2800);
+	}
+
+	function showQrUnknown() {
+		qrUnknown = true;
+		if (unknownTimer) clearTimeout(unknownTimer);
+		unknownTimer = setTimeout(() => {
+			qrUnknown = false;
+			unknownTimer = null;
+		}, 3200);
 	}
 
 	function applyResult(r: CheckinResult, opts?: { celebrate?: boolean }) {
@@ -172,18 +195,21 @@
 			void invalidate(OPS_LOAD_DEPS.dashboard);
 			return;
 		}
+		if (r.status === 'not_found') {
+			resultView = { kind: 'not_found', message: labels.memberNotFound };
+			if (opts?.celebrate) showQrUnknown();
+			return;
+		}
 		const message =
 			r.status === 'denied'
 				? labels.resultDenied
-				: r.status === 'not_found'
-					? labels.memberNotFound
-					: r.status === 'busy'
-						? labels.qrInUse
-						: r.status === 'forbidden'
-							? labels.forbidden
-							: r.status === 'empty'
-								? labels.manualPlaceholder
-								: labels.saveFailed;
+				: r.status === 'busy'
+					? labels.qrInUse
+					: r.status === 'forbidden'
+						? labels.forbidden
+						: r.status === 'empty'
+							? labels.manualPlaceholder
+							: labels.saveFailed;
 		resultView = {
 			kind: 'error',
 			title: labels.accessDenied,
@@ -252,6 +278,10 @@
 						: r.status === 'empty'
 							? labels.manualPlaceholder
 							: labels.saveFailed;
+			if (r.status === 'not_found') {
+				resultView = { kind: 'not_found', message };
+				return;
+			}
 			resultView = {
 				kind: 'error',
 				title: labels.accessDenied,
@@ -382,6 +412,7 @@
 		}
 		scanner = null;
 		if (celebrationTimer) clearTimeout(celebrationTimer);
+		if (unknownTimer) clearTimeout(unknownTimer);
 	});
 
 	const expiresDays = $derived(
@@ -439,6 +470,32 @@
 					<p class="text-lg font-semibold text-white/90 sm:text-xl">{qrCelebration.name}</p>
 				{/if}
 				<p class="text-sm text-white/65">{labels.qrSuccessHint}</p>
+			</div>
+		</button>
+	{/if}
+
+	{#if qrUnknown}
+		<button
+			type="button"
+			use:portal
+			aria-label={labels.qrUnknownHint}
+			onclick={dismissQrUnknown}
+			class="amrap-checkin-success-overlay fixed inset-0 z-[80] flex h-dvh w-full cursor-pointer flex-col items-center justify-center gap-5 bg-black/80 px-6 text-center backdrop-blur-sm"
+		>
+			<span
+				class="amrap-checkin-success-mark relative inline-flex h-28 w-28 items-center justify-center rounded-[2rem] bg-[var(--color-surface)] text-[var(--color-primary)] shadow-lg ring-4 ring-[var(--color-primary)]/30 sm:h-32 sm:w-32"
+				aria-hidden="true"
+			>
+				<SearchX class="h-14 w-14 sm:h-16 sm:w-16" strokeWidth={2} />
+			</span>
+			<div class="amrap-checkin-success-mark flex max-w-sm flex-col gap-2">
+				<p class="font-title text-2xl font-bold tracking-tight text-white sm:text-3xl">
+					{labels.qrUnknownTitle}
+				</p>
+				<p class="text-sm leading-relaxed text-white/75 sm:text-base">{labels.qrUnknownHint}</p>
+				<p class="mt-1 text-xs font-medium uppercase tracking-wide text-white/50">
+					{labels.qrSuccessHint}
+				</p>
 			</div>
 		</button>
 	{/if}
@@ -521,18 +578,32 @@
 							<QrCode class="h-16 w-16 opacity-35" aria-hidden="true" />
 						</div>
 					{/if}
-					<div
-						class="pointer-events-none absolute left-3 top-3 z-10 h-8 w-8 rounded-tl-lg border-l-2 border-t-2 border-[var(--color-primary)]"
-					></div>
-					<div
-						class="pointer-events-none absolute right-3 top-3 z-10 h-8 w-8 rounded-tr-lg border-r-2 border-t-2 border-[var(--color-primary)]"
-					></div>
-					<div
-						class="pointer-events-none absolute bottom-3 left-3 z-10 h-8 w-8 rounded-bl-lg border-b-2 border-l-2 border-[var(--color-primary)]"
-					></div>
-					<div
-						class="pointer-events-none absolute bottom-3 right-3 z-10 h-8 w-8 rounded-br-lg border-b-2 border-r-2 border-[var(--color-primary)]"
-					></div>
+					<svg
+						class="pointer-events-none absolute inset-3 z-10 text-[var(--color-primary)]"
+						viewBox="0 0 100 100"
+						fill="none"
+						aria-hidden="true"
+					>
+						<path d="M0 22 V8 H22" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+						<path
+							d="M78 0 H92 V22"
+							stroke="currentColor"
+							stroke-width="3"
+							stroke-linecap="round"
+						/>
+						<path
+							d="M0 78 V92 H22"
+							stroke="currentColor"
+							stroke-width="3"
+							stroke-linecap="round"
+						/>
+						<path
+							d="M78 100 H92 V78"
+							stroke="currentColor"
+							stroke-width="3"
+							stroke-linecap="round"
+						/>
+					</svg>
 				</div>
 
 				<div class="mt-4 flex w-full flex-wrap items-center justify-center gap-2">
@@ -787,6 +858,34 @@
 							type="button"
 							onclick={() => (resultView = { kind: 'idle' })}
 							class="mt-auto min-h-11 w-full rounded-lg border border-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)]/10"
+						>
+							{labels.nextScan}
+						</button>
+					</div>
+				{:else if resultView.kind === 'not_found'}
+					<div
+						class="flex items-center gap-2 bg-[var(--color-primary)]/15 px-5 py-3 text-[var(--color-primary)]"
+					>
+						<SearchX class="h-5 w-5 shrink-0" aria-hidden="true" strokeWidth={2.5} />
+						<p class="text-sm font-bold uppercase tracking-wide">{labels.qrUnknownTitle}</p>
+					</div>
+					<div class="flex flex-1 flex-col items-center gap-4 p-6 text-center">
+						<div
+							class="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--color-primary)]/12 text-[var(--color-primary)]"
+							aria-hidden="true"
+						>
+							<SearchX class="h-7 w-7" />
+						</div>
+						<div>
+							<p class="font-semibold text-[var(--color-text)]">{labels.qrUnknownTitle}</p>
+							<p class="mt-1.5 text-sm leading-relaxed text-[var(--color-muted)]">
+								{labels.qrUnknownHint}
+							</p>
+						</div>
+						<button
+							type="button"
+							onclick={() => (resultView = { kind: 'idle' })}
+							class="mt-auto min-h-11 w-full rounded-lg border border-[var(--color-border)] px-4 py-2.5 text-sm font-semibold text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)]"
 						>
 							{labels.nextScan}
 						</button>

@@ -1,10 +1,40 @@
 import { createServerClient } from '@supabase/ssr';
-import { redirect, type Handle } from '@sveltejs/kit';
+import { error, redirect, type Handle } from '@sveltejs/kit';
 import { isLocale, type Locale } from '$lib/i18n/config';
 import { negotiateLocale } from '$lib/i18n/negotiate-locale';
 import { getSupabasePublishableKey, getSupabaseUrl } from '$lib/supabase/env';
 
 const publicPathRoots = new Set(['login', 'register']);
+
+/**
+ * First path segment under `/[locale]/…` that exists as an app route.
+ * Unknown segments must 404 (not soft-redirect to login) so crawlers do not
+ * invent redirect chains like `/mes` → `/es/mes` → `/es/login`.
+ */
+const knownLocaleRoots = new Set([
+	'login',
+	'register',
+	'dashboard',
+	'members',
+	'checkin',
+	'classes',
+	'payments',
+	'plans',
+	'staff',
+	'trainers',
+	'timers',
+	'settings',
+	'organization',
+	'gym-info',
+	'team',
+	'me',
+	'onboarding',
+	'welcome',
+	'invite',
+	'profile',
+	'no-access',
+	'complete-setup'
+]);
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const { pathname } = event.url;
@@ -43,8 +73,15 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const first = segments[0];
 
 	if (!first || !isLocale(first)) {
-		const suffix = pathname === '/' ? '' : pathname.startsWith('/') ? pathname : `/${pathname}`;
 		const locale = negotiateLocale(event.request.headers.get('accept-language'));
+		// Bare `/` → locale home. Unknown top-level paths 404 (avoid crawlable redirect chains).
+		if (!first) {
+			throw redirect(302, `/${locale}`);
+		}
+		if (!knownLocaleRoots.has(first)) {
+			throw error(404, 'Not found');
+		}
+		const suffix = pathname.startsWith('/') ? pathname : `/${pathname}`;
 		throw redirect(302, `/${locale}${suffix}`);
 	}
 
@@ -64,6 +101,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const isMarketingHome = segments.length === 1;
 
 	if (!user && !isPublic && !isMarketingHome) {
+		// Unknown routes → real 404. Known private routes → login.
+		if (!knownLocaleRoots.has(firstSegment)) {
+			throw error(404, 'Not found');
+		}
 		throw redirect(302, `/${locale}/login`);
 	}
 

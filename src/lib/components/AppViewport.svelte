@@ -15,20 +15,29 @@
 	onMount(() => {
 		if (!browser) return;
 
-		// Dismiss inline app.html splash once the shell is alive.
-		const boot = document.getElementById('amrap-boot');
-		let bootTimer: ReturnType<typeof setTimeout> | undefined;
-		if (boot) {
-			boot.setAttribute('data-done', '');
-			bootTimer = window.setTimeout(() => boot.remove(), 320);
-		}
-
 		const root = document.documentElement;
 		let keyboardWasOpen = false;
 
 		function measure() {
 			const h = layoutViewportHeight();
 			root.style.setProperty('--app-height', `${h}px`);
+		}
+
+		// Dismiss inline app.html splash once the shell is alive.
+		const boot = document.getElementById('amrap-boot');
+		let bootTimer: ReturnType<typeof setTimeout> | undefined;
+		if (boot) {
+			boot.setAttribute('data-done', '');
+			bootTimer = window.setTimeout(() => {
+				boot.remove();
+				// Remeasure after splash — iOS often reports a short height while
+				// the boot overlay was covering the viewport.
+				measure();
+				requestAnimationFrame(() => {
+					measure();
+					requestAnimationFrame(measure);
+				});
+			}, 320);
 		}
 
 		function keyboardOpenNow() {

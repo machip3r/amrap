@@ -16,6 +16,7 @@ export const load: PageServerLoad = async ({ cookies, request, locals }) => {
 
 	return {
 		locale,
-		booting: d.pwa.booting
+		booting: d.pwa.booting,
+		fallbackPath: `/${locale}/login`
 	};
 };

@@ -54,6 +54,13 @@ export default defineConfig({
 				cleanupOutdatedCaches: true,
 				clientsClaim: true,
 				skipWaiting: false,
+				/**
+				 * SSR app: never SPA-fallback navigations to `/`.
+				 * Serving `/` HTML while the URL is `/app` (or /es/…) hydrates as a
+				 * client 404 — a common iOS PWA cold-start dead-end.
+				 */
+				navigateFallback: undefined,
+				navigateFallbackDenylist: [/.*/],
 				runtimeCaching: [
 					{
 						urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -101,7 +108,8 @@ export default defineConfig({
 				enabled: true,
 				suppressWarnings: true,
 				type: 'module',
-				navigateFallback: '/app'
+				// Do not bind navigations to a precached shell in dev either.
+				navigateFallback: undefined
 			},
 			kit: {
 				includeVersionFile: true

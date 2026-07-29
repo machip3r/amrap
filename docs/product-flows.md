@@ -23,7 +23,7 @@ Locales: `es` (default) · `en`.
 | Surface | Who | Typical route | Status | Notes |
 | ------- | --- | ------------- | ------ | ----- |
 | Marketing | Public | `/[locale]` | Shipped | Landing, pricing, contact · **SEO:** intent-led titles, descriptions, www canonicals, OG, hreflang, JSON-LD, `/sitemap.xml`, `robots.txt`; private app routes `noindex`. **PWA:** installed apps open `/app` (not marketing); standalone visits to landing bounce to `/app` |
-| PWA entry | Installed app | `/app` | Shipped | Manifest `start_url`; cold start paints branded splash then `/app/resolve` → dashboard/me/onboarding (signed-in) or login (signed-out) |
+| PWA entry | Installed app | `/app` | Shipped | Manifest `start_url`; cold start paints branded splash then full navigation via `/app/resolve` → home/login; SW does not SPA-fallback document navigations (avoids bare 404 dead-ends on iOS) |
 | Auth | Public / pending | `/login`, `/register` | Shipped | OTP on same routes; branded Supabase Auth emails in `supabase/templates/` (paste into Dashboard); no public “confirm email” nav link |
 | Onboarding | Owner / provisional | `/onboarding` | Shipped | Steps 1–6 (profile → gym → **schedule** → plans → billing → done); optional AMRAP plan + compare; finish starts owner tour |
 | Profile welcome | Invited staff / trainer / member | `/welcome` | Shipped | After accept (+ password only if new Auth user); blocking until `persons.profile_completed_at` |

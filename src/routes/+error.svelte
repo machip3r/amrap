@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { onMount } from 'svelte';
 	import EntityNotFound from '$lib/components/ui/EntityNotFound.svelte';
 	import { defaultLocale, isLocale, type Locale } from '$lib/i18n/config';
 	import { getDictionary } from '$lib/i18n/dictionaries';
@@ -32,18 +33,38 @@
 					homeLabel: d.entityNotFound.goHome as string | undefined
 				}
 			: status === 404 || status >= 400
-				? resolveEntityNotFound(page.url.pathname, locale, d, errorMessage)
+				? {
+						...resolveEntityNotFound(page.url.pathname, locale, d, errorMessage),
+						// PWA / ops recovery — always offer the cold-start entry.
+						homeHref: '/app',
+						homeLabel: d.pwa.openApp
+					}
 				: {
 						title: d.entityNotFound.titleGeneric,
 						description: d.entityNotFound.bodyGeneric,
 						backHref: `/${locale}`,
 						backLabel: d.entityNotFound.goLanding,
-						homeHref: undefined as string | undefined,
-						homeLabel: undefined as string | undefined
+						homeHref: '/app' as string | undefined,
+						homeLabel: d.pwa.openApp as string | undefined
 					}
 	);
 
 	const documentTitle = $derived(brandedTitle(copy.title));
+
+	/** Standalone 404 → bounce into `/app` so users are not trapped without Safari chrome. */
+	onMount(() => {
+		if (status !== 404) return;
+		const standalone =
+			window.matchMedia('(display-mode: standalone)').matches ||
+			window.matchMedia('(display-mode: fullscreen)').matches ||
+			Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
+		if (!standalone) return;
+		if (page.url.pathname === '/app' || page.url.pathname.startsWith('/app/')) return;
+		const t = window.setTimeout(() => {
+			window.location.replace('/app');
+		}, 1600);
+		return () => window.clearTimeout(t);
+	});
 </script>
 
 <svelte:head>

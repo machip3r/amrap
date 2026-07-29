@@ -361,7 +361,7 @@
 					{#each TIMER_COLORS.filter((c) => c !== '#eab308') as c (c)}
 						<button
 							type="button"
-							onclick={() => (draft = { ...draft, color: c, templateId: undefined })}
+							onclick={() => (draft = { ...draft, color: c })}
 							class="h-11 w-full min-h-[var(--touch-target)] rounded-lg border-2 {draft.color === c
 								? 'border-[var(--color-text)]'
 								: 'border-transparent opacity-80'}"

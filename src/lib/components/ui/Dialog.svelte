@@ -28,7 +28,7 @@
 		description = undefined,
 		closeLabel,
 		class: className = undefined,
-		containerClass = 'items-start justify-center p-3 pt-[max(0.75rem,var(--safe-top))] sm:items-center sm:p-6 sm:pt-6',
+		containerClass = 'items-center justify-center p-3 pt-[max(0.75rem,var(--safe-top))] pb-[max(0.75rem,var(--safe-bottom))] sm:p-6',
 		bodyClass = 'px-6 py-5',
 		autoFocus = true,
 		fullScreen = false,
@@ -199,7 +199,7 @@
 	const panelSize = $derived(
 		fullScreen
 			? 'h-full max-h-full w-full rounded-none border-0 shadow-none'
-			: 'max-h-[min(100%,calc(100%-0.5rem))] w-full rounded-2xl border border-[var(--color-border)] shadow-2xl'
+			: 'max-h-full w-full rounded-2xl border border-[var(--color-border)] shadow-2xl'
 	);
 </script>
 

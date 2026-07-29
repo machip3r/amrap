@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 
 	let { data } = $props();
@@ -21,9 +20,15 @@
 					throw new Error('invalid path');
 				}
 				if (cancelled) return;
-				await goto(body.path, { replaceState: true });
+				// Full navigation — `goto` can 404 in standalone when a stale SW
+				// shell was hydrated for the wrong URL.
+				window.location.replace(body.path);
 			} catch {
-				if (cancelled || attempts >= 3) return;
+				if (cancelled) return;
+				if (attempts >= 3) {
+					window.location.replace(data.fallbackPath);
+					return;
+				}
 				window.setTimeout(() => {
 					if (!cancelled) void resolveAndGo();
 				}, 1200 * attempts);

@@ -105,15 +105,15 @@
 			</p>
 		</div>
 		<section
-			class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/50 p-6 shadow-sm sm:p-8"
+			class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/50 p-6 text-center shadow-sm sm:p-8"
 		>
-			<div class="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+			<div class="flex flex-col items-center gap-4">
 				<div
 					class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[var(--color-muted)]/15 text-[var(--color-muted)]"
 				>
 					<Lock class="h-5 w-5" aria-hidden="true" />
 				</div>
-				<div class="min-w-0 flex-1">
+				<div class="min-w-0 max-w-md">
 					<h3 class="font-title text-lg font-bold text-[var(--color-text)]">
 						{d.settings.whitelabelLocked}
 					</h3>
@@ -123,7 +123,7 @@
 				</div>
 				<a
 					href="/{locale}/organization#subscription"
-					class="inline-flex shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--color-primary-on)] shadow-sm transition-opacity hover:opacity-90"
+					class="inline-flex min-h-[var(--touch-target)] items-center justify-center rounded-lg bg-[var(--color-primary)] px-4 py-2.5 text-sm font-semibold text-[var(--color-primary-on)] shadow-sm transition-opacity hover:opacity-90"
 				>
 					{d.settings.upgradeWhitelabel}
 				</a>

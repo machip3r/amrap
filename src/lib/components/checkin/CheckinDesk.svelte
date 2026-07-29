@@ -578,32 +578,21 @@
 							<QrCode class="h-16 w-16 opacity-35" aria-hidden="true" />
 						</div>
 					{/if}
-					<svg
-						class="pointer-events-none absolute inset-3 z-10 text-[var(--color-primary)]"
-						viewBox="0 0 100 100"
-						fill="none"
-						aria-hidden="true"
-					>
-						<path d="M0 22 V8 H22" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
-						<path
-							d="M78 0 H92 V22"
-							stroke="currentColor"
-							stroke-width="3"
-							stroke-linecap="round"
-						/>
-						<path
-							d="M0 78 V92 H22"
-							stroke="currentColor"
-							stroke-width="3"
-							stroke-linecap="round"
-						/>
-						<path
-							d="M78 100 H92 V78"
-							stroke="currentColor"
-							stroke-width="3"
-							stroke-linecap="round"
-						/>
-					</svg>
+					<!-- CSS corners stay pinned to the frame (SVG viewBox corners skewed when the video isn’t square). -->
+					<div class="pointer-events-none absolute inset-3 z-10" aria-hidden="true">
+						<span
+							class="absolute left-0 top-0 h-9 w-9 rounded-tl-md border-l-[3px] border-t-[3px] border-[var(--color-primary)]"
+						></span>
+						<span
+							class="absolute right-0 top-0 h-9 w-9 rounded-tr-md border-r-[3px] border-t-[3px] border-[var(--color-primary)]"
+						></span>
+						<span
+							class="absolute bottom-0 left-0 h-9 w-9 rounded-bl-md border-l-[3px] border-b-[3px] border-[var(--color-primary)]"
+						></span>
+						<span
+							class="absolute bottom-0 right-0 h-9 w-9 rounded-br-md border-r-[3px] border-b-[3px] border-[var(--color-primary)]"
+						></span>
+					</div>
 				</div>
 
 				<div class="mt-4 flex w-full flex-wrap items-center justify-center gap-2">

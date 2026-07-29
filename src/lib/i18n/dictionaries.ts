@@ -52,6 +52,7 @@ export type Dictionary = {
     reload: string;
     reloading: string;
     booting: string;
+    openApp: string;
   };
   a11y: {
     toggleTheme: string;
@@ -1159,6 +1160,7 @@ const es: Dictionary = {
     reload: "Actualizar ahora",
     reloading: "Actualizando…",
     booting: "Abriendo AMRAP…",
+    openApp: "Abrir AMRAP",
   },
   a11y: {
     toggleTheme: "Cambiar tema",
@@ -2317,6 +2319,7 @@ const en: Dictionary = {
     reload: "Update now",
     reloading: "Updating…",
     booting: "Opening AMRAP…",
+    openApp: "Open AMRAP",
   },
   a11y: {
     toggleTheme: "Toggle theme",

@@ -112,7 +112,7 @@
 {/snippet}
 
 <nav
-	class="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-surface)] md:hidden"
+	class="amrap-bottom-chrome fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-surface)] md:hidden"
 	aria-label={d.nav.brandTitle}
 >
 	<div class="relative flex items-stretch justify-around px-0.5">
@@ -165,11 +165,11 @@
 		<AmrapWatermark
 			{locale}
 			label={d.shell.poweredBy}
-			class="border-[var(--color-border)] bg-[var(--color-surface)] pt-1.5 pb-[max(0.4rem,var(--safe-bottom))]"
+			class="border-[var(--color-border)] bg-[var(--color-surface)] !py-0 pt-1 pb-[var(--safe-bottom)]"
 		/>
 	{:else}
 		<div
-			class="bg-[var(--color-surface)] pb-[max(0.5rem,var(--safe-bottom))]"
+			class="bg-[var(--color-surface)] pb-[var(--safe-bottom)]"
 			aria-hidden="true"
 		></div>
 	{/if}

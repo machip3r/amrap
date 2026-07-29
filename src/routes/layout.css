@@ -116,6 +116,25 @@ body {
 	max-height: none;
 }
 
+/*
+ * Fixed bottom chrome (tabs + watermark). Paint a bleed below the bar so iOS
+ * PWA cannot show a white/system strip under `bottom: 0` after splash / resize.
+ */
+.amrap-bottom-chrome {
+	position: relative;
+}
+
+.amrap-bottom-chrome::after {
+	content: '';
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 100%;
+	height: max(50vh, 120px);
+	background: var(--color-surface);
+	pointer-events: none;
+}
+
 h1,
 h2,
 h3,

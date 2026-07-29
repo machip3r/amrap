@@ -86,9 +86,8 @@
  */
 html {
 	background: var(--color-bg);
-	min-height: 100%;
-	min-height: 100dvh;
-	min-height: -webkit-fill-available;
+	height: 100%;
+	height: -webkit-fill-available;
 }
 
 body {
@@ -106,22 +105,27 @@ body {
 		color 0.3s ease;
 }
 
-/* App shells: sync to `--app-height` (AppViewport). Never cap below the CSS
-   viewport floor — a short JS height left a permanent PWA strip under nav. */
+/*
+ * App shells: floor with -webkit-fill-available so a short post-splash
+ * `--app-height` cannot leave a strip under the fixed bottom nav.
+ */
 .amrap-app-shell {
 	box-sizing: border-box;
-	height: var(--app-height, 100dvh);
+	min-height: 100%;
 	min-height: 100dvh;
 	min-height: -webkit-fill-available;
+	height: var(--app-height, 100%);
 	max-height: none;
 }
 
 /*
- * Fixed bottom chrome (tabs + watermark). Paint a bleed below the bar so iOS
- * PWA cannot show a white/system strip under `bottom: 0` after splash / resize.
+ * Fixed bottom chrome (tabs + watermark). Paint below the bar so iOS PWA
+ * cannot show a strip under `bottom: 0` after splash. Do not clip — QR FAB
+ * overhangs above the nav.
  */
 .amrap-bottom-chrome {
 	position: relative;
+	background-color: var(--color-surface);
 }
 
 .amrap-bottom-chrome::after {
@@ -130,8 +134,8 @@ body {
 	left: 0;
 	right: 0;
 	top: 100%;
-	height: max(50vh, 120px);
-	background: var(--color-surface);
+	height: 100vh;
+	background-color: var(--color-surface);
 	pointer-events: none;
 }
 

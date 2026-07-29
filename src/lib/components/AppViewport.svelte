@@ -17,6 +17,7 @@
 
 		const root = document.documentElement;
 		let keyboardWasOpen = false;
+		const pendingTimers: number[] = [];
 
 		function measure() {
 			const h = layoutViewportHeight();
@@ -29,34 +30,44 @@
 			document.body.scrollTop = 0;
 		}
 
-		/** Fade out + remove boot splash without leaving an iOS rubber-band gap. */
-		function dismissBootSplash() {
-			const boot = document.getElementById('amrap-boot');
-			if (!boot) {
-				root.classList.remove('amrap-booting');
-				pinDocumentScroll();
-				measure();
-				return;
-			}
-
-			boot.setAttribute('data-done', '');
-			pinDocumentScroll();
-
-			return window.setTimeout(() => {
-				pinDocumentScroll();
-				boot.remove();
-				root.classList.remove('amrap-booting');
-				pinDocumentScroll();
-				measure();
-				requestAnimationFrame(() => {
-					pinDocumentScroll();
-					measure();
-					requestAnimationFrame(measure);
-				});
-			}, 280);
+		function afterBootSettle(fn: () => void, ms: number) {
+			pendingTimers.push(window.setTimeout(fn, ms));
 		}
 
-		const bootTimer = dismissBootSplash();
+		/**
+		 * Remove splash without toggling document overflow (that unlock is what
+		 * left a white strip under the bottom nav on iOS PWA).
+		 */
+		function dismissBootSplash() {
+			const boot = document.getElementById('amrap-boot');
+			root.classList.remove('amrap-booting');
+			pinDocumentScroll();
+			measure();
+
+			if (!boot) return;
+
+			// Remove immediately — no fade that leaves the page interactive underneath
+			// while iOS still thinks the viewport is “boot-sized”.
+			boot.remove();
+			pinDocumentScroll();
+			measure();
+
+			// iOS often reports the real height a beat after the overlay is gone.
+			requestAnimationFrame(() => {
+				pinDocumentScroll();
+				measure();
+				afterBootSettle(() => {
+					pinDocumentScroll();
+					measure();
+				}, 100);
+				afterBootSettle(() => {
+					pinDocumentScroll();
+					measure();
+				}, 400);
+			});
+		}
+
+		dismissBootSplash();
 
 		function keyboardOpenNow() {
 			const vv = window.visualViewport;
@@ -75,7 +86,6 @@
 			measure();
 			if (open) {
 				keyboardWasOpen = true;
-				// Keep layout pinned while the keyboard is up.
 				if (window.scrollY !== 0) window.scrollTo(0, 0);
 				return;
 			}
@@ -102,17 +112,20 @@
 		window.addEventListener('focusin', onFocusIn);
 		window.addEventListener('focusout', onFocusOut);
 		document.addEventListener('visibilitychange', syncHeight);
-		window.addEventListener('pageshow', recoverScrollIfNeeded);
+		window.addEventListener('pageshow', onPageShow);
 		document.addEventListener('gesturestart', preventGesture, { passive: false });
 		document.addEventListener('gesturechange', preventGesture, { passive: false });
 
 		let focusOutTimer: ReturnType<typeof setTimeout> | undefined;
 
+		function onPageShow() {
+			pinDocumentScroll();
+			measure();
+			recoverScrollIfNeeded();
+		}
+
 		function onFocusIn() {
 			measure();
-			// Only pin when the soft keyboard is open. Unconditional scrollTo(0)
-			// jumps the landing page (and any scrolled surface) when a dialog
-			// autofocuses — compare plans needed a second click after the jump.
 			if (!keyboardOpenNow()) return;
 			keyboardWasOpen = true;
 			if (window.scrollY !== 0) window.scrollTo(0, 0);
@@ -124,13 +137,8 @@
 		}
 
 		function onVisualScroll() {
-			// While keyboard is open, iOS may pan the visual viewport — pin window scroll.
 			if (keyboardOpenNow() && window.scrollY !== 0) {
 				window.scrollTo(0, 0);
-			}
-			// While boot splash is up, never allow a visualViewport pan to stick.
-			if (root.classList.contains('amrap-booting')) {
-				pinDocumentScroll();
 			}
 			syncHeight();
 		}
@@ -140,7 +148,7 @@
 		}
 
 		return () => {
-			if (bootTimer != null) clearTimeout(bootTimer);
+			for (const t of pendingTimers) clearTimeout(t);
 			root.classList.remove('amrap-booting');
 			clearTimeout(focusOutTimer);
 			vv?.removeEventListener('resize', syncHeight);
@@ -150,7 +158,7 @@
 			window.removeEventListener('focusin', onFocusIn);
 			window.removeEventListener('focusout', onFocusOut);
 			document.removeEventListener('visibilitychange', syncHeight);
-			window.removeEventListener('pageshow', recoverScrollIfNeeded);
+			window.removeEventListener('pageshow', onPageShow);
 			document.removeEventListener('gesturestart', preventGesture);
 			document.removeEventListener('gesturechange', preventGesture);
 		};

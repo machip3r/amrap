@@ -45,6 +45,8 @@
 		organizationName: string;
 		planTier: OrgPlanTier;
 		hasStripeCustomer: boolean;
+		subscriptionCancelAt?: string | null;
+		subscriptionCancelAtPeriodEnd?: boolean;
 		billingFlash: 'success' | 'cancel' | null;
 		stripePublishableKey: string | null;
 		gyms: OrgGymRow[];
@@ -58,6 +60,8 @@
 		organizationName,
 		planTier,
 		hasStripeCustomer,
+		subscriptionCancelAt = null,
+		subscriptionCancelAtPeriodEnd = false,
 		billingFlash,
 		stripePublishableKey,
 		gyms,
@@ -68,6 +72,20 @@
 	const labels = $derived(d.organization);
 	const contactHref = $derived(`/${locale}#contact`);
 	const gymInfoHref = $derived(`/${locale}/gym-info`);
+	const localeTag = $derived(locale === 'es' ? 'es-MX' : 'en-US');
+
+	const cancelScheduleLabel = $derived.by(() => {
+		if (!subscriptionCancelAtPeriodEnd && !subscriptionCancelAt) return null;
+		if (subscriptionCancelAt) {
+			const date = new Date(subscriptionCancelAt).toLocaleDateString(localeTag, {
+				year: 'numeric',
+				month: 'long',
+				day: 'numeric'
+			});
+			return labels.billingCancelsOn.replace('{date}', date);
+		}
+		return labels.billingCancelScheduled;
+	});
 
 	/** Soft-delete gym / org UI — re-enable when product is ready. */
 	const showDeletionUi = false;
@@ -420,6 +438,15 @@
 				</form>
 			{/if}
 		</div>
+
+		{#if cancelScheduleLabel}
+			<p
+				class="mb-3 rounded-lg border border-[var(--color-primary)]/25 bg-[var(--color-primary)]/5 px-3 py-2 text-sm font-medium text-[var(--color-text)]"
+				role="status"
+			>
+				{cancelScheduleLabel}
+			</p>
+		{/if}
 
 		<ul class="flex flex-col gap-2">
 			{#each AMRAP_PLANS as plan (plan.tier)}

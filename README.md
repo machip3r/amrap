@@ -222,7 +222,7 @@ For **more than 3 gyms**, unlimited staff/members, full customization, priority 
 During Beta, mark unfinished money features clearly:
 
 - **AMRAP subscription checkout**: label **Beta** / early access on marketing and in-app where the flow is still maturing.
-- **Online member billing** ships on **Starter+** (compare table / pricing). Lean on **manual payment logging** (cash, SPEI, Clip/MP terminal) as the default strength for small MX gyms — no platform commission.
+- **Online member billing** on **Starter+**: **Mercado Pago** connect (OAuth) + Checkout Pro is the first gateway path; Stripe Connect / Clip follow. Lean on **manual payment logging** (cash, SPEI, Clip/MP terminal) as the default strength for small MX gyms — no platform commission — and keep it available on Freemium.
 
 ### Planned competitive wedge: WhatsApp
 

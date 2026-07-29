@@ -8,6 +8,7 @@
 	import PanelLeftOpen from '@lucide/svelte/icons/panel-left-open';
 	import Timer from '@lucide/svelte/icons/timer';
 	import User from '@lucide/svelte/icons/user';
+	import Wallet from '@lucide/svelte/icons/wallet';
 	import LogoutButton from '$lib/components/LogoutButton.svelte';
 	import OpsNavLogo from '$lib/components/ops/OpsNavLogo.svelte';
 	import type { Locale } from '$lib/i18n/config';
@@ -47,6 +48,7 @@
 
 	const ICONS: Record<Exclude<MemberNavId, 'profile'>, Component> = {
 		home: Home,
+		membership: Wallet,
 		classes: CalendarDays,
 		timers: Timer,
 		inbox: Inbox

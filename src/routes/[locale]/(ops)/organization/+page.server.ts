@@ -30,6 +30,8 @@ export const load: PageServerLoad = async ({ parent, url }) => {
 			organizationName: '',
 			planTier: workspace.planTier,
 			hasStripeCustomer: false,
+			subscriptionCancelAt: null as string | null,
+			subscriptionCancelAtPeriodEnd: false,
 			billingFlash: null as 'success' | 'cancel' | null,
 			stripePublishableKey,
 			gyms: [],
@@ -52,7 +54,7 @@ export const load: PageServerLoad = async ({ parent, url }) => {
 			.order('created_at', { ascending: true }),
 		supabase
 			.from('organizations')
-			.select('stripe_customer_id')
+			.select('stripe_customer_id, stripe_cancel_at_period_end, stripe_cancel_at')
 			.eq('id', workspace.organizationId)
 			.maybeSingle(),
 		supabase
@@ -93,6 +95,8 @@ export const load: PageServerLoad = async ({ parent, url }) => {
 		organizationName: workspace.organizationName || workspace.gymName,
 		planTier: workspace.planTier,
 		hasStripeCustomer: Boolean(orgBilling?.stripe_customer_id),
+		subscriptionCancelAt: orgBilling?.stripe_cancel_at ?? null,
+		subscriptionCancelAtPeriodEnd: Boolean(orgBilling?.stripe_cancel_at_period_end),
 		billingFlash,
 		stripePublishableKey,
 		gyms,

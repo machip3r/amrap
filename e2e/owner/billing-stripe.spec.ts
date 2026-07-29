@@ -18,8 +18,10 @@ import {
 	hasStripeTestEnv,
 	hasStripeWebhookSecret,
 	postSubscriptionDeletedWebhook,
+	postSubscriptionUpdatedWebhook,
 	readOrgBilling,
 	resetOrgBillingToFreemium,
+	scheduleCancelAtPeriodEnd,
 	seedPaidOrg,
 	syncOrgFromLatestCheckout,
 	waitForOrgPlan,
@@ -308,9 +310,41 @@ test.describe('owner Stripe billing (hybrid)', () => {
 		const billing = await readOrgBilling(organizationId);
 		expect(billing.stripe_subscription_id).toBeNull();
 		expect(billing.billing_interval).toBeNull();
+		expect(billing.stripe_cancel_at_period_end).toBe(false);
+		expect(billing.stripe_cancel_at).toBeNull();
 
 		await gotoOrganization(page);
 		await expectCurrentPlan(page, 'FREEMIUM');
+	});
+
+	test('schedule cancel at period end + webhook keeps paid plan + shows date', async ({
+		page,
+		baseURL
+	}) => {
+		test.skip(
+			!hasStripeWebhookSecret() || !baseURL,
+			'Requires STRIPE_WEBHOOK_SECRET=whsec_… (stripe listen) to POST subscription.updated'
+		);
+
+		const seeded = await seedPaidOrg({
+			organizationId,
+			email: ownerEmail,
+			tier: 'STARTER',
+			interval: 'MONTH'
+		});
+		stripeCustomerToCleanup = seeded.customerId;
+
+		const scheduled = await scheduleCancelAtPeriodEnd(seeded.subscriptionId);
+		await postSubscriptionUpdatedWebhook(baseURL!, scheduled);
+
+		const billing = await readOrgBilling(organizationId);
+		expect(billing.plan_tier).toBe('STARTER');
+		expect(billing.stripe_cancel_at_period_end).toBe(true);
+		expect(billing.stripe_cancel_at).toBeTruthy();
+
+		await gotoOrganization(page);
+		await expectCurrentPlan(page, 'STARTER');
+		await expect(page.getByText(/Se cancela el|Cancels on/i)).toBeVisible();
 	});
 
 	test('canceled stale subscription id opens Embedded Checkout again', async ({ page }) => {

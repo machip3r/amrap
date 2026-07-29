@@ -108,6 +108,14 @@ export function canUseWhitelabel(tier: OrgPlanTier): boolean {
 }
 
 /**
+ * Online member billing (connect PSP + checkout). Starter+ only.
+ * Manual cash/SPEI stays available on every tier including Freemium.
+ */
+export function canUseOnlineBilling(tier: OrgPlanTier): boolean {
+	return tier !== 'FREEMIUM';
+}
+
+/**
  * Full white-label (custom domain / advanced branding) — Growth & Pro.
  * Feature may still be Beta / coming soon in UI.
  */

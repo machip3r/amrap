@@ -33,7 +33,7 @@ Locales: `es` (default) · `en`.
 | Ops app | Owner, staff, trainer | `/dashboard`, `/timers`, members, plans, … | Shipped | Scoped to active gym (`amrap_gym_id` cookie); dashboard quick actions open unified register dialog; **friendly 404** for missing member/trainer/staff/class/check-in history (`EntityNotFound`); **global 404** for unknown routes (`/+error` + locale `+error`) |
 | Gym info | Owner / provisional | `/gym-info` | Shipped | Edit gym name, address, branch name, and weekly schedule (open days + open/close time) |
 | Check-in | Staff / kiosk | `/checkin` | Shipped | QR success overlay · **unknown QR** soft overlay + panel (not “access denied”) · history calendar |
-| Member app | Member | `/me`, `/me/qr`, `/me/classes`, `/me/timers`, `/me/inbox`, `/me/profile` | Shipped | Ops-parity shell; active membership; gym white-label when plan allows |
+| Member app | Member | `/me`, `/me/membership`, `/me/qr`, `/me/classes`, `/me/timers`, `/me/inbox`, `/me/profile` | Shipped | Ops-parity shell; membership tab; active membership; gym white-label when plan allows |
 | Ops profile | Staff / trainer / owner | `/profile` | Shipped | Avatar → profile; compose for staff/trainer |
 | Organization / billing | Owner / provisional | `/organization` | Partial | Checkout + Portal + webhooks shipped (MXN); **E2E hybrid local** (`pnpm test:e2e:billing`); create gym & unpaid grace UX still coming |
 | Gym settings | All ops roles | `/settings` | Partial | Everyone: personal nav menu. Owner/provisional: + gym branding |
@@ -209,7 +209,7 @@ Clear session + pending cookies. Redirect marketing (or login).
 
 **Who:** Owner / provisional (`canActAsOwner`) only.
 
-**What:** Coachmark tour after first onboarding finish (or Settings → Replay). Spotlights dashboard quick actions + primary nav (check-in, members, classes, payments, plans, organization). Dismiss stored in `localStorage` (`amrap-owner-tour-v1`).
+**What:** Coachmark tour after first onboarding finish (or Settings → **Replay quickstart** button → confirm). Spotlights dashboard quick actions + primary nav (check-in, members, classes, payments, plans, organization). Dismiss stored in `localStorage` (`amrap-owner-tour-v1`).
 
 ---
 
@@ -338,13 +338,15 @@ CRUD membership plans at gym level. Price, duration, active/archived. Day-pass p
 
 ---
 
-### 4.4 Payments (`/payments`) — Shipped (manual)
+### 4.4 Payments (`/payments`) — Shipped (manual) · Partial (online)
 
 Register manual payment (cash / transfer). **Pricing modes:** full list price · **discount** (charge less than catalog; stores `list_amount`) · **trial / courtesy** (charge `$0`, still grants plan/day-pass duration). Recent list shows trial / discount badges. Member picker seeds a recent subset and searches the server as you type. Top option in the member search: **Register new member** (when `manage_members`) → create-member dialog → new membership is selected in the payment form.
 
 Same pricing modes on **create member** and **renew**.
 
-**Planned:** Gateway (Mercado Pago / etc.), recurring, failure handling, member portal, CSV export (Starter+).
+**Payment gateway (Starter+ · Mercado Pago first):** Settings → Pasarela de pago → OAuth connect → sync plans. Ops member detail and member `/me/membership` can start online checkout; webhook fulfills `payments` (`method=ONLINE`) + renews membership. OAuth tokens in `gym_payment_accounts` are **service-role only** (not readable via staff JWT). Manual cash/SPEI stays on every tier including Freemium. Stripe Connect / Clip / recurring: planned.
+
+**Planned:** Additional gateways, recurring, richer failure UX, CSV export.
 
 ---
 
@@ -398,7 +400,7 @@ See §7. Owner has full staff check-in powers.
 
 **What (by role):**
 1. **Everyone** — **My menu** (nav visibility) is **temporarily disabled** in the UI (backend/action still exist). Re-enable `NavCustomizationForm` on `/settings` when ready.
-2. **Owner / provisional (`manage_billing`) only** — **Personalization**: logos light/dark + theme palettes (whitelabel gated by plan).
+2. **Owner / provisional (`manage_billing`) only** — **Customization**: logos light/dark + theme palettes (whitelabel gated by plan). **Online member billing** (Mercado Pago) when the plan allows. Header **Replay quickstart** (confirm dialog) restarts the owner coachmark tour.
 
 Hiding a nav item is chrome-only for that user; direct URLs still respect page permission guards.
 
@@ -410,13 +412,13 @@ Hiding a nav item is chrome-only for that user; direct URLs still respect page p
 
 **Who:** `manage_billing` (owner / provisional).
 
-**UI (shipped):** Gym list first · AMRAP subscription below (separator) · plan rows (Freemium / Starter / Growth / Pro) · whole upgradeable row opens confirm (monthly/annual) → **Embedded Checkout** in a fullscreen in-app dialog (new paid) or Subscriptions API upgrade (existing) · **Manage billing** opens Customer Portal in a **new tab** · Pro / Contact AMRAP goes to landing `#contact`. List prices are **before tax**; Checkout uses **Stripe Tax** (`automatic_tax`) so Mexico **IVA** (and other registered jurisdictions) is added at payment. Collects tax IDs (e.g. RFC) when relevant.
+**UI (shipped):** Gym list first · AMRAP subscription below (separator) · plan rows (Freemium / Starter / Growth / Pro) · whole upgradeable row opens confirm (monthly/annual) → **Embedded Checkout** in a fullscreen in-app dialog (new paid) or Subscriptions API upgrade (existing) · **Manage billing** opens Customer Portal in a **new tab** · Pro / Contact AMRAP goes to landing `#contact`. List prices are **before tax**; Checkout / renewals apply a manual **IVA 16%** Tax Rate (no Stripe Tax / SAT registration required yet).
 
 **Hidden for now:** Schedule gym / org deletion (danger zone + delete gym) — flip `showDeletionUi` in `OrganizationClient` when ready.
 
 **Partial / coming soon in UI:** Create additional gym · unpaid grace → Freemium read-only UX · USD prices.
 
-**Webhook:** `POST /api/stripe/webhook` (no locale) syncs `organizations` from Checkout / subscription / invoice events.
+**Webhook:** `POST /api/stripe/webhook` (no locale) syncs `organizations` from Checkout / subscription / invoice events (including `cancel_at` / `cancel_at_period_end` for scheduled cancels).
 
 ---
 
@@ -521,7 +523,8 @@ No app login. Manual check-in at reception. Optional invite to register / claim 
 
 | Route | Flow |
 | ----- | ---- |
-| `/me` | Home · memberships list · switch active gym (cookie) · shortcut cards |
+| `/me` | Home · active gym summary · switch gym · shortcuts |
+| `/me/membership` | Status hero · **active:** Cancel (danger, confirm) right-aligned · renew / change subscription via gym plan rows + gateway stepper (**gateway → plan → confirm**) · desk hint when no gateway · payment history · multi-gym switch. Cancel ends access now (`CANCELLED` + `expires_at=now`) → other gym `/me` or `/no-access` |
 | `/me/qr` | Full-screen platform QR (also center FAB on mobile) |
 | `/me/classes` | Upcoming · book / waitlist / cancel · attendance history |
 | `/me/timers` | Routines list · Simple (template presets) / Complex (multi-cycle editor) create-edit · per-phase duration/color/cue dialog · Simple Repeat toggle · full-screen run · screen wake lock · wall-clock catch-up after lock |
@@ -535,7 +538,7 @@ No app login. Manual check-in at reception. Optional invite to register / claim 
 
 ### 9.3 Planned member features
 
-Privacy settings · announcements · assigned routines · PRs · progress · community · pay membership online · push/WhatsApp.
+Privacy settings · announcements · assigned routines · PRs · progress · community · push/WhatsApp.
 
 ### 9.4 Multi-membership — Partial
 
@@ -570,11 +573,11 @@ See §4.9. Paywalls at blocked actions use plan limits (`lib/plans/limits.ts`).
 | Upgrade for limit (30 members, 2 plans, seats) | Partial — Freemium **hard**-stops at 30 actives; Starter soft-warn at ~500, Growth at ~1000 (no block); staff seats **per gym** (Starter 5 · Growth 10/gym ≤ 30 org) |
 | Self-serve Checkout (Starter / Growth, MXN monthly/annual) | Shipped — **Embedded Checkout** in PWA + webhooks · **E2E** `pnpm test:e2e:billing` (hybrid local / Stripe test) |
 | Upgrade / change plan (existing sub) | Shipped — in-app confirm → Subscriptions API proration · covered in billing E2E |
-| Manage payment method / cancel | Shipped — Customer Portal · portal open + cancel→Freemium webhook covered in billing E2E |
+| Manage payment method / cancel | Shipped — Customer Portal · portal open + cancel→Freemium webhook · **scheduled cancel** (`cancel_at_period_end`) synced + shown on Organization until period ends |
 | Downgrade confirm | Shipped — in-app change confirm → Subscriptions API · covered in billing E2E |
 | More than 3 gyms | Pro contact copy shipped; no self-serve checkout |
 | Unpaid | Partial — `PAST_DUE` synced; 3-day grace → Freemium UX Planned |
-| Member payment gateway | Partial — marketed as **Beta**; manual cash/SPEI/terminal logging is the shipped path |
+| Member payment gateway | Partial — **Mercado Pago** OAuth + Checkout Pro + webhook renew (Starter+); Stripe Connect / Clip planned; manual cash/SPEI remains the universal path |
 | WhatsApp notifications | Planned — expiry + class booking (Twilio / Meta Cloud / Evolution) |
 
 ---

@@ -27,42 +27,65 @@
 	<section
 		class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-6"
 	>
-		<h2 class="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
-			{data.d.member.gyms}
-		</h2>
-		<ul class="mt-3 flex flex-col gap-2">
-			{#each data.member.gyms as g (g.gymId)}
-				<li
-					class="flex flex-wrap items-center justify-between gap-2 rounded-xl border px-4 py-3 {g.gymId ===
-					data.member.activeGymId
-						? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5'
-						: 'border-[var(--color-border)]'}"
-				>
-					<div class="min-w-0">
-						<p class="font-semibold text-[var(--color-text)]">{g.gymName}</p>
-						<p class="text-xs text-[var(--color-muted)]">
-							{data.d.member.activeUntil}
-							{new Date(g.expiresAt).toLocaleDateString(
-								data.locale === 'es' ? 'es-MX' : 'en-US'
-							)}
-						</p>
-					</div>
-					{#if g.gymId !== data.member.activeGymId}
-						<form method="POST" action="?/switchGym">
-							<input type="hidden" name="locale" value={data.locale} />
-							<input type="hidden" name="gym_id" value={g.gymId} />
-							<Button type="submit" variant="toolbarSecondary" class="h-9 min-h-9 px-3 text-xs">
-								{data.d.member.switchGym}
-							</Button>
-						</form>
-					{/if}
-				</li>
-			{/each}
-		</ul>
+		<div class="flex flex-wrap items-start justify-between gap-3">
+			<div class="min-w-0">
+				<h2 class="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
+					{data.d.member.gyms}
+				</h2>
+				{#if active}
+					<p class="mt-2 font-semibold text-[var(--color-text)]">{active.gymName}</p>
+					<p class="text-xs text-[var(--color-muted)]">
+						{data.d.member.activeUntil}
+						{new Date(active.expiresAt).toLocaleDateString(
+							data.locale === 'es' ? 'es-MX' : 'en-US'
+						)}
+					</p>
+				{/if}
+			</div>
+			<a
+				href={`/${data.locale}/me/membership`}
+				class="inline-flex min-h-[var(--touch-target)] items-center justify-center rounded-lg border border-[var(--color-border)] px-3 text-sm font-semibold text-[var(--color-text)] transition-colors hover:border-[var(--color-primary)]/40"
+			>
+				{data.d.member.manageMembership}
+			</a>
+		</div>
+
+		{#if data.gyms.length > 1}
+			<ul class="mt-4 flex flex-col gap-2">
+				{#each data.gyms as g (g.gymId)}
+					<li
+						class="flex flex-wrap items-center justify-between gap-2 rounded-xl border px-4 py-3 {g.gymId ===
+						data.member.activeGymId
+							? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5'
+							: 'border-[var(--color-border)]'}"
+					>
+						<div class="min-w-0">
+							<p class="font-semibold text-[var(--color-text)]">{g.gymName}</p>
+							<p class="text-xs text-[var(--color-muted)]">
+								{data.d.member.activeUntil}
+								{new Date(g.expiresAt).toLocaleDateString(
+									data.locale === 'es' ? 'es-MX' : 'en-US'
+								)}
+							</p>
+						</div>
+						{#if g.gymId !== data.member.activeGymId}
+							<form method="POST" action="?/switchGym">
+								<input type="hidden" name="locale" value={data.locale} />
+								<input type="hidden" name="gym_id" value={g.gymId} />
+								<Button type="submit" variant="toolbarSecondary" class="h-9 min-h-9 px-3 text-xs">
+									{data.d.member.switchGym}
+								</Button>
+							</form>
+						{/if}
+					</li>
+				{/each}
+			</ul>
+		{/if}
 	</section>
 
 	<nav class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 		{#each [
+			[`/${data.locale}/me/membership`, data.d.member.membership],
 			[`/${data.locale}/me/classes`, data.d.member.classes],
 			[`/${data.locale}/me/inbox`, data.d.member.inbox],
 			[`/${data.locale}/me/timers`, data.d.member.timers],

@@ -13,6 +13,11 @@ English reference for the Postgres schema (Supabase). Source of truth: migration
 | `20260725065726_persons_sex_to_gender_uppercase.sql` | Rename `persons.sex` → `gender`; values `MALE` \| `FEMALE` \| `OTHER` \| `PREFER_NOT` |
 | `20260725065951_enums_uppercase_remaining.sql` | Uppercase remaining status/kind enums (invite, classes, bookings, results, feedback) + recreate RPCs/policies |
 | `20260725070927_enums_uppercase_remaining_apply.sql` | Re-apply enums uppercase (prior version was recorded applied while empty) |
+| `20260729044536_member_payments_select.sql` | Members can `SELECT` their own `payments` via membership → person |
+| `20260729044955_plans_select_for_members.sql` | Members with accepted membership can `SELECT` gym `plans` (catalog) |
+| `20260729045221_plan_member_counts_active_only.sql` | `plan_member_counts` counts only active memberships (`expires_at > now()`) |
+| `20260729053000_gym_payment_accounts_token_privileges.sql` | Token columns service-role only; managers `SELECT` status columns; no authenticated DML |
+| `20260729054000_organizations_stripe_cancel_at.sql` | Org `stripe_cancel_at` / `stripe_cancel_at_period_end` for Portal scheduled cancel |
 
 **Rule:** never edit an applied migration. Append a new timestamped migration instead.
 
@@ -99,7 +104,9 @@ Billing account for AMRAP.
 | `stripe_customer_id` | Stripe Customer (`cus_…`) for AMRAP platform subscription; unique when set |
 | `stripe_subscription_id` | Active Stripe Subscription (`sub_…`) when on a paid plan |
 | `stripe_subscription_status` | Uppercase mirror of Stripe `subscription.status` (`ACTIVE`, `PAST_DUE`, `CANCELED`, …) |
-| `billing_interval` | `MONTH` \| `YEAR` for the current paid price |
+| `stripe_cancel_at_period_end` | Mirror of Stripe `cancel_at_period_end` (scheduled cancel; still entitled until period ends) |
+| `stripe_cancel_at` | When the paid subscription ends (`subscription.cancel_at`); null if not scheduled |
+| `billing_interval` | `MONTH` \| `YEAR` when on a paid self-serve price |
 | `created_by` | Signup user |
 | `pending_as_provisional` | Signup/onboarding: acting as provisional owner |
 | `onboarding_plans_done` | Step “plans” finished or skipped |
@@ -188,7 +195,7 @@ Person trains at a gym. **Unique `(gym_id, person_id)`.**
 | ------ | ----- |
 | `branch_id` | Optional home branch |
 | `plan_id` | Set null if plan deleted |
-| `status` | `ACTIVE` \| `INACTIVE` \| `EXPIRED` \| `CANCELLED` |
+| `status` | `ACTIVE` \| `INACTIVE` \| `EXPIRED` \| `CANCELLED`. Member self-cancel from `/me/membership` sets `CANCELLED` and `expires_at = now()` (access ends immediately). |
 | `expires_at` | Required |
 | `invite_status` | `PENDING` \| `ACCEPTED` \| `CANCELLED` (account claim invite) |
 | `invite_responded_at` | When member accepted or declined |
@@ -197,18 +204,66 @@ Person trains at a gym. **Unique `(gym_id, person_id)`.**
 
 ### `payments`
 
-Ops-recorded payments (cash, transfer, etc.). Gateway / recurring billing is a later layer.
+Ops-recorded payments (cash, transfer) and online gateway fulfillments.
 
 | Column | Notes |
 | ------ | ----- |
 | `gym_id`, `membership_id` | |
 | `amount` | Charged amount (`>= 0`). **`0` = trial / courtesy** (same membership duration; UI labels as trial). |
 | `list_amount` | Catalog price (plan or day-pass) at record time; null on legacy rows. When `list_amount > amount` and `amount > 0`, UI shows a discount. |
-| `method` | `CASH` \| `TRANSFER` \| `CARD` \| `OTHER` (app uses cash/transfer today) |
+| `method` | `CASH` \| `TRANSFER` \| `CARD` \| `OTHER` \| `ONLINE` (desk uses cash/transfer; gateway uses `ONLINE`) |
 | `kind` | `PLAN` \| `DAY_PASS` |
 | `plan_id` | Set for plan payments; null for day-pass |
-| `recorded_by` | Staff user |
+| `provider` | `MERCADOPAGO` \| `STRIPE` \| `CLIP` \| null (manual) |
+| `provider_payment_id` | Idempotent PSP payment id (unique per provider when set) |
+| `checkout_id` | Optional FK → `payment_checkouts` |
+| `recorded_by` | Staff user (null for member self-serve online) |
 | `created_at` | |
+
+### `gym_payment_accounts`
+
+Per-gym OAuth connection to a payment provider.
+
+**Secrets:** `access_token`, `refresh_token`, and `token_expires_at` are **service-role only** (no `GRANT` to `authenticated` / `anon`). App code loads and mutates them via `createServiceRoleClient()` in `gateway-accounts.ts`. Managers may `SELECT` non-secret columns only (status, provider, public_key, …) under RLS (`can_manage_gym`). See migration `20260729053000_gym_payment_accounts_token_privileges.sql`.
+
+| Column | Notes |
+| ------ | ----- |
+| `gym_id`, `provider` | Unique pair (`MERCADOPAGO` \| `STRIPE` \| `CLIP`) |
+| `status` | `CONNECTED` \| `DISCONNECTED` \| `ERROR` |
+| `external_user_id` | Seller id at the PSP |
+| `access_token`, `refresh_token`, `token_expires_at` | OAuth secrets — **service role only** |
+| `public_key` | Optional publishable key |
+| `live_mode` | |
+| `connected_at`, `disconnected_at`, `last_error` | |
+
+### `plan_payment_links`
+
+Maps AMRAP `plans` → provider catalog ids. **AMRAP plans remain source of truth**; sync pushes outward.
+
+| Column | Notes |
+| ------ | ----- |
+| `plan_id`, `provider` | Unique |
+| `gym_id` | Denormalized for RLS |
+| `external_product_id`, `external_price_id` | Provider ids (nullable until sync) |
+| `is_enabled` | Online checkout allowed for this plan+provider |
+| `synced_at` | |
+
+### `payment_checkouts`
+
+Async online checkout attempts. On success → insert `payments` + renew membership.
+
+| Column | Notes |
+| ------ | ----- |
+| `gym_id`, `membership_id`, `plan_id` | |
+| `provider` | |
+| `amount`, `list_amount` | Charged vs catalog |
+| `status` | `PENDING` \| `SUCCEEDED` \| `FAILED` \| `CANCELLED` \| `EXPIRED` |
+| `provider_preference_id` | e.g. Mercado Pago preference id |
+| `provider_payment_id` | Filled when paid |
+| `init_point` | Redirect URL for Checkout Pro |
+| `created_by` | Staff or member user |
+| `metadata` | jsonb |
+| `completed_at` | |
 
 ---
 
@@ -329,7 +384,8 @@ All listed `public` tables have RLS enabled. Pattern summary:
 | ----- | -------------- |
 | `persons` | Self (`user_id`); staff at gyms where person has a **membership**; staff who share a gym via **`gym_roles`** (teammates); platform admin |
 | `organizations` | Creator / gym roles / members with membership at org gym / platform admin |
-| `gyms` / `branches` / `plans` / `payments` | Gym roles (accepted); **members** may `SELECT` gyms they have a pending/accepted membership at; platform admin |
+| `gyms` / `branches` / `plans` / `payments` | Gym roles (accepted); **members** may `SELECT` gyms they have a pending/accepted membership at; **members** may `SELECT` `plans` at accepted-membership gyms and their own `payments` rows; platform admin |
+| `gym_payment_accounts` / `plan_payment_links` / `payment_checkouts` | Accounts: managers `SELECT` non-secret columns only; token columns + all DML are **service role**. Links: gym roles / members select; managers write. Checkouts: gym roles / own membership select; managers or member insert own |
 | `gym_roles` | Select peers at same gyms; manage if can manage gym / owner |
 | `memberships` / `check_ins` | Gym managers; member may see own via person link (per policies) |
 | `feedback_messages` | Select: platform admin or gym OWNER/provisional (`target=GYM`); insert for authors |
@@ -359,7 +415,8 @@ Expect future migrations for:
 - Freemium numeric caps as DB constraints or trigger checks
 - Class sessions/schedules → **shipped** (see Classes below)
 - Announcements, penalties, routines, community
-- Org billing (Stripe Checkout + webhooks sync `plan_tier` / subscription ids on `organizations`), member payment gateway accounts
+- Org billing (Stripe Checkout + webhooks sync `plan_tier` / subscription ids on `organizations`)
+- Member gateway: `gym_payment_accounts` + `plan_payment_links` + `payment_checkouts` (Mercado Pago OAuth shipped path; Stripe Connect / Clip planned)
 - Impersonation audit log
 - Member white-label / custom domain (gym branding columns exist for admin dashboard)
 - Hardware device registry

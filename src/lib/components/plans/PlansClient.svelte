@@ -173,7 +173,6 @@
 				</span>
 				<span class="text-sm text-[var(--color-muted)]">{d.plans.dayPassSubtitle}</span>
 			</p>
-			<p class="text-sm text-[var(--color-muted)]">{d.plans.dayPassHint}</p>
 		</div>
 
 		<form

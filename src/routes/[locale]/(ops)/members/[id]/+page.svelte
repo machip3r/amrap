@@ -285,6 +285,9 @@
 				>
 					{d.members.renew}
 				</h2>
+				{#if data.billingFlash}
+					<p class="mt-3 text-sm text-[var(--color-muted)]" role="status">{data.billingFlash}</p>
+				{/if}
 				{#if data.plans.length === 0}
 					<p class="mt-4 text-sm text-[var(--color-muted)]">
 						{d.plans.noPlans}
@@ -370,6 +373,17 @@
 							{d.members.renewSubmit}
 						</Button>
 					</form>
+					{#if data.onlineBilling.available && data.onlineBilling.enabledPlanIds.includes(renewPlanId)}
+						<form method="POST" action="?/payOnline" class="mt-3 grid w-full gap-2">
+							<input type="hidden" name="locale" value={locale} />
+							<input type="hidden" name="member_id" value={member.id} />
+							<input type="hidden" name="plan_id" value={renewPlanId} />
+							<p class="text-xs text-[var(--color-muted)]">{d.settings.gatewayPayOnlineHint}</p>
+							<Button type="submit" variant="toolbar" class="w-full">
+								{d.settings.gatewayPayOnline}
+							</Button>
+						</form>
+					{/if}
 				{/if}
 			</section>
 		</div>

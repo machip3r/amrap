@@ -21,6 +21,8 @@ export type OrgBillingSnapshot = {
 	stripe_subscription_id: string | null;
 	stripe_subscription_status: string | null;
 	billing_interval: string | null;
+	stripe_cancel_at_period_end: boolean;
+	stripe_cancel_at: string | null;
 };
 
 export type SeededStripeOrg = {
@@ -100,7 +102,7 @@ export async function readOrgBilling(organizationId: string): Promise<OrgBilling
 	const { data, error } = await admin
 		.from('organizations')
 		.select(
-			'plan_tier, stripe_customer_id, stripe_subscription_id, stripe_subscription_status, billing_interval'
+			'plan_tier, stripe_customer_id, stripe_subscription_id, stripe_subscription_status, billing_interval, stripe_cancel_at_period_end, stripe_cancel_at'
 		)
 		.eq('id', organizationId)
 		.single();
@@ -127,7 +129,9 @@ export async function resetOrgBillingToFreemium(organizationId: string): Promise
 		stripe_customer_id: null,
 		stripe_subscription_id: null,
 		stripe_subscription_status: null,
-		billing_interval: null
+		billing_interval: null,
+		stripe_cancel_at_period_end: false,
+		stripe_cancel_at: null
 	});
 }
 
@@ -178,7 +182,9 @@ export async function seedPaidOrg(opts: {
 		stripe_customer_id: customer.id,
 		stripe_subscription_id: subscription.id,
 		stripe_subscription_status: subscription.status.toUpperCase(),
-		billing_interval: opts.interval
+		billing_interval: opts.interval,
+		stripe_cancel_at_period_end: false,
+		stripe_cancel_at: null
 	});
 
 	return {
@@ -217,6 +223,29 @@ export async function cancelSubscription(
 ): Promise<Stripe.Subscription> {
 	const stripe = getStripe();
 	return stripe.subscriptions.cancel(subscriptionId);
+}
+
+/** Schedule cancel at period end (Portal-style); sub stays active until then. */
+export async function scheduleCancelAtPeriodEnd(
+	subscriptionId: string
+): Promise<Stripe.Subscription> {
+	const stripe = getStripe();
+	return stripe.subscriptions.update(subscriptionId, {
+		cancel_at_period_end: true
+	});
+}
+
+export async function postSubscriptionUpdatedWebhook(
+	baseURL: string,
+	subscription: Stripe.Subscription
+): Promise<void> {
+	const res = await postWebhookEvent(baseURL, {
+		type: 'customer.subscription.updated',
+		data: { object: subscription }
+	});
+	if (!res.ok) {
+		throw new Error(`subscription.updated webhook failed: ${res.status} ${await res.text()}`);
+	}
 }
 
 /** Best-effort Stripe cleanup (ignore already-deleted resources). */
@@ -374,7 +403,9 @@ export async function syncOrgFromLatestCheckout(opts: {
 		stripe_customer_id: opts.customerId,
 		stripe_subscription_id: subId,
 		stripe_subscription_status: 'ACTIVE',
-		billing_interval: interval === 'YEAR' ? 'YEAR' : 'MONTH'
+		billing_interval: interval === 'YEAR' ? 'YEAR' : 'MONTH',
+		stripe_cancel_at_period_end: false,
+		stripe_cancel_at: null
 	});
 }
 

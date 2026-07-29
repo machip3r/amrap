@@ -5,6 +5,7 @@
 	import MemberMobileNav from '$lib/components/member/MemberMobileNav.svelte';
 	import OpsNavLogo from '$lib/components/ops/OpsNavLogo.svelte';
 	import IdentityPicker from '$lib/components/IdentityPicker.svelte';
+	import { persistBootLogo } from '$lib/branding/boot-logo';
 	import { getTimersImmersive } from '$lib/timers/shell.svelte';
 	import { DEFAULT_DOCUMENT_BRAND } from '$lib/seo/document-title';
 	import type { Snippet } from 'svelte';
@@ -39,6 +40,15 @@
 	const appName = $derived(data.documentBrand?.trim() || DEFAULT_DOCUMENT_BRAND);
 	const faviconLight = $derived(data.logoUrlLight || data.logoUrlDark);
 	const faviconDark = $derived(data.logoUrlDark || data.logoUrlLight);
+
+	$effect(() => {
+		persistBootLogo({
+			allowBrand: data.allowBrand,
+			logoUrlLight: data.logoUrlLight,
+			logoUrlDark: data.logoUrlDark,
+			name: data.documentBrand ?? data.gymName
+		});
+	});
 
 	$effect(() => {
 		const light = faviconLight;

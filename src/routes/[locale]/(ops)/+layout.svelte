@@ -8,6 +8,7 @@
 	import OpsNavLogo from '$lib/components/ops/OpsNavLogo.svelte';
 	import OpsNavProgress from '$lib/components/ops/OpsNavProgress.svelte';
 	import OwnerTour from '$lib/components/tour/OwnerTour.svelte';
+	import { persistBootLogo } from '$lib/branding/boot-logo';
 	import type { UserIdentity } from '$lib/auth/identities';
 	import { getCheckinKiosk } from '$lib/checkin/kiosk-shell.svelte';
 	import { getDictionary } from '$lib/i18n/dictionaries';
@@ -44,6 +45,16 @@
 	const faviconLight = $derived(data.logoUrlLight || data.logoUrlDark);
 	const faviconDark = $derived(data.logoUrlDark || data.logoUrlLight);
 	const showWatermark = $derived(showAmrapWatermark(data.workspace.planTier));
+
+	/** Cache gym mark for the next PWA / cold-start splash. */
+	$effect(() => {
+		persistBootLogo({
+			allowBrand: data.allowBrand,
+			logoUrlLight: data.logoUrlLight,
+			logoUrlDark: data.logoUrlDark,
+			name: data.documentBrand ?? data.workspace.gymName
+		});
+	});
 
 	/** Override static AMRAP icons in app.html so the gym logo wins in the tab. */
 	$effect(() => {

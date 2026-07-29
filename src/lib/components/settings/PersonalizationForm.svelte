@@ -1,18 +1,18 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { invalidate } from '$app/navigation';
-	import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
-	import Check from '@lucide/svelte/icons/check';
-	import Lock from '@lucide/svelte/icons/lock';
-	import X from '@lucide/svelte/icons/x';
-	import AmrapLogo from '$lib/components/landing/AmrapLogo.svelte';
-	import Button from '$lib/components/ui/Button.svelte';
-	import Dialog from '$lib/components/ui/Dialog.svelte';
-	import FormField from '$lib/components/ui/FormField.svelte';
-	import { BRAND_PALETTE_TEMPLATES } from '$lib/branding/palettes';
-	import type { Locale } from '$lib/i18n/config';
-	import type { Dictionary } from '$lib/i18n/dictionaries';
-	import type { SettingsActionState } from '$lib/server/settings/actions';
+	import { enhance } from "$app/forms";
+	import { invalidate } from "$app/navigation";
+	import { OPS_LOAD_DEPS } from "$lib/nav/load-deps";
+	import Check from "@lucide/svelte/icons/check";
+	import Lock from "@lucide/svelte/icons/lock";
+	import X from "@lucide/svelte/icons/x";
+	import AmrapLogo from "$lib/components/landing/AmrapLogo.svelte";
+	import Button from "$lib/components/ui/Button.svelte";
+	import Dialog from "$lib/components/ui/Dialog.svelte";
+	import FormField from "$lib/components/ui/FormField.svelte";
+	import { BRAND_PALETTE_TEMPLATES } from "$lib/branding/palettes";
+	import type { Locale } from "$lib/i18n/config";
+	import type { Dictionary } from "$lib/i18n/dictionaries";
+	import type { SettingsActionState } from "$lib/server/settings/actions";
 
 	type Props = {
 		locale: Locale;
@@ -29,7 +29,7 @@
 		logoUrlLight,
 		logoUrlDark,
 		canCustomizeBrand,
-		canUseCustomDomain = false
+		canUseCustomDomain = false,
 	}: Props = $props();
 
 	let displayLight = $state<string | null>(null);
@@ -47,7 +47,7 @@
 	let darkPreview = $state<string | null>(null);
 	let lightFileEl: HTMLInputElement | undefined = $state();
 	let darkFileEl: HTMLInputElement | undefined = $state();
-	let removeMode = $state<'light' | 'dark' | null>(null);
+	let removeMode = $state<"light" | "dark" | null>(null);
 
 	$effect(() => {
 		displayLight = logoUrlLight;
@@ -58,14 +58,14 @@
 		lightHasFile = false;
 		if (lightPreview) URL.revokeObjectURL(lightPreview);
 		lightPreview = null;
-		if (lightFileEl) lightFileEl.value = '';
+		if (lightFileEl) lightFileEl.value = "";
 	}
 
 	function clearDarkSelection() {
 		darkHasFile = false;
 		if (darkPreview) URL.revokeObjectURL(darkPreview);
 		darkPreview = null;
-		if (darkFileEl) darkFileEl.value = '';
+		if (darkFileEl) darkFileEl.value = "";
 	}
 
 	function handleResult(data: SettingsActionState) {
@@ -73,10 +73,10 @@
 		if (data.success) {
 			flash = data.success;
 			error = undefined;
-			if (data.logoMode === 'light') {
+			if (data.logoMode === "light") {
 				displayLight = data.logoUrl ?? null;
 				clearLightSelection();
-			} else if (data.logoMode === 'dark') {
+			} else if (data.logoMode === "dark") {
 				displayDark = data.logoUrl ?? null;
 				clearDarkSelection();
 			}
@@ -91,17 +91,17 @@
 	const darkDisplay = $derived(darkPreview || displayDark);
 
 	const fileInputClass =
-		'w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] px-4 py-2.5 text-sm text-[var(--color-text)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--color-primary)] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[var(--color-primary-on)]';
+		"w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-hover)] px-4 py-2.5 text-sm text-[var(--color-text)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--color-primary)] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[var(--color-primary-on)]";
 </script>
 
 {#if !canCustomizeBrand}
 	<div class="flex flex-col gap-5">
 		<div>
 			<h2 class="font-title text-2xl font-bold text-[var(--color-text)]">
-				{d.settings.personalization}
+				{d.settings.branding}
 			</h2>
 			<p class="mt-1 max-w-xl text-sm text-[var(--color-muted)]">
-				{d.settings.personalizationHint}
+				{d.settings.brandingHint}
 			</p>
 		</div>
 		<section
@@ -114,7 +114,9 @@
 					<Lock class="h-5 w-5" aria-hidden="true" />
 				</div>
 				<div class="min-w-0 max-w-md">
-					<h3 class="font-title text-lg font-bold text-[var(--color-text)]">
+					<h3
+						class="font-title text-lg font-bold text-[var(--color-text)]"
+					>
 						{d.settings.whitelabelLocked}
 					</h3>
 					<p class="mt-1 text-sm text-[var(--color-muted)]">
@@ -137,16 +139,20 @@
 				class="flex w-full items-center gap-1.5 rounded-lg border border-[var(--color-success)]/20 bg-[var(--color-success)]/10 px-3 py-2 text-sm font-medium text-[var(--color-success)]"
 				role="status"
 			>
-				<Check class="h-4 w-4 shrink-0" aria-hidden="true" strokeWidth={2.5} />
+				<Check
+					class="h-4 w-4 shrink-0"
+					aria-hidden="true"
+					strokeWidth={2.5}
+				/>
 				{flash}
 			</p>
 		{/if}
 		<div class="min-w-0">
 			<h2 class="font-title text-2xl font-bold text-[var(--color-text)]">
-				{d.settings.personalization}
+				{d.settings.branding}
 			</h2>
 			<p class="mt-1 max-w-xl text-sm text-[var(--color-muted)]">
-				{d.settings.personalizationHint}
+				{d.settings.brandingHint}
 			</p>
 			<p class="mt-2 max-w-xl text-sm text-[var(--color-muted)]">
 				{canUseCustomDomain
@@ -167,8 +173,12 @@
 		<section
 			class="flex flex-col rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-6"
 		>
-			<h3 class="font-title text-xl font-bold text-[var(--color-text)]">{d.settings.palettes}</h3>
-			<p class="mt-1 text-sm text-[var(--color-muted)]">{d.settings.palettesHint}</p>
+			<h3 class="font-title text-xl font-bold text-[var(--color-text)]">
+				{d.settings.palettes}
+			</h3>
+			<p class="mt-1 text-sm text-[var(--color-muted)]">
+				{d.settings.palettesHint}
+			</p>
 			<div class="mt-5 grid gap-3 sm:grid-cols-3">
 				{#each BRAND_PALETTE_TEMPLATES as tpl (tpl.id)}
 					<form
@@ -182,8 +192,10 @@
 							return async ({ result, update }) => {
 								palettePending = false;
 								await update();
-								if (result.type === 'success') {
-									handleResult(result.data as SettingsActionState);
+								if (result.type === "success") {
+									handleResult(
+										result.data as SettingsActionState,
+									);
 								}
 							};
 						}}
@@ -195,7 +207,9 @@
 							disabled={palettePending}
 							class="flex flex-col gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-4 text-left transition-colors hover:border-[var(--color-primary)]/40 hover:bg-[var(--color-surface-hover)] disabled:opacity-60"
 						>
-							<span class="text-sm font-semibold text-[var(--color-text)]">
+							<span
+								class="text-sm font-semibold text-[var(--color-text)]"
+							>
 								{d.settings[tpl.nameKey]}
 							</span>
 							<span class="flex gap-1.5">
@@ -204,7 +218,10 @@
 									style="background:{tpl.light.primary}"
 									title={d.settings.lightMode}
 								></span>
-								<span class="h-7 flex-1 rounded-md" style="background:{tpl.light.bg}"></span>
+								<span
+									class="h-7 flex-1 rounded-md"
+									style="background:{tpl.light.bg}"
+								></span>
 								<span
 									class="h-7 flex-1 rounded-md border border-[var(--color-border)]"
 									style="background:{tpl.light.surface}"
@@ -216,7 +233,10 @@
 									style="background:{tpl.dark.primary}"
 									title={d.settings.darkMode}
 								></span>
-								<span class="h-7 flex-1 rounded-md" style="background:{tpl.dark.bg}"></span>
+								<span
+									class="h-7 flex-1 rounded-md"
+									style="background:{tpl.dark.bg}"
+								></span>
 								<span
 									class="h-7 flex-1 rounded-md border border-[var(--color-border)]"
 									style="background:{tpl.dark.surface}"
@@ -225,7 +245,9 @@
 							<span
 								class="text-[11px] font-medium uppercase tracking-wider text-[var(--color-muted)]"
 							>
-								{palettePending ? d.settings.saving : d.settings.applyPalette}
+								{palettePending
+									? d.settings.saving
+									: d.settings.applyPalette}
 							</span>
 						</button>
 					</form>
@@ -236,18 +258,26 @@
 		<section
 			class="flex flex-col rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm sm:p-6"
 		>
-			<h3 class="font-title text-xl font-bold text-[var(--color-text)]">{d.settings.logo}</h3>
-			<p class="mt-1 text-sm text-[var(--color-muted)]">{d.settings.logoHint}</p>
+			<h3 class="font-title text-xl font-bold text-[var(--color-text)]">
+				{d.settings.logo}
+			</h3>
+			<p class="mt-1 text-sm text-[var(--color-muted)]">
+				{d.settings.logoHint}
+			</p>
 			<div class="mt-5 grid gap-4 sm:grid-cols-2">
 				<div
 					class="relative flex flex-col gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-4"
 				>
 					<div class="flex items-start justify-between gap-2 pr-8">
-						<h4 class="text-sm font-semibold text-[var(--color-text)]">{d.settings.logoLight}</h4>
+						<h4
+							class="text-sm font-semibold text-[var(--color-text)]"
+						>
+							{d.settings.logoLight}
+						</h4>
 						{#if displayLight && !lightPreview}
 							<button
 								type="button"
-								onclick={() => (removeMode = 'light')}
+								onclick={() => (removeMode = "light")}
 								disabled={removePending}
 								class="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-md text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)] disabled:opacity-50"
 								aria-label={d.settings.removeLogo}
@@ -278,15 +308,21 @@
 							return async ({ result, update }) => {
 								logoPending = false;
 								await update();
-								if (result.type === 'success') {
-									handleResult(result.data as SettingsActionState);
+								if (result.type === "success") {
+									handleResult(
+										result.data as SettingsActionState,
+									);
 								}
 							};
 						}}
 					>
 						<input type="hidden" name="locale" value={locale} />
 						<input type="hidden" name="mode" value="light" />
-						<FormField label={d.settings.uploadLogo} htmlFor="logo-light" error={logoFieldError}>
+						<FormField
+							label={d.settings.uploadLogo}
+							htmlFor="logo-light"
+							error={logoFieldError}
+						>
 							{#snippet children({ invalid, describedBy })}
 								<input
 									bind:this={lightFileEl}
@@ -299,16 +335,27 @@
 									aria-describedby={describedBy}
 									class={fileInputClass}
 									onchange={(e) => {
-										const file = (e.currentTarget as HTMLInputElement).files?.[0] ?? null;
-										if (lightPreview) URL.revokeObjectURL(lightPreview);
+										const file =
+											(
+												e.currentTarget as HTMLInputElement
+											).files?.[0] ?? null;
+										if (lightPreview)
+											URL.revokeObjectURL(lightPreview);
 										lightHasFile = Boolean(file);
-										lightPreview = file ? URL.createObjectURL(file) : null;
+										lightPreview = file
+											? URL.createObjectURL(file)
+											: null;
 									}}
 								/>
 							{/snippet}
 						</FormField>
-						<Button type="submit" disabled={logoPending || !lightHasFile}>
-							{logoPending ? d.settings.saving : d.settings.uploadLogo}
+						<Button
+							type="submit"
+							disabled={logoPending || !lightHasFile}
+						>
+							{logoPending
+								? d.settings.saving
+								: d.settings.uploadLogo}
 						</Button>
 					</form>
 				</div>
@@ -317,11 +364,15 @@
 					class="relative flex flex-col gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-4"
 				>
 					<div class="flex items-start justify-between gap-2 pr-8">
-						<h4 class="text-sm font-semibold text-[var(--color-text)]">{d.settings.logoDark}</h4>
+						<h4
+							class="text-sm font-semibold text-[var(--color-text)]"
+						>
+							{d.settings.logoDark}
+						</h4>
 						{#if displayDark && !darkPreview}
 							<button
 								type="button"
-								onclick={() => (removeMode = 'dark')}
+								onclick={() => (removeMode = "dark")}
 								disabled={removePending}
 								class="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-md text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text)] disabled:opacity-50"
 								aria-label={d.settings.removeLogo}
@@ -352,15 +403,21 @@
 							return async ({ result, update }) => {
 								logoPending = false;
 								await update();
-								if (result.type === 'success') {
-									handleResult(result.data as SettingsActionState);
+								if (result.type === "success") {
+									handleResult(
+										result.data as SettingsActionState,
+									);
 								}
 							};
 						}}
 					>
 						<input type="hidden" name="locale" value={locale} />
 						<input type="hidden" name="mode" value="dark" />
-						<FormField label={d.settings.uploadLogo} htmlFor="logo-dark" error={logoFieldError}>
+						<FormField
+							label={d.settings.uploadLogo}
+							htmlFor="logo-dark"
+							error={logoFieldError}
+						>
 							{#snippet children({ invalid, describedBy })}
 								<input
 									bind:this={darkFileEl}
@@ -373,16 +430,27 @@
 									aria-describedby={describedBy}
 									class={fileInputClass}
 									onchange={(e) => {
-										const file = (e.currentTarget as HTMLInputElement).files?.[0] ?? null;
-										if (darkPreview) URL.revokeObjectURL(darkPreview);
+										const file =
+											(
+												e.currentTarget as HTMLInputElement
+											).files?.[0] ?? null;
+										if (darkPreview)
+											URL.revokeObjectURL(darkPreview);
 										darkHasFile = Boolean(file);
-										darkPreview = file ? URL.createObjectURL(file) : null;
+										darkPreview = file
+											? URL.createObjectURL(file)
+											: null;
 									}}
 								/>
 							{/snippet}
 						</FormField>
-						<Button type="submit" disabled={logoPending || !darkHasFile}>
-							{logoPending ? d.settings.saving : d.settings.uploadLogo}
+						<Button
+							type="submit"
+							disabled={logoPending || !darkHasFile}
+						>
+							{logoPending
+								? d.settings.saving
+								: d.settings.uploadLogo}
 						</Button>
 					</form>
 				</div>
@@ -408,8 +476,10 @@
 						return async ({ result, update }) => {
 							removePending = false;
 							await update();
-							if (result.type === 'success') {
-								handleResult(result.data as SettingsActionState);
+							if (result.type === "success") {
+								handleResult(
+									result.data as SettingsActionState,
+								);
 								removeMode = null;
 							}
 						};
@@ -417,7 +487,9 @@
 				>
 					<input type="hidden" name="locale" value={locale} />
 					<input type="hidden" name="mode" value={removeMode} />
-					<div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+					<div
+						class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"
+					>
 						<Button
 							type="button"
 							variant="ghost"

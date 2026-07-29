@@ -8,7 +8,19 @@ export type OrgPlanTier = "FREEMIUM" | "STARTER" | "GROWTH" | "PRO";
 /** Derived from memberships.expires_at for UI; DB status uses ACTIVE/EXPIRED etc. */
 export type MemberStatus = "ACTIVE" | "EXPIRED";
 
-export type PaymentMethod = "CASH" | "TRANSFER";
+export type PaymentMethod = "CASH" | "TRANSFER" | "ONLINE";
+
+/** Connected PSP for gym → member charges (not AMRAP org billing). */
+export type PaymentProvider = "MERCADOPAGO" | "STRIPE" | "CLIP";
+
+export type PaymentAccountStatus = "CONNECTED" | "DISCONNECTED" | "ERROR";
+
+export type PaymentCheckoutStatus =
+  | "PENDING"
+  | "SUCCEEDED"
+  | "FAILED"
+  | "CANCELLED"
+  | "EXPIRED";
 
 export type CheckInSource = "QR" | "MANUAL" | "KIOSK";
 
@@ -161,6 +173,9 @@ export type Payment = {
   method: PaymentMethod;
   kind: PaymentKind;
   plan_id: string | null;
+  provider?: PaymentProvider | null;
+  provider_payment_id?: string | null;
+  checkout_id?: string | null;
   created_at: string;
 };
 

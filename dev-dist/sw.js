@@ -67,7 +67,7 @@ if (!self.define) {
     });
   };
 }
-define(['./workbox-2b8a15e7'], (function (workbox) { 'use strict';
+define(['./workbox-ec1a7d45'], (function (workbox) { 'use strict';
 
   self.addEventListener('message', event => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
@@ -83,14 +83,8 @@ define(['./workbox-2b8a15e7'], (function (workbox) { 'use strict';
   workbox.precacheAndRoute([{
     "url": "suppress-warnings.js",
     "revision": "d41d8cd98f00b204e9800998ecf8427e"
-  }, {
-    "url": "/",
-    "revision": "0.9hujffd0m4"
   }], {});
   workbox.cleanupOutdatedCaches();
-  workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("/"), {
-    allowlist: [/^\/$/]
-  }));
   workbox.registerRoute(/^https:\/\/fonts\.googleapis\.com\/.*/i, new workbox.CacheFirst({
     "cacheName": "google-fonts-stylesheets",
     plugins: [new workbox.ExpirationPlugin({

@@ -17,7 +17,28 @@ type OrgBillingPatch = {
 	stripe_subscription_id?: string | null;
 	stripe_subscription_status?: string | null;
 	billing_interval?: BillingInterval | null;
+	stripe_cancel_at_period_end?: boolean;
+	stripe_cancel_at?: string | null;
 };
+
+function unixToIso(unix: number | null | undefined): string | null {
+	if (unix == null || !Number.isFinite(unix)) return null;
+	return new Date(unix * 1000).toISOString();
+}
+
+/** Scheduled cancel fields while the sub is still entitled; cleared when ended. */
+function cancelSchedulePatch(
+	sub: Stripe.Subscription,
+	isEntitled: boolean
+): Pick<OrgBillingPatch, 'stripe_cancel_at_period_end' | 'stripe_cancel_at'> {
+	if (!isEntitled) {
+		return { stripe_cancel_at_period_end: false, stripe_cancel_at: null };
+	}
+	return {
+		stripe_cancel_at_period_end: Boolean(sub.cancel_at_period_end),
+		stripe_cancel_at: unixToIso(sub.cancel_at)
+	};
+}
 
 function paidTierFromSubscription(sub: Stripe.Subscription): {
 	tier: OrgPlanTier | null;
@@ -108,7 +129,8 @@ export async function syncOrganizationFromSubscription(sub: Stripe.Subscription)
 		stripe_customer_id: customerId ?? undefined,
 		stripe_subscription_id: isEntitled ? sub.id : null,
 		stripe_subscription_status: toStoredSubscriptionStatus(status),
-		billing_interval: isEntitled ? interval : null
+		billing_interval: isEntitled ? interval : null,
+		...cancelSchedulePatch(sub, isEntitled)
 	};
 
 	if (isEntitled && tier && (tier === 'STARTER' || tier === 'GROWTH' || tier === 'PRO')) {
@@ -117,6 +139,8 @@ export async function syncOrganizationFromSubscription(sub: Stripe.Subscription)
 		patch.plan_tier = 'FREEMIUM';
 		patch.stripe_subscription_id = null;
 		patch.billing_interval = null;
+		patch.stripe_cancel_at_period_end = false;
+		patch.stripe_cancel_at = null;
 	}
 
 	await updateOrgById(orgId, patch);
@@ -146,7 +170,9 @@ export async function syncOrganizationFromCheckoutSession(session: Stripe.Checko
 	const patch: OrgBillingPatch = {
 		stripe_customer_id: customerId ?? undefined,
 		stripe_subscription_id: subscriptionId ?? undefined,
-		stripe_subscription_status: 'ACTIVE'
+		stripe_subscription_status: 'ACTIVE',
+		stripe_cancel_at_period_end: false,
+		stripe_cancel_at: null
 	};
 	if (tierMeta === 'STARTER' || tierMeta === 'GROWTH') {
 		patch.plan_tier = tierMeta;

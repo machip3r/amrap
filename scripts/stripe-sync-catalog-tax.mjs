@@ -9,9 +9,9 @@
  *   node --env-file=.env.preview scripts/stripe-sync-catalog-tax.mjs
  *   node --env-file=.env.prod scripts/stripe-sync-catalog-tax.mjs
  *
- * After sync, enable Mexico collection in Stripe Dashboard:
- * Tax → Registrations → Add Mexico (IVA). Without an active registration,
- * automatic_tax calculates $0 tax.
+ * Optional: keep product tax_code / exclusive tax_behavior in sync for a future
+ * Stripe Tax migration. Current billing uses a **manual IVA 16% Tax Rate**
+ * (`scripts/stripe-ensure-mx-iva-tax-rate.mjs`) — no SAT / Tax Registrations needed.
  */
 import Stripe from 'stripe';
 
@@ -77,15 +77,16 @@ for (const lookup_key of LOOKUPS) {
 	console.log(`price ${price.id} (${lookup_key}) tax_behavior=${TAX_BEHAVIOR}`);
 }
 
-const regs = await stripe.tax.registrations.list({ status: 'active', limit: 20 });
+const regs = await stripe.tax.registrations.list({ status: 'active', limit: 20 }).catch(() => ({
+	data: []
+}));
 const mx = regs.data.filter((r) => r.country === 'MX');
 if (mx.length === 0) {
-	console.warn(
-		'\nNo active Mexico (MX) Tax registration. Add one in Dashboard → Tax → Registrations\n' +
-			'or Stripe will charge $0 tax even with automatic_tax enabled.'
+	console.log(
+		'\nNote: no Stripe Tax MX registration (expected until SAT). Billing uses manual IVA Tax Rate.'
 	);
 } else {
-	console.log(`\nActive MX tax registrations: ${mx.length}`);
+	console.log(`\nActive MX Stripe Tax registrations: ${mx.length}`);
 }
 
 console.log('done');

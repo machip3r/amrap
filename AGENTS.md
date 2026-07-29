@@ -47,6 +47,9 @@ pnpm dev               # http://localhost:5173
 | `STRIPE_SECRET_KEY` | Server-only Stripe secret (org subscription Checkout / Portal / webhooks) |
 | `PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (optional client use; also accepts `STRIPE_PUBLISHABLE_KEY`) |
 | `STRIPE_WEBHOOK_SECRET` | Signing secret for `POST /api/stripe/webhook` |
+| `PUBLIC_MERCADOPAGO_CLIENT_ID` | Mercado Pago app client id (OAuth for gym → member billing) |
+| `MERCADOPAGO_CLIENT_SECRET` | Server-only Mercado Pago client secret |
+| `MERCADOPAGO_WEBHOOK_SECRET` | Optional; reserved for signature validation |
 
 ---
 

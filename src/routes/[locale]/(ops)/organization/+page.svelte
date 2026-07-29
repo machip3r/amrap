@@ -21,6 +21,8 @@
 			organizationName={data.organizationName}
 			planTier={data.planTier}
 			hasStripeCustomer={data.hasStripeCustomer}
+			subscriptionCancelAt={data.subscriptionCancelAt}
+			subscriptionCancelAtPeriodEnd={data.subscriptionCancelAtPeriodEnd}
 			billingFlash={data.billingFlash}
 			stripePublishableKey={data.stripePublishableKey}
 			gyms={data.gyms}

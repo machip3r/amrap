@@ -12,7 +12,7 @@ import {
 import { PLAN_TIER_RANK } from '$lib/plans/limits';
 import { getRequestOrigin } from '$lib/http/origin';
 import { getStripe } from '$lib/stripe/server';
-import { checkoutTaxParams, subscriptionTaxParams } from '$lib/stripe/tax';
+import { checkoutManualIvaParams, subscriptionManualIvaParams } from '$lib/stripe/tax';
 import { createClient } from '$lib/supabase/server';
 import { formString, localeSchema } from '$lib/validation/schemas';
 import type { OrgPlanTier } from '$lib/types';
@@ -209,7 +209,9 @@ export async function requestSubscriptionCheckout(formData: FormData): Promise<O
 						stripe_subscription_id: null,
 						stripe_subscription_status: toStoredSubscriptionStatus(sub.status),
 						plan_tier: 'FREEMIUM',
-						billing_interval: null
+						billing_interval: null,
+						stripe_cancel_at_period_end: false,
+						stripe_cancel_at: null
 					})
 					.eq('id', org.id);
 			} else {
@@ -221,11 +223,12 @@ export async function requestSubscriptionCheckout(formData: FormData): Promise<O
 				// create_prorations only queues the delta for the *next* invoice.
 				// always_invoice charges (or credits) immediately — required for upgrades.
 				const isUpgrade = PLAN_TIER_RANK[tier] > PLAN_TIER_RANK[org.plan_tier];
-				await stripe.subscriptions.update(liveSubId, {
+				const updated = await stripe.subscriptions.update(liveSubId, {
 					items: [{ id: itemId, price: priceId }],
 					proration_behavior: 'always_invoice',
+					cancel_at_period_end: false,
 					...(isUpgrade ? { payment_behavior: 'error_if_incomplete' as const } : {}),
-					...subscriptionTaxParams(),
+					...(await subscriptionManualIvaParams()),
 					metadata: {
 						organization_id: org.id,
 						amrap_tier: tier,
@@ -238,7 +241,12 @@ export async function requestSubscriptionCheckout(formData: FormData): Promise<O
 					.update({
 						plan_tier: tier,
 						billing_interval: interval,
-						stripe_subscription_status: 'ACTIVE'
+						stripe_subscription_status: 'ACTIVE',
+						stripe_cancel_at_period_end: Boolean(updated.cancel_at_period_end),
+						stripe_cancel_at:
+							updated.cancel_at != null
+								? new Date(updated.cancel_at * 1000).toISOString()
+								: null
 					})
 					.eq('id', org.id);
 
@@ -250,6 +258,7 @@ export async function requestSubscriptionCheckout(formData: FormData): Promise<O
 		const returnRaw = (formString(formData, 'return_to') || 'organization').toLowerCase();
 		const returnPath = returnRaw === 'onboarding' ? 'onboarding' : 'organization';
 		const returnUrl = `${appOrigin()}/${locale}/${returnPath}?billing=success&session_id={CHECKOUT_SESSION_ID}`;
+		const iva = await checkoutManualIvaParams();
 
 		const session = await stripe.checkout.sessions.create({
 			// Stripe renamed `embedded` → `embedded_page` (API still mounts via createEmbeddedCheckoutPage).
@@ -257,12 +266,17 @@ export async function requestSubscriptionCheckout(formData: FormData): Promise<O
 			mode: 'subscription',
 			customer: customerId,
 			client_reference_id: org.id,
-			line_items: [{ price: priceId, quantity: 1 }],
+			line_items: [
+				{
+					price: priceId,
+					quantity: 1,
+					tax_rates: iva.lineItemTaxRates
+				}
+			],
 			return_url: returnUrl,
 			redirect_on_completion: 'always',
-			...checkoutTaxParams(),
 			subscription_data: {
-				...subscriptionTaxParams(),
+				default_tax_rates: iva.subscriptionDefaultTaxRates,
 				metadata: {
 					organization_id: org.id,
 					amrap_tier: tier,

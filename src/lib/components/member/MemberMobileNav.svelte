@@ -8,6 +8,7 @@
 	import QrCode from '@lucide/svelte/icons/qr-code';
 	import Timer from '@lucide/svelte/icons/timer';
 	import User from '@lucide/svelte/icons/user';
+	import Wallet from '@lucide/svelte/icons/wallet';
 	import AmrapWatermark from '$lib/components/AmrapWatermark.svelte';
 	import LogoutButton from '$lib/components/LogoutButton.svelte';
 	import QrCodeImage from '$lib/components/QrCodeImage.svelte';
@@ -64,6 +65,7 @@
 
 	const ICONS: Record<MemberNavId, Component> = {
 		home: Home,
+		membership: Wallet,
 		classes: CalendarDays,
 		timers: Timer,
 		inbox: Inbox,

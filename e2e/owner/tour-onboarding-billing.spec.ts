@@ -8,9 +8,14 @@ test.describe('owner tour + onboarding billing UI', () => {
 		await expect(page.getByRole('heading', { name: 'Ajustes' })).toBeVisible();
 		await page.evaluate((key) => localStorage.setItem(key, '1'), OWNER_TOUR_STORAGE_KEY);
 
-		const replay = page.getByRole('button', { name: /Ver guía rápida|Replay/i });
+		const replay = page.getByRole('button', { name: /Ver guía rápida|Replay quickstart/i });
 		await expect(replay).toBeVisible();
 		await replay.click();
+
+		const dialog = page.getByRole('dialog');
+		await expect(dialog).toBeVisible();
+		await expect(dialog.getByText(/recorrido corto|short tour/i)).toBeVisible();
+		await dialog.getByRole('button', { name: /Empezar guía|Start quickstart/i }).click();
 
 		await expect(page).toHaveURL(/\/es\/dashboard\?tour=1/);
 		await expect(page.getByRole('dialog')).toBeVisible({ timeout: 15_000 });

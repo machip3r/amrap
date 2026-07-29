@@ -1,6 +1,12 @@
 import type { Dictionary } from '$lib/i18n/dictionaries';
 
-export type MemberNavId = 'home' | 'classes' | 'timers' | 'inbox' | 'profile';
+export type MemberNavId =
+	| 'home'
+	| 'membership'
+	| 'classes'
+	| 'timers'
+	| 'inbox'
+	| 'profile';
 
 export type MemberNavItemDef = {
 	id: MemberNavId;
@@ -12,18 +18,19 @@ export type MemberNavItemDef = {
 };
 
 /**
- * Mobile bottom tabs: Home · Classes · Timers · Inbox (+ center My QR + More).
- * Profile lives via avatar / More.
+ * Mobile bottom tabs: Home · Membership · Classes (+ center My QR + More).
+ * Timers / Inbox / Profile via More (and avatar for profile).
  */
 export const MEMBER_NAV_ITEMS: MemberNavItemDef[] = [
 	{ id: 'home', path: '', getLabel: (d) => d.member.home },
+	{ id: 'membership', path: '/membership', getLabel: (d) => d.member.membership },
 	{ id: 'classes', path: '/classes', getLabel: (d) => d.member.classes },
 	{ id: 'timers', path: '/timers', getLabel: (d) => d.member.timers },
 	{ id: 'inbox', path: '/inbox', getLabel: (d) => d.member.inbox },
 	{ id: 'profile', path: '/profile', getLabel: (d) => d.member.profile, moreOnly: true }
 ];
 
-const PRIMARY_ORDER: MemberNavId[] = ['home', 'classes', 'timers', 'inbox'];
+const PRIMARY_ORDER: MemberNavId[] = ['home', 'membership', 'classes', 'timers', 'inbox'];
 const MAX_PRIMARY = 3;
 
 export function memberNavHref(prefix: string, path: string) {

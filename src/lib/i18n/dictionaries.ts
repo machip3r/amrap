@@ -267,6 +267,9 @@ export type Dictionary = {
     back: string;
     done: string;
     replay: string;
+    replayConfirmTitle: string;
+    replayConfirmBody: string;
+    replayConfirm: string;
     stepDashboardTitle: string;
     stepDashboardBody: string;
     stepCheckInTitle: string;
@@ -818,6 +821,23 @@ export type Dictionary = {
   member: {
     title: string;
     home: string;
+    membership: string;
+    membershipSubtitle: string;
+    membershipStatus: string;
+    membershipEmpty: string;
+    manageMembership: string;
+    currentPlan: string;
+    noPlanAssigned: string;
+    statusActive: string;
+    statusExpired: string;
+    gymPlans: string;
+    gymPlansHint: string;
+    noGymPlans: string;
+    planDays: string;
+    planOnlineBadge: string;
+    paymentHistory: string;
+    noPayments: string;
+    payMethodOnline: string;
     classes: string;
     classesSubtitle: string;
     inbox: string;
@@ -855,6 +875,39 @@ export type Dictionary = {
     emptyBookings: string;
     emptyMyBookings: string;
     filterAll: string;
+    payOnline: string;
+    payOnlineHint: string;
+    payOnlineSuccess: string;
+    payOnlineFailure: string;
+    payOnlinePending: string;
+    payOnlineUnavailable: string;
+    payStepsLabel: string;
+    payStepGateway: string;
+    payStepPlan: string;
+    payStepConfirm: string;
+    paySummary: string;
+    payVia: string;
+    payConfirmHint: string;
+    payContinueToGateway: string;
+    payRedirecting: string;
+    payCta: string;
+    renewMembership: string;
+    upgradeMembership: string;
+    cancelMembership: string;
+    cancelMembershipTitle: string;
+    cancelMembershipBody: string;
+    cancelMembershipConfirm: string;
+    cancelMembershipError: string;
+    renewSoon: string;
+    renewConfirmHint: string;
+    upgradeConfirmHint: string;
+    upgradeNoPlans: string;
+    payAtDeskTitle: string;
+    payAtDeskBody: string;
+    reactivateMembership: string;
+    daysLeft: string;
+    dayLeft: string;
+    expiresToday: string;
     filterMine: string;
     today: string;
     emptyInbox: string;
@@ -936,6 +989,8 @@ export type Dictionary = {
     billingAnnualHint: string;
     billingAnnualSaveBadge: string;
     manageBilling: string;
+    billingCancelsOn: string;
+    billingCancelScheduled: string;
     checkoutTitle: string;
     checkoutDescription: string;
     checkoutMountLabel: string;
@@ -1063,8 +1118,8 @@ export type Dictionary = {
     limitedSubtitle: string;
     limitedTitle: string;
     limitedHint: string;
-    personalization: string;
-    personalizationHint: string;
+    branding: string;
+    brandingHint: string;
     customization: string;
     customizationHint: string;
     navVisible: string;
@@ -1101,6 +1156,40 @@ export type Dictionary = {
     whitelabelStarterHint: string;
     whitelabelGrowthHint: string;
     upgradeWhitelabel: string;
+    gatewayTitle: string;
+    gatewayHint: string;
+    gatewayMercadoPago: string;
+    gatewayConnect: string;
+    gatewayConnecting: string;
+    gatewayPopupBlocked: string;
+    gatewayDisconnect: string;
+    gatewaySync: string;
+    gatewaySyncing: string;
+    gatewayConnected: string;
+    gatewayDisconnectedHint: string;
+    gatewayErrorStatus: string;
+    gatewayPlansSynced: string;
+    gatewayLocked: string;
+    gatewayLockedHint: string;
+    gatewayUpgrade: string;
+    gatewayNotConfigured: string;
+    gatewayManualStillWorks: string;
+    gatewayFlashConnected: string;
+    gatewayFlashDenied: string;
+    gatewayFlashError: string;
+    gatewayFlashUpgrade: string;
+    gatewayFlashForbidden: string;
+    gatewayFlashNotConfigured: string;
+    gatewayUpgradeRequired: string;
+    gatewaySyncError: string;
+    gatewaySyncSuccess: string;
+    gatewayDisconnected: string;
+    gatewayError: string;
+    gatewayNotConnected: string;
+    gatewayPlanDisabled: string;
+    gatewayCheckoutError: string;
+    gatewayPayOnline: string;
+    gatewayPayOnlineHint: string;
   };
 };
 
@@ -1388,6 +1477,10 @@ const es: Dictionary = {
     back: "Atrás",
     done: "Listo",
     replay: "Ver guía rápida",
+    replayConfirmTitle: "¿Ver la guía rápida?",
+    replayConfirmBody:
+      "La guía rápida es un recorrido corto por las pantallas principales de operación (resumen, check-in, miembros, clases, pagos, planes y organización). Te mostrará dónde está cada cosa; puedes saltarla cuando quieras.",
+    replayConfirm: "Empezar guía",
     stepDashboardTitle: "Tu día a día",
     stepDashboardBody:
       "Desde aquí registras miembros, entrenadores y abres el check-in sin buscar en el menú.",
@@ -1957,6 +2050,23 @@ const es: Dictionary = {
   member: {
     title: "Mi espacio",
     home: "Inicio",
+    membership: "Membresía",
+    membershipSubtitle: "Tu plan, pagos y opciones del gym activo.",
+    membershipStatus: "Estado actual",
+    membershipEmpty: "No encontramos una membresía activa en este gym.",
+    manageMembership: "Ver membresía",
+    currentPlan: "Plan actual",
+    noPlanAssigned: "Sin plan asignado",
+    statusActive: "Activa",
+    statusExpired: "Vencida",
+    gymPlans: "Planes del gym",
+    gymPlansHint: "Planes disponibles en este gimnasio.",
+    noGymPlans: "Este gym aún no publicó planes.",
+    planDays: "días",
+    planOnlineBadge: "Pago en línea",
+    paymentHistory: "Historial de pagos",
+    noPayments: "Aún no hay pagos registrados.",
+    payMethodOnline: "En línea",
     classes: "Clases",
     classesSubtitle: "Reserva clases y revisa tu historial.",
     inbox: "Buzón",
@@ -1994,6 +2104,42 @@ const es: Dictionary = {
     emptyBookings: "Aún no tienes reservas.",
     emptyMyBookings: "No tienes reservas en este periodo.",
     filterAll: "Todas",
+    payOnline: "Pagar membresía en línea",
+    payOnlineHint: "Elige pasarela, plan y confirma. Tu membresía se renueva al completar el pago.",
+    payOnlineSuccess: "Pago recibido. Tu membresía ya está actualizada.",
+    payOnlineFailure: "El pago no se completó. Puedes intentar de nuevo o pagar en recepción.",
+    payOnlinePending: "Pago en proceso. Te avisaremos cuando se confirme.",
+    payOnlineUnavailable: "Tu gimnasio aún no acepta pagos en línea.",
+    payStepsLabel: "Pasos del pago",
+    payStepGateway: "Elige la pasarela de pago",
+    payStepPlan: "Elige tu plan",
+    payStepConfirm: "Confirma y continúa",
+    paySummary: "Resumen",
+    payVia: "Pasarela",
+    payConfirmHint: "Te llevaremos a la pasarela de tu gym para completar el pago de forma segura.",
+    payContinueToGateway: "Ir a la pasarela",
+    payRedirecting: "Abriendo pasarela…",
+    payCta: "Cambiar suscripción",
+    renewMembership: "Renovar",
+    upgradeMembership: "Cambiar suscripción",
+    cancelMembership: "Cancelar membresía",
+    cancelMembershipTitle: "¿Cancelar tu membresía?",
+    cancelMembershipBody:
+      "Tu acceso termina ahora. No hay reembolso automático — habla con recepción si necesitas ayuda. Podrás volver a inscribirte después.",
+    cancelMembershipConfirm: "Sí, cancelar",
+    cancelMembershipError: "No se pudo cancelar la membresía",
+    renewSoon: "Renueva pronto",
+    renewConfirmHint: "Extenderemos tu membresía actual al confirmar el pago en la pasarela.",
+    upgradeConfirmHint:
+      "Cambiarás a este plan y extenderemos tu membresía al confirmar el pago en la pasarela.",
+    upgradeNoPlans: "No hay un plan superior disponible para pagar en línea.",
+    payAtDeskTitle: "Paga en recepción",
+    payAtDeskBody:
+      "Tu gimnasio aún no tiene pasarela de pago conectada. Renueva o mejora tu plan en recepción.",
+    reactivateMembership: "Reactivar",
+    daysLeft: "{count} días restantes",
+    dayLeft: "1 día restante",
+    expiresToday: "Vence hoy",
     filterMine: "Mis reservas",
     today: "Hoy",
     emptyInbox: "Sin mensajes.",
@@ -2074,7 +2220,7 @@ const es: Dictionary = {
     pricePerOrg: "por organización (tarifa plana)",
     pricePerGym: "por gym activo",
     priceContact: "A medida",
-    priceExVatNote: "Precios sin IVA. El impuesto se calcula en el checkout según tu ubicación (México: IVA).",
+    priceExVatNote: "Precios sin IVA. Se añade IVA 16% en el checkout.",
     perMonth: "/ mes",
     perYear: "/ año",
     billingIntervalLabel: "Facturación",
@@ -2084,8 +2230,10 @@ const es: Dictionary = {
     billingAnnualHint: "Un pago al año · mejor precio",
     billingAnnualSaveBadge: "Ahorra ~17%",
     manageBilling: "Gestionar facturación",
+    billingCancelsOn: "Se cancela el {date}. Sigues con el plan de pago hasta entonces.",
+    billingCancelScheduled: "Cancelación programada al final del periodo. Gestiona la facturación para reactivar.",
     checkoutTitle: "Completar pago",
-    checkoutDescription: "Paga de forma segura sin salir de AMRAP. El total incluye impuestos aplicables.",
+    checkoutDescription: "Paga de forma segura sin salir de AMRAP. El total incluye IVA 16%.",
     checkoutMountLabel: "Formulario de pago Stripe",
     checkoutFailed: "No se pudo iniciar el pago. Inténtalo de nuevo.",
     upgradeSuccess: "Suscripción actualizada.",
@@ -2106,8 +2254,8 @@ const es: Dictionary = {
     limitedTitle: "Configuración limitada",
     limitedHint:
       "La marca del gimnasio solo la gestiona el dueño. Pronto podrás ajustar más preferencias personales aquí.",
-    personalization: "Personalización",
-    personalizationHint:
+    branding: "Personalización",
+    brandingHint:
       "Colores y logos de este gimnasio en el panel (claro y oscuro).",
     customization: "Mi menú",
     customizationHint:
@@ -2143,11 +2291,50 @@ const es: Dictionary = {
     preview: "Vista previa",
     whitelabelLocked: "Personalización no incluida en plan gratuito",
     whitelabelLockedHint:
-      "En Starter: logo y colores. En Growth/Pro: white-label completo (dominio propio) cuando esté disponible. El plan gratuito usa la marca AMRAP.",
+      "Disponible desde Starter. El plan gratuito mantiene la marca AMRAP.",
     whitelabelStarterHint: "Personalización de marca: logo y colores de tu gym.",
     whitelabelGrowthHint:
       "White-label completo (dominio propio / branding avanzado) — acceso anticipado / próximamente en Growth y Pro.",
     upgradeWhitelabel: "Mejorar plan",
+    gatewayTitle: "Pasarela de pago",
+    gatewayHint:
+      "Conecta tu pasarela favorita para que los miembros paguen membresías en línea. El dinero llega a tu cuenta; AMRAP no retiene comisiones.",
+    gatewayMercadoPago: "Mercado Pago",
+    gatewayConnect: "Conectar",
+    gatewayConnecting: "Conectando…",
+    gatewayPopupBlocked: "Permite ventanas emergentes para conectar la pasarela.",
+    gatewayDisconnect: "Desconectar",
+    gatewaySync: "Sincronizar planes",
+    gatewaySyncing: "Sincronizando…",
+    gatewayConnected: "Conectado",
+    gatewayDisconnectedHint: "Inicia sesión con este proveedor para activar la pasarela.",
+    gatewayErrorStatus: "Error de conexión — vuelve a conectar",
+    gatewayPlansSynced: "{count} planes listos",
+    gatewayLocked: "Pasarela de pago no incluida en el plan gratuito",
+    gatewayLockedHint:
+      "Disponible desde Starter. Mientras tanto puedes seguir registrando efectivo y SPEI a mano.",
+    gatewayUpgrade: "Mejorar plan",
+    gatewayNotConfigured:
+      "Ninguna pasarela está configurada en este entorno. Contacta a soporte AMRAP.",
+    gatewayManualStillWorks:
+      "Efectivo y transferencia (SPEI) siguen disponibles en Pagos para todos los planes.",
+    gatewayFlashConnected: "Pasarela conectada. Sincroniza tus planes para cobrar en línea.",
+    gatewayFlashDenied: "No se completó la autorización de la pasarela.",
+    gatewayFlashError: "No se pudo conectar la pasarela. Intenta de nuevo.",
+    gatewayFlashUpgrade: "Mejora a Starter o superior para usar la pasarela de pago.",
+    gatewayFlashForbidden: "No tienes permiso para conectar la pasarela de pago.",
+    gatewayFlashNotConfigured: "La pasarela de pago no está configurada en el servidor.",
+    gatewayUpgradeRequired: "Tu plan AMRAP no incluye pasarela de pago.",
+    gatewaySyncError: "No se pudieron sincronizar los planes",
+    gatewaySyncSuccess: "Listo: {count} planes habilitados para cobro en línea",
+    gatewayDisconnected: "Pasarela desconectada",
+    gatewayError: "No se pudo actualizar la conexión",
+    gatewayNotConnected: "Conecta una pasarela en Configuración primero",
+    gatewayPlanDisabled: "Ese plan no está habilitado para cobro en línea. Sincroniza planes.",
+    gatewayCheckoutError: "No se pudo iniciar el pago en línea",
+    gatewayPayOnline: "Pagar en línea",
+    gatewayPayOnlineHint:
+      "El miembro completa el pago en la pasarela; la membresía se renueva al confirmarse.",
   },
   common: {
     loading: "Cargando…",
@@ -2546,6 +2733,10 @@ const en: Dictionary = {
     back: "Back",
     done: "Done",
     replay: "Replay quickstart",
+    replayConfirmTitle: "Replay the quickstart?",
+    replayConfirmBody:
+      "The quickstart is a short tour of the main ops screens (overview, check-in, members, classes, payments, plans, and organization). It points out where things live; you can skip it anytime.",
+    replayConfirm: "Start quickstart",
     stepDashboardTitle: "Your day-to-day",
     stepDashboardBody:
       "Register members and coaches, and open check-in from here without hunting the menu.",
@@ -3113,6 +3304,23 @@ const en: Dictionary = {
   member: {
     title: "My space",
     home: "Home",
+    membership: "Membership",
+    membershipSubtitle: "Your plan, payments, and options for the active gym.",
+    membershipStatus: "Current status",
+    membershipEmpty: "We could not find an active membership at this gym.",
+    manageMembership: "View membership",
+    currentPlan: "Current plan",
+    noPlanAssigned: "No plan assigned",
+    statusActive: "Active",
+    statusExpired: "Expired",
+    gymPlans: "Gym plans",
+    gymPlansHint: "Plans available at this gym.",
+    noGymPlans: "This gym has not published plans yet.",
+    planDays: "days",
+    planOnlineBadge: "Online pay",
+    paymentHistory: "Payment history",
+    noPayments: "No payments recorded yet.",
+    payMethodOnline: "Online",
     classes: "Classes",
     classesSubtitle: "Book classes and review your history.",
     inbox: "Inbox",
@@ -3150,6 +3358,42 @@ const en: Dictionary = {
     emptyBookings: "You have no bookings yet.",
     emptyMyBookings: "You have no bookings in this period.",
     filterAll: "All",
+    payOnline: "Pay membership online",
+    payOnlineHint: "Pick a gateway, choose a plan, then confirm. Your membership renews when payment completes.",
+    payOnlineSuccess: "Payment received. Your membership is up to date.",
+    payOnlineFailure: "Payment did not complete. Try again or pay at the front desk.",
+    payOnlinePending: "Payment pending. We will update your membership when it clears.",
+    payOnlineUnavailable: "Your gym does not accept online payments yet.",
+    payStepsLabel: "Payment steps",
+    payStepGateway: "Choose payment gateway",
+    payStepPlan: "Choose your plan",
+    payStepConfirm: "Confirm and continue",
+    paySummary: "Summary",
+    payVia: "Gateway",
+    payConfirmHint: "We’ll send you to your gym’s payment gateway to finish securely.",
+    payContinueToGateway: "Go to gateway",
+    payRedirecting: "Opening gateway…",
+    payCta: "Change subscription",
+    renewMembership: "Renew",
+    upgradeMembership: "Change subscription",
+    cancelMembership: "Cancel membership",
+    cancelMembershipTitle: "Cancel your membership?",
+    cancelMembershipBody:
+      "Access ends now. There is no automatic refund — talk to the front desk if you need help. You can join again later.",
+    cancelMembershipConfirm: "Yes, cancel",
+    cancelMembershipError: "Could not cancel membership",
+    renewSoon: "Renew soon",
+    renewConfirmHint: "We’ll extend your current membership when gateway payment confirms.",
+    upgradeConfirmHint:
+      "You’ll switch to this plan and extend membership when gateway payment confirms.",
+    upgradeNoPlans: "No higher plan is available for online payment.",
+    payAtDeskTitle: "Pay at the front desk",
+    payAtDeskBody:
+      "Your gym has no payment gateway connected yet. Renew or upgrade at the front desk.",
+    reactivateMembership: "Reactivate",
+    daysLeft: "{count} days left",
+    dayLeft: "1 day left",
+    expiresToday: "Expires today",
     filterMine: "My bookings",
     today: "Today",
     emptyInbox: "No messages.",
@@ -3230,7 +3474,7 @@ const en: Dictionary = {
     pricePerOrg: "per organization (flat rate)",
     pricePerGym: "per active gym",
     priceContact: "Custom",
-    priceExVatNote: "Prices exclude tax. Tax is calculated at checkout based on your location (Mexico: IVA).",
+    priceExVatNote: "Prices exclude tax. 16% IVA is added at checkout.",
     perMonth: "/ month",
     perYear: "/ year",
     billingIntervalLabel: "Billing",
@@ -3240,8 +3484,10 @@ const en: Dictionary = {
     billingAnnualHint: "One payment a year · best value",
     billingAnnualSaveBadge: "Save ~17%",
     manageBilling: "Manage billing",
+    billingCancelsOn: "Cancels on {date}. You keep your paid plan until then.",
+    billingCancelScheduled: "Cancellation scheduled for the end of the period. Manage billing to resume.",
     checkoutTitle: "Complete payment",
-    checkoutDescription: "Pay securely without leaving AMRAP. Totals include applicable taxes.",
+    checkoutDescription: "Pay securely without leaving AMRAP. Totals include 16% IVA.",
     checkoutMountLabel: "Stripe payment form",
     checkoutFailed: "Could not start checkout. Try again.",
     upgradeSuccess: "Subscription updated.",
@@ -3262,8 +3508,8 @@ const en: Dictionary = {
     limitedTitle: "Limited settings",
     limitedHint:
       "Gym branding is managed by the owner. More personal preferences will appear here soon.",
-    personalization: "Personalization",
-    personalizationHint:
+    branding: "Customization",
+    brandingHint:
       "Logos and colors for this gym in the admin dashboard (light and dark).",
     customization: "My menu",
     customizationHint:
@@ -3299,11 +3545,50 @@ const en: Dictionary = {
     preview: "Preview",
     whitelabelLocked: "Customization is not included in free plan",
     whitelabelLockedHint:
-      "Starter: logo and colors. Growth/Pro: full white-label (custom domain) when available. Free plan keeps AMRAP branding.",
+      "Available from Starter up. The free plan keeps AMRAP branding.",
     whitelabelStarterHint: "Brand customization: your gym logo and colors.",
     whitelabelGrowthHint:
       "Full white-label (custom domain / advanced branding) — early access / coming soon on Growth and Pro.",
     upgradeWhitelabel: "Upgrade plan",
+    gatewayTitle: "Payment gateway",
+    gatewayHint:
+      "Connect your preferred payment provider so members can pay memberships online. Funds go to your account — AMRAP takes no platform fee.",
+    gatewayMercadoPago: "Mercado Pago",
+    gatewayConnect: "Connect",
+    gatewayConnecting: "Connecting…",
+    gatewayPopupBlocked: "Allow pop-ups to connect the payment gateway.",
+    gatewayDisconnect: "Disconnect",
+    gatewaySync: "Sync plans",
+    gatewaySyncing: "Syncing…",
+    gatewayConnected: "Connected",
+    gatewayDisconnectedHint: "Sign in with this provider to enable the payment gateway.",
+    gatewayErrorStatus: "Connection error — reconnect",
+    gatewayPlansSynced: "{count} plans ready",
+    gatewayLocked: "Payment gateway is not included on the free plan",
+    gatewayLockedHint:
+      "Available from Starter up. You can still log cash and SPEI manually.",
+    gatewayUpgrade: "Upgrade plan",
+    gatewayNotConfigured:
+      "No payment gateway is configured in this environment. Contact AMRAP support.",
+    gatewayManualStillWorks:
+      "Cash and transfer (SPEI) remain available under Payments on every plan.",
+    gatewayFlashConnected: "Gateway connected. Sync your plans to charge online.",
+    gatewayFlashDenied: "Gateway authorization was not completed.",
+    gatewayFlashError: "Could not connect the payment gateway. Try again.",
+    gatewayFlashUpgrade: "Upgrade to Starter or higher for the payment gateway.",
+    gatewayFlashForbidden: "You do not have permission to connect a payment gateway.",
+    gatewayFlashNotConfigured: "Payment gateway is not configured on the server.",
+    gatewayUpgradeRequired: "Your AMRAP plan does not include a payment gateway.",
+    gatewaySyncError: "Could not sync plans",
+    gatewaySyncSuccess: "Done: {count} plans enabled for online checkout",
+    gatewayDisconnected: "Gateway disconnected",
+    gatewayError: "Could not update the connection",
+    gatewayNotConnected: "Connect a payment gateway in Settings first",
+    gatewayPlanDisabled: "That plan is not enabled for online checkout. Sync plans.",
+    gatewayCheckoutError: "Could not start online checkout",
+    gatewayPayOnline: "Pay online",
+    gatewayPayOnlineHint:
+      "The member completes payment with your gateway; membership renews when confirmed.",
   },
   common: {
     loading: "Loading…",

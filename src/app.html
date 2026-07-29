@@ -95,8 +95,8 @@
 					visibility 0.2s ease;
 			}
 			#amrap-boot .amrap-boot-logo {
-				width: min(42vw, 9rem);
-				height: auto;
+				width: auto;
+				height: 2.25rem; /* matches ops top-bar AmrapLogo default h-9 */
 				display: block;
 			}
 			#amrap-boot .amrap-boot-logo-dark {
@@ -128,22 +128,42 @@
 		<div id="amrap-boot" aria-hidden="true">
 			<img
 				class="amrap-boot-logo amrap-boot-logo-light"
-				src="/amrap-hero-logo-black.png"
+				src="/amrap-black-logo.png"
 				alt=""
-				width="144"
-				height="48"
+				width="120"
+				height="32"
 				decoding="async"
 			/>
 			<img
 				class="amrap-boot-logo amrap-boot-logo-dark"
-				src="/amrap-hero-logo-white.png"
+				src="/amrap-white-logo.png"
 				alt=""
-				width="144"
-				height="48"
+				width="120"
+				height="32"
 				decoding="async"
 			/>
 			<div class="amrap-boot-spin" aria-hidden="true"></div>
 		</div>
+		<script>
+			/* Prefer cached gym mark when the org is whitelabeled (set by ops/me layouts). */
+			(function () {
+				try {
+					var raw = localStorage.getItem('amrap-boot-logo');
+					if (!raw) return;
+					var data = JSON.parse(raw);
+					var light = (data && (data.light || data.dark)) || null;
+					var dark = (data && (data.dark || data.light)) || null;
+					if (!light && !dark) return;
+					var elL = document.querySelector('#amrap-boot .amrap-boot-logo-light');
+					var elD = document.querySelector('#amrap-boot .amrap-boot-logo-dark');
+					if (elL && light) {
+						elL.setAttribute('src', light);
+						if (data.name) elL.setAttribute('alt', data.name);
+					}
+					if (elD && dark) elD.setAttribute('src', dark);
+				} catch (e) {}
+			})();
+		</script>
 		<div style="display: contents">%sveltekit.body%</div>
 		<script>
 			(function () {

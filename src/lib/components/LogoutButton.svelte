@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import Loader2 from '@lucide/svelte/icons/loader-2';
+	import { persistBootLogo } from '$lib/branding/boot-logo';
 	import { portal } from '$lib/dom/portal';
 	import type { Locale } from '$lib/i18n/config';
 	import { createClient } from '$lib/supabase/client';
@@ -30,6 +31,7 @@
 		try {
 			const supabase = createClient();
 			await supabase.auth.signOut();
+			persistBootLogo({ allowBrand: false });
 			await goto(`/${locale}/login`);
 		} catch {
 			pending = false;

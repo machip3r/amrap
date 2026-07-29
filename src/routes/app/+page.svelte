@@ -1,7 +1,14 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
+	import { readBootLogo } from '$lib/branding/boot-logo';
 
 	let { data } = $props();
+
+	const cached = browser ? readBootLogo() : null;
+	const logoLight = cached?.light || '/amrap-black-logo.png';
+	const logoDark = cached?.dark || cached?.light || '/amrap-white-logo.png';
+	const logoAlt = cached?.name || 'AMRAP';
 
 	onMount(() => {
 		let cancelled = false;
@@ -55,20 +62,21 @@
 	aria-label={data.booting}
 >
 	<img
-		src="/amrap-hero-logo-black.png"
-		alt=""
-		width="144"
-		height="48"
-		class="h-auto w-[min(42vw,9rem)] dark:hidden"
+		src={logoLight}
+		alt={logoAlt}
+		width="120"
+		height="32"
+		class="h-9 w-auto max-w-[10rem] object-contain dark:hidden"
 		decoding="async"
 	/>
 	<img
-		src="/amrap-hero-logo-white.png"
+		src={logoDark}
 		alt=""
-		width="144"
-		height="48"
-		class="hidden h-auto w-[min(42vw,9rem)] dark:block"
+		width="120"
+		height="32"
+		class="hidden h-9 w-auto max-w-[10rem] object-contain dark:block"
 		decoding="async"
+		aria-hidden="true"
 	/>
 	<span
 		class="inline-block h-7 w-7 animate-spin rounded-full border-[2.5px] border-[var(--color-primary)]/25 border-t-[var(--color-primary)]"

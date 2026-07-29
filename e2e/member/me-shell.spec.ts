@@ -20,12 +20,45 @@ async function gotoMemberPath(page: Page, path: string): Promise<void> {
 }
 
 test.describe("member me shell", () => {
-  test("home, QR, classes, timers, inbox, and profile", async ({ page }) => {
+  test("home, membership, QR, classes, timers, inbox, and profile", async ({ page }) => {
     const member = readRoleCreds(memberCredsPath());
 
     await gotoMemberPath(page, "/es/me");
     await expect(page.getByRole("heading", { name: "Inicio" })).toBeVisible();
     await expect(page.getByText(member.fullName).first()).toBeVisible();
+
+    await gotoMemberPath(page, "/es/me/membership");
+    await expect(page.getByRole("heading", { name: "Membresía" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Estado actual" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Planes del gym" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Historial de pagos" })).toBeVisible();
+
+    // Active membership: cancel on status card; renew/upgrade via gym plans when online.
+    await expect(page.getByRole("button", { name: "Cancelar membresía" })).toBeVisible();
+
+    const renewOnPlans = page.getByRole("button", { name: "Renovar" }).first();
+    if (await renewOnPlans.isVisible().catch(() => false)) {
+      await renewOnPlans.click();
+      await expect(page.getByRole("dialog")).toBeVisible();
+      const dialog = page.getByRole("dialog");
+      const gatewayStep = dialog.getByText("Elige la pasarela de pago");
+      const deskTitle = dialog.getByRole("heading", { name: "Paga en recepción" });
+      await expect(gatewayStep.or(deskTitle)).toBeVisible();
+      const cancelInDialog = dialog.getByRole("button", { name: /Cancelar|Cerrar/ }).first();
+      await cancelInDialog.click();
+      await expect(page.getByRole("dialog")).toBeHidden();
+    }
+
+    const changeSub = page.getByRole("button", { name: "Cambiar suscripción" }).first();
+    if (await changeSub.isVisible().catch(() => false)) {
+      await expect(changeSub).toBeVisible();
+    }
+
+    await page.getByRole("button", { name: "Cancelar membresía" }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "¿Cancelar tu membresía?" })).toBeVisible();
+    await page.getByRole("button", { name: "Cancelar" }).click();
+    await expect(page.getByRole("dialog")).toBeHidden();
 
     await gotoMemberPath(page, "/es/me/qr");
     await expect(page.getByRole("heading", { name: "Mi QR" })).toBeVisible();

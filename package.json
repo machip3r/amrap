@@ -19,6 +19,7 @@
 		"test:e2e:flows": "playwright test --project=owner-setup --project=multi-user",
 		"test:e2e:billing": "playwright test e2e/owner/billing-stripe.spec.ts --project=owner-setup --project=owner",
 		"stripe:sync-tax": "node --env-file=.env scripts/stripe-sync-catalog-tax.mjs",
+		"stripe:ensure-iva": "node --env-file=.env scripts/stripe-ensure-mx-iva-tax-rate.mjs",
 		"knip": "knip"
 	},
 	"devDependencies": {

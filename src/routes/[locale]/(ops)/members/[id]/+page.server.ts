@@ -4,15 +4,18 @@ import type { Locale } from '$lib/i18n/config';
 import { getDictionary } from '$lib/i18n/dictionaries';
 import { MEMBERSHIP_LIST_SELECT, mapMembershipRow } from '$lib/members/queries';
 import { OPS_LOAD_DEPS } from '$lib/nav/load-deps';
+import { canUseOnlineBilling } from '$lib/plans/limits';
 import {
 	deleteMemberAction,
 	renewMember,
 	savePersonCareNote
 } from '$lib/server/members/actions';
+import { startOnlineCheckoutAction } from '$lib/server/payments/gateway-actions';
+import { loadGymPaymentAccount } from '$lib/server/payments/gateway-accounts';
 import { createClient } from '$lib/supabase/server';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ parent, params, depends }) => {
+export const load: PageServerLoad = async ({ parent, params, depends, url }) => {
 	depends(OPS_LOAD_DEPS.members);
 	const { locale, workspace } = await parent();
 	if (!workspace) throw redirect(303, `/${locale}/login`);
@@ -26,7 +29,12 @@ export const load: PageServerLoad = async ({ parent, params, depends }) => {
 			d,
 			member: null,
 			plans: [],
-			careNote: null
+			careNote: null,
+			onlineBilling: {
+				available: false,
+				enabledPlanIds: [] as string[]
+			},
+			billingFlash: null as string | null
 		};
 	}
 
@@ -58,6 +66,30 @@ export const load: PageServerLoad = async ({ parent, params, depends }) => {
 			.maybeSingle()
 	]);
 
+	let enabledPlanIds: string[] = [];
+	let onlineAvailable = false;
+	if (canUseOnlineBilling(workspace.planTier)) {
+		const account = await loadGymPaymentAccount(workspace.gymId, 'MERCADOPAGO');
+		if (account?.status === 'CONNECTED') {
+			const { data: links } = await supabase
+				.from('plan_payment_links')
+				.select('plan_id')
+				.eq('gym_id', workspace.gymId)
+				.eq('provider', 'MERCADOPAGO')
+				.eq('is_enabled', true);
+			enabledPlanIds = (links ?? []).map((l) => l.plan_id);
+			onlineAvailable = enabledPlanIds.length > 0;
+		}
+	}
+
+	const billing = url.searchParams.get('billing');
+	const billingFlash =
+		billing === 'success'
+			? d.settings.gatewayPayOnlineHint
+			: billing === 'failure'
+				? d.settings.gatewayCheckoutError
+				: null;
+
 	return {
 		forbidden: false as const,
 		locale: locale as Locale,
@@ -69,7 +101,12 @@ export const load: PageServerLoad = async ({ parent, params, depends }) => {
 			price: Number(p.price),
 			duration_days: p.duration_days
 		})),
-		careNote: care?.medical_note ?? null
+		careNote: care?.medical_note ?? null,
+		onlineBilling: {
+			available: onlineAvailable,
+			enabledPlanIds
+		},
+		billingFlash
 	};
 };
 
@@ -80,5 +117,6 @@ export const actions = {
 	delete: async ({ request }) => {
 		await deleteMemberAction(await request.formData());
 	},
-	saveCare: async ({ request }) => savePersonCareNote(await request.formData())
+	saveCare: async ({ request }) => savePersonCareNote(await request.formData()),
+	payOnline: async ({ request }) => startOnlineCheckoutAction(await request.formData())
 } satisfies Actions;

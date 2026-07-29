@@ -23,22 +23,40 @@
 			root.style.setProperty('--app-height', `${h}px`);
 		}
 
-		// Dismiss inline app.html splash once the shell is alive.
-		const boot = document.getElementById('amrap-boot');
-		let bootTimer: ReturnType<typeof setTimeout> | undefined;
-		if (boot) {
+		function pinDocumentScroll() {
+			window.scrollTo(0, 0);
+			root.scrollTop = 0;
+			document.body.scrollTop = 0;
+		}
+
+		/** Fade out + remove boot splash without leaving an iOS rubber-band gap. */
+		function dismissBootSplash() {
+			const boot = document.getElementById('amrap-boot');
+			if (!boot) {
+				root.classList.remove('amrap-booting');
+				pinDocumentScroll();
+				measure();
+				return;
+			}
+
 			boot.setAttribute('data-done', '');
-			bootTimer = window.setTimeout(() => {
+			pinDocumentScroll();
+
+			return window.setTimeout(() => {
+				pinDocumentScroll();
 				boot.remove();
-				// Remeasure after splash — iOS often reports a short height while
-				// the boot overlay was covering the viewport.
+				root.classList.remove('amrap-booting');
+				pinDocumentScroll();
 				measure();
 				requestAnimationFrame(() => {
+					pinDocumentScroll();
 					measure();
 					requestAnimationFrame(measure);
 				});
-			}, 320);
+			}, 280);
 		}
+
+		const bootTimer = dismissBootSplash();
 
 		function keyboardOpenNow() {
 			const vv = window.visualViewport;
@@ -110,6 +128,10 @@
 			if (keyboardOpenNow() && window.scrollY !== 0) {
 				window.scrollTo(0, 0);
 			}
+			// While boot splash is up, never allow a visualViewport pan to stick.
+			if (root.classList.contains('amrap-booting')) {
+				pinDocumentScroll();
+			}
 			syncHeight();
 		}
 
@@ -118,7 +140,8 @@
 		}
 
 		return () => {
-			clearTimeout(bootTimer);
+			if (bootTimer != null) clearTimeout(bootTimer);
+			root.classList.remove('amrap-booting');
 			clearTimeout(focusOutTimer);
 			vv?.removeEventListener('resize', syncHeight);
 			vv?.removeEventListener('scroll', onVisualScroll);

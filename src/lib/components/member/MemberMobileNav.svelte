@@ -145,11 +145,11 @@
 		<AmrapWatermark
 			{locale}
 			label={d.shell.poweredBy}
-			class="border-[var(--color-border)] bg-[var(--color-surface)] !py-0 pt-1 pb-[var(--safe-bottom)]"
+			class="border-[var(--color-border)] bg-[var(--color-surface)] pt-1.5 pb-[max(0.4rem,var(--safe-bottom))]"
 		/>
 	{:else}
 		<div
-			class="bg-[var(--color-surface)] pb-[var(--safe-bottom)]"
+			class="bg-[var(--color-surface)] pb-[max(0.5rem,var(--safe-bottom))]"
 			aria-hidden="true"
 		></div>
 	{/if}

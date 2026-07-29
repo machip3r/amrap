@@ -48,7 +48,7 @@
 </svelte:head>
 
 <div
-	class="amrap-app-shell flex flex-col items-center justify-center gap-5 bg-[var(--color-bg)] px-[var(--spacing-page)]"
+	class="amrap-app-shell flex flex-col items-center justify-center gap-5 overflow-hidden overscroll-none bg-[var(--color-bg)] px-[var(--spacing-page)]"
 	role="status"
 	aria-busy="true"
 	aria-live="polite"

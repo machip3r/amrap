@@ -43,7 +43,7 @@
 			media="(prefers-color-scheme: dark)"
 		/>
 		<link rel="apple-touch-icon" href="/pwa/apple-touch-icon.png" />
-		<!-- Theme before first paint so #amrap-boot matches light/dark -->
+		<!-- Theme + boot scroll lock before first paint -->
 		<script>
 			(function () {
 				try {
@@ -56,9 +56,17 @@
 								: 'light';
 					document.documentElement.classList.toggle('dark', theme === 'dark');
 				} catch (e) {}
+				/* Prevent iOS rubber-band scroll under the splash (causes a gap after dismiss). */
+				document.documentElement.classList.add('amrap-booting');
 			})();
 		</script>
 		<style>
+			html.amrap-booting,
+			html.amrap-booting body {
+				overflow: hidden !important;
+				overscroll-behavior: none !important;
+				touch-action: none;
+			}
 			#amrap-boot {
 				position: fixed;
 				inset: 0;
@@ -71,6 +79,8 @@
 				margin: 0;
 				background: #f8fafc;
 				color: #0f172a;
+				touch-action: none;
+				overscroll-behavior: none;
 				transition:
 					opacity 0.28s ease,
 					visibility 0.28s ease;
@@ -82,7 +92,8 @@
 			#amrap-boot[data-done] {
 				opacity: 0;
 				visibility: hidden;
-				pointer-events: none;
+				/* Keep blocking interaction until the node is removed */
+				pointer-events: auto;
 			}
 			#amrap-boot .amrap-boot-logo {
 				width: min(42vw, 9rem);
@@ -136,12 +147,30 @@
 		</div>
 		<div style="display: contents">%sveltekit.body%</div>
 		<script>
-			/**
-			 * iOS standalone dead-end recovery.
-			 * A stale service worker can hydrate the wrong shell for `/app` and leave
-			 * SvelteKit’s bare “404 Not Found” with no chrome to navigate away.
-			 */
 			(function () {
+				function pinScroll() {
+					try {
+						window.scrollTo(0, 0);
+						document.documentElement.scrollTop = 0;
+						document.body.scrollTop = 0;
+					} catch (e) {}
+				}
+
+				function blockTouchMove(e) {
+					if (document.documentElement.classList.contains('amrap-booting')) {
+						e.preventDefault();
+					}
+				}
+
+				pinScroll();
+				document.addEventListener('touchmove', blockTouchMove, { passive: false, capture: true });
+				document.addEventListener('scroll', pinScroll, { passive: true, capture: true });
+
+				/**
+				 * iOS standalone dead-end recovery.
+				 * A stale service worker can hydrate the wrong shell for `/app` and leave
+				 * SvelteKit’s bare “404 Not Found” with no chrome to navigate away.
+				 */
 				function isStandalone() {
 					try {
 						return (
@@ -172,7 +201,11 @@
 						navigator.serviceWorker
 							.getRegistrations()
 							.then(function (regs) {
-								return Promise.all(regs.map(function (r) { return r.unregister(); }));
+								return Promise.all(
+									regs.map(function (r) {
+										return r.unregister();
+									})
+								);
 							})
 							.catch(function () {})
 							.then(function () {

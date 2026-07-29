@@ -41,19 +41,29 @@
 	let overlayEl: HTMLDivElement | undefined = $state();
 	let bodyScrollEl: HTMLDivElement | undefined = $state();
 
-	/** Pin overlay to the visible viewport. Prefer full layout coverage unless the keyboard is open — iOS PWA often reports a short visualViewport.height and leaves a white strip under the dialog until the next scroll/resize. */
+	/** Stretch overlay with inset:0 so iOS PWA cannot leave a strip under a short height. Pin to visualViewport only while the keyboard is open. */
 	function syncOverlayToVisualViewport() {
 		const el = overlayEl;
 		if (!el) return;
 		const vv = window.visualViewport;
 		const layoutH = window.innerHeight;
-		const layoutW = window.innerWidth;
 
-		if (!vv) {
+		const coverFull = () => {
 			el.style.top = '0';
 			el.style.left = '0';
-			el.style.width = '100%';
-			el.style.height = 'var(--app-height, 100dvh)';
+			el.style.right = '0';
+			el.style.bottom = '0';
+			el.style.width = '';
+			el.style.height = '';
+			el.style.minHeight = '';
+		};
+
+		if (!vv) {
+			coverFull();
+			document.documentElement.style.setProperty(
+				'--app-height',
+				`${layoutViewportHeight()}px`
+			);
 			return;
 		}
 
@@ -61,15 +71,20 @@
 		if (keyboardOpen) {
 			el.style.top = `${vv.offsetTop}px`;
 			el.style.left = `${vv.offsetLeft}px`;
+			el.style.right = 'auto';
+			el.style.bottom = 'auto';
 			el.style.width = `${vv.width}px`;
 			el.style.height = `${vv.height}px`;
+			el.style.minHeight = '';
 			return;
 		}
 
-		el.style.top = '0';
-		el.style.left = '0';
-		el.style.width = `${Math.max(layoutW, vv.width)}px`;
-		el.style.height = `${layoutViewportHeight()}px`;
+		coverFull();
+		// Keep --app-height honest for the shell behind the dialog.
+		document.documentElement.style.setProperty(
+			'--app-height',
+			`${layoutViewportHeight()}px`
+		);
 	}
 
 	$effect(() => {
@@ -192,10 +207,10 @@
 	<div
 		use:portal
 		bind:this={overlayEl}
-		class="fixed z-50 flex overscroll-none {fullScreen
+		class="fixed inset-0 z-50 flex overscroll-none {fullScreen
 			? 'items-stretch justify-stretch p-0'
 			: containerClass}"
-		style="top:0;left:0;width:100%;height:var(--app-height,100dvh);min-height:100%;min-height:100dvh"
+		style="inset:0"
 	>
 		{#if !fullScreen}
 			<button

@@ -51,6 +51,7 @@ export type Dictionary = {
     updateAvailable: string;
     reload: string;
     reloading: string;
+    booting: string;
   };
   a11y: {
     toggleTheme: string;
@@ -924,6 +925,7 @@ export type Dictionary = {
     pricePerOrg: string;
     pricePerGym: string;
     priceContact: string;
+    priceExVatNote: string;
     perMonth: string;
     perYear: string;
     billingIntervalLabel: string;
@@ -977,6 +979,7 @@ export type Dictionary = {
     goClasses: string;
     goCheckin: string;
     goHome: string;
+    goLanding: string;
     forbiddenTitle: string;
     forbiddenBody: string;
   };
@@ -1155,6 +1158,7 @@ const es: Dictionary = {
     updateAvailable: "Hay una actualización de AMRAP. Actualiza ahora para obtener mejoras y correcciones; solo toma un momento.",
     reload: "Actualizar ahora",
     reloading: "Actualizando…",
+    booting: "Abriendo AMRAP…",
   },
   a11y: {
     toggleTheme: "Cambiar tema",
@@ -2068,6 +2072,7 @@ const es: Dictionary = {
     pricePerOrg: "por organización (tarifa plana)",
     pricePerGym: "por gym activo",
     priceContact: "A medida",
+    priceExVatNote: "Precios sin IVA. El impuesto se calcula en el checkout según tu ubicación (México: IVA).",
     perMonth: "/ mes",
     perYear: "/ año",
     billingIntervalLabel: "Facturación",
@@ -2078,7 +2083,7 @@ const es: Dictionary = {
     billingAnnualSaveBadge: "Ahorra ~17%",
     manageBilling: "Gestionar facturación",
     checkoutTitle: "Completar pago",
-    checkoutDescription: "Paga de forma segura sin salir de AMRAP.",
+    checkoutDescription: "Paga de forma segura sin salir de AMRAP. El total incluye impuestos aplicables.",
     checkoutMountLabel: "Formulario de pago Stripe",
     checkoutFailed: "No se pudo iniciar el pago. Inténtalo de nuevo.",
     upgradeSuccess: "Suscripción actualizada.",
@@ -2170,13 +2175,14 @@ const es: Dictionary = {
     bodyCheckin:
       "No hay historial para esa membresía en este gym. Vuelve a entradas e inténtalo de nuevo.",
     bodyGeneric:
-      "Esa ruta no existe o ya no está disponible. Te llevamos de vuelta al panel.",
+      "Esa ruta no existe o ya no está disponible. Vuelve al inicio o al panel.",
     goMembers: "Ir a miembros",
     goTrainers: "Ir a entrenadores",
     goStaff: "Ir a personal",
     goClasses: "Ir a clases",
     goCheckin: "Ir a entradas",
     goHome: "Ir al panel",
+    goLanding: "Ir al inicio",
     forbiddenTitle: "Sin acceso",
     forbiddenBody: "No tienes permiso para ver esta sección con tu rol actual.",
   },
@@ -2310,6 +2316,7 @@ const en: Dictionary = {
     updateAvailable: "An AMRAP update is ready. Update now for fixes and improvements — it only takes a moment.",
     reload: "Update now",
     reloading: "Updating…",
+    booting: "Opening AMRAP…",
   },
   a11y: {
     toggleTheme: "Toggle theme",
@@ -3220,6 +3227,7 @@ const en: Dictionary = {
     pricePerOrg: "per organization (flat rate)",
     pricePerGym: "per active gym",
     priceContact: "Custom",
+    priceExVatNote: "Prices exclude tax. Tax is calculated at checkout based on your location (Mexico: IVA).",
     perMonth: "/ month",
     perYear: "/ year",
     billingIntervalLabel: "Billing",
@@ -3230,7 +3238,7 @@ const en: Dictionary = {
     billingAnnualSaveBadge: "Save ~17%",
     manageBilling: "Manage billing",
     checkoutTitle: "Complete payment",
-    checkoutDescription: "Pay securely without leaving AMRAP.",
+    checkoutDescription: "Pay securely without leaving AMRAP. Totals include applicable taxes.",
     checkoutMountLabel: "Stripe payment form",
     checkoutFailed: "Could not start checkout. Try again.",
     upgradeSuccess: "Subscription updated.",
@@ -3322,13 +3330,14 @@ const en: Dictionary = {
     bodyCheckin:
       "There’s no history for that membership at this gym. Return to check-in and try again.",
     bodyGeneric:
-      "That route doesn’t exist or is no longer available. We’ll take you back to the dashboard.",
+      "That route doesn’t exist or is no longer available. Head back home or to the dashboard.",
     goMembers: "Go to members",
     goTrainers: "Go to trainers",
     goStaff: "Go to staff",
     goClasses: "Go to classes",
     goCheckin: "Go to check-in",
     goHome: "Go to dashboard",
+    goLanding: "Go to home",
     forbiddenTitle: "No access",
     forbiddenBody: "You don’t have permission to view this section with your current role.",
   },

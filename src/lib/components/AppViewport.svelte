@@ -15,6 +15,14 @@
 	onMount(() => {
 		if (!browser) return;
 
+		// Dismiss inline app.html splash once the shell is alive.
+		const boot = document.getElementById('amrap-boot');
+		let bootTimer: ReturnType<typeof setTimeout> | undefined;
+		if (boot) {
+			boot.setAttribute('data-done', '');
+			bootTimer = window.setTimeout(() => boot.remove(), 320);
+		}
+
 		const root = document.documentElement;
 		let keyboardWasOpen = false;
 
@@ -101,6 +109,7 @@
 		}
 
 		return () => {
+			clearTimeout(bootTimer);
 			clearTimeout(focusOutTimer);
 			vv?.removeEventListener('resize', syncHeight);
 			vv?.removeEventListener('scroll', onVisualScroll);

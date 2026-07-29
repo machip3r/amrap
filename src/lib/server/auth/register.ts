@@ -89,7 +89,8 @@ export async function registerAction(formData: FormData): Promise<RegisterState>
 		email,
 		password,
 		options: {
-			emailRedirectTo: `${origin}/auth/confirm?next=/${locale}/onboarding`
+			emailRedirectTo: `${origin}/auth/confirm?next=/${locale}/onboarding`,
+			data: { locale }
 		}
 	});
 

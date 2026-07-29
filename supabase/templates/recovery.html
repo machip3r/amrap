@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AMRAP</title>
+  </head>
+  <body style="margin:0;padding:0;background:#f8fafc;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f8fafc;padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;background:#ffffff;border-radius:16px;padding:28px 24px;border:1px solid #e2e8f0;">
+            <tr>
+              <td style="font-size:12px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:#ff6b6b;">
+                AMRAP
+              </td>
+            </tr>
+
+            {{ if eq .Data.locale "en" }}
+            <tr>
+              <td style="padding-top:18px;font-size:26px;font-weight:800;color:#0f172a;line-height:1.25;letter-spacing:-0.02em;">Reset your password</td>
+            </tr>
+            <tr>
+              <td style="padding-top:12px;font-size:15px;line-height:1.6;color:#64748b;">We received a request to reset the password for <strong style="color:#0f172a;">{{ .Email }}</strong>. Use the code below, or open the secure link.</td>
+            </tr>
+            <tr>
+              <td align="center" style="padding-top:28px;">
+                <div style="display:inline-block;background:#fff5f5;border:1px solid #ffd4d4;border-radius:12px;padding:18px 32px;">
+                  <div style="font-size:11px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:#ff6b6b;margin-bottom:10px;">Code</div>
+                  <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:34px;font-weight:700;letter-spacing:0.32em;color:#0f172a;">{{ .Token }}</div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-top:24px;">
+                <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#ff6b6b;color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;padding:14px 20px;border-radius:10px;">Choose a new password</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-top:18px;font-size:13px;line-height:1.55;color:#64748b;">If you didn’t request a reset, ignore this email — your password won’t change.</td>
+            </tr>
+            {{ else }}
+            <tr>
+              <td style="padding-top:18px;font-size:26px;font-weight:800;color:#0f172a;line-height:1.25;letter-spacing:-0.02em;">Restablece tu contraseña</td>
+            </tr>
+            <tr>
+              <td style="padding-top:12px;font-size:15px;line-height:1.6;color:#64748b;">Recibimos una solicitud para restablecer la contraseña de <strong style="color:#0f172a;">{{ .Email }}</strong>. Usa el código o abre el enlace seguro.</td>
+            </tr>
+            <tr>
+              <td align="center" style="padding-top:28px;">
+                <div style="display:inline-block;background:#fff5f5;border:1px solid #ffd4d4;border-radius:12px;padding:18px 32px;">
+                  <div style="font-size:11px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:#ff6b6b;margin-bottom:10px;">Código</div>
+                  <div style="font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:34px;font-weight:700;letter-spacing:0.32em;color:#0f172a;">{{ .Token }}</div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-top:24px;">
+                <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#ff6b6b;color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;padding:14px 20px;border-radius:10px;">Elegir nueva contraseña</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-top:18px;font-size:13px;line-height:1.55;color:#64748b;">Si no pediste restablecerla, ignora este correo — tu contraseña no cambiará.</td>
+            </tr>
+            {{ end }}
+
+            <tr>
+              <td style="padding-top:28px;border-top:1px solid #e2e8f0;font-size:12px;line-height:1.5;color:#94a3b8;">
+                AMRAP · amrap.space
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

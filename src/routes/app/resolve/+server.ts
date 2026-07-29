@@ -1,12 +1,11 @@
-import { redirect, type RequestHandler } from '@sveltejs/kit';
+import { json, type RequestHandler } from '@sveltejs/kit';
 import { resolvePostAuthPath } from '$lib/auth/post-auth-redirect';
 import { defaultLocale, isLocale, type Locale } from '$lib/i18n/config';
 import { negotiateLocale } from '$lib/i18n/negotiate-locale';
 
 /**
- * PWA entry (`manifest.start_url`). Sends signed-in users to their app home
- * (dashboard / member / onboarding) and everyone else to login — never the
- * marketing landing.
+ * PWA cold-start resolve (`manifest.start_url` → `/app` splash fetches this).
+ * Returns the post-auth destination as JSON so `/app` can paint a splash first.
  */
 export const GET: RequestHandler = async ({ locals, request, cookies }) => {
 	const cookieLocale = cookies.get('amrap_locale');
@@ -18,8 +17,8 @@ export const GET: RequestHandler = async ({ locals, request, cookies }) => {
 	locals.locale = locale;
 
 	if (!locals.user) {
-		throw redirect(302, `/${locale}/login`);
+		return json({ path: `/${locale}/login` });
 	}
 
-	throw redirect(302, await resolvePostAuthPath(locale));
+	return json({ path: await resolvePostAuthPath(locale) });
 };

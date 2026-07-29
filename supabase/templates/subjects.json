@@ -1,0 +1,42 @@
+{
+  "confirmation": {
+    "es": "Tu código AMRAP: confirma tu correo",
+    "en": "Your AMRAP code: confirm your email",
+    "dashboard_default": "Tu código AMRAP: confirma tu correo"
+  },
+  "magic_link": {
+    "es": "Tu código de acceso AMRAP",
+    "en": "Your AMRAP sign-in code",
+    "dashboard_default": "Tu código de acceso AMRAP"
+  },
+  "recovery": {
+    "es": "Restablece tu contraseña de AMRAP",
+    "en": "Reset your AMRAP password",
+    "dashboard_default": "Restablece tu contraseña de AMRAP"
+  },
+  "invite": {
+    "es": "Te invitaron a AMRAP",
+    "en": "You’re invited to AMRAP",
+    "dashboard_default": "Te invitaron a AMRAP"
+  },
+  "email_change": {
+    "es": "Confirma tu nuevo correo en AMRAP",
+    "en": "Confirm your new AMRAP email",
+    "dashboard_default": "Confirma tu nuevo correo en AMRAP"
+  },
+  "reauthentication": {
+    "es": "{{ .Token }} es tu código de verificación AMRAP",
+    "en": "{{ .Token }} is your AMRAP verification code",
+    "dashboard_default": "{{ .Token }} es tu código de verificación AMRAP"
+  },
+  "password_changed_notification": {
+    "es": "Tu contraseña de AMRAP cambió",
+    "en": "Your AMRAP password was changed",
+    "dashboard_default": "Tu contraseña de AMRAP cambió"
+  },
+  "email_changed_notification": {
+    "es": "Tu correo de AMRAP cambió",
+    "en": "Your AMRAP email was changed",
+    "dashboard_default": "Tu correo de AMRAP cambió"
+  }
+}

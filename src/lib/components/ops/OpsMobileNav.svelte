@@ -272,26 +272,28 @@
 		description={d.shell.myQrHint}
 		closeLabel={d.a11y.closeMyQr}
 		fullScreen
-		bodyClass="flex flex-col items-center justify-center gap-6 px-6 py-8 pb-[max(2rem,var(--safe-bottom))] text-center"
+		bodyClass="flex h-full min-h-0 flex-col p-0"
 		autoFocus={false}
 	>
-		{#if fullName}
-			<p
-				class="text-xl font-semibold text-[var(--color-text)] sm:text-2xl"
-			>
-				{fullName}
-			</p>
-		{/if}
-		<QrCodeImage
-			value={qrCode}
-			size={512}
-			alt={d.nav.myQr}
-			class="h-auto w-[min(88vw,28rem)] max-w-full"
-		/>
-		<p
-			class="hidden max-w-sm break-all font-mono text-base text-[var(--color-muted)] sm:block sm:text-lg"
+		<div
+			class="flex min-h-full w-full flex-col items-center justify-center gap-6 px-6 py-8 pb-[max(2rem,var(--safe-bottom))] text-center"
 		>
-			{qrCode}
-		</p>
+			{#if fullName}
+				<p class="text-xl font-semibold text-[var(--color-text)] sm:text-2xl">
+					{fullName}
+				</p>
+			{/if}
+			<QrCodeImage
+				value={qrCode}
+				size={512}
+				alt={d.nav.myQr}
+				class="h-auto w-[min(88vw,28rem)] max-w-full"
+			/>
+			<p
+				class="hidden max-w-sm break-all font-mono text-base text-[var(--color-muted)] sm:block sm:text-lg"
+			>
+				{qrCode}
+			</p>
+		</div>
 	</Dialog>
 {/if}

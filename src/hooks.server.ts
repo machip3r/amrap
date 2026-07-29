@@ -65,7 +65,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.user = user;
 
 	// Auth callbacks + public HTTP APIs + PWA cold-start entry — no locale prefix.
-	if (pathname.startsWith('/auth/') || pathname.startsWith('/api/') || pathname === '/app') {
+	if (
+		pathname.startsWith('/auth/') ||
+		pathname.startsWith('/api/') ||
+		pathname === '/app' ||
+		pathname.startsWith('/app/')
+	) {
 		return resolve(event);
 	}
 
@@ -79,7 +84,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 			throw redirect(302, `/${locale}`);
 		}
 		if (!knownLocaleRoots.has(first)) {
-			throw error(404, 'Not found');
+			throw error(404);
 		}
 		const suffix = pathname.startsWith('/') ? pathname : `/${pathname}`;
 		throw redirect(302, `/${locale}${suffix}`);
@@ -103,7 +108,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	if (!user && !isPublic && !isMarketingHome) {
 		// Unknown routes → real 404. Known private routes → login.
 		if (!knownLocaleRoots.has(firstSegment)) {
-			throw error(404, 'Not found');
+			throw error(404);
 		}
 		throw redirect(302, `/${locale}/login`);
 	}

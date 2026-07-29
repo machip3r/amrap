@@ -106,12 +106,14 @@ body {
 		color 0.3s ease;
 }
 
-/* App shells: sync to visible viewport (`--app-height` from AppViewport) so iOS
-   keyboard / PWA chrome does not leave a permanent bottom gap under fixed nav. */
+/* App shells: sync to `--app-height` (AppViewport). Never cap below the CSS
+   viewport floor — a short JS height left a permanent PWA strip under nav. */
 .amrap-app-shell {
+	box-sizing: border-box;
 	height: var(--app-height, 100dvh);
-	max-height: var(--app-height, 100dvh);
-	min-height: 0;
+	min-height: 100dvh;
+	min-height: -webkit-fill-available;
+	max-height: none;
 }
 
 h1,

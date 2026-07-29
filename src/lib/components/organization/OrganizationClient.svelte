@@ -391,6 +391,7 @@
 			<p class="min-w-0 text-xs text-[var(--color-muted)]">
 				{labels.currentPlan}:
 				<span class="font-semibold text-[var(--color-text)]">{planLabel(planTier)}</span>
+				<span class="mt-1 block font-normal">{labels.priceExVatNote}</span>
 			</p>
 			{#if hasStripeCustomer}
 				<form

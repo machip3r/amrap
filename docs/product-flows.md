@@ -23,14 +23,14 @@ Locales: `es` (default) · `en`.
 | Surface | Who | Typical route | Status | Notes |
 | ------- | --- | ------------- | ------ | ----- |
 | Marketing | Public | `/[locale]` | Shipped | Landing, pricing, contact · **SEO:** intent-led titles, descriptions, www canonicals, OG, hreflang, JSON-LD, `/sitemap.xml`, `robots.txt`; private app routes `noindex`. **PWA:** installed apps open `/app` (not marketing); standalone visits to landing bounce to `/app` |
-| PWA entry | Installed app | `/app` | Shipped | Manifest `start_url`; signed-in → dashboard/me/onboarding via `resolvePostAuthPath`; signed-out → login |
-| Auth | Public / pending | `/login`, `/register` | Shipped | OTP on same routes; no public “confirm email” nav link |
+| PWA entry | Installed app | `/app` | Shipped | Manifest `start_url`; cold start paints branded splash then `/app/resolve` → dashboard/me/onboarding (signed-in) or login (signed-out) |
+| Auth | Public / pending | `/login`, `/register` | Shipped | OTP on same routes; branded Supabase Auth emails in `supabase/templates/` (paste into Dashboard); no public “confirm email” nav link |
 | Onboarding | Owner / provisional | `/onboarding` | Shipped | Steps 1–6 (profile → gym → **schedule** → plans → billing → done); optional AMRAP plan + compare; finish starts owner tour |
 | Profile welcome | Invited staff / trainer / member | `/welcome` | Shipped | After accept (+ password only if new Auth user); blocking until `persons.profile_completed_at` |
 | Invite decision | Invited staff / trainer / member | `/invite` | Shipped | Accept or decline; decline → `cancelled` + sign out |
 | Invite password | After accept (new Auth users only) | `/invite/password` | Shipped | Required password for new accounts; skipped when the email already had an AMRAP login |
 | No gym access | Signed-in, no gym/membership | `/no-access` | Shipped | Message + logout; not owner onboarding |
-| Ops app | Owner, staff, trainer | `/dashboard`, `/timers`, members, plans, … | Shipped | Scoped to active gym (`amrap_gym_id` cookie); dashboard quick actions open unified register dialog; **friendly 404** for missing member/trainer/staff/class/check-in history (`EntityNotFound`) |
+| Ops app | Owner, staff, trainer | `/dashboard`, `/timers`, members, plans, … | Shipped | Scoped to active gym (`amrap_gym_id` cookie); dashboard quick actions open unified register dialog; **friendly 404** for missing member/trainer/staff/class/check-in history (`EntityNotFound`); **global 404** for unknown routes (`/+error` + locale `+error`) |
 | Gym info | Owner / provisional | `/gym-info` | Shipped | Edit gym name, address, branch name, and weekly schedule (open days + open/close time) |
 | Check-in | Staff / kiosk | `/checkin` | Shipped | QR success overlay · **unknown QR** soft overlay + panel (not “access denied”) · history calendar |
 | Member app | Member | `/me`, `/me/qr`, `/me/classes`, `/me/timers`, `/me/inbox`, `/me/profile` | Shipped | Ops-parity shell; active membership; gym white-label when plan allows |
@@ -410,7 +410,7 @@ Hiding a nav item is chrome-only for that user; direct URLs still respect page p
 
 **Who:** `manage_billing` (owner / provisional).
 
-**UI (shipped):** Gym list first · AMRAP subscription below (separator) · plan rows (Freemium / Starter / Growth / Pro) · whole upgradeable row opens confirm (monthly/annual) → **Embedded Checkout** in a fullscreen in-app dialog (new paid) or Subscriptions API upgrade (existing) · **Manage billing** opens Customer Portal in a **new tab** · Pro / Contact AMRAP goes to landing `#contact`.
+**UI (shipped):** Gym list first · AMRAP subscription below (separator) · plan rows (Freemium / Starter / Growth / Pro) · whole upgradeable row opens confirm (monthly/annual) → **Embedded Checkout** in a fullscreen in-app dialog (new paid) or Subscriptions API upgrade (existing) · **Manage billing** opens Customer Portal in a **new tab** · Pro / Contact AMRAP goes to landing `#contact`. List prices are **before tax**; Checkout uses **Stripe Tax** (`automatic_tax`) so Mexico **IVA** (and other registered jurisdictions) is added at payment. Collects tax IDs (e.g. RFC) when relevant.
 
 **Hidden for now:** Schedule gym / org deletion (danger zone + delete gym) — flip `showDeletionUi` in `OrganizationClient` when ready.
 

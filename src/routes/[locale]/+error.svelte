@@ -21,8 +21,8 @@
 					description: d.entityNotFound.forbiddenBody,
 					backHref: `/${locale}/dashboard`,
 					backLabel: d.entityNotFound.goHome,
-					homeHref: undefined as string | undefined,
-					homeLabel: undefined as string | undefined
+					homeHref: `/${locale}` as string | undefined,
+					homeLabel: d.entityNotFound.goLanding as string | undefined
 				}
 			: resolveEntityNotFound(page.url.pathname, locale, d, errorMessage)
 	);
@@ -32,6 +32,7 @@
 
 <svelte:head>
 	<title>{documentTitle}</title>
+	<meta name="robots" content="noindex,nofollow" />
 </svelte:head>
 
 <div class="animate-fade-in-up w-full">

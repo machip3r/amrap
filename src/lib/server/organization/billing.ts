@@ -12,6 +12,7 @@ import {
 import { PLAN_TIER_RANK } from '$lib/plans/limits';
 import { getRequestOrigin } from '$lib/http/origin';
 import { getStripe } from '$lib/stripe/server';
+import { checkoutTaxParams, subscriptionTaxParams } from '$lib/stripe/tax';
 import { createClient } from '$lib/supabase/server';
 import { formString, localeSchema } from '$lib/validation/schemas';
 import type { OrgPlanTier } from '$lib/types';
@@ -224,6 +225,7 @@ export async function requestSubscriptionCheckout(formData: FormData): Promise<O
 					items: [{ id: itemId, price: priceId }],
 					proration_behavior: 'always_invoice',
 					...(isUpgrade ? { payment_behavior: 'error_if_incomplete' as const } : {}),
+					...subscriptionTaxParams(),
 					metadata: {
 						organization_id: org.id,
 						amrap_tier: tier,
@@ -250,7 +252,7 @@ export async function requestSubscriptionCheckout(formData: FormData): Promise<O
 		const returnUrl = `${appOrigin()}/${locale}/${returnPath}?billing=success&session_id={CHECKOUT_SESSION_ID}`;
 
 		const session = await stripe.checkout.sessions.create({
-			// Stripe renamed `embedded` → `embedded_page` (API still mounts via initEmbeddedCheckout).
+			// Stripe renamed `embedded` → `embedded_page` (API still mounts via createEmbeddedCheckoutPage).
 			ui_mode: 'embedded_page',
 			mode: 'subscription',
 			customer: customerId,
@@ -258,7 +260,9 @@ export async function requestSubscriptionCheckout(formData: FormData): Promise<O
 			line_items: [{ price: priceId, quantity: 1 }],
 			return_url: returnUrl,
 			redirect_on_completion: 'always',
+			...checkoutTaxParams(),
 			subscription_data: {
+				...subscriptionTaxParams(),
 				metadata: {
 					organization_id: org.id,
 					amrap_tier: tier,
@@ -305,6 +309,26 @@ export async function requestBillingPortal(formData: FormData): Promise<OrgActio
 
 	try {
 		const stripe = getStripe();
+		const supabase = createClient();
+
+		try {
+			const existing = await stripe.customers.retrieve(org.stripe_customer_id);
+			if ('deleted' in existing && existing.deleted) {
+				throw Object.assign(new Error('deleted customer'), { code: 'resource_missing' });
+			}
+		} catch (err) {
+			if (!isMissingStripeCustomerError(err)) throw err;
+			await supabase
+				.from('organizations')
+				.update({
+					stripe_customer_id: null,
+					stripe_subscription_id: null,
+					stripe_subscription_status: null
+				})
+				.eq('id', org.id);
+			return { error: d.organization.portalUnavailable };
+		}
+
 		const portal = await stripe.billingPortal.sessions.create({
 			customer: org.stripe_customer_id,
 			return_url: `${appOrigin()}/${locale}/organization`
@@ -315,6 +339,18 @@ export async function requestBillingPortal(formData: FormData): Promise<OrgActio
 		return { success: true, portalUrl: portal.url };
 	} catch (err) {
 		console.error('requestBillingPortal', err);
+		if (isMissingStripeCustomerError(err)) {
+			const supabase = createClient();
+			await supabase
+				.from('organizations')
+				.update({
+					stripe_customer_id: null,
+					stripe_subscription_id: null,
+					stripe_subscription_status: null
+				})
+				.eq('id', org.id);
+			return { error: d.organization.portalUnavailable };
+		}
 		return { error: d.organization.checkoutFailed };
 	}
 }

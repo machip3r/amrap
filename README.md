@@ -286,6 +286,10 @@ See **[`docs/product-flows.md`](docs/product-flows.md)** for end-to-end flows an
 
 See **[`docs/database.md`](docs/database.md)** for the Postgres schema: hierarchy, tables, RPCs, RLS, and what is intentionally out of scope for later migrations.
 
+### Auth email templates (Supabase)
+
+Branded Auth emails (confirm signup OTP, magic link, recovery, etc.) live in **[`supabase/templates/`](supabase/templates/)** — paste into the Supabase Dashboard (hosted projects are not auto-synced from git). Gym invites via Resend stay in `src/lib/email/invite-templates.ts`. See [`supabase/templates/README.md`](supabase/templates/README.md).
+
 ---
 
 ## Getting started (development)

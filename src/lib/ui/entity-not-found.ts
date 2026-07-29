@@ -15,9 +15,17 @@ export type EntityNotFoundCopy = {
 	description: string;
 	backHref: string;
 	backLabel: string;
-	homeHref: string;
-	homeLabel: string;
+	homeHref?: string;
+	homeLabel?: string;
 };
+
+/** Ignore framework default messages so dictionary titles win. */
+function displayTitle(errorMessage: string | null | undefined, fallback: string): string {
+	const trimmed = errorMessage?.trim();
+	if (!trimmed) return fallback;
+	if (/^not\s*found$/i.test(trimmed)) return fallback;
+	return trimmed;
+}
 
 /** Map a locale path to the friendliest not-found copy + back link. */
 export function resolveEntityNotFound(
@@ -30,72 +38,72 @@ export function resolveEntityNotFound(
 	const path = pathname.replace(/\/$/, '') || prefix;
 	const n = d.entityNotFound;
 
-	const homeHref = `${prefix}/dashboard`;
-	const homeLabel = n.goHome;
+	const landingHref = prefix;
+	const dashboardHref = `${prefix}/dashboard`;
 
 	if (path.includes('/members')) {
 		return {
 			kind: 'member',
-			title: errorMessage?.trim() || n.titleMember,
+			title: displayTitle(errorMessage, n.titleMember),
 			description: n.bodyMember,
 			backHref: `${prefix}/members`,
 			backLabel: n.goMembers,
-			homeHref,
-			homeLabel
+			homeHref: dashboardHref,
+			homeLabel: n.goHome
 		};
 	}
 	if (path.includes('/trainers')) {
 		return {
 			kind: 'trainer',
-			title: errorMessage?.trim() || n.titleTrainer,
+			title: displayTitle(errorMessage, n.titleTrainer),
 			description: n.bodyTrainer,
 			backHref: `${prefix}/trainers`,
 			backLabel: n.goTrainers,
-			homeHref,
-			homeLabel
+			homeHref: dashboardHref,
+			homeLabel: n.goHome
 		};
 	}
 	if (path.includes('/staff')) {
 		return {
 			kind: 'staff',
-			title: errorMessage?.trim() || n.titleStaff,
+			title: displayTitle(errorMessage, n.titleStaff),
 			description: n.bodyStaff,
 			backHref: `${prefix}/staff`,
 			backLabel: n.goStaff,
-			homeHref,
-			homeLabel
+			homeHref: dashboardHref,
+			homeLabel: n.goHome
 		};
 	}
 	if (path.includes('/classes')) {
 		return {
 			kind: 'class',
-			title: errorMessage?.trim() || n.titleClass,
+			title: displayTitle(errorMessage, n.titleClass),
 			description: n.bodyClass,
 			backHref: `${prefix}/classes`,
 			backLabel: n.goClasses,
-			homeHref,
-			homeLabel
+			homeHref: dashboardHref,
+			homeLabel: n.goHome
 		};
 	}
 	if (path.includes('/checkin')) {
 		return {
 			kind: 'checkin',
-			title: errorMessage?.trim() || n.titleCheckin,
+			title: displayTitle(errorMessage, n.titleCheckin),
 			description: n.bodyCheckin,
 			backHref: `${prefix}/checkin`,
 			backLabel: n.goCheckin,
-			homeHref,
-			homeLabel
+			homeHref: dashboardHref,
+			homeLabel: n.goHome
 		};
 	}
 
 	return {
 		kind: 'generic',
-		title: errorMessage?.trim() || n.titleGeneric,
+		title: displayTitle(errorMessage, n.titleGeneric),
 		description: n.bodyGeneric,
-		backHref: homeHref,
-		backLabel: homeLabel,
-		homeHref,
-		homeLabel
+		backHref: landingHref,
+		backLabel: n.goLanding,
+		homeHref: dashboardHref,
+		homeLabel: n.goHome
 	};
 }

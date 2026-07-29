@@ -6,7 +6,7 @@ export type SelfServeTier = 'STARTER' | 'GROWTH';
 /** Stored on `organizations.billing_interval`. */
 export type BillingInterval = 'MONTH' | 'YEAR';
 
-/** Stripe Price lookup_keys — MXN only for v1. */
+/** Stripe Price lookup_keys — MXN only for v1. Amounts are exclusive of tax (IVA). */
 export const PRICE_LOOKUP_KEYS = {
 	STARTER: {
 		MONTH: 'starter_mxn_monthly',

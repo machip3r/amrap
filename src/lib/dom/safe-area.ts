@@ -26,11 +26,18 @@ export function getSafeAreaInsets(): {
 	};
 }
 
-/** Layout height for the app shell — prefer `innerHeight` (stable). */
+/**
+ * Height that should fill the visible app chrome on iOS PWA / mobile Safari.
+ * Takes the max of layout metrics so a short `innerHeight` cannot leave a
+ * strip under fixed overlays and the app shell.
+ */
 export function layoutViewportHeight(): number {
+	const vv = window.visualViewport;
 	const layoutH = window.innerHeight;
 	const clientH = document.documentElement.clientHeight || 0;
-	// Prefer the larger of the two common layout metrics; avoid visualViewport
-	// here so keyboard pan cannot inflate or shrink the shell incorrectly.
-	return Math.round(Math.max(layoutH, clientH));
+	let h = Math.max(layoutH, clientH);
+	if (vv) {
+		h = Math.max(h, Math.ceil(vv.height + vv.offsetTop));
+	}
+	return Math.round(h);
 }

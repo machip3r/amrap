@@ -428,7 +428,7 @@
 	{#if qrProcessing}
 		<div
 			use:portal
-			class="fixed inset-0 z-[70] flex h-dvh w-full flex-col items-center justify-center gap-4 bg-black/70 px-6 text-center backdrop-blur-sm"
+			class="fixed inset-0 z-[70] flex w-full flex-col items-center justify-center gap-4 bg-black/70 px-6 text-center backdrop-blur-sm"
 			role="status"
 			aria-live="polite"
 			aria-busy="true"
@@ -448,7 +448,7 @@
 			use:portal
 			aria-label={labels.qrSuccessHint}
 			onclick={dismissQrCelebration}
-			class="amrap-checkin-success-overlay fixed inset-0 z-[80] flex h-dvh w-full cursor-pointer flex-col items-center justify-center gap-5 bg-black/80 px-6 text-center backdrop-blur-sm"
+			class="amrap-checkin-success-overlay fixed inset-0 z-[80] flex w-full cursor-pointer flex-col items-center justify-center gap-5 bg-black/80 px-6 text-center backdrop-blur-sm"
 		>
 			<span class="relative inline-flex h-40 w-40 items-center justify-center sm:h-48 sm:w-48">
 				<span
@@ -480,7 +480,7 @@
 			use:portal
 			aria-label={labels.qrUnknownHint}
 			onclick={dismissQrUnknown}
-			class="amrap-checkin-success-overlay fixed inset-0 z-[80] flex h-dvh w-full cursor-pointer flex-col items-center justify-center gap-5 bg-black/80 px-6 text-center backdrop-blur-sm"
+			class="amrap-checkin-success-overlay fixed inset-0 z-[80] flex w-full cursor-pointer flex-col items-center justify-center gap-5 bg-black/80 px-6 text-center backdrop-blur-sm"
 		>
 			<span
 				class="amrap-checkin-success-mark relative inline-flex h-28 w-28 items-center justify-center rounded-[2rem] bg-[var(--color-surface)] text-[var(--color-primary)] shadow-lg ring-4 ring-[var(--color-primary)]/30 sm:h-32 sm:w-32"

@@ -17,7 +17,8 @@ Unit tests (Vitest) are out of scope here — use Playwright for flows.
      - `STRIPE_WEBHOOK_SECRET=whsec_…` (from `stripe listen` — required for cancel→Freemium webhook test; Checkout tests can fall back to Admin sync)
 2. Prefer a **dedicated test Supabase project** so runs do not pollute production.
 3. Chromium for Playwright: `pnpm exec playwright install chromium`
-4. Stripe **test** catalog lookup keys must exist: `starter_mxn_monthly`, `starter_mxn_annual`, `growth_mxn_monthly`, `growth_mxn_annual`.
+4. Stripe **test** catalog lookup keys must exist: `starter_mxn_monthly`, `starter_mxn_annual`, `growth_mxn_monthly`, `growth_mxn_annual` (amounts exclusive of tax; sync tax_code / `tax_behavior` with `node --env-file=.env scripts/stripe-sync-catalog-tax.mjs`).
+5. For IVA to appear at Checkout: Stripe Dashboard → **Tax → Registrations** → active **Mexico** registration (Tax settings origin address required).
 
 ### Stripe billing E2E (hybrid, local-only)
 

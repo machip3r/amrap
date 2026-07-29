@@ -235,7 +235,7 @@ const es: LandingDictionary = {
     select: "Empezar",
     contactCta: "Hablar con nosotros",
     comparePlans: "Comparar planes",
-    taxNote: "* Precios sin impuestos.",
+    taxNote: "* Precios sin IVA.",
     plans: [
       {
         name: "Freemium",
@@ -265,7 +265,7 @@ const es: LandingDictionary = {
         badge: "Más elegido",
         cta: "register",
         features: [
-          "Hasta ~500 miembros activos (aviso suave; no bloquea acceso)",
+          "Hasta ~500 miembros activos",
           "5 cuentas de staff por sede",
           "Planes de membresía ilimitados",
           "Cobros en línea para miembros",
@@ -284,7 +284,7 @@ const es: LandingDictionary = {
         cta: "register",
         features: [
           "Todo lo de Starter",
-          "Hasta ~1000 miembros activos por sede (aviso suave)",
+          "Hasta ~1000 miembros activos por sede",
           "Hasta 3 sedes · ~10 staff por sede (hasta 30 en la org)",
           "Vista multi-gym / pasaporte entre sedes",
           "Marca propia · cobros en línea",
@@ -538,7 +538,7 @@ const en: LandingDictionary = {
         badge: "Most chosen",
         cta: "register",
         features: [
-          "Up to ~500 active members (soft notice; access never blocked)",
+          "Up to ~500 active members",
           "5 staff accounts per location",
           "Unlimited membership plans",
           "Online member billing",
@@ -557,7 +557,7 @@ const en: LandingDictionary = {
         cta: "register",
         features: [
           "Everything in Starter",
-          "Up to ~1000 active members per location (soft notice)",
+          "Up to ~1000 active members per location",
           "Up to 3 locations · ~10 staff per gym (up to 30 in the org)",
           "Multi-gym rollup / passport across sites",
           "Own branding · online member billing",

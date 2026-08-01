@@ -19,10 +19,18 @@ function localeFrom(formData: FormData) {
 }
 
 export type GatewayActionState = {
+	/** Discriminator so settings page does not show branding errors here. */
+	form: 'gateway';
 	error?: string;
 	success?: string;
 	syncedCount?: number;
 } | null;
+
+function gatewayState(
+	state: Omit<NonNullable<GatewayActionState>, 'form'>
+): NonNullable<GatewayActionState> {
+	return { form: 'gateway', ...state };
+}
 
 export async function syncOnlinePlansAction(
 	formData: FormData
@@ -31,20 +39,20 @@ export async function syncOnlinePlansAction(
 	const d = getDictionary(locale);
 	const workspace = await getWorkspace();
 	if (!workspace || !canInWorkspace(workspace, 'manage_billing')) {
-		return { error: d.common.forbidden };
+		return gatewayState({ error: d.common.forbidden });
 	}
 	if (!canUseOnlineBilling(workspace.planTier)) {
-		return { error: d.settings.gatewayUpgradeRequired };
+		return gatewayState({ error: d.settings.gatewayUpgradeRequired });
 	}
 
 	const result = await syncMercadoPagoPlans(workspace.gymId);
 	if (!result.ok) {
-		return { error: result.message || d.settings.gatewaySyncError };
+		return gatewayState({ error: result.message || d.settings.gatewaySyncError });
 	}
-	return {
+	return gatewayState({
 		success: d.settings.gatewaySyncSuccess.replace('{count}', String(result.count)),
 		syncedCount: result.count
-	};
+	});
 }
 
 export async function disconnectOnlineGatewayAction(
@@ -54,12 +62,14 @@ export async function disconnectOnlineGatewayAction(
 	const d = getDictionary(locale);
 	const workspace = await getWorkspace();
 	if (!workspace || !canInWorkspace(workspace, 'manage_billing')) {
-		return { error: d.common.forbidden };
+		return gatewayState({ error: d.common.forbidden });
 	}
 
 	const result = await disconnectMercadoPagoAccount(workspace.gymId);
-	if (!result.ok) return { error: result.message || d.settings.gatewayError };
-	return { success: d.settings.gatewayDisconnected };
+	if (!result.ok) {
+		return gatewayState({ error: result.message || d.settings.gatewayError });
+	}
+	return gatewayState({ success: d.settings.gatewayDisconnected });
 }
 
 /**
@@ -70,16 +80,16 @@ export async function startOnlineCheckoutAction(formData: FormData): Promise<Gat
 	const d = getDictionary(locale);
 	const workspace = await getWorkspace();
 	if (!workspace || !canInWorkspace(workspace, 'record_payment')) {
-		return { error: d.common.forbidden };
+		return gatewayState({ error: d.common.forbidden });
 	}
 	if (!canUseOnlineBilling(workspace.planTier)) {
-		return { error: d.settings.gatewayUpgradeRequired };
+		return gatewayState({ error: d.settings.gatewayUpgradeRequired });
 	}
 
 	const membershipId = uuidSchema.safeParse(formString(formData, 'member_id'));
 	const planId = uuidSchema.safeParse(formString(formData, 'plan_id'));
 	if (!membershipId.success || !planId.success) {
-		return { error: d.common.invalidInput };
+		return gatewayState({ error: d.common.invalidInput });
 	}
 
 	const supabase = createClient();
@@ -109,9 +119,13 @@ export async function startOnlineCheckoutAction(formData: FormData): Promise<Gat
 	});
 
 	if (!checkout.ok) {
-		if (checkout.code === 'not_connected') return { error: d.settings.gatewayNotConnected };
-		if (checkout.code === 'plan_disabled') return { error: d.settings.gatewayPlanDisabled };
-		return { error: checkout.message || d.settings.gatewayCheckoutError };
+		if (checkout.code === 'not_connected') {
+			return gatewayState({ error: d.settings.gatewayNotConnected });
+		}
+		if (checkout.code === 'plan_disabled') {
+			return gatewayState({ error: d.settings.gatewayPlanDisabled });
+		}
+		return gatewayState({ error: checkout.message || d.settings.gatewayCheckoutError });
 	}
 
 	throw redirect(303, checkout.initPoint);

@@ -18,6 +18,7 @@ English reference for the Postgres schema (Supabase). Source of truth: migration
 | `20260729045221_plan_member_counts_active_only.sql` | `plan_member_counts` counts only active memberships (`expires_at > now()`) |
 | `20260729053000_gym_payment_accounts_token_privileges.sql` | Token columns service-role only; managers `SELECT` status columns; no authenticated DML |
 | `20260729054000_organizations_stripe_cancel_at.sql` | Org `stripe_cancel_at` / `stripe_cancel_at_period_end` for Portal scheduled cancel |
+| `20260731200000_gym_logos_owner_select.sql` | Owner/provisional `SELECT` on own `gym-logos` objects (required for upsert/remove) |
 
 **Rule:** never edit an applied migration. Append a new timestamped migration instead.
 
@@ -342,7 +343,7 @@ RLS / storage helpers live in schema **`private`** (not exposed via the Data API
 | `private.person_owned_by_me` / `staff_can_view_person` / `staff_can_manage_person` | boolean | Person access helpers (`staff_can_view_person` includes members at caller’s gyms **and** teammates linked via `gym_roles`) |
 | `private.can_manage_gym_branding_storage(object_name)` | boolean | Storage write checks for `gym-logos` |
 
-Bucket `gym-logos` is **public** for object URL reads; there is **no** broad `SELECT` policy on `storage.objects` (avoids listing all files).
+Bucket `gym-logos` is **public** for object URL reads. There is **no** broad listing policy. Authenticated owners/provisional may `SELECT` only objects they can manage (`gym_logos_select_manage`) so Storage **upsert** / **remove** work.
 
 ### Signup & onboarding
 

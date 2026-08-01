@@ -18,12 +18,26 @@ const LOGO_MAX_BYTES = 2 * 1024 * 1024;
 const LOGO_MIME = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']);
 
 export type SettingsActionState = {
+	/** Discriminator so gateway UI does not consume branding/nav results. */
+	form: 'branding' | 'nav';
 	error?: string;
 	success?: string;
 	fieldErrors?: Record<string, string>;
 	logoMode?: 'light' | 'dark';
 	logoUrl?: string | null;
 } | null;
+
+function brandingState(
+	state: Omit<NonNullable<SettingsActionState>, 'form'>
+): NonNullable<SettingsActionState> {
+	return { form: 'branding', ...state };
+}
+
+function navState(
+	state: Omit<NonNullable<SettingsActionState>, 'form'>
+): NonNullable<SettingsActionState> {
+	return { form: 'nav', ...state };
+}
 
 function localeFromForm(formData: FormData) {
 	const localeRaw = formString(formData, 'locale') || 'es';
@@ -54,15 +68,15 @@ export async function applyPaletteTemplateAction(
 
 	const workspace = await getWorkspace();
 	if (!workspace || !canInWorkspace(workspace, 'manage_billing')) {
-		return { error: d.common.forbidden };
+		return brandingState({ error: d.common.forbidden });
 	}
 	if (!canUseWhitelabel(workspace.planTier)) {
-		return { error: d.settings.whitelabelLocked };
+		return brandingState({ error: d.settings.whitelabelLocked });
 	}
 
 	const template = getPaletteTemplate(formString(formData, 'paletteId'));
 	if (!template) {
-		return { error: d.settings.error };
+		return brandingState({ error: d.settings.error });
 	}
 
 	const supabase = createClient();
@@ -74,10 +88,10 @@ export async function applyPaletteTemplateAction(
 
 	if (error) {
 		console.error('applyPaletteTemplateAction', error.message);
-		return { error: d.settings.error };
+		return brandingState({ error: d.settings.error });
 	}
 
-	return { success: d.settings.saved };
+	return brandingState({ success: d.settings.saved });
 }
 
 export async function uploadGymLogoAction(formData: FormData): Promise<SettingsActionState> {
@@ -86,24 +100,24 @@ export async function uploadGymLogoAction(formData: FormData): Promise<SettingsA
 
 	const workspace = await getWorkspace();
 	if (!workspace || !canInWorkspace(workspace, 'manage_billing')) {
-		return { error: d.common.forbidden };
+		return brandingState({ error: d.common.forbidden });
 	}
 	if (!canUseWhitelabel(workspace.planTier)) {
-		return { error: d.settings.whitelabelLocked };
+		return brandingState({ error: d.settings.whitelabelLocked });
 	}
 
 	const modeParsed = logoModeSchema.safeParse(formString(formData, 'mode'));
 	if (!modeParsed.success) {
-		return { error: d.settings.error };
+		return brandingState({ error: d.settings.error });
 	}
 	const mode = modeParsed.data;
 
 	const file = formData.get('logo');
 	if (!(file instanceof File) || file.size === 0) {
-		return { fieldErrors: { logo: d.validation.required } };
+		return brandingState({ fieldErrors: { logo: d.validation.required } });
 	}
 	if (file.size > LOGO_MAX_BYTES || !LOGO_MIME.has(file.type)) {
-		return { fieldErrors: { logo: d.settings.logoHint } };
+		return brandingState({ fieldErrors: { logo: d.settings.logoHint } });
 	}
 
 	const supabase = createClient();
@@ -119,7 +133,7 @@ export async function uploadGymLogoAction(formData: FormData): Promise<SettingsA
 
 	if (uploadError) {
 		console.error('uploadGymLogoAction upload', uploadError.message);
-		return { error: d.settings.logoError };
+		return brandingState({ error: d.settings.logoError });
 	}
 
 	const { error } = await supabase.rpc('update_gym_branding', {
@@ -129,7 +143,7 @@ export async function uploadGymLogoAction(formData: FormData): Promise<SettingsA
 
 	if (error) {
 		console.error('uploadGymLogoAction rpc', error.message);
-		return { error: d.settings.logoError };
+		return brandingState({ error: d.settings.logoError });
 	}
 
 	const { data: gymRow } = await supabase
@@ -141,12 +155,12 @@ export async function uploadGymLogoAction(formData: FormData): Promise<SettingsA
 	const storedPath = mode === 'light' ? gymRow?.logo_url_light : gymRow?.logo_url_dark;
 	if (!storedPath) {
 		console.error('uploadGymLogoAction missing path after rpc', mode);
-		return { error: d.settings.logoError };
+		return brandingState({ error: d.settings.logoError });
 	}
 
 	const logoUrl = gymLogoPublicUrl(storedPath, gymRow?.updated_at ?? Date.now());
 
-	return { success: d.settings.saved, logoMode: mode, logoUrl };
+	return brandingState({ success: d.settings.saved, logoMode: mode, logoUrl });
 }
 
 export async function removeGymLogoAction(formData: FormData): Promise<SettingsActionState> {
@@ -155,15 +169,15 @@ export async function removeGymLogoAction(formData: FormData): Promise<SettingsA
 
 	const workspace = await getWorkspace();
 	if (!workspace || !canInWorkspace(workspace, 'manage_billing')) {
-		return { error: d.common.forbidden };
+		return brandingState({ error: d.common.forbidden });
 	}
 	if (!canUseWhitelabel(workspace.planTier)) {
-		return { error: d.settings.whitelabelLocked };
+		return brandingState({ error: d.settings.whitelabelLocked });
 	}
 
 	const modeParsed = logoModeSchema.safeParse(formString(formData, 'mode'));
 	if (!modeParsed.success) {
-		return { error: d.settings.error };
+		return brandingState({ error: d.settings.error });
 	}
 	const mode = modeParsed.data;
 
@@ -182,14 +196,14 @@ export async function removeGymLogoAction(formData: FormData): Promise<SettingsA
 
 	if (error) {
 		console.error('removeGymLogoAction', error.message);
-		return { error: d.settings.logoError };
+		return brandingState({ error: d.settings.logoError });
 	}
 
-	return {
+	return brandingState({
 		success: d.settings.saved,
 		logoMode: mode,
 		logoUrl: null
-	};
+	});
 }
 
 const navVisibilitySchema = z.object({
@@ -203,7 +217,7 @@ export async function saveNavVisibilityAction(formData: FormData): Promise<Setti
 
 	const workspace = await getWorkspace();
 	if (!workspace) {
-		return { error: d.common.forbidden };
+		return navState({ error: d.common.forbidden });
 	}
 
 	const hiddenRaw = formData.getAll('hidden').filter((v): v is string => typeof v === 'string');
@@ -213,7 +227,7 @@ export async function saveNavVisibilityAction(formData: FormData): Promise<Setti
 		hidden: hiddenRaw
 	});
 	if (!parsed.success) {
-		return { fieldErrors: zodFieldErrors(parsed.error, d.validation) };
+		return navState({ fieldErrors: zodFieldErrors(parsed.error, d.validation) });
 	}
 
 	const hidden = parsed.data.hidden.filter(isCustomizableOpsNavId);
@@ -227,7 +241,7 @@ export async function saveNavVisibilityAction(formData: FormData): Promise<Setti
 	};
 
 	if (!roleAllowsNavCustomization(navCtx)) {
-		return { error: d.common.forbidden };
+		return navState({ error: d.common.forbidden });
 	}
 
 	const allowedIds = new Set<string>(getCustomizableOpsNavItems(navCtx).map((item) => item.id));
@@ -246,8 +260,8 @@ export async function saveNavVisibilityAction(formData: FormData): Promise<Setti
 
 	if (error) {
 		console.error('saveNavVisibilityAction', error.message);
-		return { error: d.settings.error };
+		return navState({ error: d.settings.error });
 	}
 
-	return { success: d.settings.saved };
+	return navState({ success: d.settings.saved });
 }

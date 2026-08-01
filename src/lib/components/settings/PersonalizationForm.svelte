@@ -21,6 +21,7 @@
 		logoUrlDark: string | null;
 		canCustomizeBrand: boolean;
 		canUseCustomDomain?: boolean;
+		form?: SettingsActionState;
 	};
 
 	let {
@@ -30,6 +31,7 @@
 		logoUrlDark,
 		canCustomizeBrand,
 		canUseCustomDomain = false,
+		form = null,
 	}: Props = $props();
 
 	let displayLight = $state<string | null>(null);
@@ -52,6 +54,10 @@
 	$effect(() => {
 		displayLight = logoUrlLight;
 		displayDark = logoUrlDark;
+	});
+
+	$effect(() => {
+		if (form) handleResult(form);
 	});
 
 	function clearLightSelection() {
@@ -163,7 +169,7 @@
 
 		{#if error}
 			<p
-				class="rounded-lg border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 px-4 py-3 text-sm font-medium text-[var(--color-primary)]"
+				class="rounded-lg border border-[var(--color-danger)]/20 bg-[var(--color-danger)]/10 px-4 py-3 text-sm font-medium text-[var(--color-danger)]"
 				role="alert"
 			>
 				{error}

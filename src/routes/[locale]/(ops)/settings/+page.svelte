@@ -4,6 +4,7 @@
 	import PersonalizationForm from '$lib/components/settings/PersonalizationForm.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Dialog from '$lib/components/ui/Dialog.svelte';
+	import type { SettingsActionState } from '$lib/server/settings/actions';
 	import { OWNER_TOUR_STORAGE_KEY } from '$lib/tour/constants';
 	import { brandedTitle } from '$lib/seo/document-title';
 	import type { PageProps } from './$types';
@@ -23,8 +24,14 @@
 	}
 
 	const gatewayForm = $derived(
-		form && ('syncedCount' in form || form.error || form.success)
+		form && typeof form === 'object' && 'form' in form && form.form === 'gateway'
 			? { error: form.error, success: form.success }
+			: null
+	);
+
+	const brandingForm = $derived(
+		form && typeof form === 'object' && 'form' in form && form.form === 'branding'
+			? (form as SettingsActionState)
 			: null
 	);
 </script>
@@ -87,6 +94,7 @@
 			logoUrlDark={data.logoUrlDark}
 			canCustomizeBrand={data.canCustomizeBrand}
 			canUseCustomDomain={data.canUseCustomDomain}
+			form={brandingForm}
 		/>
 	{/if}
 </div>

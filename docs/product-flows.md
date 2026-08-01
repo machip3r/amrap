@@ -400,7 +400,7 @@ See §7. Owner has full staff check-in powers.
 
 **What (by role):**
 1. **Everyone** — **My menu** (nav visibility) is **temporarily disabled** in the UI (backend/action still exist). Re-enable `NavCustomizationForm` on `/settings` when ready.
-2. **Owner / provisional (`manage_billing`) only** — **Customization**: logos light/dark + theme palettes (whitelabel gated by plan). **Online member billing** (Mercado Pago) when the plan allows. Header **Replay quickstart** (confirm dialog) restarts the owner coachmark tour.
+2. **Owner / provisional (`manage_billing`) only** — **Customization**: logos light/dark + theme palettes (Starter+ / whitelabel). **Online member billing** (Mercado Pago) when the plan allows. Branding and gateway form results stay scoped to their sections. Header **Replay quickstart** (confirm dialog) restarts the owner coachmark tour.
 
 Hiding a nav item is chrome-only for that user; direct URLs still respect page permission guards.
 
